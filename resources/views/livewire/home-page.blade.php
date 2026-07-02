@@ -1,32 +1,3 @@
-<?php
-
-use Livewire\Component;
-use Livewire\Attributes\Title;
-
-new #[Title('AnimalAmo — Viaggi e servizi pet-friendly')] class extends Component
-{
-    // Data mirrors XD "Homepage – 4" (real copy from the artboard; body text was lorem placeholder).
-    public array $regioni = [
-        ['img' => 'holiday-liguria',  'nome' => 'Hotel e servizi in Liguria',            'strutture' => 10],
-        ['img' => 'holiday-veneto',   'nome' => 'Hotel e servizi in Veneto',             'strutture' => 5],
-        ['img' => 'holiday-trentino', 'nome' => 'Hotel e servizi in Trentino-Alto Adige', 'strutture' => 7],
-    ];
-
-    public array $eventi = [
-        ['img' => 'event-cavallo',  'titolo' => 'Passeggiata a cavallo',                'luogo' => 'Genova, Italia',               'data' => 'Oggi alle ore 12:30',        'prezzo' => null],
-        ['img' => 'event-mare',     'titolo' => 'Weekend al mare',                      'luogo' => 'Fiesole (FI), Toscana',        'data' => 'Lun, 8 Gen alle ore 19:30',  'prezzo' => '25,00'],
-        ['img' => 'event-asini',    'titolo' => 'Esperienza con gli asini in fattoria', 'luogo' => 'Manciano (GR), Toscana',       'data' => 'Oggi alle ore 15:00',        'prezzo' => '18,00'],
-        ['img' => 'event-maneggio', 'titolo' => 'Weekend in maneggio',                  'luogo' => 'Massa Lubrense (NA), Campania','data' => 'Ven, 18 Gen alle ore 15:00', 'prezzo' => '35,00'],
-        ['img' => 'event-cavallo',  'titolo' => 'Trekking al lago',                     'luogo' => 'Molveno (TN), Trentino',       'data' => 'Sab, 20 Gen alle ore 09:00', 'prezzo' => '12,00'],
-    ];
-
-    public array $news = [
-        ['img' => 'news-trenitalia', 'data' => '20 Ottobre 2023', 'titolo' => 'Novità Trenitalia trasporto animali'],
-        ['img' => 'news-easyjet',    'data' => '3 Ottobre 2023',  'titolo' => 'Novità EasyJet trasporto animali'],
-    ];
-};
-?>
-
 @php $px = 'px-[140px]'; @endphp
 
 <div class="min-h-screen bg-white font-sans text-ink antialiased">
@@ -98,24 +69,26 @@ new #[Title('AnimalAmo — Viaggi e servizi pet-friendly')] class extends Compon
         <div class="{{ $px }} flex min-h-[560px] max-h-[976px] flex-col justify-center py-24 lg:h-[calc(100svh-5rem)]">
             {{-- Box hero (stile XD: #152E36, radius 2px): titolo, testo, Dove/Quando --}}
             <div class="w-full max-w-2xl rounded-[2px] bg-[#152E36] px-4 py-6 shadow-[0px_3px_6px_#00000029]">
-                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white">Viaggia con il tuo<br>migliore amico.</h1>
+                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white">Viaggia con il tuo migliore amico.</h1>
                 <p class="mt-4 text-sm leading-relaxed text-white/70">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
 
                 {{-- Search bar stile XD: pill bianco (border #F4F4F4, radius 100px) con input + pulsante dentro --}}
-                <div class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2">
-                    <label class="flex flex-1 items-center gap-3 px-4 py-2">
+                <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2">
+                    <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
+                        <flux:label class="sr-only">Dove</flux:label>
                         <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <input type="text" placeholder="Dove" class="w-full border-0 bg-transparent p-0 text-sm text-ink placeholder-gray-400 focus:ring-0">
-                    </label>
+                        <flux:input wire:model="where" type="text" placeholder="Dove" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:text-gray-400" />
+                    </flux:field>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
-                    <label class="flex flex-1 items-center gap-3 px-4 py-2">
+                    <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
+                        <flux:label class="sr-only">Quando</flux:label>
                         <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <input type="text" placeholder="Quando" class="w-full border-0 bg-transparent p-0 text-sm text-ink placeholder-gray-400 focus:ring-0">
-                    </label>
-                    <flux:button square aria-label="Cerca" class="!h-auto !w-auto shrink-0 !rounded-full !bg-brand-cyan !p-3.5 !text-white hover:!bg-brand-cyan-soft">
+                        <flux:input wire:model="when" type="text" placeholder="Quando" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:text-gray-400" />
+                    </flux:field>
+                    <flux:button type="submit" square aria-label="Cerca" class="!h-auto !w-auto shrink-0 !rounded-full !bg-brand-cyan !p-3.5 !text-white hover:!bg-brand-cyan-soft">
                         <flux:icon.search class="h-5 w-5" />
                     </flux:button>
-                </div>
+                </form>
             </div>
 
         </div>
@@ -130,13 +103,13 @@ new #[Title('AnimalAmo — Viaggi e servizi pet-friendly')] class extends Compon
             </div>
         </div>
         <div class="grid grid-cols-3 gap-6">
-            @foreach ($regioni as $r)
+            @foreach ($regions as $region)
                 <a href="#" wire:key="reg-{{ $loop->index }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
                     <div class="relative overflow-hidden">
-                        <img src="{{ asset('img/xd/'.$r['img'].'.jpg') }}" alt="{{ $r['nome'] }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
+                        <img src="{{ asset('img/xd/'.$region['img'].'.jpg') }}" alt="{{ $region['name'] }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
                         <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
-                        <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ $r['strutture'] }} Strutture</flux:badge>
-                        <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white">{{ $r['nome'] }}</h3>
+                        <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ $region['structures'] }} Strutture</flux:badge>
+                        <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white">{{ $region['name'] }}</h3>
                     </div>
                 </a>
             @endforeach
@@ -160,28 +133,28 @@ new #[Title('AnimalAmo — Viaggi e servizi pet-friendly')] class extends Compon
         </div>
         <div class="{{ $px }} pb-16 pt-6">
             <div class="grid grid-cols-5 gap-6">
-                @foreach ($eventi as $e)
+                @foreach ($events as $event)
                     <div wire:key="ev-{{ $loop->index }}" class="group rounded-[3px] border border-[#E9E9E9] bg-white p-2">
                         <div class="relative overflow-hidden">
-                            <img src="{{ asset('img/xd/'.$e['img'].'.jpg') }}" alt="{{ $e['titolo'] }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ asset('img/xd/'.$event['img'].'.jpg') }}" alt="{{ $event['title'] }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
                         </div>
                         <div class="p-2 pt-3">
                             <p class="flex items-center gap-1.5 text-[13px] text-brand-purple-soft">
                                 <flux:icon.time class="h-4 w-4 shrink-0" />
-                                {{ $e['data'] }}
+                                {{ $event['date'] }}
                             </p>
                             <p class="mt-1 flex items-center gap-1.5 text-[13px] text-[#555555]">
                                 <flux:icon.pin class="h-4 w-4 shrink-0 text-[#555555]" />
-                                {{ $e['luogo'] }}
+                                {{ $event['location'] }}
                             </p>
-                            <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black">{{ $e['titolo'] }}</h3>
+                            <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black">{{ $event['title'] }}</h3>
                             <div class="mt-4 flex items-center justify-between gap-2">
                                 <flux:button href="#" size="sm" class="!rounded-full !border-0 !bg-[#E9E9E9] !px-5 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
                                     <flux:icon.check-1 class="h-4 w-4" />
                                     Partecipa
                                 </flux:button>
-                                @if ($e['prezzo'])
-                                    <p class="text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold text-[#0D171A]">€ {{ $e['prezzo'] }}</span></p>
+                                @if ($event['price'])
+                                    <p class="text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold text-[#0D171A]">€ {{ $event['price'] }}</span></p>
                                 @else
                                     <p class="text-[15px] italic text-[#627277]">Gratis</p>
                                 @endif
@@ -220,12 +193,12 @@ new #[Title('AnimalAmo — Viaggi e servizi pet-friendly')] class extends Compon
             <a href="#" class="hidden shrink-0 text-sm font-extrabold text-brand-cyan hover:underline md:block">Tutte le news →</a>
         </div>
         <div class="grid grid-cols-2 gap-8">
-            @foreach ($news as $n)
+            @foreach ($news as $article)
                 <a href="#" wire:key="news-{{ $loop->index }}" class="group flex items-center gap-6 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-gray-150 transition hover:shadow-lg">
-                    <img src="{{ asset('img/xd/'.$n['img'].'.jpg') }}" alt="{{ $n['titolo'] }}" class="h-48 w-56 shrink-0 object-cover transition duration-500 group-hover:scale-105">
+                    <img src="{{ asset('img/xd/'.$article['img'].'.jpg') }}" alt="{{ $article['title'] }}" class="h-48 w-56 shrink-0 object-cover transition duration-500 group-hover:scale-105">
                     <div class="py-6 pr-6">
-                        <p class="text-sm font-bold text-gray-400">{{ $n['data'] }}</p>
-                        <h3 class="mt-2 text-2xl font-extrabold leading-snug">{{ $n['titolo'] }}</h3>
+                        <p class="text-sm font-bold text-gray-400">{{ $article['date'] }}</p>
+                        <h3 class="mt-2 text-2xl font-extrabold leading-snug">{{ $article['title'] }}</h3>
                         <span class="mt-4 inline-block text-sm font-extrabold text-brand-cyan">Leggi l'articolo →</span>
                     </div>
                 </a>
