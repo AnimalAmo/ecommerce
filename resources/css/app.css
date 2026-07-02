@@ -57,3 +57,11 @@
     --spacing-margin: 140px;
     --container-canvas: 1920px;
 }
+
+/* Tutti gli input del portale: radius 3px (XD). Fuori da @layer per vincere
+   sulle utility rounded-* dei componenti Flux. */
+input[data-flux-control],
+select[data-flux-control],
+textarea[data-flux-control] {
+    border-radius: 3px;
+}

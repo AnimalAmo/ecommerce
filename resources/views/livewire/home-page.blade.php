@@ -36,7 +36,9 @@
                 </flux:dropdown>
 
                 @guest
-                    <flux:button class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">Accedi / Registrati</flux:button>
+                    <flux:modal.trigger name="login">
+                        <flux:button class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">Accedi / Registrati</flux:button>
+                    </flux:modal.trigger>
                 @endguest
 
                 <flux:button variant="ghost" size="sm" square aria-label="Preferiti" class="!text-ink hover:!text-brand-magenta">
@@ -289,4 +291,8 @@
             <a href="#" class="hover:text-brand-cyan">Gestisci cookie</a>
         </div>
     </footer>
+
+    {{-- ============ MODALI AUTH (componenti dedicati) ============ --}}
+    <livewire:auth-modal />
+    <livewire:register-modal />
 </div>
