@@ -1,6 +1,16 @@
 @import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
 
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@layer base {
+    *,
+    *::before,
+    *::after {
+        transition: all 0.2s ease;
+    }
+}
 @source '../../storage/framework/views/*.php';
 @source '../views';
 @source '../../app/Livewire';

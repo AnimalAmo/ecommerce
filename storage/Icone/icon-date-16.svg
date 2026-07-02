@@ -1,0 +1,12 @@
+<svg id="icon-date-16" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <rect id="Rettangolo_835" data-name="Rettangolo 835" width="20" height="20" fill="none"/>
+  <g id="Raggruppa_3201" data-name="Raggruppa 3201" transform="translate(-209.81 -1059.266)">
+    <path id="Tracciato_487" data-name="Tracciato 487" d="M8355.926,1068.3v-3.467h13.268v11.106h-4.813" transform="translate(-8143)" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+    <line id="Linea_28" data-name="Linea 28" y2="2" transform="translate(215.84 1062.5)" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-width="1.6"/>
+    <line id="Linea_29" data-name="Linea 29" y2="2" transform="translate(223.5 1062.5)" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-width="1.6"/>
+    <g id="Icon_feather-arrow-left" data-name="Icon feather-arrow-left" transform="translate(213.015 1070.381)">
+      <path id="Tracciato_488" data-name="Tracciato 488" d="M13.151,18H7.5" transform="translate(-7.5 -15.174)" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3"/>
+      <path id="Tracciato_489" data-name="Tracciato 489" d="M10.326,13.151,7.5,10.326,10.326,7.5" transform="translate(-7.5 -7.5)" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,11 @@
+<svg id="icon-pin-20" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <rect id="Rettangolo_835" data-name="Rettangolo 835" width="20" height="20" fill="none"/>
+  <g id="noun-location-4376292" transform="translate(4.332 2.117)">
+    <g id="Layer_2" data-name="Layer 2">
+      <g id="Layer_1" data-name="Layer 1">
+        <path id="Tracciato_562" data-name="Tracciato 562" d="M5.437,15.646a.281.281,0,0,0,.463,0c.032-.048,3.345-4.932,4.526-6.9a5.918,5.918,0,0,0,.909-3.081A5.675,5.675,0,0,0,5.667,0h0A5.675,5.675,0,0,0,0,5.667,5.918,5.918,0,0,0,.909,8.746C2.1,10.712,5.4,15.6,5.437,15.646ZM5.667.557a5.117,5.117,0,0,1,5.11,5.11,5.359,5.359,0,0,1-.829,2.787c-1,1.65-3.506,5.389-4.274,6.531C4.9,13.839,2.39,10.1,1.4,8.455A5.359,5.359,0,0,1,.557,5.667,5.117,5.117,0,0,1,5.667.557Z" fill="#6cd1ef" stroke="#6cd1ef" stroke-width="0.7"/>
+        <path id="Tracciato_563" data-name="Tracciato 563" d="M18.694,21.319A2.694,2.694,0,1,0,16,18.624,2.694,2.694,0,0,0,18.694,21.319Zm0-4.831a2.137,2.137,0,1,1-2.137,2.137,2.137,2.137,0,0,1,2.137-2.137Z" transform="translate(-13.027 -12.97)" fill="#6cd1ef" stroke="#6cd1ef" stroke-width="0.7"/>
+      </g>
+    </g>
+  </g>
+</svg>
