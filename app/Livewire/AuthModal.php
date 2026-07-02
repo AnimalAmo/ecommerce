@@ -21,6 +21,12 @@ class AuthModal extends Component
         Flux::modal('register')->show();
     }
 
+    public function openPartnerLogin(): void
+    {
+        Flux::modal('login')->close();
+        Flux::modal('partner-login')->show();
+    }
+
     public function render()
     {
         return view('livewire.auth-modal');

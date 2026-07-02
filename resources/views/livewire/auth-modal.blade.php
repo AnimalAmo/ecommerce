@@ -43,7 +43,7 @@
         <flux:card class="w-full !rounded-[3px] !border-gray-150 !bg-white !px-4 !py-6 shadow-[0px_1px_10px_#0000001A] lg:w-[400px]">
             <flux:heading level="3" class="text-center !text-lg !font-medium !text-black">Accedi come Partner</flux:heading>
 
-            <flux:text class="mt-10 text-center !text-[15px] text-black">Sei già un partner? <flux:link href="#" variant="ghost" class="!text-[#68CDEB] !font-bold">Accedi alla tua area riservata</flux:link></flux:text>
+            <flux:text class="mt-10 text-center !text-[15px] text-black">Sei già un partner? <flux:link as="button" wire:click="openPartnerLogin" variant="ghost" class="!text-[#68CDEB] !font-bold">Accedi alla tua area riservata</flux:link></flux:text>
 
             <flux:separator class="my-6 !bg-[#DEDEDE]" />
 
