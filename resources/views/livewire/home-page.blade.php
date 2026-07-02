@@ -171,7 +171,7 @@
     </section>
 
     {{-- ============ SMARTBOX ============ --}}
-    <section id="smartbox" class="{{ $px }} py-20">
+    <section id="smartbox" class="{{ $px }} pb-20">
         {{-- Card group stile XD: immagine + card bianca attaccate, shadow 1px 1px 10px --}}
         <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A]">
             <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover">
@@ -208,31 +208,32 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mt-10 flex justify-center">
+                <a href="#" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
+            </div>
         </div>
     </section>
 
     {{-- ============ COMMUNITY ============ --}}
-    <section id="community" class="bg-brand-cyan-bg py-20">
-        <div class="{{ $px }} grid grid-cols-2 items-center gap-16">
-            <div>
-                <h2 class="text-4xl font-extrabold">Community</h2>
-                <p class="mt-3 max-w-md text-lg text-gray-500">Confrontati con altri pet-lover: consigli, racconti di viaggio e domande prima di partire.</p>
-                <a href="#" class="mt-8 inline-block rounded-full bg-ink px-8 py-4 text-sm font-extrabold text-white transition hover:bg-ink-800">Scopri la community</a>
-            </div>
-            {{-- Post preview card --}}
-            <div class="rounded-3xl bg-white p-7 shadow-[0_20px_60px_-25px_rgba(7,24,37,0.35)]">
-                <div class="flex items-center gap-4">
-                    <img src="{{ asset('img/xd/community.jpg') }}" alt="Sofia" class="h-12 w-12 rounded-full object-cover">
-                    <div>
-                        <p class="font-extrabold">Sofia</p>
-                        <p class="text-sm text-gray-400">25/11/23</p>
-                    </div>
-                    <span class="ml-auto rounded-full bg-brand-purple-soft/30 px-3 py-1 text-xs font-extrabold text-brand-purple">benessere</span>
+    <section id="community">
+        <div class="relative isolate overflow-hidden">
+            <img src="{{ asset('img/footer-community.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
+            {{-- Gradiente XD: nero 60% a dx → trasparente a sx --}}
+            <div class="absolute inset-0 -z-10 bg-[linear-gradient(270deg,#00000099_0%,#71717100_100%)]"></div>
+            <div class="{{ $px }} flex min-h-[660px] flex-col pb-[98px]">
+                <div class="my-auto">
+                    <h2 class="text-4xl font-extrabold text-white">Community</h2>
+                    <p class="mt-3 max-w-md text-lg text-white/85">Confrontati con altri pet-lover: consigli, racconti di viaggio e domande prima di partire.</p>
+                    <a href="#" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri la community</a>
                 </div>
-                <p class="mt-5 text-gray-600">"Qualcuno ha consigli per un primo viaggio in treno con un cane di taglia media? Vorrei che fosse un'esperienza tranquilla per entrambi 🐾"</p>
-                <div class="mt-6 flex items-center gap-2 border-t border-gray-150 pt-5 text-sm font-bold text-gray-400">
-                    <flux:icon.chat class="h-5 w-5 text-brand-cyan" />
-                    6 Risposte
+                {{-- Box recensione XD: glass bianco su foto, blur 7px --}}
+                <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px]">
+                    <div class="flex items-center justify-between gap-6">
+                        <p class="text-[13px] font-semibold text-brand-yellow">25/11/23</p>
+                        <p class="text-[13px] font-semibold text-brand-yellow">6 Risposte</p>
+                    </div>
+                    <p class="mt-2 text-lg text-white mb-2">"Qualcuno ha consigli per un primo viaggio in treno con un cane di taglia media? Vorrei che fosse un'esperienza tranquilla per entrambi 🐾"</p>
+                    <p class="text-lg italic text-white">- Sofia</p>
                 </div>
             </div>
         </div>
