@@ -1,69 +1,10 @@
 {{-- Container centrato stile matsuri: max width desktop, niente full-width stretched --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 
-<div class="min-h-screen bg-white font-sans text-ink antialiased">
+<div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
 
-    {{-- ============ HEADER ============ --}}
-    <header class="sticky top-0 z-50 border-b border-gray-150 bg-white/95 backdrop-blur">
-        <div class="{{ $px }} flex h-20 items-center justify-between">
-            <div class="flex items-center gap-10">
-                <a href="/" class="shrink-0">
-                    <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="w-[90px] h-auto">
-                </a>
-                <nav class="hidden items-center gap-9 text-sm font-normal text-black lg:flex">
-                    <a href="#holiday"   class="hover:font-bold">Holiday</a>
-                    <a href="#eventi"    class="hover:font-bold">Attività ed Eventi</a>
-                    <a href="#smartbox"  class="hover:font-bold">Smartbox</a>
-                    <a href="#news"      class="hover:font-bold">News</a>
-                    <a href="#community" class="hover:font-bold">Community</a>
-                    <a href="#chi-siamo" class="hover:font-bold">Chi siamo</a>
-                    <a href="#partner"   class="hover:font-bold">Diventa Partner</a>
-                </nav>
-            </div>
-            <div class="flex items-center gap-5">
-                <flux:dropdown>
-                    <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">ITA / EUR</flux:button>
-                    <flux:menu>
-                        <flux:menu.group heading="Lingua">
-                            <flux:menu.item>Italiano</flux:menu.item>
-                            <flux:menu.item>English</flux:menu.item>
-                        </flux:menu.group>
-                        <flux:menu.group heading="Valuta">
-                            <flux:menu.item>EUR &euro;</flux:menu.item>
-                            <flux:menu.item>USD $</flux:menu.item>
-                        </flux:menu.group>
-                    </flux:menu>
-                </flux:dropdown>
-
-                @guest
-                    <flux:modal.trigger name="login">
-                        <flux:button class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">Accedi / Registrati</flux:button>
-                    </flux:modal.trigger>
-                @endguest
-
-                <flux:button variant="ghost" size="sm" square aria-label="Preferiti" class="!text-ink hover:!text-brand-magenta">
-                    <flux:icon.heart class="h-5 w-5" />
-                </flux:button>
-                <flux:button variant="ghost" size="sm" square aria-label="Carrello" class="!text-ink hover:!text-brand-cyan">
-                    <flux:icon.cart class="h-5 w-5" />
-                </flux:button>
-
-                @auth
-                    <flux:dropdown>
-                        <flux:button variant="ghost" size="sm" square aria-label="Profilo" class="!text-ink hover:!text-brand-cyan">
-                            <flux:icon.profile class="h-5 w-5" />
-                        </flux:button>
-                        <flux:menu>
-                            <flux:menu.item>Il mio profilo</flux:menu.item>
-                            <flux:menu.item>I miei ordini</flux:menu.item>
-                            <flux:menu.separator />
-                            <flux:menu.item>Esci</flux:menu.item>
-                        </flux:menu>
-                    </flux:dropdown>
-                @endauth
-            </div>
-        </div>
-    </header>
+    {{-- ============ HEADER (partial condiviso) ============ --}}
+    @include('partials.site-header')
 
     {{-- ============ HERO ============ --}}
     <section class="relative isolate overflow-hidden bg-brand-cyan-bg">
@@ -98,7 +39,7 @@
     </section>
 
     {{-- ============ ANIMAL HOLIDAY ============ --}}
-    <section id="holiday" class="{{ $px }} py-20">
+    <section id="holiday" class="{{ $px }} scroll-mt-20 py-20">
         <div class="mb-10 flex items-end justify-between">
             <div>
                 <h2 class="text-4xl font-extrabold">Animal Holiday</h2>
@@ -123,7 +64,7 @@
     </section>
 
     {{-- ============ EVENTI ============ --}}
-    <section id="eventi">
+    <section id="eventi" class="scroll-mt-20">
         {{-- Banda immagine con gradiente XD: nero 60% a sx → trasparente a dx --}}
         <div class="relative isolate overflow-hidden">
             <img src="{{ asset('img/eventi-bg.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
@@ -173,7 +114,7 @@
     </section>
 
     {{-- ============ SMARTBOX ============ --}}
-    <section id="smartbox" class="{{ $px }} pb-20">
+    <section id="smartbox" class="{{ $px }} scroll-mt-20 pb-20">
         {{-- Card group stile XD: immagine + card bianca attaccate, shadow 1px 1px 10px --}}
         <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A]">
             <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover">
@@ -186,7 +127,7 @@
     </section>
 
     {{-- ============ NEWS ============ --}}
-    <section id="news" class="bg-brand-cyan-bg py-8">
+    <section id="news" class="scroll-mt-20 bg-brand-cyan-bg py-8">
         <div class="{{ $px }}">
             <div class="text-center">
                 <h2 class="text-[36px] font-bold text-black">News</h2>
@@ -217,7 +158,7 @@
     </section>
 
     {{-- ============ COMMUNITY ============ --}}
-    <section id="community">
+    <section id="community" class="scroll-mt-20">
         <div class="relative isolate overflow-hidden">
             <img src="{{ asset('img/footer-community.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
             {{-- Gradiente XD: nero 60% a dx → trasparente a sx --}}
@@ -242,7 +183,7 @@
     </section>
 
     {{-- ============ FOOTER ============ --}}
-    <footer class="bg-white text-black">
+    <footer class="mt-auto bg-white text-black">
         <div class="{{ $px }} border-b border-black pb-10 pt-16">
             <div class="grid grid-cols-4 gap-10">
                 <div>
@@ -258,14 +199,14 @@
                     <ul class="space-y-4 text-sm text-[#2B2B2B]">
                         <li><a href="#news" class="hover:text-brand-cyan">News</a></li>
                         <li><a href="#community" class="hover:text-brand-cyan">Community</a></li>
-                        <li><a href="#" class="hover:text-brand-cyan">Diventa Partner</a></li>
+                        <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">Diventa Partner</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Azienda</h4>
                     <ul class="space-y-4 text-sm text-[#2B2B2B]">
                         <li><a href="#chi-siamo" class="hover:text-brand-cyan">Chi siamo</a></li>
-                        <li><a href="#" class="hover:text-brand-cyan">Lavora con noi</a></li>
+                        <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">Lavora con noi</a></li>
                         <li><a href="#" class="hover:text-brand-cyan">Contatti</a></li>
                     </ul>
                 </div>

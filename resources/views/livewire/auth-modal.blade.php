@@ -47,7 +47,7 @@
 
             <flux:separator class="my-6 !bg-[#DEDEDE]" />
 
-            <flux:text class="text-center !text-[15px] !text-[#0D171A]">Vuoi diventare nostro partner? <flux:link href="#" variant="ghost" class="!font-bold !text-[#F2BD2D]">Compila il form</flux:link></flux:text>
+            <flux:text class="text-center !text-[15px] !text-[#0D171A]">Vuoi diventare nostro partner? <flux:link href="{{ route('work-with-us') }}" variant="ghost" class="!font-bold !text-[#F2BD2D]">Compila il form</flux:link></flux:text>
         </flux:card>
     </div>
 </flux:modal>
