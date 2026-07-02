@@ -1,4 +1,5 @@
-@php $px = 'px-[140px]'; @endphp
+{{-- Container centrato stile matsuri: max width desktop, niente full-width stretched --}}
+@php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 
 <div class="min-h-screen bg-white font-sans text-ink antialiased">
 
@@ -171,38 +172,42 @@
 
     {{-- ============ SMARTBOX ============ --}}
     <section id="smartbox" class="{{ $px }} py-20">
-        <div class="relative overflow-hidden rounded-[2.5rem]">
-            <img src="{{ asset('img/xd/smartbox.jpg') }}" alt="Smartbox" class="h-[420px] w-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/50 to-transparent"></div>
-            <div class="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-16 text-white">
-                <span class="inline-block w-fit rounded-full bg-brand-magenta px-4 py-1.5 text-xs font-extrabold uppercase tracking-wide">Idea regalo</span>
-                <h2 class="mt-5 text-5xl font-extrabold leading-tight">Acquista una Smartbox</h2>
-                <p class="mt-4 text-lg text-gray-200">Cofanetti di soggiorni ed esperienze pet-friendly. Il regalo perfetto per chi ama viaggiare con il proprio animale.</p>
-                <a href="#" class="mt-8 w-fit rounded-full bg-brand-yellow px-8 py-4 text-sm font-extrabold text-ink transition hover:brightness-95">Trova il regalo giusto</a>
+        {{-- Card group stile XD: immagine + card bianca attaccate, shadow 1px 1px 10px --}}
+        <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A]">
+            <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover">
+            <div class="flex flex-col items-end justify-center bg-white p-16 text-right">
+                <h2 class="text-[36px] font-bold leading-tight text-black">Acquista una Smartbox</h2>
+                <p class="mt-4 text-[18px] text-[#555555]">Cofanetti di soggiorni ed esperienze pet-friendly. Il regalo perfetto per chi ama viaggiare con il proprio animale.</p>
+                <flux:button href="#" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">Trova il regalo giusto</flux:button>
             </div>
         </div>
     </section>
 
     {{-- ============ NEWS ============ --}}
-    <section id="news" class="{{ $px }} py-20">
-        <div class="mb-10 flex items-end justify-between">
-            <div>
-                <h2 class="text-4xl font-extrabold">News</h2>
-                <p class="mt-3 max-w-xl text-lg text-gray-500">Normative, trasporti e consigli per viaggiare sereni con il tuo animale.</p>
+    <section id="news" class="bg-brand-cyan-bg py-8">
+        <div class="{{ $px }}">
+            <div class="text-center">
+                <h2 class="text-[36px] font-bold text-black">News</h2>
+                <p class="mt-3 text-[18px] font-normal text-[#555555]">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
             </div>
-            <a href="#" class="hidden shrink-0 text-sm font-extrabold text-brand-cyan hover:underline md:block">Tutte le news →</a>
-        </div>
-        <div class="grid grid-cols-2 gap-8">
-            @foreach ($news as $article)
-                <a href="#" wire:key="news-{{ $loop->index }}" class="group flex items-center gap-6 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-gray-150 transition hover:shadow-lg">
-                    <img src="{{ asset('img/xd/'.$article['img'].'.jpg') }}" alt="{{ $article['title'] }}" class="h-48 w-56 shrink-0 object-cover transition duration-500 group-hover:scale-105">
-                    <div class="py-6 pr-6">
-                        <p class="text-sm font-bold text-gray-400">{{ $article['date'] }}</p>
-                        <h3 class="mt-2 text-2xl font-extrabold leading-snug">{{ $article['title'] }}</h3>
-                        <span class="mt-4 inline-block text-sm font-extrabold text-brand-cyan">Leggi l'articolo →</span>
+            <div class="mt-10 grid grid-cols-3 gap-6">
+                @foreach ($news as $article)
+                    <div wire:key="news-{{ $loop->index }}" class="rounded-[3px] bg-white px-[10px] py-2">
+                        <img src="{{ asset('img/xd/'.$article['img'].'.jpg') }}" alt="{{ $article['title'] }}" class="h-[237px] w-full object-cover">
+                        <div class="p-2">
+                            <p class="flex items-center gap-1.5 font-[Roboto,sans-serif] text-sm text-[#959595]">
+                                <flux:icon.calendar class="h-4 w-4 shrink-0 text-[#959595]" />
+                                {{ $article['date'] }}
+                            </p>
+                            <h3 class="my-4 text-[20px] font-semibold text-black">{{ $article['title'] }}</h3>
+                            <p class="mb-4 text-sm font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
+                            <div class="flex justify-center">
+                                <flux:button variant="ghost" href="#" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">Continua a leggere...</flux:button>
+                            </div>
+                        </div>
                     </div>
-                </a>
-            @endforeach
+                @endforeach
+            </div>
         </div>
     </section>
 

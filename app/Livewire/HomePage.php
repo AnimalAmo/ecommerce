@@ -28,8 +28,9 @@ class HomePage extends Component
     ];
 
     public array $news = [
-        ['img' => 'news-trenitalia', 'date' => '20 Ottobre 2023', 'title' => 'Novità Trenitalia trasporto animali'],
-        ['img' => 'news-easyjet',    'date' => '3 Ottobre 2023',  'title' => 'Novità EasyJet trasporto animali'],
+        ['img' => 'news-trenitalia', 'date' => '20 Ottobre 2023', 'title' => 'Novità Trenitalia trasporto animali', 'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
+        ['img' => 'news-easyjet',    'date' => '3 Ottobre 2023',  'title' => 'Novità EasyJet trasporto animali',    'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
+        ['img' => 'event-cavallo',   'date' => '5 Ottobre 2025',  'title' => 'Viaggiare in montagna con il cane',   'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
     ];
 
     public function search(): void
