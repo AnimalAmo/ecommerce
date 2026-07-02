@@ -240,40 +240,53 @@
     </section>
 
     {{-- ============ FOOTER ============ --}}
-    <footer class="bg-ink text-gray-300">
-        <div class="{{ $px }} grid grid-cols-4 gap-10 py-16">
-            <div class="col-span-1">
-                <span class="text-2xl font-extrabold text-white">Animal<span class="text-brand-cyan">Amo</span></span>
-                <p class="mt-4 max-w-xs text-sm text-gray-400">Piattaforma multicanale di viaggi e servizi pet-friendly. Prenota, colleziona punti, vivi esperienze.</p>
+    <footer class="bg-white text-black">
+        <div class="{{ $px }} border-b border-black pb-10 pt-16">
+            <div class="grid grid-cols-4 gap-10">
+                <div>
+                    <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Esperienze</h4>
+                    <ul class="space-y-4 text-sm text-[#2B2B2B]">
+                        <li><a href="#holiday" class="hover:text-brand-cyan">Animal Holiday</a></li>
+                        <li><a href="#eventi" class="hover:text-brand-cyan">Attività ed Eventi</a></li>
+                        <li><a href="#smartbox" class="hover:text-brand-cyan">Smartbox</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Servizi</h4>
+                    <ul class="space-y-4 text-sm text-[#2B2B2B]">
+                        <li><a href="#news" class="hover:text-brand-cyan">News</a></li>
+                        <li><a href="#community" class="hover:text-brand-cyan">Community</a></li>
+                        <li><a href="#" class="hover:text-brand-cyan">Diventa Partner</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Azienda</h4>
+                    <ul class="space-y-4 text-sm text-[#2B2B2B]">
+                        <li><a href="#chi-siamo" class="hover:text-brand-cyan">Chi siamo</a></li>
+                        <li><a href="#" class="hover:text-brand-cyan">Lavora con noi</a></li>
+                        <li><a href="#" class="hover:text-brand-cyan">Contatti</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Help &amp; Support</h4>
+                    <ul class="space-y-4 text-sm text-[#2B2B2B]">
+                        <li><a href="#" class="hover:text-brand-cyan">FAQ</a></li>
+                        <li><a href="#" class="hover:text-brand-cyan">Assistenza clienti</a></li>
+                    </ul>
+                </div>
             </div>
-            <div>
-                <h4 class="text-sm font-extrabold uppercase tracking-wide text-white">Esplora</h4>
-                <ul class="mt-4 space-y-2 text-sm text-gray-400">
-                    <li><a href="#holiday" class="hover:text-brand-cyan">Animal Holiday</a></li>
-                    <li><a href="#eventi" class="hover:text-brand-cyan">Eventi</a></li>
-                    <li><a href="#smartbox" class="hover:text-brand-cyan">Smartbox</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-sm font-extrabold uppercase tracking-wide text-white">Scopri</h4>
-                <ul class="mt-4 space-y-2 text-sm text-gray-400">
-                    <li><a href="#news" class="hover:text-brand-cyan">News</a></li>
-                    <li><a href="#community" class="hover:text-brand-cyan">Community</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">Lavora con noi</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-sm font-extrabold uppercase tracking-wide text-white">Assistenza</h4>
-                <ul class="mt-4 space-y-2 text-sm text-gray-400">
-                    <li><a href="#" class="hover:text-brand-cyan">Chi siamo</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">Contatti</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">Diventa partner</a></li>
-                </ul>
+            <div class="mt-10 flex items-center justify-end gap-5">
+                <a href="#" aria-label="YouTube" class="text-black transition hover:text-brand-cyan"><flux:icon.youtube class="h-4 w-auto" /></a>
+                <a href="#" aria-label="Instagram" class="text-black transition hover:text-brand-cyan"><flux:icon.instagram class="h-4 w-auto" /></a>
+                <a href="#" aria-label="Facebook" class="text-black transition hover:text-brand-cyan"><flux:icon.facebook class="h-4 w-auto" /></a>
             </div>
         </div>
-        <div class="{{ $px }} flex items-center justify-between border-t border-white/10 py-6 text-xs text-gray-500">
-            <span>© 2024 AnimalAmo. Tutti i diritti riservati.</span>
-            <span>Privacy · Cookie · Termini</span>
+        <div class="{{ $px }} flex items-center justify-center gap-4 py-6 text-xs font-light text-[#8D8D8D]">
+            <span>Copyright © {{ date('Y') }}</span>
+            <a href="#" class="hover:text-brand-cyan">Termini e condizioni</a>
+            <a href="#" class="hover:text-brand-cyan">Informazioni privacy</a>
+            <a href="#" class="hover:text-brand-cyan">Informativa cookie</a>
+            <a href="#" class="hover:text-brand-cyan">Gestisci cookie</a>
         </div>
     </footer>
 </div>
