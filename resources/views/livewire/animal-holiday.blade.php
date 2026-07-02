@@ -43,7 +43,7 @@
             {{-- Griglia regioni (stesse card Box Holiday della home) --}}
             <div class="mt-10 grid grid-cols-3 gap-6">
                 @foreach ($regions as $region)
-                    <a href="#" wire:key="reg-{{ $loop->index }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
+                    <a href="{{ route('holiday.region', ['region' => $region['slug']]) }}" wire:key="reg-{{ $loop->index }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
                         <div class="relative overflow-hidden">
                             <img src="{{ asset('img/xd/'.$region['img'].'.jpg') }}" alt="{{ $region['name'] }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
                             <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
