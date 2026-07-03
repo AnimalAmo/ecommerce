@@ -64,7 +64,16 @@ class EventDetail extends Component
 
     public function mount(string $event): void
     {
-        abort_unless(collect(Events::EVENTS)->contains('slug', $event), 404);
+        $entry = collect(Events::EVENTS)->firstWhere('slug', $event);
+
+        abort_unless($entry !== null, 404);
+
+        // Le attività multi-giorno hanno una scheda dedicata (stesso pattern struttura → servizio).
+        if ($entry['type'] === 'activity') {
+            $this->redirectRoute('eventi.activity', ['activity' => $event]);
+
+            return;
+        }
 
         $this->eventSlug = $event;
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\ActivityDetail;
 use App\Livewire\AnimalHoliday;
 use App\Livewire\AnimalHolidayRegion;
 use App\Livewire\AnimalHolidayService;
@@ -19,6 +20,7 @@ Route::get('/animal-holiday/{region}', AnimalHolidayRegion::class)->name('holida
 Route::get('/animal-holiday/{region}/servizi/{service}', AnimalHolidayService::class)->name('holiday.service');
 Route::get('/animal-holiday/{region}/{structure}', AnimalHolidayStructure::class)->name('holiday.structure');
 Route::get('/eventi', Events::class)->name('eventi');
+Route::get('/eventi/attivita/{activity}', ActivityDetail::class)->name('eventi.activity');
 Route::get('/eventi/{event}', EventDetail::class)->name('eventi.detail');
 Route::get('/smartbox', Smartbox::class)->name('smartbox');
 Route::get('/smartbox/{box}', SmartboxDetail::class)->name('smartbox.detail');
