@@ -6,7 +6,7 @@
                 <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Esperienze</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('holiday') }}" class="hover:text-brand-cyan">Animal Holiday</a></li>
-                    <li><a href="/#eventi" class="hover:text-brand-cyan">Attività ed Eventi</a></li>
+                    <li><a href="{{ route('eventi') }}" class="hover:text-brand-cyan">Attività ed Eventi</a></li>
                     <li><a href="{{ route('smartbox') }}" class="hover:text-brand-cyan">Smartbox</a></li>
                 </ul>
             </div>
