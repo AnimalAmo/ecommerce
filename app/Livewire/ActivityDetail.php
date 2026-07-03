@@ -47,14 +47,19 @@ class ActivityDetail extends Component
         // Prezzo unitario numerico ("118 € a persona" → 118); null per "Gratis"/assente.
         $unitPrice = preg_match('/^(\d+)\s*€/u', $activity['price'] ?? '', $m) ? (int) $m[1] : null;
 
+        // L'XD non definisce un design per le attività gratuite: allineato al linguaggio
+        // della variante evento gratuito ("Gratis" corsivo + pill Partecipa, niente riepilogo prezzi).
+        $isFree = ($activity['price'] ?? null) === 'Gratis';
+
         return view('livewire.activity-detail', [
             'activity' => $activity,
+            'isFree' => $isFree,
             'durationDays' => $days,
             // Testo XD "Durata di 3 giorni, due notti"; per le altre durate la forma numerica.
             'durationLabel' => $days === 3 ? 'Durata di 3 giorni, due notti' : sprintf('Durata di %d giorni, %d notti', $days, $days - 1),
             'priceHeadline' => $activity['price'] ?? 'A partire da 0,00 €',
-            'pricePerTwo' => $unitPrice !== null ? $unitPrice.' € per 2 persone' : ($activity['price'] ?? '0 €').' per 2 persone',
-            'totalPrice' => $unitPrice !== null ? ($unitPrice * 2).' €' : ($activity['price'] ?? '0 €'),
+            'pricePerTwo' => $unitPrice !== null ? $unitPrice.' € per 2 persone' : null,
+            'totalPrice' => $unitPrice !== null ? ($unitPrice * 2).' €' : null,
             // "Cosa è incluso" e thread identici all'artboard evento (stessi testi nell'XD).
             'includedColumns' => EventDetail::INCLUDED,
             'threads' => EventDetail::THREADS,

@@ -91,8 +91,22 @@ class EventDetail extends Component
 
     public function addToCart(): void
     {
+        // Evento gratuito: nessun acquisto (XD "Evento gratis - Dettaglio" non ha il bottone
+        // "Aggiungi al carrello"), quindi il pop-up carrello non deve poter aprirsi.
+        if ($this->isFree()) {
+            return;
+        }
+
         // TODO: carrello reale — per ora mostra solo il pop-up di conferma.
         $this->cartPopupOpen = true;
+    }
+
+    /** Variante gratuita (price "Gratis") → artboard XD "Evento gratis - Dettaglio". */
+    private function isFree(): bool
+    {
+        $entry = collect(Events::EVENTS)->firstWhere('slug', $this->eventSlug);
+
+        return ($entry['price'] ?? null) === 'Gratis';
     }
 
     public function closeCartPopup(): void
@@ -106,6 +120,7 @@ class EventDetail extends Component
 
         return view('livewire.event-detail', [
             'event' => $event,
+            'isFree' => $this->isFree(),
             // Prezzo nel pop-up: solo la parte numerica ("25 € a persona" → "25 €"); fallback fisso come i dati dei pop-up fratelli (valore XD).
             'popupPrice' => str_replace(' a persona', '', $event['price'] ?? '25 €'),
             'includedColumns' => self::INCLUDED,

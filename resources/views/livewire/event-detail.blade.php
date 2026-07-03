@@ -8,7 +8,8 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, Indietro, azioni, CTA galleria, tile data --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="absolute inset-0 h-full w-full object-cover">
+            {{-- Foto campione per artboard: "Evento gratis - Dettaglio" usa lo scatto Unsplash della festa, quello a pagamento lo stock del brunch --}}
+            <img src="{{ asset($isFree ? 'img/xd/free-event-detail-hero.jpg' : 'img/xd/event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="absolute inset-0 h-full w-full object-cover">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -37,10 +38,10 @@
                     Vedere tutte le foto
                 </flux:button>
 
-                {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645" + "5 Gen") --}}
+                {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"; campione "5 Gen" a pagamento, "8 Gen" gratuito) --}}
                 <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
                     <div class="h-6 w-full bg-brand-purple-soft" aria-hidden="true"></div>
-                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-brand-purple-soft">5 Gen</p>
+                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-brand-purple-soft">{{ $isFree ? '8 Gen' : '5 Gen' }}</p>
                 </div>
             </div>
         </section>
@@ -49,10 +50,15 @@
             {{-- 2. Testata: orario, titolo, prezzo --}}
             <p class="flex items-center gap-2 text-[15px] font-medium leading-[21px] text-brand-purple-soft">
                 <flux:icon.time class="h-[15px] w-[15px] shrink-0" />
-                Oggi alle ore 13:30
+                {{ $isFree ? 'Lunedì 8 Gennaio alle ore 19:30' : 'Oggi alle ore 13:30' }}
             </p>
             <h1 class="mt-[9px] text-[25px] font-bold leading-[30px] text-black">{{ $event['title'] }}</h1>
-            <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{{ $event['price'] ?? 'A partire da 0,00 €' }}</p>
+            @if ($isFree)
+                {{-- "Gratis" in corsivo peso normale (XD Nunito-Italic 25px) al posto della riga prezzo Light --}}
+                <p class="mt-[9px] text-[25px] italic leading-[34px] text-black">Gratis</p>
+            @else
+                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{{ $event['price'] ?? 'A partire da 0,00 €' }}</p>
+            @endif
 
             {{-- 3. Tab bar (switch Livewire Informazioni / Discussione) + azioni Preferiti / Aggiungi al carrello --}}
             <div class="flex items-end justify-between gap-4 border-b border-[#DEDEDE]">
@@ -76,11 +82,20 @@
                         <flux:icon.heart class="h-4 w-4 shrink-0" />
                         Preferiti
                     </flux:button>
-                    {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
-                    <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
-                        <flux:icon.cart class="h-4 w-4 shrink-0" />
-                        Aggiungi al carrello
-                    </flux:button>
+                    @if ($isFree)
+                        {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello"; senza wire:click non serve il fix [&>span] --}}
+                        {{-- TODO: partecipa (il pop-up "Pop-up evento partecipa" è fuori scope) --}}
+                        <flux:button class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                            <flux:icon.check-1 class="h-4 w-4 shrink-0" />
+                            Partecipa
+                        </flux:button>
+                    @else
+                        {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
+                        <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
+                            <flux:icon.cart class="h-4 w-4 shrink-0" />
+                            Aggiungi al carrello
+                        </flux:button>
+                    @endif
                 </div>
             </div>
 
@@ -101,7 +116,7 @@
                             <li class="flex items-start gap-4">
                                 <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                                 <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Oggi dalle 13:30 alle 16:30</p>
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $isFree ? 'Lunedì 8 Gennaio dalle ore 19:30 alle 21:30' : 'Oggi dalle 13:30 alle 16:30' }}</p>
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
                                 </div>
                             </li>
@@ -221,8 +236,9 @@
     <livewire:register-modal />
     <livewire:partner-login-modal />
 
-    {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista") — stesso pattern del dettaglio struttura, con data e prezzo dell'evento --}}
-    @if ($cartPopupOpen)
+    {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista") — stesso pattern del dettaglio struttura, con data e prezzo dell'evento.
+         Solo eventi a pagamento: la variante gratuita non ha trigger d'acquisto (doppia cintura oltre alla guardia in addToCart). --}}
+    @if (! $isFree && $cartPopupOpen)
         <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>

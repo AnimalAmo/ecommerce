@@ -180,7 +180,12 @@
                 {{-- 6. Colonna destra (entrambe le tab): box prenotazione (XD "Raggruppa 3019") --}}
                 <aside class="w-full shrink-0 lg:w-[453px]">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white px-[21px] pb-6 pt-[21px]">
-                        <p class="text-[28px] font-light leading-[38px] text-[#2B2B2B]">{{ $priceHeadline }}</p>
+                        @if ($isFree)
+                            {{-- TODO: conferma design attività gratuita --}}
+                            <p class="text-[28px] italic leading-[38px] text-[#2B2B2B]">Gratis</p>
+                        @else
+                            <p class="text-[28px] font-light leading-[38px] text-[#2B2B2B]">{{ $priceHeadline }}</p>
+                        @endif
 
                         {{-- Selettore date / ospiti / animali (statico come da XD, nessuna interazione definita) --}}
                         <div class="mt-4 rounded-[4px] border border-[#DEDEDE]">
@@ -210,18 +215,26 @@
                             </div>
                         </div>
 
-                        {{-- TODO: azione Aggiungi al carrello (nessun pop-up XD dedicato alle attività) --}}
-                        <flux:button class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
+                        @if ($isFree)
+                            {{-- TODO: partecipa --}}
+                            <flux:button class="!mt-[26px] !flex !h-[39px] !w-full !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                                <flux:icon.check-1 class="h-4 w-4 shrink-0" />
+                                Partecipa
+                            </flux:button>
+                        @else
+                            {{-- TODO: azione Aggiungi al carrello (nessun pop-up XD dedicato alle attività) --}}
+                            <flux:button class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
 
-                        <div class="mt-[25px] flex items-center justify-between text-[17px] leading-[23px] text-[#2B2B2B]">
-                            <p>{{ $pricePerTwo }}</p>
-                            <p>{{ $totalPrice }}</p>
-                        </div>
-                        <div class="mt-4 border-t border-[#DEDEDE]" aria-hidden="true"></div>
-                        <div class="mt-4 flex items-center justify-between text-[17px] font-bold leading-[23px] text-[#2B2B2B]">
-                            <p>Totale</p>
-                            <p>{{ $totalPrice }}</p>
-                        </div>
+                            <div class="mt-[25px] flex items-center justify-between text-[17px] leading-[23px] text-[#2B2B2B]">
+                                <p>{{ $pricePerTwo }}</p>
+                                <p>{{ $totalPrice }}</p>
+                            </div>
+                            <div class="mt-4 border-t border-[#DEDEDE]" aria-hidden="true"></div>
+                            <div class="mt-4 flex items-center justify-between text-[17px] font-bold leading-[23px] text-[#2B2B2B]">
+                                <p>Totale</p>
+                                <p>{{ $totalPrice }}</p>
+                            </div>
+                        @endif
                     </div>
                 </aside>
             </div>
