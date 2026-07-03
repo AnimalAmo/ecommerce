@@ -7,7 +7,7 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('holiday') }}" class="hover:text-brand-cyan">Animal Holiday</a></li>
                     <li><a href="/#eventi" class="hover:text-brand-cyan">Attività ed Eventi</a></li>
-                    <li><a href="/#smartbox" class="hover:text-brand-cyan">Smartbox</a></li>
+                    <li><a href="{{ route('smartbox') }}" class="hover:text-brand-cyan">Smartbox</a></li>
                 </ul>
             </div>
             <div>

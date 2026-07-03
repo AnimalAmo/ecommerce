@@ -8,7 +8,7 @@
             <nav class="hidden items-center gap-9 text-sm font-normal text-black lg:flex">
                 <a href="/#holiday"   class="hover:font-bold">Holiday</a>
                 <a href="/#eventi"    class="hover:font-bold">Attività ed Eventi</a>
-                <a href="/#smartbox"  class="hover:font-bold">Smartbox</a>
+                <a href="{{ route('smartbox') }}" class="hover:font-bold">Smartbox</a>
                 <a href="/#news"      class="hover:font-bold">News</a>
                 <a href="/#community" class="hover:font-bold">Community</a>
                 <a href="/#chi-siamo" class="hover:font-bold">Chi siamo</a>

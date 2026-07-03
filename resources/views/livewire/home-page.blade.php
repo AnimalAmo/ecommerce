@@ -121,7 +121,7 @@
             <div class="flex flex-col items-end justify-center bg-white p-16 text-right">
                 <h2 class="text-[36px] font-bold leading-tight text-black">Acquista una Smartbox</h2>
                 <p class="mt-4 text-[18px] text-[#555555]">Cofanetti di soggiorni ed esperienze pet-friendly. Il regalo perfetto per chi ama viaggiare con il proprio animale.</p>
-                <flux:button href="#" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">Trova il regalo giusto</flux:button>
+                <flux:button href="{{ route('smartbox') }}" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">Trova il regalo giusto</flux:button>
             </div>
         </div>
     </section>
