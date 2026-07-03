@@ -17,6 +17,9 @@ class EventDetail extends Component
     /** Visibilità del pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista"). */
     public bool $cartPopupOpen = false;
 
+    /** Visibilità del pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa"). */
+    public bool $joinPopupOpen = false;
+
     public const TABS = ['informazioni', 'discussione'];
 
     /**
@@ -99,6 +102,23 @@ class EventDetail extends Component
 
         // TODO: carrello reale — per ora mostra solo il pop-up di conferma.
         $this->cartPopupOpen = true;
+    }
+
+    public function joinEvent(): void
+    {
+        // Evento a pagamento: nessuna partecipazione gratuita (il pill "Partecipa" esiste
+        // solo nella variante gratuita), quindi il pop-up partecipa non deve poter aprirsi.
+        if (! $this->isFree()) {
+            return;
+        }
+
+        // TODO: partecipazione reale — per ora mostra solo il pop-up di conferma.
+        $this->joinPopupOpen = true;
+    }
+
+    public function closeJoinPopup(): void
+    {
+        $this->joinPopupOpen = false;
     }
 
     /** Variante gratuita (price "Gratis") → artboard XD "Evento gratis - Dettaglio". */

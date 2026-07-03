@@ -83,9 +83,9 @@
                         Preferiti
                     </flux:button>
                     @if ($isFree)
-                        {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello"; senza wire:click non serve il fix [&>span] --}}
-                        {{-- TODO: partecipa (il pop-up "Pop-up evento partecipa" è fuori scope) --}}
-                        <flux:button class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                        {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello" --}}
+                        {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
+                        <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.check-1 class="h-4 w-4 shrink-0" />
                             Partecipa
                         </flux:button>
@@ -269,6 +269,41 @@
 
                     {{-- TODO: pagina Carrello --}}
                     <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa") — gemello del pop-up carrello: stessa card 400x230 a destra, senza riga prezzo.
+         Solo eventi gratuiti: la variante a pagamento non ha il pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}
+    @if ($isFree && $joinPopupOpen)
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto agli eventi" x-data @keydown.escape.window="$wire.closeJoinPopup()">
+            {{-- Overlay: click fuori dalla card chiude il pop-up --}}
+            <div class="absolute inset-0 bg-black/30" wire:click="closeJoinPopup" aria-hidden="true"></div>
+
+            <div class="{{ $px }} pointer-events-none relative">
+                <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto agli eventi</h2>
+
+                    <flux:button variant="ghost" size="sm" square wire:click="closeJoinPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                        <flux:icon.close class="h-[18px] w-[18px]" />
+                    </flux:button>
+
+                    <div class="mt-3 flex items-start gap-2.5">
+                        <img src="{{ asset('img/xd/free-event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-black">{{ $event['title'] }}</p>
+                            <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
+                                <li class="flex items-center gap-[5px]">
+                                    <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
+                                    08/01/2024
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {{-- TODO: pagina "I miei eventi" (l'XD punta a un artboard con la lista eventi dell'utente) --}}
+                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[162px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai agli eventi</flux:button>
                 </div>
             </div>
         </div>
