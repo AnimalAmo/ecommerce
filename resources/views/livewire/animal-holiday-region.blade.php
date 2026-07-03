@@ -44,14 +44,14 @@
             {{-- Filtri (XD: due pill dropdown "Componente 20"; comportamento dropdown TODO) --}}
             <p class="mt-10 text-lg font-semibold leading-6 text-black">Filtra la tua ricerca:</p>
             <div class="mt-[17px] flex items-center gap-[11px]">
-                <button type="button" class="inline-flex h-[30px] items-center gap-2 whitespace-nowrap rounded-full border border-[#C8C8C8] bg-white px-3.5 text-sm font-normal text-[#555555]">
+                <flux:button class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
                     Tipologia
                     <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
-                </button>
-                <button type="button" class="inline-flex h-[30px] items-center gap-2 whitespace-nowrap rounded-full border border-[#C8C8C8] bg-white px-3.5 text-sm font-normal text-[#555555]">
+                </flux:button>
+                <flux:button class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
                     Fascia di prezzo
                     <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
-                </button>
+                </flux:button>
             </div>
 
             {{-- Griglia risultati (XD: simbolo "Box hotel", 4 colonne × 3 righe) --}}
@@ -76,24 +76,25 @@
                         </div>
                         {{-- Link alla scheda: servizi → "Animal Holiday – Dettaglio servizio", hotel → "Animal Holiday – Dettaglio struttura" --}}
                         <a href="{{ $result['type'] === 'servizi' ? route('holiday.service', ['region' => $regionSlug, 'service' => $result['slug']]) : route('holiday.structure', ['region' => $regionSlug, 'structure' => $result['slug']]) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $result['name'] }}"></a>
-                        <button type="button" aria-label="Aggiungi ai preferiti" class="absolute right-[18px] top-[18px] z-[2] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white text-black">
+                        {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
+                        <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!absolute !right-[18px] !top-[18px] !z-[2] !h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
                             <flux:icon.heart class="h-4 w-4" />
-                        </button>
+                        </flux:button>
                     </article>
                 @endforeach
             </div>
 
             {{-- Paginazione (statica; pagina 1 attiva, prev disabilitato) --}}
             <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
-                <button type="button" disabled class="p-1 text-[#C8C8C8]" aria-label="Pagina precedente">
+                <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
                     <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
-                </button>
+                </flux:button>
                 @foreach (range(1, 4) as $page)
-                    <button type="button" wire:key="page-{{ $page }}" @if ($page === 1) aria-current="page" @endif class="flex h-8 w-8 items-center justify-center rounded-full text-base font-medium {{ $page === 1 ? 'bg-black text-white' : 'bg-white text-black' }}">{{ $page }}</button>
+                    <flux:button wire:key="page-{{ $page }}" square :aria-current="$page === 1 ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === 1 ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
                 @endforeach
-                <button type="button" class="p-1 text-black" aria-label="Pagina successiva">
+                <flux:button variant="ghost" square aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
                     <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
-                </button>
+                </flux:button>
             </nav>
         </div>
     </main>
