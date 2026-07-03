@@ -145,7 +145,9 @@
                             <h3 class="my-4 text-[20px] font-semibold text-black">{{ $article['title'] }}</h3>
                             <p class="mb-4 text-sm font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
                             <div class="flex justify-center">
-                                <flux:button variant="ghost" href="#" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">Continua a leggere...</flux:button>
+                                {{-- Le card home non hanno slug proprio: si risolve per immagine su News::ARTICLES (la card fuori elenco rimanda a /news) --}}
+                                @php $newsSlug = collect(\App\Livewire\News::ARTICLES)->firstWhere('img', $article['img'])['slug'] ?? null; @endphp
+                                <flux:button variant="ghost" :href="$newsSlug ? route('news.detail', $newsSlug) : route('news')" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">Continua a leggere...</flux:button>
                             </div>
                         </div>
                     </div>

@@ -27,11 +27,10 @@
                                 </p>
                                 <h3 class="mt-4 max-w-[369px] text-[20px] font-semibold leading-[25px] text-black">{{ $article['title'] }}</h3>
                                 <p class="mt-[18px] line-clamp-4 max-w-[428px] text-sm leading-[23px] font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
-                                {{-- TODO: News dettaglio (slug in News::ARTICLES) --}}
-                                <a href="#" class="relative z-[2] mx-auto mt-auto pt-5 text-sm font-normal text-[#242C2C]">Continua a leggere…</a>
+                                <a href="{{ route('news.detail', $article['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-5 text-sm font-normal text-[#242C2C]">Continua a leggere…</a>
                             </div>
-                            {{-- Link overlay all'articolo (TODO: News dettaglio) --}}
-                            <a href="#" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $article['title'] }}"></a>
+                            {{-- Link overlay all'articolo --}}
+                            <a href="{{ route('news.detail', $article['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $article['title'] }}"></a>
                         </article>
                     @endforeach
                 </div>
