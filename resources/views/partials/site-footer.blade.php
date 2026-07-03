@@ -13,7 +13,7 @@
             <div>
                 <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Servizi</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="/#news" class="hover:text-brand-cyan">News</a></li>
+                    <li><a href="{{ route('news') }}" class="hover:text-brand-cyan">News</a></li>
                     <li><a href="/#community" class="hover:text-brand-cyan">Community</a></li>
                     <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">Diventa Partner</a></li>
                 </ul>

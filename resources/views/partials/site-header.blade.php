@@ -9,7 +9,7 @@
                 <a href="/#holiday"   class="hover:font-bold">Holiday</a>
                 <a href="{{ route('eventi') }}" class="hover:font-bold">Attività ed Eventi</a>
                 <a href="{{ route('smartbox') }}" class="hover:font-bold">Smartbox</a>
-                <a href="/#news"      class="hover:font-bold">News</a>
+                <a href="{{ route('news') }}" class="hover:font-bold">News</a>
                 <a href="/#community" class="hover:font-bold">Community</a>
                 <a href="/#chi-siamo" class="hover:font-bold">Chi siamo</a>
                 <a href="{{ route('work-with-us') }}" class="hover:font-bold">Diventa Partner</a>

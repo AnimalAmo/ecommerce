@@ -8,6 +8,7 @@ use App\Livewire\AnimalHolidayStructure;
 use App\Livewire\EventDetail;
 use App\Livewire\Events;
 use App\Livewire\HomePage;
+use App\Livewire\News;
 use App\Livewire\Smartbox;
 use App\Livewire\SmartboxDetail;
 use App\Livewire\WorkWithUs;
@@ -24,5 +25,6 @@ Route::get('/eventi/attivita/{activity}', ActivityDetail::class)->name('eventi.a
 Route::get('/eventi/{event}', EventDetail::class)->name('eventi.detail');
 Route::get('/smartbox', Smartbox::class)->name('smartbox');
 Route::get('/smartbox/{box}', SmartboxDetail::class)->name('smartbox.detail');
+Route::get('/news', News::class)->name('news');
 Route::get('/lavora-con-noi', WorkWithUs::class)->name('work-with-us');
 Route::get('/lavora-con-noi/grazie', WorkWithUsThanks::class)->name('work-with-us.thanks');

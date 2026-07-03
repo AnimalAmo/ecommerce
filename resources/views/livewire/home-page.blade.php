@@ -152,7 +152,7 @@
                 @endforeach
             </div>
             <div class="mt-10 flex justify-center">
-                <a href="#" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
+                <a href="{{ route('news') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
             </div>
         </div>
     </section>
