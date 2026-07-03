@@ -93,8 +93,7 @@
                                     <p class="whitespace-nowrap text-right text-[15px] font-semibold tracking-[0.025em] text-[#0D171A]">{{ $event['price'] ?? 'A partire da 0,00 €' }}</p>
                                 </div>
                             </div>
-                            {{-- TODO: Evento dettaglio --}}
-                            <a href="#" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $event['title'] }}"></a>
+                            <a href="{{ route('eventi.detail', $event['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $event['title'] }}"></a>
                             {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
                             <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!absolute !right-[18px] !top-[18px] !z-[2] !h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
                                 <flux:icon.heart class="h-4 w-4" />
