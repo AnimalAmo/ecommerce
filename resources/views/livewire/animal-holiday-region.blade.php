@@ -74,8 +74,8 @@
                             <h3 class="mt-2.5 text-[20px] font-semibold leading-[25px] text-black">{{ $result['name'] }}</h3>
                             <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">0,00 €</span></p>
                         </div>
-                        {{-- Link alla scheda struttura (XD: "Animal Holiday – Dettaglio struttura", pagina non ancora costruita) --}}
-                        <a href="#" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $result['name'] }}"></a>
+                        {{-- Link alla scheda struttura (XD: "Animal Holiday – Dettaglio struttura") --}}
+                        <a href="{{ route('holiday.structure', ['region' => $regionSlug, 'structure' => $result['slug']]) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $result['name'] }}"></a>
                         <button type="button" aria-label="Aggiungi ai preferiti" class="absolute right-[18px] top-[18px] z-[2] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white text-black">
                             <flux:icon.heart class="h-4 w-4" />
                         </button>

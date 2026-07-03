@@ -31,6 +31,7 @@ The app is served by a Homestead-style VM: `http://animalamo.test` → `192.168.
 - **Custom Flux icons**: `resources/views/flux/icon/*.blade.php` (`<flux:icon.pin>`, `<flux:icon.check-1>`, …), hand-converted from the XD-exported SVGs in `storage/Icone/`. Many still carry hardcoded `fill="#..."` on paths, which overrides `currentColor` and makes Tailwind text-color classes silently useless — strip the path-level fill when an icon must be tinted via class (already done for `pin`).
 - **Design assets**: source photos from XD live in `storage/Immagini/` (committed); optimize before use into `public/img/` (`convert <src> -strip -interlace Plane -quality 82 public/img/<name>.jpg`). `design/` holds the PNG-per-artboard reference workflow (gitignored PNGs, see `design/README.md`).
 - **Flux styling pattern**: brand overrides on Flux components use `!`-important utilities (e.g. `!rounded-full !bg-brand-yellow !text-ink`).
+- **Flux over native elements**: never write a native `<button>` — always `flux:button` (or `flux:modal.trigger`/`flux:link as="button"`), styled via `!`-utilities. Same preference for other elements where a Flux equivalent exists (`flux:input`, `flux:badge`, `flux:separator`, …); plain `<a>` is fine for pure text/nav links.
 
 ## Conventions
 

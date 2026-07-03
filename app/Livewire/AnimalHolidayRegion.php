@@ -50,19 +50,19 @@ class AnimalHolidayRegion extends Component
      * Risultati campione in ordine di griglia XD (riga per riga).
      * Rating con virgola decimale italiana; prezzo placeholder "0,00 €" ovunque.
      */
-    public array $results = [
-        ['type' => 'hotel', 'name' => 'Hotel Brescia', 'location' => 'Dario Boario Terme (BS), Italia', 'rating' => '4,5', 'img' => 'regione-hotel-brescia'],
-        ['type' => 'hotel', 'name' => 'Villaggio Turistico Tre Capitelli', 'location' => 'Tre Capitelli (BS), Italia', 'rating' => '3', 'img' => 'regione-villaggio-tre-capitelli'],
-        ['type' => 'hotel', 'name' => 'Hotel Mantova Residence', 'location' => 'Mantova, Italia', 'rating' => '3,5', 'img' => 'regione-hotel-mantova'],
-        ['type' => 'servizi', 'name' => 'Dog sitting', 'location' => 'Mantova, Italia', 'rating' => '4,5', 'img' => 'regione-dog-sitting'],
-        ['type' => 'servizi', 'name' => 'Centro di addestramento', 'location' => 'Dario Boario Terme (BS), Italia', 'rating' => '4,5', 'img' => 'regione-centro-addestramento'],
-        ['type' => 'servizi', 'name' => 'Pet sitting', 'location' => 'Viareggio, Italia', 'rating' => '4,5', 'img' => 'regione-pet-sitting'],
-        ['type' => 'hotel', 'name' => 'Hotel Mantova Residence', 'location' => 'Mantova, Italia', 'rating' => '3,5', 'img' => 'regione-hotel-mantova-2'],
-        ['type' => 'hotel', 'name' => 'Lamasu W&R', 'location' => 'San Felice del Benaco (BS) - Italia', 'rating' => '5', 'img' => 'regione-lamasu'],
-        ['type' => 'hotel', 'name' => 'Hotel Brescia', 'location' => 'Dario Boario Terme (BS), Italia', 'rating' => '4,5', 'img' => 'regione-hotel-brescia-2'],
-        ['type' => 'hotel', 'name' => 'Villaggio Turistico Tre Capitelli', 'location' => 'Tre Capitelli (BS), Italia', 'rating' => '3', 'img' => 'regione-villaggio-tre-capitelli-2'],
-        ['type' => 'hotel', 'name' => 'Hotel Mantova Residence', 'location' => 'Mantova, Italia', 'rating' => '3,5', 'img' => 'regione-hotel-mantova-3'],
-        ['type' => 'hotel', 'name' => 'Lamasu W&R', 'location' => 'San Felice del Benaco (BS) - Italia', 'rating' => '5', 'img' => 'regione-lamasu-2'],
+    public const RESULTS = [
+        ['type' => 'hotel', 'name' => 'Hotel Brescia', 'slug' => 'hotel-brescia', 'location' => 'Dario Boario Terme (BS), Italia', 'rating' => '4,5', 'img' => 'regione-hotel-brescia'],
+        ['type' => 'hotel', 'name' => 'Villaggio Turistico Tre Capitelli', 'slug' => 'villaggio-turistico-tre-capitelli', 'location' => 'Tre Capitelli (BS), Italia', 'rating' => '3', 'img' => 'regione-villaggio-tre-capitelli'],
+        ['type' => 'hotel', 'name' => 'Hotel Mantova Residence', 'slug' => 'hotel-mantova-residence', 'location' => 'Mantova, Italia', 'rating' => '3,5', 'img' => 'regione-hotel-mantova'],
+        ['type' => 'servizi', 'name' => 'Dog sitting', 'slug' => 'dog-sitting', 'location' => 'Mantova, Italia', 'rating' => '4,5', 'img' => 'regione-dog-sitting'],
+        ['type' => 'servizi', 'name' => 'Centro di addestramento', 'slug' => 'centro-di-addestramento', 'location' => 'Dario Boario Terme (BS), Italia', 'rating' => '4,5', 'img' => 'regione-centro-addestramento'],
+        ['type' => 'servizi', 'name' => 'Pet sitting', 'slug' => 'pet-sitting', 'location' => 'Viareggio, Italia', 'rating' => '4,5', 'img' => 'regione-pet-sitting'],
+        ['type' => 'hotel', 'name' => 'Hotel Mantova Residence', 'slug' => 'hotel-mantova-residence', 'location' => 'Mantova, Italia', 'rating' => '3,5', 'img' => 'regione-hotel-mantova-2'],
+        ['type' => 'hotel', 'name' => 'Lamasu W&R', 'slug' => 'lamasu-wr', 'location' => 'San Felice del Benaco (BS) - Italia', 'rating' => '5', 'img' => 'regione-lamasu'],
+        ['type' => 'hotel', 'name' => 'Hotel Brescia', 'slug' => 'hotel-brescia', 'location' => 'Dario Boario Terme (BS), Italia', 'rating' => '4,5', 'img' => 'regione-hotel-brescia-2'],
+        ['type' => 'hotel', 'name' => 'Villaggio Turistico Tre Capitelli', 'slug' => 'villaggio-turistico-tre-capitelli', 'location' => 'Tre Capitelli (BS), Italia', 'rating' => '3', 'img' => 'regione-villaggio-tre-capitelli-2'],
+        ['type' => 'hotel', 'name' => 'Hotel Mantova Residence', 'slug' => 'hotel-mantova-residence', 'location' => 'Mantova, Italia', 'rating' => '3,5', 'img' => 'regione-hotel-mantova-3'],
+        ['type' => 'hotel', 'name' => 'Lamasu W&R', 'slug' => 'lamasu-wr', 'location' => 'San Felice del Benaco (BS) - Italia', 'rating' => '5', 'img' => 'regione-lamasu-2'],
     ];
 
     public function mount(string $region): void
@@ -81,7 +81,7 @@ class AnimalHolidayRegion extends Component
 
     public function render()
     {
-        return view('livewire.animal-holiday-region')
+        return view('livewire.animal-holiday-region', ['results' => self::RESULTS])
             ->title('AnimalAmo — Hotel e servizi in '.$this->regionName);
     }
 }
