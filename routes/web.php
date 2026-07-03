@@ -6,6 +6,7 @@ use App\Livewire\AnimalHolidayService;
 use App\Livewire\AnimalHolidayStructure;
 use App\Livewire\HomePage;
 use App\Livewire\Smartbox;
+use App\Livewire\SmartboxDetail;
 use App\Livewire\WorkWithUs;
 use App\Livewire\WorkWithUsThanks;
 use Illuminate\Support\Facades\Route;
@@ -16,5 +17,6 @@ Route::get('/animal-holiday/{region}', AnimalHolidayRegion::class)->name('holida
 Route::get('/animal-holiday/{region}/servizi/{service}', AnimalHolidayService::class)->name('holiday.service');
 Route::get('/animal-holiday/{region}/{structure}', AnimalHolidayStructure::class)->name('holiday.structure');
 Route::get('/smartbox', Smartbox::class)->name('smartbox');
+Route::get('/smartbox/{box}', SmartboxDetail::class)->name('smartbox.detail');
 Route::get('/lavora-con-noi', WorkWithUs::class)->name('work-with-us');
 Route::get('/lavora-con-noi/grazie', WorkWithUsThanks::class)->name('work-with-us.thanks');
