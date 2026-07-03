@@ -14,6 +14,9 @@ class EventDetail extends Component
     #[Url(except: 'informazioni')]
     public string $tab = 'informazioni';
 
+    /** Visibilità del pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista"). */
+    public bool $cartPopupOpen = false;
+
     public const TABS = ['informazioni', 'discussione'];
 
     /**
@@ -77,12 +80,25 @@ class EventDetail extends Component
         }
     }
 
+    public function addToCart(): void
+    {
+        // TODO: carrello reale — per ora mostra solo il pop-up di conferma.
+        $this->cartPopupOpen = true;
+    }
+
+    public function closeCartPopup(): void
+    {
+        $this->cartPopupOpen = false;
+    }
+
     public function render()
     {
         $event = collect(Events::EVENTS)->firstWhere('slug', $this->eventSlug);
 
         return view('livewire.event-detail', [
             'event' => $event,
+            // Prezzo nel pop-up: solo la parte numerica ("25 € a persona" → "25 €"); fallback fisso come i dati dei pop-up fratelli (valore XD).
+            'popupPrice' => str_replace(' a persona', '', $event['price'] ?? '25 €'),
             'includedColumns' => self::INCLUDED,
             'threads' => self::THREADS,
         ])->title('AnimalAmo — '.$event['title']);

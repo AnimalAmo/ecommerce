@@ -76,8 +76,8 @@
                         <flux:icon.heart class="h-4 w-4 shrink-0" />
                         Preferiti
                     </flux:button>
-                    {{-- TODO: azione Aggiungi al carrello --}}
-                    <flux:button class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                    {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
+                    <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                         <flux:icon.cart class="h-4 w-4 shrink-0" />
                         Aggiungi al carrello
                     </flux:button>
@@ -220,4 +220,41 @@
     <livewire:auth-modal />
     <livewire:register-modal />
     <livewire:partner-login-modal />
+
+    {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista") — stesso pattern del dettaglio struttura, con data e prezzo dell'evento --}}
+    @if ($cartPopupOpen)
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
+            {{-- Overlay: click fuori dalla card chiude il pop-up --}}
+            <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>
+
+            <div class="{{ $px }} pointer-events-none relative">
+                <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto al carrello</h2>
+
+                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                        <flux:icon.close class="h-[18px] w-[18px]" />
+                    </flux:button>
+
+                    <div class="mt-3 flex items-start gap-2.5">
+                        <img src="{{ asset('img/xd/event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-black">{{ $event['title'] }}</p>
+                            <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
+                                <li class="flex items-center gap-[5px]">
+                                    <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
+                                    07/02/2024
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {{-- Prezzo in basso a destra sopra il bottone (XD "25 €" @1724,250) --}}
+                    <p class="absolute right-4 top-[118px] text-lg font-semibold leading-6 text-black">{{ $popupPrice }}</p>
+
+                    {{-- TODO: pagina Carrello --}}
+                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
