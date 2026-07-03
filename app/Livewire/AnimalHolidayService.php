@@ -5,8 +5,8 @@ namespace App\Livewire;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('AnimalAmo — Dettaglio struttura')]
-class AnimalHolidayStructure extends Component
+#[Title('AnimalAmo — Dettaglio servizio')]
+class AnimalHolidayService extends Component
 {
     /** Slug regione dalla rotta (es. "lombardia"). */
     public string $regionSlug = '';
@@ -14,31 +14,21 @@ class AnimalHolidayStructure extends Component
     /** Nome visualizzato della regione (es. "Lombardia"). */
     public string $regionName = '';
 
-    /** Slug struttura dalla rotta (es. "hotel-brescia"). */
-    public string $structureSlug = '';
+    /** Slug servizio dalla rotta (es. "dog-sitting"). */
+    public string $serviceSlug = '';
 
-    /** Nome visualizzato della struttura (es. "Hotel Brescia"). */
-    public string $structureName = '';
+    /** Nome visualizzato del servizio (es. "Dog sitting"). */
+    public string $serviceName = '';
 
-    /** Località campione — verbatim dall'XD (probabile refuso per "Darfo Boario Terme"). */
-    public string $location = 'Dario Boario Terme (BS), Italia';
+    /** Località del servizio (dal risultato campione della regione). */
+    public string $location = '';
 
     public string $rating = '4,5 stelle';
 
-    /** Pop-up "Aggiunto al carrello" (XD: "Pop-up aggiunta al carrello"). */
+    /** Pop-up "Aggiunto al carrello" (stesso pattern del dettaglio struttura). */
     public bool $cartPopupOpen = false;
 
-    /** Servizi Hotel: incluso (check verde) / escluso (X magenta). */
-    public array $hotelServices = [
-        ['label' => 'Aria condizionata negli spazi comuni', 'included' => true],
-        ['label' => 'Lavanderia', 'included' => true],
-        ['label' => 'Ascensore', 'included' => true],
-        ['label' => 'Wifi', 'included' => true],
-        ['label' => 'Noleggio bici', 'included' => false],
-        ['label' => 'Spa', 'included' => false],
-    ];
-
-    /** Servizi Animali: incluso / escluso. */
+    /** Servizi Animali: incluso (check verde) / escluso (X magenta). */
     public array $animalServices = [
         ['label' => 'Pet sitting', 'included' => true],
         ['label' => 'Servizio veterinario', 'included' => true],
@@ -64,25 +54,21 @@ class AnimalHolidayStructure extends Component
         ['date' => '23 febbraio 2023', 'stars' => 4.5, 'title' => 'Incredibile!', 'body' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.', 'initials' => 'FS', 'name' => 'Francesca Sogni', 'avatar' => '#3E72FF'],
     ];
 
-    public function mount(string $region, string $structure): void
+    public function mount(string $region, string $service): void
     {
         abort_unless(isset(AnimalHolidayRegion::REGION_NAMES[$region]), 404);
 
-        $entry = collect(AnimalHolidayRegion::RESULTS)->firstWhere('slug', $structure);
+        $entry = collect(AnimalHolidayRegion::RESULTS)
+            ->first(fn (array $result) => $result['slug'] === $service && $result['type'] === 'servizi');
 
         abort_unless($entry !== null, 404);
 
-        // I risultati di tipo "servizi" hanno una scheda dedicata.
-        if ($entry['type'] === 'servizi') {
-            $this->redirectRoute('holiday.service', ['region' => $region, 'service' => $structure]);
-
-            return;
-        }
-
         $this->regionSlug = $region;
         $this->regionName = AnimalHolidayRegion::REGION_NAMES[$region];
-        $this->structureSlug = $structure;
-        $this->structureName = $entry['name'];
+        $this->serviceSlug = $service;
+        $this->serviceName = $entry['name'];
+        $this->location = $entry['location'];
+        $this->rating = $entry['rating'].' stelle';
     }
 
     public function addToCart(): void
@@ -103,7 +89,7 @@ class AnimalHolidayStructure extends Component
 
     public function render()
     {
-        return view('livewire.animal-holiday-structure')
-            ->title('AnimalAmo — '.$this->structureName);
+        return view('livewire.animal-holiday-service')
+            ->title('AnimalAmo — '.$this->serviceName);
     }
 }
