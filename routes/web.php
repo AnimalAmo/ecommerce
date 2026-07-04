@@ -1,10 +1,12 @@
 <?php
 
+use App\Livewire\AboutUs;
 use App\Livewire\ActivityDetail;
 use App\Livewire\AnimalHoliday;
 use App\Livewire\AnimalHolidayRegion;
 use App\Livewire\AnimalHolidayService;
 use App\Livewire\AnimalHolidayStructure;
+use App\Livewire\Community;
 use App\Livewire\EventDetail;
 use App\Livewire\Events;
 use App\Livewire\HomePage;
@@ -26,6 +28,8 @@ Route::get('/eventi/attivita/{activity}', ActivityDetail::class)->name('eventi.a
 Route::get('/eventi/{event}', EventDetail::class)->name('eventi.detail');
 Route::get('/smartbox', Smartbox::class)->name('smartbox');
 Route::get('/smartbox/{box}', SmartboxDetail::class)->name('smartbox.detail');
+Route::get('/chi-siamo', AboutUs::class)->name('about');
+Route::get('/community', Community::class)->name('community');
 Route::get('/news', News::class)->name('news');
 Route::get('/news/{article}', NewsDetail::class)->name('news.detail');
 Route::get('/lavora-con-noi', WorkWithUs::class)->name('work-with-us');
