@@ -39,7 +39,7 @@
             <flux:button variant="ghost" size="sm" square aria-label="Preferiti" href="{{ route('preferiti') }}" class="!text-ink hover:!text-brand-magenta">
                 <flux:icon.heart class="h-5 w-5" />
             </flux:button>
-            <flux:button variant="ghost" size="sm" square aria-label="Carrello" class="!text-ink hover:!text-brand-cyan">
+            <flux:button variant="ghost" size="sm" square aria-label="Carrello" href="{{ route('carrello') }}" class="!text-ink hover:!text-brand-cyan">
                 <flux:icon.cart class="h-5 w-5" />
             </flux:button>
 
