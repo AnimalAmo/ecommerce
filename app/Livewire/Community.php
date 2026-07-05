@@ -78,24 +78,40 @@ class Community extends Component
         ],
     ];
 
+    /**
+     * Post del tab "I miei post" come da XD (artboard "Community – I miei post"):
+     * titoli e tag propri, corpi e risposte riusati dai campioni (XD riusa gli stessi testi).
+     */
+    public const MY_POSTS = [
+        [
+            'id' => 3,
+            'title' => 'Dubbi sugli eventi',
+            'tag' => 'Benessere',
+            'tagColor' => '#8DABFF',
+            'author' => 'Tommaso (Io)',
+            'body' => self::POSTS[0]['body'],
+            'replies' => self::POSTS[0]['replies'],
+            'mine' => true,
+        ],
+        [
+            'id' => 4,
+            'title' => 'Consigli sulle attività',
+            'tag' => 'Domanda',
+            'tagColor' => '#555555',
+            'author' => 'Tommaso (Io)',
+            'body' => self::POSTS[1]['body'],
+            'replies' => self::POSTS[1]['replies'],
+            'mine' => true,
+        ],
+    ];
+
     public function mount(): void
     {
         if (! in_array($this->tab, self::TABS, true)) {
             $this->tab = 'tutti';
         }
 
-        // Tab "I miei post" (XD artboard 3): stesse due card ma autore "Tommaso (Io)" —
-        // derivate dalle const con mine=true, reply invariate.
-        $myPosts = array_map(
-            fn (array $post): array => array_merge($post, [
-                'id' => $post['id'] + count(self::POSTS),
-                'author' => 'Tommaso (Io)',
-                'mine' => true,
-            ]),
-            self::POSTS,
-        );
-
-        $this->posts = array_merge(self::POSTS, $myPosts);
+        $this->posts = array_merge(self::POSTS, self::MY_POSTS);
     }
 
     public function switchTab(string $tab): void

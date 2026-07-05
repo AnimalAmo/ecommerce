@@ -18,11 +18,25 @@
         '#3E72FF' => 'bg-[#3E72FF] text-white',
         '#555555' => 'bg-[#555555] text-white',
         '#8DE0FF' => 'bg-[#8DE0FF] text-ink',
-        '#8DABFF' => 'bg-[#8DABFF] text-ink',
+        '#8DABFF' => 'bg-[#8DABFF] text-white', // XD "I miei post": chip Benessere con testo bianco
         '#C59FFD' => 'bg-[#C59FFD] text-ink',
         '#8E53E6' => 'bg-[#8E53E6] text-white',
         '#FF9F3E' => 'bg-[#FF9F3E] text-ink',
         '#FFE13E' => 'bg-[#FFE13E] text-ink',
+    ];
+
+    // Chip filtro attivo (artboard "Community – filtro"): coppie bg/testo+icona per tag.
+    // Da XD arrivano solo Avventura e Benessere; le altre cinque seguono la stessa ricetta
+    // (tinta molto chiara del colore tag come bg, colore tag come testo).
+    // Servizi: testo scurito a #D4B500 (il giallo #FFE13E sarebbe illeggibile su fondo chiaro).
+    $filterChip = [
+        'Avventura' => '!bg-[#E1E9FF] !text-[#3E72FF]',
+        'Benessere' => '!bg-[#E8EEFF] !text-[#8DABFF]',
+        'Soggiorno' => '!bg-[#E9F9FF] !text-[#8DE0FF]',
+        'Eventi' => '!bg-[#F5EDFF] !text-[#C59FFD]',
+        'Attività' => '!bg-[#EFE6FC] !text-[#8E53E6]',
+        'Strutture' => '!bg-[#FFF2E4] !text-[#FF9F3E]',
+        'Servizi' => '!bg-[#FFFADF] !text-[#D4B500]',
     ];
 @endphp
 
@@ -87,7 +101,8 @@
                         <flux:input type="text" wire:model.live.debounce.300ms="search" placeholder="Cerca" class="!min-w-0 !flex-1 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-[48px] [&_input]:!rounded-full [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!px-4 [&_input]:!text-lg [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
                     </div>
 
-                    <flux:dropdown align="end">
+                    {{-- Aperto (XD symbol "Open"): pannello 159px a filo sotto la pill (offset/gap 0), angoli alti squadrati --}}
+                    <flux:dropdown align="start" offset="0" gap="0">
                         <flux:button class="!h-[50px] !w-[159px] !shrink-0 !gap-1.5 !rounded-full !border !border-[#E9E9E9] !bg-white !px-2.5 !text-sm !font-normal !text-[#555555] !shadow-none">
                             <span class="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#EBF9FD]">
                                 <flux:icon.filter class="h-3 w-3" />
@@ -95,9 +110,10 @@
                             Filtra tipologia
                             <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-[#555555]" />
                         </flux:button>
-                        <flux:menu>
+                        {{-- Lista piatta: 7 voci da 31px + py-4 ≈ 251px totali come da XD; niente icone né pill hover --}}
+                        <flux:menu class="!w-[159px] !min-w-0 !rounded-t-none !rounded-b-[10px] !border-[#E9E9E9] !bg-white !px-0 !py-4 !shadow-none">
                             @foreach ($tags as $tag)
-                                <flux:menu.item wire:key="menu-tag-{{ $tag }}" wire:click="addFilter('{{ $tag }}')">{{ $tag }}</flux:menu.item>
+                                <flux:menu.item wire:key="menu-tag-{{ $tag }}" wire:click="addFilter('{{ $tag }}')" class="!h-[31px] !rounded-none !px-4 !py-0 !text-sm !font-normal !text-[#555555] data-active:!bg-gray-50">{{ $tag }}</flux:menu.item>
                             @endforeach
                         </flux:menu>
                     </flux:dropdown>
@@ -108,8 +124,9 @@
                     <div class="mt-3 flex h-[27px] flex-wrap items-center gap-2">
                         @foreach ($activeFilters as $filter)
                             {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
-                            <flux:button wire:key="filter-{{ $filter }}" wire:click="removeFilter('{{ $filter }}')" aria-label="Rimuovi filtro {{ $filter }}" class="!h-[27px] !rounded-full !border-0 !px-[22px] !text-sm !font-medium !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2 {{ $filter === 'Avventura' ? '!bg-[#E1E9FF] !text-[#3E72FF]' : '!bg-[#E8EEFF] !text-[#8DABFF]' }}">
-                                <flux:icon.close class="h-3 w-3 shrink-0" />
+                            {{-- Geometria XD: × da 10px a sinistra, label a ~22px dal bordo (pl-2 + icona + gap-1), ~12px a destra --}}
+                            <flux:button wire:key="filter-{{ $filter }}" wire:click="removeFilter('{{ $filter }}')" aria-label="Rimuovi filtro {{ $filter }}" class="!h-[27px] !rounded-full !border-0 !pl-2 !pr-3 !text-sm !font-medium !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-1 {{ $filterChip[$filter] ?? '!bg-[#E9E9E9] !text-[#555555]' }}">
+                                <flux:icon.close class="h-[10px] w-[10px] shrink-0" />
                                 {{ $filter }}
                             </flux:button>
                         @endforeach
