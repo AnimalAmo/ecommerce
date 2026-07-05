@@ -105,9 +105,8 @@
 
                                 <div class="mx-[17px] mt-5 h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
-                                {{-- TODO: pagine Checkout non ancora costruite --}}
                                 <div class="mt-[31px] flex justify-center">
-                                    <flux:button href="#" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
+                                    <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
                                 </div>
                             </div>
                         </aside>
