@@ -10,15 +10,15 @@ class Checkout extends Component
     public int $step = 1;
 
     /** Dati personali mock precompilati come da XD (nessun backend). */
-    public string $nome = 'Giulia';
+    public string $firstName = 'Giulia';
 
-    public string $cognome = 'Rossi';
+    public string $lastName = 'Rossi';
 
     public string $email = 'giulia.rossi@gmail.com';
 
-    public string $paese = 'Italia';
+    public string $country = 'Italia';
 
-    public string $cellulare = '340 5738920';
+    public string $phone = '340 5738920';
 
     /** Metodo di pagamento selezionato ('carta' mostra il sub-form carta). */
     public string $paymentMethod = 'carta';

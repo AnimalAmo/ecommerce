@@ -37,11 +37,11 @@
 
                                 <div class="mt-1 space-y-4">
                                     @foreach ([
-                                        ['model' => 'nome', 'label' => 'Nome *', 'type' => 'text'],
-                                        ['model' => 'cognome', 'label' => 'Cognome *', 'type' => 'text'],
+                                        ['model' => 'firstName', 'label' => 'Nome *', 'type' => 'text'],
+                                        ['model' => 'lastName', 'label' => 'Cognome *', 'type' => 'text'],
                                         ['model' => 'email', 'label' => 'Email *', 'type' => 'email'],
-                                        ['model' => 'paese', 'label' => 'Paese', 'type' => 'text'],
-                                        ['model' => 'cellulare', 'label' => 'Cellulare *', 'type' => 'tel'],
+                                        ['model' => 'country', 'label' => 'Paese', 'type' => 'text'],
+                                        ['model' => 'phone', 'label' => 'Cellulare *', 'type' => 'tel'],
                                     ] as $field)
                                         <div wire:key="field-{{ $field['model'] }}">
                                             <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
