@@ -4,12 +4,28 @@ namespace App\Livewire;
 
 use DateTimeImmutable;
 use Flux\Flux;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class Cart extends Component
 {
+    /** Flag ?regalo=1 (deep-link come ?tab della community): carica gli articoli regalo al posto dei normali. */
+    #[Url(as: 'regalo', except: false)]
+    public bool $gift = false;
+
     /** Articoli nel carrello in-memory (come le pagine sorelle); niente DB. */
     public array $items = [];
+
+    /** Dedica e messaggio della smartbox regalo, per id articolo. */
+    // TODO: persistenza regalo backend — per ora restano solo nello stato del componente.
+    public array $giftDedication = [];
+
+    public array $giftMessage = [];
+
+    /** Id delle card suggerite (stato vuoto) marcate preferite / aggiunte al carrello (solo visivo). */
+    public array $suggestFavorites = [];
+
+    public array $suggestInCart = [];
 
     /** Id dell'articolo in modifica nel pop-up (null = pop-up chiuso). */
     public ?int $editingId = null;
@@ -85,9 +101,53 @@ class Cart extends Component
         ],
     ];
 
+    /**
+     * Articolo del flusso regalo smartbox (artboard "Carrello – flusso regalo smartbox").
+     * NOTA: il chip dice "Struttura" anche se l'articolo è una smartbox — copiato
+     * VERBATIM dal mock XD per fedeltà, l'incongruenza è voluta dal design.
+     */
+    public const GIFT_ITEMS = [
+        [
+            'id' => 1,
+            'tag' => 'Struttura',
+            'tagColor' => '#FF9F3E',
+            'title' => 'Weekend in Piemonte',
+            'location' => 'Torino, Italia',
+            'dates' => null,
+            'guests' => ['adulti' => 4, 'ragazzi' => 0, 'bambini' => 0],
+            'dogs' => 2,
+            'price' => 143,
+            'photo' => 'cart-weekend-piemonte.jpg',
+            'gift' => true,
+            'giftValidity' => 'Smartbox valida per 12 mesi',
+        ],
+    ];
+
     public function mount(): void
     {
-        $this->items = self::ITEMS;
+        $this->items = $this->gift ? self::GIFT_ITEMS : self::ITEMS;
+    }
+
+    /** Cuore sulle card suggerite dello stato vuoto: parte bianco e diventa giallo (toggle). */
+    public function toggleSuggestionFavorite(int $id): void
+    {
+        // TODO: backend reale — stato solo visivo, come il toggle borsa dei preferiti.
+        if (in_array($id, $this->suggestFavorites, true)) {
+            $this->suggestFavorites = array_values(array_diff($this->suggestFavorites, [$id]));
+        } else {
+            $this->suggestFavorites[] = $id;
+        }
+    }
+
+    /** Borsa sulle card suggerite dello stato vuoto: aggiunge/toglie dal carrello (solo visivo). */
+    public function toggleSuggestionCart(int $id): void
+    {
+        // TODO: backend reale.
+        if (in_array($id, $this->suggestInCart, true)) {
+            $this->suggestInCart = array_values(array_diff($this->suggestInCart, [$id]));
+        } else {
+            $this->suggestInCart[] = $id;
+        }
     }
 
     /** Il bottone "Elimina" rimuove l'articolo; totale e conteggio si aggiornano da soli. */
@@ -336,6 +396,11 @@ class Cart extends Component
             'editingItem' => $editingItem,
             'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
             'calendarLabel' => self::MONTHS[$this->calendarMonth].' '.$this->calendarYear,
+            // Le 3 card "più amate" dello stato vuoto = preferiti 1-3 (combaciano con l'XD).
+            'suggestions' => $this->items === [] ? array_values(array_filter(
+                Favorites::FAVORITES,
+                fn (array $fav): bool => in_array($fav['id'], [1, 2, 3], true),
+            )) : [],
         ])->title('Carrello — AnimalAmo');
     }
 }
