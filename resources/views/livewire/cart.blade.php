@@ -173,9 +173,13 @@
 
                                 <div class="mx-[17px] {{ $gift ? 'mt-[17px]' : 'mt-5' }} h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
-                                {{-- TODO: checkout flusso regalo dedicato in arrivo — per ora punta al checkout standard --}}
                                 <div class="{{ $gift ? 'mt-[23px]' : 'mt-[31px]' }} flex justify-center">
-                                    <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
+                                    @if ($gift)
+                                        {{-- In modalità regalo la CTA salva dedica/messaggio in sessione e apre il checkout regalo (?regalo=1) --}}
+                                        <flux:button wire:click="goToCheckout" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
+                                    @else
+                                        <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
+                                    @endif
                                 </div>
                             </div>
                         </aside>

@@ -123,9 +123,31 @@ class Cart extends Component
         ],
     ];
 
+    /** Dedica e messaggio di default del regalo come da mock XD (fallback se i campi restano vuoti). */
+    public const GIFT_DEDICATION_DEFAULT = 'Sofia';
+
+    public const GIFT_MESSAGE_DEFAULT = 'ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat';
+
     public function mount(): void
     {
         $this->items = $this->gift ? self::GIFT_ITEMS : self::ITEMS;
+    }
+
+    /** CTA "Vai al checkout" in modalità regalo: passa dedica/messaggio al checkout via sessione. */
+    public function goToCheckout()
+    {
+        // TODO: persistenza regalo backend — per ora la dedica viaggia in sessione fino al checkout.
+        $id = self::GIFT_ITEMS[0]['id'];
+
+        $dedication = trim($this->giftDedication[$id] ?? '');
+        $message = trim($this->giftMessage[$id] ?? '');
+
+        session()->put('giftCheckout', [
+            'dedication' => $dedication !== '' ? $dedication : self::GIFT_DEDICATION_DEFAULT,
+            'message' => $message !== '' ? $message : self::GIFT_MESSAGE_DEFAULT,
+        ]);
+
+        return $this->redirectRoute('checkout', ['regalo' => 1]);
     }
 
     /** Cuore sulle card suggerite dello stato vuoto: parte bianco e diventa giallo (toggle). */

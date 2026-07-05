@@ -2,10 +2,20 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class Checkout extends Component
 {
+    /** Flag ?regalo=1 (come nel carrello): riepilogo con il solo articolo smartbox + dedica/messaggio. */
+    #[Url(as: 'regalo', except: false)]
+    public bool $gift = false;
+
+    /** Dedica e messaggio del regalo, letti dalla sessione scritta dal carrello (default mock XD). */
+    public string $giftDedication = '';
+
+    public string $giftMessage = '';
+
     /** Step interno del funnel: 1 = I tuoi dati, 2 = Pagamento, 3 = Fatto! (nessun parametro in URL). */
     public int $step = 1;
 
@@ -46,6 +56,17 @@ class Checkout extends Component
         'paypal' => 'Paypal',
     ];
 
+    public function mount(): void
+    {
+        if ($this->gift) {
+            // TODO: persistenza regalo backend — dedica/messaggio arrivano dalla sessione scritta dal carrello.
+            $giftData = session('giftCheckout', []);
+
+            $this->giftDedication = $giftData['dedication'] ?? Cart::GIFT_DEDICATION_DEFAULT;
+            $this->giftMessage = $giftData['message'] ?? Cart::GIFT_MESSAGE_DEFAULT;
+        }
+    }
+
     /** Avanza di un solo step via CTA (Prosegui → 2, Paga ora → 3); niente salti in avanti né ritorni. */
     public function goToStep(int $step): void
     {
@@ -85,10 +106,14 @@ class Checkout extends Component
 
     public function render()
     {
-        // Riepilogo ordine: stessi articoli del carrello (Cart::ITEMS), totale sommato dai prezzi (476 €).
+        // Riepilogo ordine: stessi articoli del carrello (476 €); in modalità regalo il solo
+        // articolo smartbox. NOTA: il mock XD regalo ripete "476 €" per errore di copia del
+        // designer — il totale è la somma reale dei prezzi (regalo: 143 €).
+        $items = $this->gift ? Cart::GIFT_ITEMS : Cart::ITEMS;
+
         return view('livewire.checkout', [
-            'items' => Cart::ITEMS,
-            'total' => array_sum(array_column(Cart::ITEMS, 'price')),
+            'items' => $items,
+            'total' => array_sum(array_column($items, 'price')),
             'steps' => self::STEPS,
             'altMethods' => self::ALT_METHODS,
         ])->title('Checkout — AnimalAmo');

@@ -183,9 +183,17 @@
                                 @endforeach
                             </div>
 
+                            @if ($gift)
+                                {{-- Dedica e messaggio della smartbox (XD y481/512, x=24 dal bordo card; il messaggio va a capo su ~527px) --}}
+                                <div class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
+                                    <p class="leading-none">Dedicato a: {{ $giftDedication }}</p>
+                                    <p class="mt-4 leading-[21px]">Messaggio: {{ $giftMessage }}</p>
+                                </div>
+                            @endif
+
                             <div class="mx-4 h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
-                            {{-- Riga totale: 476 € a destra con nota tasse --}}
+                            {{-- Riga totale a destra con nota tasse (regalo: 143 €, somma reale — il "476 €" del mock XD è un refuso del designer) --}}
                             <div class="flex items-start justify-between px-6 pt-[46px]">
                                 <span class="text-2xl font-bold leading-none text-[#0D171A]">Totale</span>
                                 <div class="text-right">
@@ -239,6 +247,14 @@
                             </div>
                         @endforeach
                     </div>
+
+                    @if ($gift)
+                        {{-- Dedica e messaggio della smartbox (XD y532/563, x=24 dal bordo card) --}}
+                        <div class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
+                            <p class="leading-none">Dedicato a: {{ $giftDedication }}</p>
+                            <p class="mt-4 leading-[21px]">Messaggio: {{ $giftMessage }}</p>
+                        </div>
+                    @endif
 
                     <div class="mx-4 h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
