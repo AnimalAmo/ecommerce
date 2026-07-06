@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Lang;
 use NumberFormatter;
 
 /**
@@ -121,6 +122,42 @@ final class Format
             'start' => $from->format('H:i'),
             'end' => $to->format('H:i'),
         ]);
+    }
+
+    /**
+     * '1 cane' / '2 cani' / '1 cane, 1 gatto' — etichetta animali del carrello
+     * da options['animals'] ({specie: count}, decisione ratificata #4). Specie
+     * senza chiave lang: fallback letterale 'N specie'.
+     */
+    public static function animals(array $animals): string
+    {
+        $labels = [];
+
+        foreach ($animals as $species => $count) {
+            $key = 'format.animals_'.$species;
+
+            $labels[] = Lang::has($key)
+                ? trans_choice($key, $count, ['count' => $count])
+                : $count.' '.$species;
+        }
+
+        return implode(', ', $labels);
+    }
+
+    /** Etichetta ospiti: 'N adulti' se ci sono solo adulti, altrimenti 'N ospiti' (totale). */
+    public static function guests(array $guests): string
+    {
+        $extra = ($guests['ragazzi'] ?? 0) + ($guests['bambini'] ?? 0);
+
+        if ($extra === 0) {
+            $adults = $guests['adulti'] ?? 0;
+
+            return trans_choice('format.guests_adults', $adults, ['count' => $adults]);
+        }
+
+        $total = ($guests['adulti'] ?? 0) + $extra;
+
+        return trans_choice('format.guests_total', $total, ['count' => $total]);
     }
 
     /** '1 anno' / '2 anni' / '6 mesi' ("Valido per" del dettaglio smartbox) */

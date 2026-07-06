@@ -46,6 +46,8 @@ class StructureSeeder extends Seeder
                 'rating' => $row['rating'],
                 'price_cents' => $isHotel ? self::HOTEL_PRICE_CENTS : self::SERVICE_PRICE_CENTS,
                 'price_from_cents' => 0,
+                // 0 esplicito: i supplementi reali arriveranno dai partner (totali XD invariati).
+                'animal_supplement_cents' => 0,
                 'img' => $row['img'],
                 'hero_img' => $isHotel ? 'struttura-hero' : 'servizio-hero',
                 'map_img' => $isHotel ? 'struttura-mappa' : 'servizio-mappa',

@@ -11,6 +11,7 @@ use Database\Factories\Structure\StructureFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Structure extends Model
 {
@@ -26,6 +27,7 @@ class Structure extends Model
         'rating',
         'price_cents',
         'price_from_cents',
+        'animal_supplement_cents',
         'img',
         'hero_img',
         'map_img',
@@ -40,6 +42,10 @@ class Structure extends Model
         return [
             'type' => ProductType::class,
             'rating' => 'float',
+            // Cast espliciti sui cents: il pricing (step 3) fa aritmetica, non solo display.
+            'price_cents' => 'integer',
+            'price_from_cents' => 'integer',
+            'animal_supplement_cents' => 'integer',
             'general_info' => 'array',
             'features' => 'array',
         ];
@@ -48,5 +54,11 @@ class Structure extends Model
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
+    }
+
+    /** Giorni di chiusura (calendario disponibilità, step 3). */
+    public function closures(): HasMany
+    {
+        return $this->hasMany(StructureClosure::class);
     }
 }

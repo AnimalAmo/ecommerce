@@ -30,4 +30,10 @@ return [
     'validity_months' => '{1} 1 mese|[2,*] :months mesi',
     // Card preferiti smartbox: riga durata = validità del cofanetto (maiuscole nel presenter)
     'valid_for' => 'Valido per :validity',
+    // Etichette carrello: ospiti ('1 adulto' / '3 adulti' / 'N ospiti') e animali per specie
+    'guests_adults' => '{0} :count adulti|{1} 1 adulto|[2,*] :count adulti',
+    'guests_total' => '{0} :count ospiti|{1} 1 ospite|[2,*] :count ospiti',
+    'animals_cane' => '{0} :count cani|{1} 1 cane|[2,*] :count cani',
+    'animals_gatto' => '{0} :count gatti|{1} 1 gatto|[2,*] :count gatti',
+    'animals_coniglio' => '{0} :count conigli|{1} 1 coniglio|[2,*] :count conigli',
 ];

@@ -42,6 +42,8 @@
                                         ['model' => 'email', 'label' => 'Email *', 'type' => 'email'],
                                         ['model' => 'country', 'label' => 'Paese', 'type' => 'text'],
                                         ['model' => 'phone', 'label' => 'Cellulare *', 'type' => 'tel'],
+                                        {{-- Campo solo flusso regalo: email a cui inviare la smartbox (assente in XD, necessario per l'invio reale) --}}
+                                        ...($gift ? [['model' => 'recipientEmail', 'label' => 'Email del destinatario *', 'type' => 'email']] : []),
                                     ] as $field)
                                         <div wire:key="field-{{ $field['model'] }}">
                                             <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
@@ -51,6 +53,7 @@
                                                     <flux:icon.check class="pointer-events-none absolute right-5 top-1/2 !h-[14px] !w-[14px] -translate-y-1/2 text-[#68CDEB]" />
                                                 @endif
                                             </div>
+                                            <flux:error name="{{ $field['model'] }}" class="!mt-1 !pl-[15px] !text-xs" />
                                         </div>
                                     @endforeach
                                 </div>
@@ -147,14 +150,14 @@
                             <div class="divide-y divide-[#E9E9E9] px-5">
                                 @foreach ($items as $item)
                                     <div wire:key="summary-item-{{ $item['id'] }}" class="flex gap-5 py-[10px] first:pt-px last:pb-[13px]">
-                                        {{-- Foto 167x111 con chip tipologia sovrapposta (dump: offset 36/45 dentro la foto) --}}
+                                        {{-- Foto 167x111 con chip tipologia sovrapposta (dump: offset 36/45 dentro la foto); chip = ProductType REALE del prodotto --}}
                                         <div class="relative shrink-0">
-                                            <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[111px] w-[167px] rounded-[2px] object-cover">
+                                            <img src="{{ $item['photoUrl'] }}" alt="{{ $item['title'] }}" class="h-[111px] w-[167px] rounded-[2px] object-cover">
                                             @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
                                             <span class="absolute left-9 top-[45px] flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
                                         </div>
 
-                                        {{-- Blocco info: titolo + righe meta come nel carrello (item 3 senza riga date; adulti + cane sulla stessa riga) --}}
+                                        {{-- Blocco info: titolo + righe meta come nel carrello (le righe assenti fanno salire le successive) --}}
                                         <div class="min-w-0 flex-1 pt-5">
                                             <h3 class="truncate text-base font-bold leading-none text-[#0D171A]">{{ $item['title'] }}</h3>
                                             <div class="mt-[9px] space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
@@ -165,19 +168,32 @@
                                                 @if ($item['dates'] !== null)
                                                     <div class="flex items-center gap-2">
                                                         <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
-                                                        <span>{{ $item['dates']['checkIn'] }} - {{ $item['dates']['checkOut'] }}</span>
+                                                        {{-- checkOut null (evento a data singola): solo il check-in --}}
+                                                        <span>{{ $item['dates']['checkIn'] }}@if ($item['dates']['checkOut'] !== null) - {{ $item['dates']['checkOut'] }}@endif</span>
+                                                    </div>
+                                                @elseif ($item['serviceSlot'] !== null)
+                                                    {{-- Riga giorno + orario del servizio al posto della riga date (come nel carrello) --}}
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
+                                                        <span>{{ $item['serviceSlot'] }}</span>
                                                     </div>
                                                 @endif
-                                                <div class="flex items-center">
-                                                    <div class="flex w-[112px] items-center gap-2">
-                                                        <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
-                                                        <span>{{ $this->guestsLabel($item['guests']) }}</span>
+                                                @if ($item['guests'] !== null || $item['animals'] !== null)
+                                                    <div class="flex items-center">
+                                                        @if ($item['guests'] !== null)
+                                                            <div class="flex w-[112px] items-center gap-2">
+                                                                <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
+                                                                <span>{{ \App\Support\Format::guests($item['guests']) }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if ($item['animals'] !== null)
+                                                            <div class="flex items-center gap-2">
+                                                                <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
+                                                                <span>{{ \App\Support\Format::animals($item['animals']) }}</span>
+                                                            </div>
+                                                        @endif
                                                     </div>
-                                                    <div class="flex items-center gap-2">
-                                                        <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
-                                                        <span>{{ $this->dogsLabel($item['dogs']) }}</span>
-                                                    </div>
-                                                </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -185,20 +201,28 @@
                             </div>
 
                             @if ($gift)
-                                {{-- Dedica e messaggio della smartbox (XD y481/512, x=24 dal bordo card; il messaggio va a capo su ~527px) --}}
-                                <div class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
-                                    <p class="leading-none">Dedicato a: {{ $giftDedication }}</p>
-                                    <p class="mt-4 leading-[21px]">Messaggio: {{ $giftMessage }}</p>
-                                </div>
+                                {{-- Dedica e messaggio dalle options della riga regalo (XD y481/512, x=24 dal bordo card); righe mostrate solo se valorizzate --}}
+                                @foreach ($items as $item)
+                                    @if ($item['gift'] && ($item['giftDedication'] !== null || $item['giftMessage'] !== null))
+                                        <div wire:key="summary-gift-{{ $item['id'] }}" class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
+                                            @if ($item['giftDedication'] !== null)
+                                                <p class="leading-none">Dedicato a: {{ $item['giftDedication'] }}</p>
+                                            @endif
+                                            @if ($item['giftMessage'] !== null)
+                                                <p class="mt-4 leading-[21px]">Messaggio: {{ $item['giftMessage'] }}</p>
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endforeach
                             @endif
 
                             <div class="mx-4 h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
-                            {{-- Riga totale a destra con nota tasse (regalo: 143 €, somma reale — il "476 €" del mock XD è un refuso del designer) --}}
+                            {{-- Riga totale a destra con nota tasse (il "476 €" ripetuto nel mock XD regalo è un refuso del designer: somma reale) --}}
                             <div class="flex items-start justify-between px-6 pt-[46px]">
                                 <span class="text-2xl font-bold leading-none text-[#0D171A]">Totale</span>
                                 <div class="text-right">
-                                    <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ $total }} €</div>
+                                    <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
                                     <div class="mt-[2px] text-xs leading-none text-[#627277]">Tasse e commissioni comprese</div>
                                 </div>
                             </div>
@@ -211,8 +235,8 @@
 
                 <div class="mx-auto mt-2 w-full max-w-[575px] {{ $card }} pb-[30px]">
                     @if ($gift)
-                        {{-- Copy regalo (XD "Checkout – flusso regalo smartbox 3": 18px nero su due righe) --}}
-                        <p class="px-6 pt-11 text-lg font-normal leading-6 text-black">La Smartbox è stata mandata all’email: {{ \App\Livewire\Checkout::GIFT_RECIPIENT_EMAIL }}<br>Ecco il riepilogo del tuo acquisto:</p>
+                        {{-- Copy regalo (XD "Checkout – flusso regalo smartbox 3": 18px nero su due righe); email dalle options della riga regalo --}}
+                        <p class="px-6 pt-11 text-lg font-normal leading-6 text-black">La Smartbox è stata mandata all’email: {{ $giftRecipientEmail }}<br>Ecco il riepilogo del tuo acquisto:</p>
                     @else
                         <p class="px-6 pt-11 text-xl font-normal leading-none text-[#555555]">Ecco il riepilogo, controlla l’email</p>
                     @endif
@@ -220,7 +244,7 @@
                     <div class="mt-1 divide-y divide-[#E9E9E9] px-5">
                         @foreach ($items as $item)
                             <div wire:key="done-item-{{ $item['id'] }}" class="relative flex gap-5 py-[10px] first:pt-1 last:pb-[13px]">
-                                <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[111px] w-[167px] shrink-0 rounded-[2px] object-cover">
+                                <img src="{{ $item['photoUrl'] }}" alt="{{ $item['title'] }}" class="h-[111px] w-[167px] shrink-0 rounded-[2px] object-cover">
 
                                 <div class="min-w-0 flex-1 pt-5">
                                     <h2 class="truncate pr-[100px] text-base font-bold leading-none text-[#0D171A]">{{ $item['title'] }}</h2>
@@ -232,19 +256,32 @@
                                         @if ($item['dates'] !== null)
                                             <div class="flex items-center gap-2">
                                                 <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
-                                                <span>{{ $item['dates']['checkIn'] }} - {{ $item['dates']['checkOut'] }}</span>
+                                                {{-- checkOut null (evento a data singola): solo il check-in --}}
+                                                <span>{{ $item['dates']['checkIn'] }}@if ($item['dates']['checkOut'] !== null) - {{ $item['dates']['checkOut'] }}@endif</span>
+                                            </div>
+                                        @elseif ($item['serviceSlot'] !== null)
+                                            {{-- Riga giorno + orario del servizio al posto della riga date (come nel carrello) --}}
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
+                                                <span>{{ $item['serviceSlot'] }}</span>
                                             </div>
                                         @endif
-                                        <div class="flex items-center">
-                                            <div class="flex w-[112px] items-center gap-2">
-                                                <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
-                                                <span>{{ $this->guestsLabel($item['guests']) }}</span>
+                                        @if ($item['guests'] !== null || $item['animals'] !== null)
+                                            <div class="flex items-center">
+                                                @if ($item['guests'] !== null)
+                                                    <div class="flex w-[112px] items-center gap-2">
+                                                        <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
+                                                        <span>{{ \App\Support\Format::guests($item['guests']) }}</span>
+                                                    </div>
+                                                @endif
+                                                @if ($item['animals'] !== null)
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
+                                                        <span>{{ \App\Support\Format::animals($item['animals']) }}</span>
+                                                    </div>
+                                                @endif
                                             </div>
-                                            <div class="flex items-center gap-2">
-                                                <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
-                                                <span>{{ $this->dogsLabel($item['dogs']) }}</span>
-                                            </div>
-                                        </div>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -256,11 +293,19 @@
                     </div>
 
                     @if ($gift)
-                        {{-- Dedica e messaggio della smartbox (XD y532/563, x=24 dal bordo card) --}}
-                        <div class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
-                            <p class="leading-none">Dedicato a: {{ $giftDedication }}</p>
-                            <p class="mt-4 leading-[21px]">Messaggio: {{ $giftMessage }}</p>
-                        </div>
+                        {{-- Dedica e messaggio dalle options della riga regalo (XD y532/563, x=24 dal bordo card); righe mostrate solo se valorizzate --}}
+                        @foreach ($items as $item)
+                            @if ($item['gift'] && ($item['giftDedication'] !== null || $item['giftMessage'] !== null))
+                                <div wire:key="done-gift-{{ $item['id'] }}" class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
+                                    @if ($item['giftDedication'] !== null)
+                                        <p class="leading-none">Dedicato a: {{ $item['giftDedication'] }}</p>
+                                    @endif
+                                    @if ($item['giftMessage'] !== null)
+                                        <p class="mt-4 leading-[21px]">Messaggio: {{ $item['giftMessage'] }}</p>
+                                    @endif
+                                </div>
+                            @endif
+                        @endforeach
                     @endif
 
                     <div class="mx-4 h-px bg-[#E9E9E9]" aria-hidden="true"></div>
@@ -268,8 +313,7 @@
                     {{-- CTA finali: coppia centrata (gap 24) — Home nera + acquisti brand-cyan #6CD1EF --}}
                     <div class="mt-[33px] flex flex-col items-center justify-center gap-6 sm:flex-row">
                         <flux:button href="{{ route('home') }}" class="!h-10 !w-[178px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Torna alla Home</flux:button>
-                        {{-- TODO: pagina acquisti profilo non ancora costruita --}}
-                        <flux:button href="#" class="!h-10 !w-[192px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Vai ai tuoi acquisti</flux:button>
+                        <flux:button href="{{ route('profilo.ordini') }}" class="!h-10 !w-[192px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Vai ai tuoi acquisti</flux:button>
                     </div>
                 </div>
             @endif

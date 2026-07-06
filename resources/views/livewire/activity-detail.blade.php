@@ -185,31 +185,52 @@
                             <p class="text-[28px] font-light leading-[38px] text-[#2B2B2B]">{{ $priceHeadline }}</p>
                         @endif
 
-                        {{-- Selettore date / ospiti / animali (statico come da XD, nessuna interazione definita) --}}
+                        {{-- Selettore: date fisse derivate dalla riga evento (starts_at/ends_at/duration_days, non editabili);
+                             ospiti e animali con accordion + stepper condivisi (stile del pop-up Modifica del carrello) --}}
                         <div class="mt-4 rounded-[4px] border border-[#DEDEDE]">
                             <div class="grid grid-cols-2 divide-x divide-[#DEDEDE]">
                                 <div class="px-[15px] pb-[14px] pt-3">
                                     <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">Check-in</p>
-                                    <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">17/12/2023</p>
+                                    <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">{{ $dates['checkIn'] ?? '—' }}</p>
                                 </div>
                                 <div class="pb-[14px] pl-[18px] pr-[15px] pt-3">
                                     <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">Check-out</p>
-                                    <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">19/12/2023</p>
+                                    <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">{{ $dates['checkOut'] ?? $dates['checkIn'] ?? '—' }}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between border-t border-[#DEDEDE] px-[15px] pb-[14px] pt-3">
-                                <div>
-                                    <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">Ospiti</p>
-                                    <p class="mt-[1px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">2 adulti</p>
-                                </div>
-                                <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black" />
+                            {{-- Campo Ospiti --}}
+                            <div class="border-t border-[#DEDEDE]">
+                                <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span class="flex flex-col gap-[7px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Ospiti</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $guestsLabel }}</span>
+                                    </span>
+                                    <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
+                                </flux:button>
+
+                                @if ($expandedField === 'ospiti')
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="px-6 pb-3 pt-[10px]">
+                                        @include('partials.booking.guest-steppers', ['guests' => $editGuests, 'guestsAtMax' => $guestsAtMax])
+                                    </div>
+                                @endif
                             </div>
-                            <div class="flex items-center justify-between border-t border-[#DEDEDE] px-[15px] pb-[14px] pt-3">
-                                <div>
-                                    <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">Animali</p>
-                                    <p class="mt-[1px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">1 cani</p>
-                                </div>
-                                <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black" />
+                            {{-- Campo Animali --}}
+                            <div class="border-t border-[#DEDEDE]">
+                                <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span class="flex flex-col gap-[7px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Animali</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $animalsLabel }}</span>
+                                    </span>
+                                    <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
+                                </flux:button>
+
+                                @if ($expandedField === 'animali')
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="px-6 pb-3 pt-[10px]">
+                                        @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -220,11 +241,11 @@
                                 Partecipa
                             </flux:button>
                         @else
-                            {{-- TODO: azione Aggiungi al carrello (nessun pop-up XD dedicato alle attività) --}}
-                            <flux:button class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
+                            <flux:button wire:click="addToCart" class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
 
+                            {{-- Riepilogo reale dagli stepper: prezzo × persone + totale quotato server-side --}}
                             <div class="mt-[25px] flex items-center justify-between text-[17px] leading-[23px] text-[#2B2B2B]">
-                                <p>{{ $pricePerTwo }}</p>
+                                <p>{{ $priceForGuests }}</p>
                                 <p>{{ $totalPrice }}</p>
                             </div>
                             <div class="mt-4 border-t border-[#DEDEDE]" aria-hidden="true"></div>
@@ -312,6 +333,54 @@
 
                     {{-- TODO: pagina "I miei eventi" (l'XD punta a un artboard con la lista eventi dell'utente) --}}
                     <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[162px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai agli eventi</flux:button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Pop-up "Aggiunto al carrello" — layout riusato dal dettaglio struttura (nessun pop-up XD dedicato alle attività, DA SEGNALARE)
+         con i dati reali della scelta: date derivate dall'evento, ospiti e animali dagli stepper.
+         Solo attività con CTA carrello (doppia cintura oltre alla guardia in addToCart). --}}
+    @if (! $canJoin && $cartPopupOpen)
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
+            {{-- Overlay: click fuori dalla card chiude il pop-up --}}
+            <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>
+
+            <div class="{{ $px }} pointer-events-none relative">
+                <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto al carrello</h2>
+
+                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                        <flux:icon.close class="h-[18px] w-[18px]" />
+                    </flux:button>
+
+                    <div class="mt-3 flex items-start gap-2.5">
+                        <img src="{{ asset('img/xd/'.$activity->hero_img.'.jpg') }}" alt="{{ $activity->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-black">{{ $activity->title }}</p>
+                            <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
+                                @if ($dates['checkIn'] !== null)
+                                    <li class="flex items-center gap-[5px]">
+                                        <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
+                                        {{ $dates['checkIn'] }}{{ $dates['checkOut'] !== null ? ' - '.$dates['checkOut'] : '' }}
+                                    </li>
+                                @endif
+                                <li class="flex items-center gap-[5px]">
+                                    <span class="flex w-[15px] shrink-0 justify-center" aria-hidden="true">
+                                        <flux:icon.profile class="h-[13px] w-[13px]" />
+                                        <flux:icon.profile class="-ml-[7px] h-[13px] w-[13px]" />
+                                    </span>
+                                    {{ $guestsLabel }}
+                                </li>
+                                <li class="flex items-center gap-[5px]">
+                                    <flux:icon.animal class="h-[15px] w-[15px] shrink-0" />
+                                    {{ $animalsLabel }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
                 </div>
             </div>
         </div>

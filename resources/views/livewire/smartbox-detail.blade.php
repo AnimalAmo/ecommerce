@@ -108,20 +108,23 @@
 
                 {{-- 2c. Card "Box acquista" (sovrappone il bordo inferiore dell'hero su desktop) --}}
                 <aside class="relative z-10 w-full max-w-[453px] shrink-0 lg:-mt-[26px] lg:w-[453px]">
-                    <div class="rounded-[4px] border border-[#DEDEDE] bg-white" x-data="{ mode: 'acquista' }">
-                        {{-- Acquista / Regala (toggle solo visivo) --}}
-                        {{-- TODO: flusso regalo --}}
+                    <div class="rounded-[4px] border border-[#DEDEDE] bg-white">
+                        {{-- Acquista / Regala (toggle server-driven: ?regalo=1 preseleziona Regala, la riga nasce con is_gift) --}}
                         <div class="flex h-[57px] items-stretch">
-                            <flux:button variant="ghost" @click="mode = 'acquista'" ::aria-pressed="(mode === 'acquista').toString()" class="!h-full !flex-1 !justify-center !gap-2.5 !rounded-none !px-0 !text-[17px] !font-normal !text-[#2B2B2B] hover:!bg-transparent">
-                                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full" :class="mode === 'acquista' ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white'">
-                                    <flux:icon.check x-show="mode === 'acquista'" class="h-2.5 w-2.5 text-black" />
+                            <flux:button variant="ghost" wire:click="setGift(false)" aria-pressed="{{ $gift ? 'false' : 'true' }}" class="!h-full !flex-1 !rounded-none !px-0 !text-[17px] !font-normal !text-[#2B2B2B] hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center [&>span]:gap-2.5">
+                                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $gift ? 'border border-[#C8C8C8] bg-white' : 'bg-brand-yellow' }}">
+                                    @unless ($gift)
+                                        <flux:icon.check class="h-2.5 w-2.5 text-black" />
+                                    @endunless
                                 </span>
                                 Acquista
                             </flux:button>
                             <span class="my-[9px] w-px shrink-0 bg-[#DEDEDE]" aria-hidden="true"></span>
-                            <flux:button variant="ghost" @click="mode = 'regala'" ::aria-pressed="(mode === 'regala').toString()" class="!h-full !flex-1 !justify-center !gap-2.5 !rounded-none !px-0 !text-[17px] !font-normal !text-[#2B2B2B] hover:!bg-transparent">
-                                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full" :class="mode === 'regala' ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white'">
-                                    <flux:icon.check x-show="mode === 'regala'" x-cloak class="h-2.5 w-2.5 text-black" />
+                            <flux:button variant="ghost" wire:click="setGift(true)" aria-pressed="{{ $gift ? 'true' : 'false' }}" class="!h-full !flex-1 !rounded-none !px-0 !text-[17px] !font-normal !text-[#2B2B2B] hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center [&>span]:gap-2.5">
+                                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $gift ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white' }}">
+                                    @if ($gift)
+                                        <flux:icon.check class="h-2.5 w-2.5 text-black" />
+                                    @endif
                                 </span>
                                 Regala
                             </flux:button>
@@ -146,19 +149,28 @@
                                 <p class="text-[17px] font-medium text-[#2B2B2B]">Ospiti</p>
                                 <p class="mt-1 text-[17px] font-light text-[#2B2B2B]">2 adulti</p>
                             </div>
-                            <div class="flex items-center justify-between px-[15px] py-3">
-                                <span>
-                                    <span class="block text-[17px] font-medium text-[#2B2B2B]">Animali</span>
-                                    <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">1 cani</span>
-                                </span>
-                                {{-- XD "Tracciato 619": chevron nero verso il basso (stessa forma di arrow-down) — TODO: selezione animali --}}
-                                <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
+                            {{-- Accordion Animali (stepper condiviso, stile pop-up "Modifica prenotazione" del carrello) --}}
+                            <div>
+                                <flux:button variant="ghost" wire:click="toggleAnimals" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !rounded-none !px-[15px] !py-3 !text-left hover:!bg-transparent [&>span]:flex [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span>
+                                        <span class="block text-[17px] font-medium text-[#2B2B2B]">Animali</span>
+                                        <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
+                                    </span>
+                                    {{-- XD "Tracciato 619": chevron nero verso il basso (stessa forma di arrow-down) --}}
+                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $animalsOpen ? 'rotate-180' : '' }}" />
+                                </flux:button>
+
+                                @if ($animalsOpen)
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="px-6 pb-3 pt-[10px]">
+                                        @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
                         <div class="mt-[26px] px-[22px] pb-6">
-                            {{-- TODO: aggiunta al carrello --}}
-                            <flux:button class="!flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
+                            <flux:button wire:click="addToCart" class="!flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
                         </div>
                     </div>
                 </aside>
@@ -167,4 +179,41 @@
     </main>
 
     @include('partials.site-footer')
+
+    {{-- Pop-up "Aggiunto al carrello": layout riusato dal dettaglio struttura (estrapolazione ratificata, l'XD non ne definisce uno per le smartbox) --}}
+    @if ($cartPopupOpen)
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
+            {{-- Overlay: click fuori dalla card chiude il pop-up --}}
+            <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>
+
+            <div class="{{ $px }} pointer-events-none relative">
+                <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto al carrello</h2>
+
+                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                        <flux:icon.close class="h-[18px] w-[18px]" />
+                    </flux:button>
+
+                    <div class="mt-3 flex items-start gap-2.5">
+                        <img src="{{ asset('img/xd/'.$box->hero_img.'.jpg') }}" alt="{{ $box->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-black">{{ $box->title }}</p>
+                            <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
+                                <li class="flex items-center gap-[5px]">
+                                    <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
+                                    {{ __('format.valid_for', ['validity' => \App\Support\Format::validity($box->validity_months)]) }}
+                                </li>
+                                <li class="flex items-center gap-[5px]">
+                                    <flux:icon.animal class="h-[15px] w-[15px] shrink-0" />
+                                    {{ \App\Support\Format::animals($editAnimals) }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <flux:button href="{{ route('carrello', $gift ? ['regalo' => 1] : []) }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

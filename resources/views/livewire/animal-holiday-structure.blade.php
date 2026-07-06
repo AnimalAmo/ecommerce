@@ -186,44 +186,82 @@
                         <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($structure->price_cents)]) }}</p>
 
                         <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
-                            <div class="grid grid-cols-2 divide-x divide-[#DEDEDE] border-b border-[#DEDEDE]">
-                                <div class="px-[15px] py-3">
-                                    <p class="text-[17px] font-medium text-[#2B2B2B]">Check-in</p>
-                                    <p class="mt-1 text-[17px] font-light text-[#2B2B2B]">17/12/2023</p>
-                                </div>
-                                <div class="px-[15px] py-3">
-                                    <p class="text-[17px] font-medium text-[#2B2B2B]">Check-out</p>
-                                    <p class="mt-1 text-[17px] font-light text-[#2B2B2B]">22/12/2023</p>
-                                </div>
+                            {{-- Check-in / Check-out: apre il calendario range condiviso (accordion nello stile del pop-up carrello) --}}
+                            <div class="border-b border-[#DEDEDE]">
+                                <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-none !p-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-stretch">
+                                    <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Check-in</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
+                                    </span>
+                                    <span class="w-px self-stretch bg-[#DEDEDE]" aria-hidden="true"></span>
+                                    <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Check-out</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckOut ?? '—' }}</span>
+                                    </span>
+                                </flux:button>
+
+                                @if ($expandedField === 'date')
+                                    {{-- Calendario inline condiviso (giorni chiusi della struttura + passati disabilitati) --}}
+                                    <div class="px-[10px] pb-4">
+                                        @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                                    </div>
+                                @endif
                             </div>
-                            {{-- TODO: dropdown selezione ospiti --}}
-                            <flux:button variant="ghost" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none border-b border-[#DEDEDE] !px-[15px] !py-3 !text-left hover:!bg-transparent">
-                                <span>
-                                    <span class="block text-[17px] font-medium text-[#2B2B2B]">Ospiti</span>
-                                    <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">2 adulti</span>
-                                </span>
-                                <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
-                            </flux:button>
-                            {{-- TODO: dropdown selezione animali --}}
-                            <flux:button variant="ghost" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none !px-[15px] !py-3 !text-left hover:!bg-transparent">
-                                <span>
-                                    <span class="block text-[17px] font-medium text-[#2B2B2B]">Animali</span>
-                                    <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">1 cani</span>
-                                </span>
-                                <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
-                            </flux:button>
+                            {{-- Ospiti: apre gli stepper condivisi --}}
+                            <div class="border-b border-[#DEDEDE]">
+                                <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span class="flex flex-col gap-[7px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Ospiti</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::guests($editGuests) }}</span>
+                                    </span>
+                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
+                                </flux:button>
+
+                                @if ($expandedField === 'ospiti')
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="px-6 pb-3 pt-[10px]">
+                                        @include('partials.booking.guest-steppers', ['guests' => $editGuests, 'guestsAtMax' => $guestsAtMax])
+                                    </div>
+                                @endif
+                            </div>
+                            {{-- Animali: apre lo stepper condiviso per specie --}}
+                            <div>
+                                <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span class="flex flex-col gap-[7px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Animali</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
+                                    </span>
+                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
+                                </flux:button>
+
+                                @if ($expandedField === 'animali')
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="px-6 pb-3 pt-[10px]">
+                                        @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
+                                    </div>
+                                @endif
+                            </div>
                         </div>
 
                         <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
 
-                        <div class="mt-6 flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                            <span>{{ __('format.for_nights', ['price' => \App\Support\Format::money($structure->price_cents), 'count' => $nights]) }}</span>
-                            <span>{{ \App\Support\Format::money($structure->price_cents * $nights) }}</span>
+                        <div class="mt-6 space-y-3">
+                            <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
+                                <span>{{ __('format.for_nights', ['price' => \App\Support\Format::money($structure->price_cents), 'count' => $nights]) }}</span>
+                                <span>{{ \App\Support\Format::money($nightsCents) }}</span>
+                            </div>
+                            {{-- Supplemento animali per notte: riga mostrata solo se il seed lo valorizza --}}
+                            @if ($animalSupplementCents > 0)
+                                <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
+                                    <span>Supplemento animali</span>
+                                    <span>{{ \App\Support\Format::money($animalSupplementCents) }}</span>
+                                </div>
+                            @endif
                         </div>
                         <hr class="mt-5 border-[#DEDEDE]">
                         <div class="mt-4 flex items-center justify-between text-[17px] font-bold text-[#2B2B2B]">
                             <span>Totale</span>
-                            <span>{{ \App\Support\Format::money($structure->price_cents * $nights) }}</span>
+                            <span>{{ \App\Support\Format::money($totalCents) }}</span>
                         </div>
                     </div>
                 </aside>
@@ -254,25 +292,24 @@
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
-                                    17/02/2024 - 22/02/2024
+                                    {{ $editCheckIn }} - {{ $editCheckOut ?? $editCheckIn }}
                                 </li>
                                 <li class="flex items-center gap-[5px]">
                                     <span class="flex w-[15px] shrink-0 justify-center" aria-hidden="true">
                                         <flux:icon.profile class="h-[13px] w-[13px]" />
                                         <flux:icon.profile class="-ml-[7px] h-[13px] w-[13px]" />
                                     </span>
-                                    2 adulti
+                                    {{ \App\Support\Format::guests($editGuests) }}
                                 </li>
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.animal class="h-[15px] w-[15px] shrink-0" />
-                                    1 cane
+                                    {{ \App\Support\Format::animals($editAnimals) }}
                                 </li>
                             </ul>
                         </div>
                     </div>
 
-                    {{-- TODO: pagina Carrello --}}
-                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
                 </div>
             </div>
         </div>

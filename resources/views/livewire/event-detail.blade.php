@@ -261,8 +261,7 @@
                     {{-- Prezzo in basso a destra sopra il bottone (XD "25 €" @1724,250) --}}
                     <p class="absolute right-4 top-[118px] text-lg font-semibold leading-6 text-black">{{ $popupPrice }}</p>
 
-                    {{-- TODO: pagina Carrello --}}
-                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
                 </div>
             </div>
         </div>

@@ -51,6 +51,7 @@ return [
         'petType' => 'la tipologia di animale',
         'phone' => 'il numero di cellulare',
         'postalCode' => 'il CAP',
+        'recipientEmail' => 'l\'email del destinatario',
         'zip' => 'il CAP',
     ],
 ];

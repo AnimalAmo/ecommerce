@@ -25,6 +25,7 @@ class Event extends Model
         'starts_at',
         'ends_at',
         'duration_days',
+        'max_participants',
         'price_cents',
         'is_free',
         'img',
@@ -42,6 +43,9 @@ class Event extends Model
             'type' => ProductType::class,
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            // Cast espliciti: capienza e prezzo entrano nell'aritmetica di availability/pricing (step 3).
+            'max_participants' => 'integer',
+            'price_cents' => 'integer',
             'is_free' => 'boolean',
         ];
     }

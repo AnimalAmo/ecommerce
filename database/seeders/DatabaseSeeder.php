@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RegionSeeder::class,
             AmenitySeeder::class,
             StructureSeeder::class,
+            StructureClosureSeeder::class,
             EventSeeder::class,
             SmartboxPackageSeeder::class,
             RoleSeeder::class,

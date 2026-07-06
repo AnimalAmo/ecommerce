@@ -2,242 +2,153 @@
 
 namespace App\Livewire;
 
+use App\Data\Cart\CartItemData;
+use App\Enums\ProductType;
+use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\HasBookingCalendar;
+use App\Models\Event\Event;
+use App\Models\Favorite\Favorite;
+use App\Models\Structure\Structure;
+use App\Services\Cart\CartManager;
+use App\Support\Format;
 use DateTimeImmutable;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class Cart extends Component
 {
-    /** Flag ?regalo=1 (deep-link come ?tab della community): carica gli articoli regalo al posto dei normali. */
+    use HasBookingCalendar;
+
+    /** Flag ?regalo=1 (deep-link come ?tab della community): mostra SOLO le righe regalo (flussi separati, mai vista mista). */
     #[Url(as: 'regalo', except: false)]
     public bool $gift = false;
 
-    /** Articoli nel carrello in-memory (come le pagine sorelle); niente DB. */
-    public array $items = [];
-
-    /** Dedica e messaggio della smartbox regalo, per id articolo. */
-    // TODO: persistenza regalo backend — per ora restano solo nello stato del componente.
+    /** Dedica e messaggio della riga regalo, per chiave riga (persistiti da goToCheckout via updateGift). */
     public array $giftDedication = [];
 
     public array $giftMessage = [];
 
-    /** Id delle card suggerite (stato vuoto) marcate preferite / aggiunte al carrello (solo visivo). */
+    /** Chiavi ('alias-id') delle card suggerite (stato vuoto) marcate preferite / aggiunte al carrello (solo visivo). */
     public array $suggestFavorites = [];
 
     public array $suggestInCart = [];
 
-    /** Id dell'articolo in modifica nel pop-up (null = pop-up chiuso). */
-    public ?int $editingId = null;
+    /** Chiave della riga in modifica nel pop-up: id cart_items (auth) o hash md5 (sessione); null = pop-up chiuso. */
+    public int|string|null $editingKey = null;
 
-    /** Copie di lavoro del pop-up (Annulla le scarta, Conferma le riversa nell'articolo). */
-    public ?string $editCheckIn = null;
+    /** Famiglia della riga in modifica (structure/service/activity/smartbox): decide gli accordion del pop-up. */
+    public ?string $editingFamily = null;
 
-    public ?string $editCheckOut = null;
+    /** Copie di lavoro degli orari del servizio ('10:00'), solo famiglia service. */
+    public ?string $editTimeFrom = null;
 
-    /** @var array{adulti: int, ragazzi: int, bambini: int} */
-    public array $editGuests = ['adulti' => 1, 'ragazzi' => 0, 'bambini' => 0];
+    public ?string $editTimeTo = null;
 
-    public int $editDogs = 0;
-
-    /** Campo espanso nel pop-up: null | 'date' | 'ospiti' | 'animali' (uno alla volta). */
+    /** Campo espanso nel pop-up: null | 'date' | 'ospiti' | 'animali' | 'orari' (uno alla volta). */
     public ?string $expandedField = null;
 
-    /** Mese (1-12) e anno mostrati dal calendario inline del pop-up. */
-    public int $calendarMonth = 1;
-
-    public int $calendarYear = 2024;
-
-    /** Campi espandibili ammessi nel pop-up. */
-    public const FIELDS = ['date', 'ospiti', 'animali'];
-
-    /** Nomi dei mesi per il titolo del calendario ("Marzo 2024"). */
-    public const MONTHS = [
-        1 => 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
-    ];
-
-    /**
-     * Articoli campione come da XD (artboard "Carrello", dall'alto in basso);
-     * statici come nelle pagine sorelle, struttura pronta per un backend reale.
-     * Le date sono dd/mm/yyyy; 'dates' null = articolo senza riga date (item 3).
-     */
-    public const ITEMS = [
-        [
-            'id' => 1,
-            'type' => 'structure',
-            'title' => 'Hotel Brescia',
-            'location' => 'Dario Boario Terme (BS), Italia',
-            'dates' => ['checkIn' => '17/02/2024', 'checkOut' => '22/02/2024'],
-            'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
-            'dogs' => 1,
-            'price' => 215,
-            'photo' => 'cart-hotel-brescia.jpg',
-        ],
-        [
-            'id' => 2,
-            'type' => 'activity',
-            'title' => 'Weekend di escursioni',
-            'location' => 'Viareggio, Italia',
-            'dates' => ['checkIn' => '21/05/2024', 'checkOut' => '23/05/2024'],
-            'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
-            'dogs' => 1,
-            'price' => 118,
-            'photo' => 'cart-excursions-viareggio.jpg',
-        ],
-        [
-            'id' => 3,
-            'type' => 'stay',
-            'title' => 'Weekend in Piemonte',
-            'location' => 'Torino, Italia',
-            'dates' => null,
-            'guests' => ['adulti' => 4, 'ragazzi' => 0, 'bambini' => 0],
-            'dogs' => 2,
-            'price' => 143,
-            'photo' => 'cart-weekend-piemonte.jpg',
-        ],
-    ];
-
-    /**
-     * Articolo del flusso regalo smartbox (artboard "Carrello – flusso regalo smartbox").
-     * NOTA: il chip dice "Struttura" anche se l'articolo è una smartbox — copiato
-     * VERBATIM dal mock XD per fedeltà, l'incongruenza è voluta dal design.
-     */
-    public const GIFT_ITEMS = [
-        [
-            'id' => 1,
-            'type' => 'structure',
-            'title' => 'Weekend in Piemonte',
-            'location' => 'Torino, Italia',
-            'dates' => null,
-            'guests' => ['adulti' => 4, 'ragazzi' => 0, 'bambini' => 0],
-            'dogs' => 2,
-            'price' => 143,
-            'photo' => 'cart-weekend-piemonte.jpg',
-            'gift' => true,
-            'giftValidity' => 'Smartbox valida per 12 mesi',
-        ],
-    ];
-
-    /**
-     * Card campione come da XD (artboard "Preferiti – 2"): SOLO per il carosello
-     * "più amate" dello stato vuoto, da sostituire nello step 3.
-     * 'type' è il value ProductType: label e colore chip arrivano dall'enum.
-     */
-    private const SUGGESTED = [
-        [
-            'id' => 1,
-            'title' => 'Vacanza di relax in montagna',
-            'location' => 'Alpi, Italia',
-            'type' => 'activity',
-            'metaType' => 'durata',
-            'metaText' => 'DURATA DI 5 GIORNI',
-            'photo' => 'favorites-activity-mountain.jpg',
-            'price' => '0,00 €',
-        ],
-        [
-            'id' => 2,
-            'title' => 'Hotel con piscina sul lago',
-            'location' => 'Como, Italia',
-            'type' => 'structure',
-            'metaType' => 'rating',
-            'metaText' => '4,5',
-            'photo' => 'favorites-hotel-lake.jpg',
-            'price' => '0,00 €',
-        ],
-        [
-            'id' => 3,
-            'title' => 'Sessione pomeridiana di Puppy Yoga',
-            'location' => 'Milano, Italia',
-            'type' => 'event',
-            'metaType' => 'data',
-            'metaText' => 'LUN, 30 MAG ALLE 15:30',
-            'photo' => 'favorites-puppy-yoga.jpg',
-            'price' => '0,00 €',
-        ],
-    ];
-
-    /** Dedica e messaggio di default del regalo come da mock XD (fallback se i campi restano vuoti). */
-    public const GIFT_DEDICATION_DEFAULT = 'Sofia';
-
-    public const GIFT_MESSAGE_DEFAULT = 'ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat';
+    /** Campi espandibili ammessi nel pop-up ('date' copre anche il giorno singolo del service). */
+    public const FIELDS = ['date', 'ospiti', 'animali', 'orari'];
 
     public function mount(): void
     {
-        $this->items = $this->gift ? self::GIFT_ITEMS : self::ITEMS;
+        if (! $this->gift) {
+            return;
+        }
+
+        // Idrata dedica/messaggio già persistiti sulle righe regalo (chiave = riga).
+        foreach ($this->cart()->items(true) as $item) {
+            $this->giftDedication[$item->key] = $item->options['gift']['dedication'] ?? '';
+            $this->giftMessage[$item->key] = $item->options['gift']['message'] ?? '';
+        }
     }
 
-    /** CTA "Vai al checkout" in modalità regalo: passa dedica/messaggio al checkout via sessione. */
+    /** CTA "Vai al checkout" in modalità regalo: persiste dedica/messaggio sulle righe e apre il checkout regalo. */
     public function goToCheckout()
     {
-        // TODO: persistenza regalo backend — per ora la dedica viaggia in sessione fino al checkout.
-        $id = self::GIFT_ITEMS[0]['id'];
-
-        $dedication = trim($this->giftDedication[$id] ?? '');
-        $message = trim($this->giftMessage[$id] ?? '');
-
-        session()->put('giftCheckout', [
-            'dedication' => $dedication !== '' ? $dedication : self::GIFT_DEDICATION_DEFAULT,
-            'message' => $message !== '' ? $message : self::GIFT_MESSAGE_DEFAULT,
-        ]);
+        foreach ($this->cart()->items(true) as $item) {
+            $this->cart()->updateGift($item->key, [
+                'dedication' => $this->giftDedication[$item->key] ?? '',
+                'message' => $this->giftMessage[$item->key] ?? '',
+            ]);
+        }
 
         return $this->redirectRoute('checkout', ['regalo' => 1]);
     }
 
-    /** Cuore sulle card suggerite dello stato vuoto: parte bianco e diventa giallo (toggle). */
-    public function toggleSuggestionFavorite(int $id): void
+    /** Cuore sulle card suggerite dello stato vuoto: parte bianco e diventa giallo (toggle, solo visivo). */
+    public function toggleSuggestionFavorite(string $key): void
     {
-        // TODO: backend reale — stato solo visivo, come il toggle borsa dei preferiti.
-        if (in_array($id, $this->suggestFavorites, true)) {
-            $this->suggestFavorites = array_values(array_diff($this->suggestFavorites, [$id]));
+        if (in_array($key, $this->suggestFavorites, true)) {
+            $this->suggestFavorites = array_values(array_diff($this->suggestFavorites, [$key]));
         } else {
-            $this->suggestFavorites[] = $id;
+            $this->suggestFavorites[] = $key;
         }
     }
 
     /** Borsa sulle card suggerite dello stato vuoto: aggiunge/toglie dal carrello (solo visivo). */
-    public function toggleSuggestionCart(int $id): void
+    public function toggleSuggestionCart(string $key): void
     {
-        // TODO: backend reale.
-        if (in_array($id, $this->suggestInCart, true)) {
-            $this->suggestInCart = array_values(array_diff($this->suggestInCart, [$id]));
+        if (in_array($key, $this->suggestInCart, true)) {
+            $this->suggestInCart = array_values(array_diff($this->suggestInCart, [$key]));
         } else {
-            $this->suggestInCart[] = $id;
+            $this->suggestInCart[] = $key;
         }
     }
 
-    /** Il bottone "Elimina" rimuove l'articolo; totale e conteggio si aggiornano da soli. */
-    public function removeItem(int $id): void
+    /** Il bottone "Elimina" rimuove la riga dal carrello; totale e conteggio si aggiornano da soli. */
+    public function removeItem(int|string $key): void
     {
-        // TODO: backend reale — per ora la lista vive solo in memoria per la durata del componente.
-        $this->items = array_values(array_filter(
-            $this->items,
-            fn (array $item): bool => $item['id'] !== $id,
-        ));
+        $this->cart()->removeItem($key);
     }
 
-    /** "Modifica" apre il pop-up condiviso caricando le copie di lavoro dell'articolo. */
-    public function openEdit(int $id): void
+    /** "Modifica" apre il pop-up condiviso caricando le copie di lavoro dalle options della riga. */
+    public function openEdit(int|string $key): void
     {
-        $index = $this->findIndex($id);
+        $item = $this->findItem($key);
 
-        if ($index === null) {
+        if ($item === null) {
             return;
         }
 
-        $item = $this->items[$index];
+        $family = self::familyOf($item);
 
-        $this->editingId = $id;
-        $this->editCheckIn = $item['dates']['checkIn'] ?? null;
-        $this->editCheckOut = $item['dates']['checkOut'] ?? null;
-        $this->editGuests = $item['guests'];
-        $this->editDogs = $item['dogs'];
+        // Gli eventi hanno data fissa e 1 partecipante: nessuna Modifica.
+        if ($family === 'event') {
+            return;
+        }
+
+        $options = $item->options;
+
+        $this->editingKey = $item->key;
+        $this->editingFamily = $family;
         $this->expandedField = null;
+        $this->calendarSingleDay = $family === 'service';
 
-        // Il calendario parte dal mese del check-in dell'articolo.
+        $this->editCheckIn = null;
+        $this->editCheckOut = null;
+        $this->editTimeFrom = null;
+        $this->editTimeTo = null;
+        $this->editGuests = $options['guests'] ?? ['adulti' => 1, 'ragazzi' => 0, 'bambini' => 0];
+        $this->editAnimals = $options['animals'] ?? ['cane' => 0];
+
+        if ($family === 'structure') {
+            $this->editCheckIn = self::displayDate($options['check_in']);
+            $this->editCheckOut = self::displayDate($options['check_out']);
+        }
+
+        if ($family === 'service') {
+            $this->editCheckIn = self::displayDate($options['day']);
+            $this->editTimeFrom = $options['time_from'];
+            $this->editTimeTo = $options['time_to'];
+        }
+
+        // Il calendario parte dal mese della data della riga (oggi se assente).
         $start = $this->editCheckIn !== null ? self::parseDate($this->editCheckIn) : new DateTimeImmutable('today');
-        $this->calendarMonth = (int) $start->format('n');
-        $this->calendarYear = (int) $start->format('Y');
+        $this->pointCalendarAt($start);
 
         Flux::modal('edit-booking')->show();
     }
@@ -245,29 +156,29 @@ class Cart extends Component
     /** "Annulla": chiude il pop-up scartando le copie di lavoro. */
     public function closeEdit(): void
     {
-        $this->editingId = null;
+        $this->editingKey = null;
+        $this->editingFamily = null;
         $this->expandedField = null;
 
         Flux::modal('edit-booking')->close();
     }
 
-    /** "Conferma": riversa date/ospiti/animali nell'articolo e chiude. */
+    /**
+     * "Conferma": fonde le copie di lavoro nelle options della riga (il manager
+     * rivalida disponibilità e riprezza); violazione = toast danger e pop-up aperto.
+     */
     public function confirmEdit(): void
     {
-        $index = $this->editingId !== null ? $this->findIndex($this->editingId) : null;
+        if ($this->editingKey === null) {
+            return;
+        }
 
-        if ($index !== null) {
-            if ($this->items[$index]['dates'] !== null && $this->editCheckIn !== null) {
-                $this->items[$index]['dates'] = [
-                    'checkIn' => $this->editCheckIn,
-                    // Intervallo lasciato a metà: check-out = check-in (giorno singolo).
-                    'checkOut' => $this->editCheckOut ?? $this->editCheckIn,
-                ];
-            }
+        try {
+            $this->cart()->updateItem($this->editingKey, $this->editOptions());
+        } catch (CartValidationException $exception) {
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
 
-            $this->items[$index]['guests'] = $this->editGuests;
-            $this->items[$index]['dogs'] = $this->editDogs;
-            // TODO: pricing backend — il prezzo resta statico anche dopo la modifica.
+            return;
         }
 
         $this->closeEdit();
@@ -283,177 +194,207 @@ class Cart extends Component
         $this->expandedField = $this->expandedField === $field ? null : $field;
     }
 
-    /** Freccia sinistra del calendario. */
-    public function previousMonth(): void
+    public function render()
     {
-        $this->calendarMonth--;
+        $items = $this->cart()->items($this->gift)
+            ->map(fn (CartItemData $item): array => $this->presentItem($item))
+            ->values()
+            ->all();
 
-        if ($this->calendarMonth < 1) {
-            $this->calendarMonth = 12;
-            $this->calendarYear--;
-        }
+        $editingItem = $this->editingKey !== null
+            ? collect($items)->first(fn (array $item): bool => (string) $item['id'] === (string) $this->editingKey)
+            : null;
+
+        return view('livewire.cart', [
+            'items' => $items,
+            'total' => $this->cart()->total($this->gift),
+            'count' => count($items),
+            'editingItem' => $editingItem,
+            'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
+            'calendarLabel' => $this->calendarLabel(),
+            'guestsAtMax' => $this->guestsAtMax(),
+            'animalsAtMax' => $this->animalsAtMax(),
+            'bookingHours' => self::bookingHours(),
+            // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
+            'suggestions' => $items === [] ? $this->suggestions() : [],
+        ])->title('Carrello — AnimalAmo');
     }
 
-    /** Freccia destra del calendario. */
-    public function nextMonth(): void
+    /** Struttura del calendario del pop-up: il purchasable della riga in modifica (solo structure/service). */
+    protected function calendarStructure(): ?Structure
     {
-        $this->calendarMonth++;
-
-        if ($this->calendarMonth > 12) {
-            $this->calendarMonth = 1;
-            $this->calendarYear++;
+        if ($this->editingKey === null || ! in_array($this->editingFamily, ['structure', 'service'], true)) {
+            return null;
         }
+
+        $item = $this->findItem($this->editingKey);
+
+        return $item !== null ? Structure::find($item->purchasableId) : null;
+    }
+
+    /** Facciata carrello (singleton: storage sessione da guest, db da autenticato). */
+    private function cart(): CartManager
+    {
+        return app(CartManager::class);
+    }
+
+    /** Riga del carrello (nel flusso corrente) a partire dalla chiave (null se rimossa). */
+    private function findItem(int|string $key): ?CartItemData
+    {
+        return $this->cart()->items($this->gift)->first(
+            fn (CartItemData $item): bool => (string) $item->key === (string) $key,
+        );
     }
 
     /**
-     * Click su un giorno del calendario (data Y-m-d): imposta il check-in;
-     * un click su un giorno successivo imposta il check-out; un click prima
-     * del check-in (o a intervallo già completo) fa ripartire la selezione.
+     * DTO riga → array della card blade: id = chiave riga, prezzo in cents
+     * (display via Format::money), animali {specie: count} (label via
+     * Format::animals), chip = ProductType REALE del prodotto.
      */
-    public function selectDay(string $date): void
+    private function presentItem(CartItemData $item): array
+    {
+        $family = self::familyOf($item);
+
+        return [
+            'id' => $item->key,
+            'family' => $family,
+            'type' => $item->productType,
+            'title' => $item->title,
+            'location' => $item->location,
+            'photoUrl' => $item->photoUrl,
+            'dates' => $item->dates,
+            'serviceSlot' => $item->serviceSlot,
+            // Evento: niente ospiti nelle options, la riga mostra i partecipanti (sempre 1 dalla pagina).
+            'guests' => match ($family) {
+                'structure', 'activity' => $item->options['guests'] ?? null,
+                'event' => ['adulti' => (int) ($item->options['participants'] ?? 1), 'ragazzi' => 0, 'bambini' => 0],
+                default => null,
+            },
+            'animals' => $item->options['animals'] ?? null,
+            'price' => $item->priceCents,
+            'gift' => $item->isGift,
+            'giftValidity' => $item->giftValidity,
+        ];
+    }
+
+    /**
+     * Famiglia della riga da alias morph + ProductType (stessa logica di
+     * BookingPricingService::family, senza ricaricare il modello).
+     */
+    private static function familyOf(CartItemData $item): string
+    {
+        return match (true) {
+            $item->type === 'smartbox_package' => 'smartbox',
+            $item->type === 'structure' => $item->productType === ProductType::Service->value ? 'service' : 'structure',
+            default => $item->productType === ProductType::Activity->value ? 'activity' : 'event',
+        };
+    }
+
+    /** Options del pop-up per famiglia (merge lato manager: le chiavi non toccate restano). */
+    private function editOptions(): array
+    {
+        $options = match ($this->editingFamily) {
+            'structure' => [
+                'check_in' => self::isoDate($this->editCheckIn),
+                // Intervallo lasciato a metà: check-out = check-in (la validazione server segnala il range non valido).
+                'check_out' => self::isoDate($this->editCheckOut ?? $this->editCheckIn),
+                'guests' => $this->editGuests,
+                'animals' => $this->editAnimals,
+            ],
+            'service' => [
+                'day' => self::isoDate($this->editCheckIn),
+                'time_from' => in_array($this->editTimeFrom, self::bookingHours(), true) ? $this->editTimeFrom : null,
+                'time_to' => in_array($this->editTimeTo, self::bookingHours(), true) ? $this->editTimeTo : null,
+                'animals' => $this->editAnimals,
+            ],
+            'activity' => [
+                'guests' => $this->editGuests,
+                'animals' => $this->editAnimals,
+            ],
+            default => ['animals' => $this->editAnimals],
+        };
+
+        // Valori assenti/non validi omessi: il merge del manager conserva quelli correnti.
+        return array_filter($options, fn (mixed $value): bool => $value !== null);
+    }
+
+    /**
+     * Le 3 attività "più amate" reali per lo stato vuoto: top prodotti per
+     * numero di preferiti (tie-break id crescente), presentati nel contratto
+     * della card condivisa (come FavoriteService::present, ma con prezzo
+     * "A partire da" = price_from_cents).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function suggestions(): array
+    {
+        return Favorite::query()
+            ->select(['favoritable_type', 'favoritable_id'])
+            ->selectRaw('count(*) as favorites_count')
+            ->groupBy('favoritable_type', 'favoritable_id')
+            ->orderByDesc('favorites_count')
+            ->orderBy('favoritable_id')
+            ->limit(3)
+            ->get()
+            ->map(function (Favorite $row): ?array {
+                $product = Relation::getMorphedModel($row->favoritable_type)::find($row->favoritable_id);
+
+                // Prodotti nel frattempo rimossi dal catalogo: card saltata.
+                return $product !== null ? $this->presentSuggestion($row->favoritable_type, $product) : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /** Presenta il prodotto suggerito nella card condivisa, per famiglia (id = 'alias-id', unico tra i morph). */
+    private function presentSuggestion(string $alias, Model $product): array
+    {
+        $card = match (true) {
+            $product instanceof Event => [
+                'title' => $product->title,
+                'location' => $product->location,
+                ...($product->type === ProductType::Activity && $product->duration_days
+                    ? ['metaType' => 'durata', 'metaText' => mb_strtoupper(__('format.duration_days', ['days' => $product->duration_days]))]
+                    : ['metaType' => 'data', 'metaText' => $product->starts_at ? Format::eventTime($product->starts_at) : '']),
+                // Gli eventi non hanno price_from: prezzo pieno (0 per i gratuiti, '0,00 €' fedele al mock).
+                'price' => Format::money($product->price_cents ?? 0),
+            ],
+            $product instanceof Structure => [
+                'title' => $product->name,
+                'location' => $product->location,
+                'metaType' => 'rating',
+                'metaText' => Format::rating($product->rating),
+                'price' => Format::money($product->price_from_cents),
+            ],
+            // SmartboxPackage: la riga pin mostra l'audience, la riga durata la validità.
+            default => [
+                'title' => $product->title,
+                'location' => $product->audience,
+                'metaType' => 'durata',
+                'metaText' => mb_strtoupper(__('format.valid_for', ['validity' => Format::validity($product->validity_months)])),
+                'price' => Format::money($product->price_from_cents),
+            ],
+        };
+
+        return $card + [
+            'id' => $alias.'-'.$product->getKey(),
+            'type' => $product->type->value,
+            'photo' => $product->img.'.jpg',
+        ];
+    }
+
+    /** 'Y-m-d' (options) → 'dd/mm/yyyy' (display pop-up). */
+    private static function displayDate(string $date): string
     {
         $day = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
 
-        if ($day === false) {
-            return;
-        }
-
-        $checkIn = $this->editCheckIn !== null ? self::parseDate($this->editCheckIn) : null;
-
-        if ($checkIn === null || $day < $checkIn || $this->editCheckOut !== null) {
-            $this->editCheckIn = $day->format('d/m/Y');
-            $this->editCheckOut = null;
-        } else {
-            $this->editCheckOut = $day->format('d/m/Y');
-        }
+        return ($day ?: new DateTimeImmutable('today'))->format('d/m/Y');
     }
 
-    /** Stepper "+" del pop-up Ospiti. */
-    public function incrementGuest(string $key): void
+    /** 'dd/mm/yyyy' (display) → 'Y-m-d' (options); null resta null. */
+    private static function isoDate(?string $date): ?string
     {
-        if (array_key_exists($key, $this->editGuests)) {
-            $this->editGuests[$key]++;
-        }
-    }
-
-    /** Stepper "−" del pop-up Ospiti (adulti minimo 1, ragazzi/bambini minimo 0). */
-    public function decrementGuest(string $key): void
-    {
-        if (array_key_exists($key, $this->editGuests)) {
-            $min = $key === 'adulti' ? 1 : 0;
-            $this->editGuests[$key] = max($min, $this->editGuests[$key] - 1);
-        }
-    }
-
-    /** Stepper "+" del pop-up Animali. */
-    public function incrementDogs(): void
-    {
-        $this->editDogs++;
-    }
-
-    /** Stepper "−" del pop-up Animali. */
-    public function decrementDogs(): void
-    {
-        $this->editDogs = max(0, $this->editDogs - 1);
-    }
-
-    /** Etichetta ospiti: "N adulti" se ci sono solo adulti, altrimenti "N ospiti" (totale). */
-    public function guestsLabel(array $guests): string
-    {
-        $extra = $guests['ragazzi'] + $guests['bambini'];
-
-        if ($extra === 0) {
-            return $guests['adulti'] === 1 ? '1 adulto' : $guests['adulti'].' adulti';
-        }
-
-        $total = $guests['adulti'] + $extra;
-
-        return $total === 1 ? '1 ospite' : $total.' ospiti';
-    }
-
-    /** Etichetta animali: "1 cane" / "N cani". */
-    public function dogsLabel(int $dogs): string
-    {
-        return $dogs === 1 ? '1 cane' : $dogs.' cani';
-    }
-
-    /** Indice dell'articolo nel carrello a partire dall'id (null se rimosso). */
-    private function findIndex(int $id): ?int
-    {
-        foreach ($this->items as $index => $item) {
-            if ($item['id'] === $id) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
-
-    /** dd/mm/yyyy → DateTimeImmutable a mezzanotte. */
-    private static function parseDate(string $date): DateTimeImmutable
-    {
-        return DateTimeImmutable::createFromFormat('!d/m/Y', $date) ?: new DateTimeImmutable('today');
-    }
-
-    /**
-     * Griglia reale del mese mostrato: settimane da domenica (Dom … Sab come in XD),
-     * con i giorni dei mesi adiacenti a completare le righe; 'inRange' marca i giorni
-     * dentro l'intervallo selezionato (cerchio giallo nel calendario).
-     */
-    private function buildCalendar(): array
-    {
-        $first = new DateTimeImmutable(sprintf('%d-%02d-01', $this->calendarYear, $this->calendarMonth));
-        $cursor = $first->modify('-'.(int) $first->format('w').' days');
-        $lastOfMonth = $first->modify('last day of this month');
-
-        $rangeStart = $this->editCheckIn !== null ? self::parseDate($this->editCheckIn) : null;
-        $rangeEnd = $this->editCheckOut !== null ? self::parseDate($this->editCheckOut) : $rangeStart;
-
-        $weeks = [];
-
-        do {
-            $week = [];
-
-            for ($i = 0; $i < 7; $i++) {
-                $week[] = [
-                    'day' => (int) $cursor->format('j'),
-                    'date' => $cursor->format('Y-m-d'),
-                    'inMonth' => (int) $cursor->format('n') === $this->calendarMonth
-                        && (int) $cursor->format('Y') === $this->calendarYear,
-                    'inRange' => $rangeStart !== null && $cursor >= $rangeStart && $cursor <= $rangeEnd,
-                ];
-
-                $cursor = $cursor->modify('+1 day');
-            }
-
-            $weeks[] = $week;
-        } while ($cursor <= $lastOfMonth);
-
-        return $weeks;
-    }
-
-    public function render()
-    {
-        // Totale ricalcolato live sugli articoli rimasti (Elimina lo aggiorna).
-        $total = array_sum(array_column($this->items, 'price'));
-
-        $editingItem = null;
-
-        foreach ($this->items as $item) {
-            if ($item['id'] === $this->editingId) {
-                $editingItem = $item;
-                break;
-            }
-        }
-
-        return view('livewire.cart', [
-            'total' => $total,
-            'count' => count($this->items),
-            'editingItem' => $editingItem,
-            'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
-            'calendarLabel' => self::MONTHS[$this->calendarMonth].' '.$this->calendarYear,
-            // Le 3 card "più amate" dello stato vuoto (combaciano con l'XD).
-            'suggestions' => $this->items === [] ? self::SUGGESTED : [],
-        ])->title('Carrello — AnimalAmo');
+        return $date !== null ? self::parseDate($date)->format('Y-m-d') : null;
     }
 }
