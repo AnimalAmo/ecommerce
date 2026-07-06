@@ -34,7 +34,7 @@
                             <flux:menu class="!w-[105px] !min-w-0 !rounded-t-none !rounded-b-[10px] !border-[#C8C8C8] !bg-white !px-0 !py-1 !shadow-none">
                                 <flux:menu.item wire:click="setTypeFilter(null)" class="!h-[35px] !rounded-none !px-4 !py-0 !text-sm !font-normal !text-[#555555] data-active:!bg-gray-50">Tutte</flux:menu.item>
                                 @foreach ($types as $type)
-                                    <flux:menu.item wire:key="type-{{ $type }}" wire:click="setTypeFilter('{{ $type }}')" class="!h-[35px] !rounded-none !px-4 !py-0 !text-sm !font-normal !text-[#555555] data-active:!bg-gray-50">{{ $type }}</flux:menu.item>
+                                    <flux:menu.item wire:key="type-{{ $type->value }}" wire:click="setTypeFilter('{{ $type->value }}')" class="!h-[35px] !rounded-none !px-4 !py-0 !text-sm !font-normal !text-[#555555] data-active:!bg-gray-50">{{ $type->label() }}</flux:menu.item>
                                 @endforeach
                             </flux:menu>
                         </flux:dropdown>

@@ -58,26 +58,30 @@
                 {{-- Griglia eventi (XD: simbolo "Box eventi" 354x415, 4 colonne × 3 righe) --}}
                 <div class="mt-10 grid grid-cols-4 gap-x-[27px] gap-y-6">
                     @foreach ($events as $event)
-                        <article wire:key="event-{{ $loop->index }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
+                        <article wire:key="event-{{ $event->id }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                             <div class="relative overflow-hidden rounded-t-[3px]">
-                                <img src="{{ asset('img/xd/'.$event['img'].'.jpg') }}" alt="{{ $event['title'] }}" class="aspect-[354/246] w-full object-cover transition duration-500 group-hover:scale-105">
-                                <span class="absolute left-[18px] top-[20px] inline-flex h-[27px] items-center rounded-[3px] bg-brand-purple-soft px-[10px] text-sm font-medium text-white">{{ $event['badge'] }}</span>
+                                <img src="{{ asset('img/xd/'.$event->img.'.jpg') }}" alt="{{ $event->title }}" class="aspect-[354/246] w-full object-cover transition duration-500 group-hover:scale-105">
+                                {{-- Badge sempre 'Evento' come da XD, anche sulle attività --}}
+                                <span class="absolute left-[18px] top-[20px] inline-flex h-[27px] items-center rounded-[3px] bg-brand-purple-soft px-[10px] text-sm font-medium text-white">{{ \App\Enums\ProductType::Event->label() }}</span>
                             </div>
                             <div class="flex flex-1 flex-col px-[18px] pb-[22px]">
-                                {{-- Riga orario: slot fisso, vuoto sulle attività multi-giorno (come da XD) --}}
-                                <p class="mt-[15px] flex h-[17px] items-center gap-1 text-[13px] font-bold uppercase tracking-[0.025em] {{ $event['timeAccent'] ? 'text-[#8E53E6]' : 'text-brand-purple-soft' }}">
-                                    @if ($event['time'])
+                                {{-- Riga orario: slot fisso; sulle attività compare solo la durata non-weekend (accent #8E53E6) --}}
+                                <p class="mt-[15px] flex h-[17px] items-center gap-1 text-[13px] font-bold uppercase tracking-[0.025em] {{ $event->type === \App\Enums\ProductType::Activity && $event->duration_days ? 'text-[#8E53E6]' : 'text-brand-purple-soft' }}">
+                                    @if ($event->type === \App\Enums\ProductType::Event && $event->starts_at)
                                         <flux:icon.time class="h-[15px] w-[15px] shrink-0" />
-                                        {{ $event['time'] }}
+                                        {{ \App\Support\Format::eventTime($event->starts_at) }}
+                                    @elseif ($event->type === \App\Enums\ProductType::Activity && $event->duration_days)
+                                        <flux:icon.time class="h-[15px] w-[15px] shrink-0" />
+                                        {{ __('format.duration_days', ['days' => $event->duration_days]) }}
                                     @endif
                                 </p>
                                 <p class="mt-[5px] flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
                                     <flux:icon.pin class="h-[14px] w-4 shrink-0" />
-                                    {{ $event['location'] }}
+                                    {{ $event->location }}
                                 </p>
-                                <h3 class="mt-[10px] text-[20px] font-semibold leading-[25px] text-black">{{ $event['title'] }}</h3>
+                                <h3 class="mt-[10px] text-[20px] font-semibold leading-[25px] text-black">{{ $event->title }}</h3>
                                 <div class="mt-auto flex items-center justify-between gap-2 pt-[18px]">
-                                    @if ($event['button'] === 'carrello')
+                                    @if (! $event->hasJoinCta())
                                         {{-- TODO: azione Aggiungi al carrello --}}
                                         <flux:button class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none">
                                             <flux:icon.cart class="h-4 w-4 shrink-0" />
@@ -90,11 +94,19 @@
                                             Partecipa
                                         </flux:button>
                                     @endif
-                                    <p class="whitespace-nowrap text-right text-[15px] font-semibold tracking-[0.025em] text-[#0D171A]">{{ $event['price'] ?? 'A partire da 0,00 €' }}</p>
+                                    <p class="whitespace-nowrap text-right text-[15px] font-semibold tracking-[0.025em] text-[#0D171A]">
+                                        @if ($event->price_cents !== null)
+                                            {{ __('format.per_person', ['price' => \App\Support\Format::money($event->price_cents)]) }}
+                                        @elseif ($event->is_free)
+                                            {{ __('format.free') }}
+                                        @else
+                                            {{ __('format.from_price', ['price' => \App\Support\Format::money(0)]) }}
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                             {{-- Le attività multi-giorno aprono la scheda attività, gli eventi la scheda evento --}}
-                            <a href="{{ $event['type'] === 'activity' ? route('eventi.activity', $event['slug']) : route('eventi.detail', $event['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $event['title'] }}"></a>
+                            <a href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event->slug) : route('eventi.detail', $event->slug) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $event->title }}"></a>
                             {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
                             <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!absolute !right-[18px] !top-[18px] !z-[2] !h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
                                 <flux:icon.heart class="h-4 w-4" />

@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, Indietro, azioni, CTA galleria, tile durata --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/activity-detail-hero.jpg') }}" alt="{{ $activity['title'] }}" class="absolute inset-0 h-full w-full object-cover">
+            <img src="{{ asset('img/xd/'.$activity->hero_img.'.jpg') }}" alt="{{ $activity->title }}" class="absolute inset-0 h-full w-full object-cover">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -47,7 +47,7 @@
 
         <div class="{{ $px }} pb-[120px] pt-[65px]">
             {{-- 2. Testata: titolo (il prezzo vive nel box prenotazione a destra, come da XD) --}}
-            <h1 class="text-[25px] font-bold leading-[30px] text-black">{{ $activity['title'] }}</h1>
+            <h1 class="text-[25px] font-bold leading-[30px] text-black">{{ $activity->title }}</h1>
 
             {{-- 3. Tab bar (switch Livewire Informazioni / Discussione) + azione Preferiti --}}
             <div class="mt-[13px] flex items-end justify-between gap-4 border-b border-[#DEDEDE]">
@@ -81,7 +81,7 @@
                     {{-- 4a. Descrizione --}}
                     <section>
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">Descrizione</h2>
-                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata.</p>
+                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
                     </section>
 
                     {{-- 4b. Informazioni generali: durata, località, ritrovo --}}
@@ -92,22 +92,22 @@
                                 <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $durationLabel }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
+                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->time_note }}</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-4">
                                 <flux:icon.pin class="mt-0.5 h-[15px] w-3 shrink-0 text-[#0D171A]" />
                                 <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $activity['location'] }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $activity->location }}</p>
+                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue_note }}</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-4">
                                 {{-- XD: coppia di figure "noun-user" — resa con l'icona team --}}
                                 <flux:icon.team class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                                 <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Ritrovo: Hotel Miramare, {{ $activity['location'] }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">Via Roma 63, 30057, Viareggio, Italia</p>
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Ritrovo: {{ $activity->venue->name }}, {{ $activity->location }}</p>
+                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue->address }}</p>
                                 </div>
                             </li>
                         </ul>
@@ -116,7 +116,7 @@
                     {{-- 4c. Attività --}}
                     <section class="mt-10">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">Attività</h2>
-                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata.</p>
+                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
                     </section>
 
                     {{-- 4d. Cosa è incluso (box bordato, check verdi / X rosa su due colonne) --}}
@@ -182,7 +182,7 @@
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white px-[21px] pb-6 pt-[21px]">
                         @if ($isFree)
                             {{-- TODO: conferma design attività gratuita --}}
-                            <p class="text-[28px] italic leading-[38px] text-[#2B2B2B]">Gratis</p>
+                            <p class="text-[28px] italic leading-[38px] text-[#2B2B2B]">{{ __('format.free') }}</p>
                         @else
                             <p class="text-[28px] font-light leading-[38px] text-[#2B2B2B]">{{ $priceHeadline }}</p>
                         @endif
@@ -215,7 +215,7 @@
                             </div>
                         </div>
 
-                        @if ($isFree)
+                        @if ($canJoin)
                             {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
                             <flux:button wire:click="joinEvent" class="!mt-[26px] !flex !h-[39px] !w-full !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center [&>span]:gap-2">
                                 <flux:icon.check-1 class="h-4 w-4 shrink-0" />
@@ -245,11 +245,11 @@
                 <h2 class="text-[25px] font-bold leading-[30px] text-black">Dove siamo</h2>
                 <div class="relative mt-4 h-[389px] w-full overflow-hidden rounded-[4px]">
                     {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                    <img src="{{ asset('img/xd/event-detail-map.jpg') }}" alt="Mappa della zona — Hotel Miramare" class="h-full w-full object-cover">
+                    <img src="{{ asset('img/xd/'.$activity->venue->map_img.'.jpg') }}" alt="Mappa della zona — {{ $activity->venue->name }}" class="h-full w-full object-cover">
                     {{-- TODO: apertura mappa (nessuna interazione definita nell'XD) --}}
                     <flux:button class="!absolute !left-[715px] !top-[125px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
                         <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                        Hotel Miramare
+                        {{ $activity->venue->name }}
                     </flux:button>
                 </div>
             </section>
@@ -258,22 +258,24 @@
             <section wire:key="faq" class="mt-[60px] border-t border-[#DEDEDE]">
                 <div class="pl-[79px] pr-[71px] pt-10">
                     <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">Domande frequenti</h2>
-                    {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
-                    <div class="mt-[31px] flex items-start justify-between gap-4">
-                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Lorem ipsum dolor sit amet, consetetur sadipscing</p>
-                        <flux:icon.chevron-up class="mt-1 !h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
-                    </div>
-                    <p class="mt-[14px] text-[15px] leading-[21px] text-[#627277]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.</p>
-                    {{-- Voci chiuse (chevron a destra) --}}
-                    <div class="mt-[21px]">
-                        @for ($i = 0; $i < 4; $i++)
-                            <div wire:key="faq-{{ $i }}" class="flex items-center justify-between gap-4 border-t border-[#E2EAEB] pb-[14px] pt-[17px]">
-                                <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Lorem ipsum dolor sit amet, consetetur sadipscing</p>
-                                <flux:icon.chevron-right class="!h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
-                            </div>
-                        @endfor
-                        <div class="border-t border-[#E2EAEB]" aria-hidden="true"></div>
-                    </div>
+                    @if ($faqs->isNotEmpty())
+                        {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
+                        <div class="mt-[31px] flex items-start justify-between gap-4">
+                            <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faqs->first()->question }}</p>
+                            <flux:icon.chevron-up class="mt-1 !h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
+                        </div>
+                        <p class="mt-[14px] text-[15px] leading-[21px] text-[#627277]">{{ $faqs->first()->answer }}</p>
+                        {{-- Voci chiuse (chevron a destra) --}}
+                        <div class="mt-[21px]">
+                            @foreach ($faqs->skip(1) as $faq)
+                                <div wire:key="faq-{{ $faq->id }}" class="flex items-center justify-between gap-4 border-t border-[#E2EAEB] pb-[14px] pt-[17px]">
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faq->question }}</p>
+                                    <flux:icon.chevron-right class="!h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
+                                </div>
+                            @endforeach
+                            <div class="border-t border-[#E2EAEB]" aria-hidden="true"></div>
+                        </div>
+                    @endif
                 </div>
             </section>
             @endif
@@ -288,8 +290,8 @@
     <livewire:partner-login-modal />
 
     {{-- Pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa") — duplicato dal dettaglio evento come i pop-up fratelli tra le pagine;
-         dati della pagina: foto hero attività e data check-in. Solo attività gratuite (doppia cintura oltre alla guardia in joinEvent). --}}
-    @if ($isFree && $joinPopupOpen)
+         dati della pagina: foto hero attività e data check-in. Solo attività con pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}
+    @if ($canJoin && $joinPopupOpen)
         <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto agli eventi" x-data @keydown.escape.window="$wire.closeJoinPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeJoinPopup" aria-hidden="true"></div>
@@ -303,9 +305,9 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/activity-detail-hero.jpg') }}" alt="{{ $activity['title'] }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ asset('img/xd/'.$activity->hero_img.'.jpg') }}" alt="{{ $activity->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-black">{{ $activity['title'] }}</p>
+                            <p class="truncate text-sm font-semibold text-black">{{ $activity->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />

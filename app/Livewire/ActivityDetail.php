@@ -2,6 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Enums\ProductType;
+use App\Models\Event\Event;
+use App\Support\Format;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -21,10 +24,10 @@ class ActivityDetail extends Component
 
     public function mount(string $activity): void
     {
-        $entry = collect(Events::EVENTS)->firstWhere('slug', $activity);
+        $model = Event::where('slug', $activity)->first();
 
         // Solo le attività multi-giorno; gli eventi restano su /eventi/{event}.
-        abort_unless($entry !== null && $entry['type'] === 'activity', 404);
+        abort_unless($model !== null && $model->type === ProductType::Activity, 404);
 
         $this->activitySlug = $activity;
 
@@ -42,9 +45,8 @@ class ActivityDetail extends Component
 
     public function joinEvent(): void
     {
-        // Attività a pagamento: il pill "Partecipa" esiste solo nella variante gratuita,
-        // quindi il pop-up partecipa non deve poter aprirsi.
-        if (! $this->isFree()) {
+        // Attività a pagamento: il pill "Partecipa" esiste solo nella variante gratuita.
+        if (! $this->activity()->hasJoinCta()) {
             return;
         }
 
@@ -57,38 +59,39 @@ class ActivityDetail extends Component
         $this->joinPopupOpen = false;
     }
 
-    /** Variante gratuita (price "Gratis") — allineata al linguaggio dell'evento gratuito. */
-    private function isFree(): bool
+    private function activity(): Event
     {
-        $entry = collect(Events::EVENTS)->firstWhere('slug', $this->activitySlug);
-
-        return ($entry['price'] ?? null) === 'Gratis';
+        return Event::where('slug', $this->activitySlug)->firstOrFail();
     }
 
     public function render()
     {
-        $activity = collect(Events::EVENTS)->firstWhere('slug', $this->activitySlug);
+        $activity = $this->activity();
 
-        // Durata: dalla riga orario "DURATA DI n GIORNI" quando presente, altrimenti il weekend XD di 3 giorni.
-        $days = preg_match('/DURATA DI (\d+)/i', $activity['time'] ?? '', $m) ? (int) $m[1] : 3;
-
-        // Prezzo unitario numerico ("118 € a persona" → 118); null per "Gratis"/assente.
-        $unitPrice = preg_match('/^(\d+)\s*€/u', $activity['price'] ?? '', $m) ? (int) $m[1] : null;
+        // Durata: null nel dato = weekend XD di 3 giorni.
+        $days = $activity->duration_days ?? 3;
 
         return view('livewire.activity-detail', [
             'activity' => $activity,
             // L'XD non definisce un design per le attività gratuite: allineato al linguaggio
             // della variante evento gratuito ("Gratis" corsivo + pill Partecipa, niente riepilogo prezzi).
-            'isFree' => $this->isFree(),
+            'isFree' => $activity->is_free,
+            'canJoin' => $activity->hasJoinCta(),
             'durationDays' => $days,
             // Testo XD "Durata di 3 giorni, due notti"; per le altre durate la forma numerica.
-            'durationLabel' => $days === 3 ? 'Durata di 3 giorni, due notti' : sprintf('Durata di %d giorni, %d notti', $days, $days - 1),
-            'priceHeadline' => $activity['price'] ?? 'A partire da 0,00 €',
-            'pricePerTwo' => $unitPrice !== null ? $unitPrice.' € per 2 persone' : null,
-            'totalPrice' => $unitPrice !== null ? ($unitPrice * 2).' €' : null,
-            // "Cosa è incluso" e thread identici all'artboard evento (stessi testi nell'XD).
-            'includedColumns' => EventDetail::INCLUDED,
+            'durationLabel' => $days === 3
+                ? __('format.duration_label_weekend')
+                : __('format.duration_label', ['days' => $days, 'nights' => $days - 1]),
+            'priceHeadline' => $activity->price_cents !== null
+                ? __('format.per_person', ['price' => Format::money($activity->price_cents)])
+                : __('format.from_price', ['price' => Format::money(0)]),
+            'pricePerTwo' => $activity->price_cents !== null
+                ? __('format.for_people', ['price' => Format::money($activity->price_cents), 'count' => 2])
+                : null,
+            'totalPrice' => $activity->price_cents !== null ? Format::money($activity->price_cents * 2) : null,
+            'includedColumns' => [$activity->amenityRows('hotel'), $activity->amenityRows('animal')],
+            'faqs' => $activity->faqs,
             'threads' => EventDetail::THREADS,
-        ])->title('AnimalAmo — '.$activity['title']);
+        ])->title('AnimalAmo — '.$activity->title);
     }
 }

@@ -7,7 +7,7 @@
 
     <main class="flex-1">
         <div class="{{ $px }} pt-10 pb-20">
-            <h1 class="text-4xl font-bold text-black">Hotel e servizi in {{ $regionName }}</h1>
+            <h1 class="text-4xl font-bold text-black">{{ __('catalog.region_title', ['region' => $regionName]) }}</h1>
             <p class="mt-4 max-w-[1295px] text-lg leading-6 text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
             {{-- Barra ricerca (simbolo condiviso, pre-compilata con la regione) --}}
@@ -57,25 +57,26 @@
             {{-- Griglia risultati (XD: simbolo "Box hotel", 4 colonne × 3 righe) --}}
             <div class="mt-10 grid grid-cols-4 gap-x-[27px] gap-y-4">
                 @foreach ($results as $result)
-                    <article wire:key="res-{{ $loop->index }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
+                    <article wire:key="res-{{ $result->id }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                         <div class="relative m-2 overflow-hidden rounded-t-[3px]">
-                            <img src="{{ asset('img/xd/'.$result['img'].'.jpg') }}" alt="{{ $result['name'] }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
-                            <span class="absolute left-[10px] top-[15px] inline-flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white {{ $result['type'] === 'hotel' ? 'bg-[#FF9F3E]' : 'bg-[#FDC220]' }}">{{ $result['type'] === 'hotel' ? 'Hotel' : 'Servizi' }}</span>
+                            <img src="{{ asset('img/xd/'.$result->img.'.jpg') }}" alt="{{ $result->name }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
+                            {{-- Badge verbatim XD ('Hotel'/'Servizi'), colore dalla tassonomia ProductType --}}
+                            <span class="absolute left-[10px] top-[15px] inline-flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $result->type->color() }}">{{ $result->type === \App\Enums\ProductType::Structure ? __('catalog.badge_hotel') : __('catalog.badge_services') }}</span>
                         </div>
                         <div class="flex flex-1 flex-col px-[18px] pt-[9px] pb-[18px]">
                             <p class="flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
                                 <flux:icon.pin class="h-[14px] w-4 shrink-0" />
-                                {{ $result['location'] }}
+                                {{ $result->location }}
                             </p>
                             <p class="mt-1.5 flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
                                 <flux:icon.star class="h-[15px] w-4 shrink-0" />
-                                {{ $result['rating'] }}
+                                {{ \App\Support\Format::rating($result->rating) }}
                             </p>
-                            <h3 class="mt-2.5 text-[20px] font-semibold leading-[25px] text-black">{{ $result['name'] }}</h3>
-                            <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">0,00 €</span></p>
+                            <h3 class="mt-2.5 text-[20px] font-semibold leading-[25px] text-black">{{ $result->name }}</h3>
+                            <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">{{ \App\Support\Format::money($result->price_from_cents) }}</span></p>
                         </div>
                         {{-- Link alla scheda: servizi → "Animal Holiday – Dettaglio servizio", hotel → "Animal Holiday – Dettaglio struttura" --}}
-                        <a href="{{ $result['type'] === 'servizi' ? route('holiday.service', ['region' => $regionSlug, 'service' => $result['slug']]) : route('holiday.structure', ['region' => $regionSlug, 'structure' => $result['slug']]) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $result['name'] }}"></a>
+                        <a href="{{ $result->type === \App\Enums\ProductType::Service ? route('holiday.service', ['region' => $regionSlug, 'service' => $result->slug]) : route('holiday.structure', ['region' => $regionSlug, 'structure' => $result->slug]) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $result->name }}"></a>
                         {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
                         <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!absolute !right-[18px] !top-[18px] !z-[2] !h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
                             <flux:icon.heart class="h-4 w-4" />

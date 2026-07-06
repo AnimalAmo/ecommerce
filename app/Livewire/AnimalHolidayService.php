@@ -2,6 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Enums\ProductType;
+use App\Models\Region\Region;
+use App\Models\Structure\Structure;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -17,58 +20,23 @@ class AnimalHolidayService extends Component
     /** Slug servizio dalla rotta (es. "dog-sitting"). */
     public string $serviceSlug = '';
 
-    /** Nome visualizzato del servizio (es. "Dog sitting"). */
-    public string $serviceName = '';
-
-    /** Località del servizio (dal risultato campione della regione). */
-    public string $location = '';
-
-    public string $rating = '4,5 stelle';
-
     /** Pop-up "Aggiunto al carrello" (stesso pattern del dettaglio struttura). */
     public bool $cartPopupOpen = false;
 
-    /** Servizi Animali: incluso (check verde) / escluso (X magenta). */
-    public array $animalServices = [
-        ['label' => 'Pet sitting', 'included' => true],
-        ['label' => 'Servizio veterinario', 'included' => true],
-        ['label' => 'Omaggio di benvenuto', 'included' => true],
-        ['label' => 'Dog Beach nelle vicinanze', 'included' => true],
-        ['label' => 'Supplemento animali', 'included' => false],
-        ['label' => 'Piscina per cani', 'included' => false],
-    ];
-
-    /** Domande frequenti (contenuto campione identico per le 5 righe, come da XD). */
-    public array $faqs = [
-        ['question' => 'Lorem ipsum dolor sit amet, consetetur sadipscing', 'answer' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'],
-        ['question' => 'Lorem ipsum dolor sit amet, consetetur sadipscing', 'answer' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'],
-        ['question' => 'Lorem ipsum dolor sit amet, consetetur sadipscing', 'answer' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'],
-        ['question' => 'Lorem ipsum dolor sit amet, consetetur sadipscing', 'answer' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'],
-        ['question' => 'Lorem ipsum dolor sit amet, consetetur sadipscing', 'answer' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.'],
-    ];
-
-    /** Recensioni campione. stars: numero di stelle piene + eventuale mezza (.5). */
-    public array $reviews = [
-        ['date' => '23 febbraio 2023', 'stars' => 5.0, 'title' => 'Incredibile!', 'body' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.', 'initials' => 'GR', 'name' => 'Giulia Rossi', 'avatar' => '#FF9F3E'],
-        ['date' => '23 febbraio 2023', 'stars' => 4.5, 'title' => 'Molto bello', 'body' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.', 'initials' => 'AB', 'name' => 'Andrea Bianchi', 'avatar' => '#FF9F3E'],
-        ['date' => '23 febbraio 2023', 'stars' => 4.5, 'title' => 'Incredibile!', 'body' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.', 'initials' => 'FS', 'name' => 'Francesca Sogni', 'avatar' => '#3E72FF'],
-    ];
+    /** Ore del preventivo campione (10:00 → 16:00 come da XD); dinamiche con il carrello (step 3). */
+    public const SAMPLE_HOURS = 4;
 
     public function mount(string $region, string $service): void
     {
-        abort_unless(isset(AnimalHolidayRegion::REGION_NAMES[$region]), 404);
+        $regionModel = Region::where('slug', $region)->first();
 
-        $entry = collect(AnimalHolidayRegion::RESULTS)
-            ->first(fn (array $result) => $result['slug'] === $service && $result['type'] === 'servizi');
+        abort_unless($regionModel !== null, 404);
 
-        abort_unless($entry !== null, 404);
+        abort_unless(self::findBySlug($service) !== null, 404);
 
-        $this->regionSlug = $region;
-        $this->regionName = AnimalHolidayRegion::REGION_NAMES[$region];
+        $this->regionSlug = $regionModel->slug;
+        $this->regionName = $regionModel->name;
         $this->serviceSlug = $service;
-        $this->serviceName = $entry['name'];
-        $this->location = $entry['location'];
-        $this->rating = $entry['rating'].' stelle';
     }
 
     public function addToCart(): void
@@ -84,12 +52,30 @@ class AnimalHolidayService extends Component
 
     public function loadMoreReviews(): void
     {
-        // TODO: paginare le recensioni quando esisterà il backend.
+        // TODO: paginare le recensioni quando il design definirà la pagina 2.
+    }
+
+    private static function findBySlug(string $slug): ?Structure
+    {
+        return Structure::where('slug', $slug)
+            ->where('type', ProductType::Service)
+            ->orderBy('position')
+            ->first();
     }
 
     public function render()
     {
-        return view('livewire.animal-holiday-service')
-            ->title('AnimalAmo — '.$this->serviceName);
+        $service = self::findBySlug($this->serviceSlug);
+
+        abort_unless($service !== null, 404);
+
+        return view('livewire.animal-holiday-service', [
+            'service' => $service,
+            'animalServices' => $service->amenityRows('animal'),
+            'faqs' => $service->faqs,
+            'reviews' => $service->reviews->take(3),
+            'reviewsCount' => $service->reviews->count(),
+            'hours' => self::SAMPLE_HOURS,
+        ])->title('AnimalAmo — '.$service->name);
     }
 }

@@ -8,8 +8,8 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, Indietro, azioni, CTA galleria, tile data --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            {{-- Foto campione per artboard: "Evento gratis - Dettaglio" usa lo scatto Unsplash della festa, quello a pagamento lo stock del brunch --}}
-            <img src="{{ asset($isFree ? 'img/xd/free-event-detail-hero.jpg' : 'img/xd/event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="absolute inset-0 h-full w-full object-cover">
+            {{-- Foto per evento (XD: scatto festa per il gratuito, stock brunch per il pagamento) --}}
+            <img src="{{ asset('img/xd/'.$event->hero_img.'.jpg') }}" alt="{{ $event->title }}" class="absolute inset-0 h-full w-full object-cover">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -38,10 +38,10 @@
                     Vedere tutte le foto
                 </flux:button>
 
-                {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"; campione "5 Gen" a pagamento, "8 Gen" gratuito) --}}
+                {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"), derivata da starts_at --}}
                 <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
                     <div class="h-6 w-full bg-brand-purple-soft" aria-hidden="true"></div>
-                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-brand-purple-soft">{{ $isFree ? '8 Gen' : '5 Gen' }}</p>
+                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
                 </div>
             </div>
         </section>
@@ -50,14 +50,14 @@
             {{-- 2. Testata: orario, titolo, prezzo --}}
             <p class="flex items-center gap-2 text-[15px] font-medium leading-[21px] text-brand-purple-soft">
                 <flux:icon.time class="h-[15px] w-[15px] shrink-0" />
-                {{ $isFree ? 'Lunedì 8 Gennaio alle ore 19:30' : 'Oggi alle ore 13:30' }}
+                {{ \App\Support\Format::eventTimeFull($event->starts_at) }}
             </p>
-            <h1 class="mt-[9px] text-[25px] font-bold leading-[30px] text-black">{{ $event['title'] }}</h1>
+            <h1 class="mt-[9px] text-[25px] font-bold leading-[30px] text-black">{{ $event->title }}</h1>
             @if ($isFree)
                 {{-- "Gratis" in corsivo peso normale (XD Nunito-Italic 25px) al posto della riga prezzo Light --}}
-                <p class="mt-[9px] text-[25px] italic leading-[34px] text-black">Gratis</p>
+                <p class="mt-[9px] text-[25px] italic leading-[34px] text-black">{{ __('format.free') }}</p>
             @else
-                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{{ $event['price'] ?? 'A partire da 0,00 €' }}</p>
+                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{{ $event->price_cents !== null ? __('format.per_person', ['price' => \App\Support\Format::money($event->price_cents)]) : __('format.from_price', ['price' => \App\Support\Format::money(0)]) }}</p>
             @endif
 
             {{-- 3. Tab bar (switch Livewire Informazioni / Discussione) + azioni Preferiti / Aggiungi al carrello --}}
@@ -82,7 +82,7 @@
                         <flux:icon.heart class="h-4 w-4 shrink-0" />
                         Preferiti
                     </flux:button>
-                    @if ($isFree)
+                    @if ($canJoin)
                         {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello" --}}
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
                         <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
@@ -106,7 +106,7 @@
                     {{-- 4a. Descrizione --}}
                     <section>
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">Descrizione</h2>
-                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata.</p>
+                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $event->description }}</p>
                     </section>
 
                     {{-- 4b. Informazioni generali --}}
@@ -116,15 +116,15 @@
                             <li class="flex items-start gap-4">
                                 <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                                 <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $isFree ? 'Lunedì 8 Gennaio dalle ore 19:30 alle 21:30' : 'Oggi dalle 13:30 alle 16:30' }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ \App\Support\Format::eventTimeRange($event->starts_at, $event->ends_at) }}</p>
+                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-4">
                                 <flux:icon.pin class="mt-0.5 h-[15px] w-3 shrink-0 text-[#0D171A]" />
                                 <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Dario Boario Terme (BS), Italia</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $event->venue->address }}</p>
+                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->venue_note }}</p>
                                 </div>
                             </li>
                         </ul>
@@ -157,11 +157,11 @@
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-5">
                         <div class="relative overflow-hidden rounded-[4px]">
                             {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                            <img src="{{ asset('img/xd/event-detail-map.jpg') }}" alt="Mappa della zona — Cascina Brescia" class="h-[576px] w-full object-cover">
+                            <img src="{{ asset('img/xd/'.$event->venue->map_img.'.jpg') }}" alt="Mappa della zona — {{ $event->venue->name }}" class="h-[576px] w-full object-cover">
                             {{-- TODO: apertura mappa (nessuna interazione definita nell'XD) --}}
                             <flux:button class="!absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
                                 <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                                Cascina Brescia
+                                {{ $event->venue->name }}
                             </flux:button>
                         </div>
                     </div>
@@ -207,21 +207,23 @@
                 <aside class="w-full shrink-0 lg:w-[718px]">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white px-[22px] pb-[1px] pt-[29px]">
                         <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">Domande frequenti</h2>
-                        {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
-                        <div class="mt-[31px] flex items-start justify-between gap-4">
-                            <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Lorem ipsum dolor sit amet, consetetur sadipscing</p>
-                            <flux:icon.chevron-up class="mt-1 !h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
-                        </div>
-                        <p class="mt-[14px] text-[15px] leading-[21px] text-[#627277]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.</p>
-                        {{-- Voci chiuse (chevron a destra) --}}
-                        <div class="mt-[21px]">
-                            @for ($i = 0; $i < 4; $i++)
-                                <div wire:key="faq-{{ $i }}" class="flex items-center justify-between gap-4 border-t border-[#E2EAEB] pb-[14px] pt-[17px]">
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">Lorem ipsum dolor sit amet, consetetur sadipscing</p>
-                                    <flux:icon.chevron-right class="!h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
-                                </div>
-                            @endfor
-                        </div>
+                        @if ($faqs->isNotEmpty())
+                            {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
+                            <div class="mt-[31px] flex items-start justify-between gap-4">
+                                <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faqs->first()->question }}</p>
+                                <flux:icon.chevron-up class="mt-1 !h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
+                            </div>
+                            <p class="mt-[14px] text-[15px] leading-[21px] text-[#627277]">{{ $faqs->first()->answer }}</p>
+                            {{-- Voci chiuse (chevron a destra) --}}
+                            <div class="mt-[21px]">
+                                @foreach ($faqs->skip(1) as $faq)
+                                    <div wire:key="faq-{{ $faq->id }}" class="flex items-center justify-between gap-4 border-t border-[#E2EAEB] pb-[14px] pt-[17px]">
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faq->question }}</p>
+                                        <flux:icon.chevron-right class="!h-3.5 !w-3.5 shrink-0 text-[#1E2E33]" />
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </aside>
             </div>
@@ -237,8 +239,8 @@
     <livewire:partner-login-modal />
 
     {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista") — stesso pattern del dettaglio struttura, con data e prezzo dell'evento.
-         Solo eventi a pagamento: la variante gratuita non ha trigger d'acquisto (doppia cintura oltre alla guardia in addToCart). --}}
-    @if (! $isFree && $cartPopupOpen)
+         Solo eventi con CTA carrello (doppia cintura oltre alla guardia in addToCart). --}}
+    @if (! $canJoin && $cartPopupOpen)
         <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>
@@ -252,13 +254,13 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ asset('img/xd/'.$event->hero_img.'.jpg') }}" alt="{{ $event->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-black">{{ $event['title'] }}</p>
+                            <p class="truncate text-sm font-semibold text-black">{{ $event->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
-                                    07/02/2024
+                                    {{ \App\Support\Format::dateShort($event->starts_at) }}
                                 </li>
                             </ul>
                         </div>
@@ -275,8 +277,8 @@
     @endif
 
     {{-- Pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa") — gemello del pop-up carrello: stessa card 400x230 a destra, senza riga prezzo.
-         Solo eventi gratuiti: la variante a pagamento non ha il pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}
-    @if ($isFree && $joinPopupOpen)
+         Solo eventi con pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}
+    @if ($canJoin && $joinPopupOpen)
         <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto agli eventi" x-data @keydown.escape.window="$wire.closeJoinPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeJoinPopup" aria-hidden="true"></div>
@@ -290,13 +292,13 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/free-event-detail-hero.jpg') }}" alt="{{ $event['title'] }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ asset('img/xd/'.$event->hero_img.'.jpg') }}" alt="{{ $event->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-black">{{ $event['title'] }}</p>
+                            <p class="truncate text-sm font-semibold text-black">{{ $event->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
-                                    08/01/2024
+                                    {{ \App\Support\Format::dateShort($event->starts_at) }}
                                 </li>
                             </ul>
                         </div>

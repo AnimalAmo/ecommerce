@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, titolo, azioni, CTA galleria --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/servizio-hero.jpg') }}" alt="{{ $serviceName }}" class="absolute inset-0 h-full w-full object-cover object-[center_35%]">
+            <img src="{{ asset('img/xd/'.$service->hero_img.'.jpg') }}" alt="{{ $service->name }}" class="absolute inset-0 h-full w-full object-cover object-[center_35%]">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -17,14 +17,14 @@
                         <flux:icon.arrow-back class="h-3 w-3 shrink-0" />
                         Indietro
                     </a>
-                    <h1 class="mt-7 text-[25px] font-bold leading-[30px] text-brand-yellow">{{ $serviceName }}</h1>
+                    <h1 class="mt-7 text-[25px] font-bold leading-[30px] text-brand-yellow">{{ $service->name }}</h1>
                     <p class="mt-2.5 flex items-center gap-2 text-[13px] font-semibold text-white">
                         <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                        {{ $location }}
+                        {{ $service->location }}
                     </p>
                     <p class="mt-1.5 flex items-center gap-2 text-[13px] font-semibold text-white">
                         <flux:icon.star class="h-[15px] w-4 shrink-0" />
-                        {{ $rating }}
+                        {{ __('format.stars', ['rating' => \App\Support\Format::rating($service->rating)]) }}
                     </p>
                 </div>
 
@@ -57,31 +57,13 @@
                     {{-- 2a. Descrizione breve --}}
                     <section>
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Descrizione breve</h2>
-                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata.</p>
+                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $service->description }}</p>
                     </section>
 
                     {{-- 2b. Informazioni generali --}}
                     <section class="mt-10">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Informazioni generali</h2>
-                        <ul class="mt-4 space-y-4">
-                            <li class="flex items-start gap-3.5">
-                                <flux:icon.calendar-return class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
-                                <div>
-                                    <p class="text-[15px] font-medium text-[#0D171A]">Cancellazione gratuita</p>
-                                    <p class="mt-1 max-w-[613px] text-[15px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3.5">
-                                {{-- Icona casa (XD: "noun-home-6605324") --}}
-                                <svg viewBox="0 0 21 21" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="h-[19px] w-[19px] shrink-0 text-[#0D171A]" aria-hidden="true">
-                                    <path d="M2.937 18.679h15.081c.329 0 .595-.267.595-.596a.595.595 0 0 0-.596-.596h-.002V8.8a.596.596 0 0 0-.198-.444l-6.943-6.204a.596.596 0 0 0-.794 0L3.138 8.356a.596.596 0 0 0-.199.444v8.687h-.002a.595.595 0 0 0-.596.596c0 .329.267.596.596.596Zm1.193-9.612 6.347-5.672 6.347 5.672v8.42H13.13v-4.048a.596.596 0 0 0-.596-.595H8.42a.596.596 0 0 0-.596.595v4.048H4.13v-8.42Zm4.886 4.968h2.923v3.452H9.016v-3.452Z" />
-                                </svg>
-                                <div>
-                                    <p class="text-[15px] font-medium text-[#0D171A]">Dog sitting a casa</p>
-                                    <p class="mt-1 max-w-[613px] text-[15px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
-                                </div>
-                            </li>
-                        </ul>
+                        @include('partials.general-info', ['rows' => $service->general_info])
                     </section>
 
                     {{-- 3. Servizi Animali --}}
@@ -89,14 +71,15 @@
                         <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 lg:px-[22px]">
                             <h2 class="text-[25px] font-bold leading-[30px] text-black">Servizi Animali</h2>
                             <ul class="mt-2 space-y-[7px]">
-                                @foreach ($animalServices as $service)
+                                {{-- $row e non $service: il nome del model di pagina non va sovrascritto dal loop --}}
+                                @foreach ($animalServices as $row)
                                     <li wire:key="srv-animal-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
-                                        @if ($service['included'])
+                                        @if ($row['included'])
                                             <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
                                         @else
                                             <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
                                         @endif
-                                        {{ $service['label'] }}
+                                        {{ $row['label'] }}
                                     </li>
                                 @endforeach
                             </ul>
@@ -108,10 +91,10 @@
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Dove siamo</h2>
                         <div class="relative mt-5 overflow-hidden rounded-[4px]">
                             {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                            <img src="{{ asset('img/xd/servizio-mappa.jpg') }}" alt="Mappa della zona — {{ $serviceName }}" class="h-[389px] w-full object-cover">
+                            <img src="{{ asset('img/xd/'.$service->map_img.'.jpg') }}" alt="Mappa della zona — {{ $service->name }}" class="h-[389px] w-full object-cover">
                             <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
                                 <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                                {{ $serviceName }}
+                                {{ $service->name }}
                             </span>
                         </div>
                     </section>
@@ -121,12 +104,12 @@
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">Domande frequenti</h2>
                         <div class="mt-4">
                             @foreach ($faqs as $index => $faq)
-                                <div wire:key="faq-{{ $index }}" class="border-b border-[#E2EAEB]">
+                                <div wire:key="faq-{{ $faq->id }}" class="border-b border-[#E2EAEB]">
                                     <flux:button variant="ghost" @click="open = open === {{ $index }} ? null : {{ $index }}" ::aria-expanded="(open === {{ $index }}).toString()" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none !px-0 !py-4 !text-left hover:!bg-transparent">
-                                        <span class="text-[15px] font-medium text-[#0D171A]">{{ $faq['question'] }}</span>
+                                        <span class="text-[15px] font-medium text-[#0D171A]">{{ $faq->question }}</span>
                                         <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-[#1E2E33] transition-transform duration-200" ::class="open === {{ $index }} && 'rotate-180'" />
                                     </flux:button>
-                                    <p x-show="open === {{ $index }}" @if ($index !== 0) style="display: none" @endif class="max-w-[1032px] pb-5 text-[15px] leading-[22px] text-[#627277]">{{ $faq['answer'] }}</p>
+                                    <p x-show="open === {{ $index }}" @if ($index !== 0) style="display: none" @endif class="max-w-[1032px] pb-5 text-[15px] leading-[22px] text-[#627277]">{{ $faq->answer }}</p>
                                 </div>
                             @endforeach
                         </div>
@@ -136,38 +119,40 @@
                     <section class="mt-14">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Recensioni dei clienti</h2>
                         <p class="mt-2 flex items-center gap-2.5">
-                            <span class="text-lg font-semibold leading-[22px] text-brand-cyan">4,5</span>
+                            <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($service->rating) }}</span>
                             <span class="flex items-center gap-[3px]">
-                                @foreach (range(1, 4) as $i)
+                                @foreach (range(1, (int) floor($service->rating)) as $i)
                                     <flux:icon.star-fill wire:key="sum-star-{{ $i }}" class="h-4 w-[17px]" />
                                 @endforeach
-                                <flux:icon.star-mid class="h-4 w-[17px]" />
+                                @if ($service->rating > floor($service->rating))
+                                    <flux:icon.star-mid class="h-4 w-[17px]" />
+                                @endif
                             </span>
                         </p>
                         <p class="mt-1.5 flex items-baseline gap-3">
-                            <span class="text-lg font-semibold text-black">12</span>
+                            <span class="text-lg font-semibold text-black">{{ $reviewsCount }}</span>
                             <span class="text-[15px] text-black">Recensioni</span>
                         </p>
 
                         <div class="mt-6">
                             @foreach ($reviews as $index => $review)
-                                <article wire:key="review-{{ $index }}" class="border-b border-[#E2EAEB] pb-6 {{ $loop->first ? '' : 'pt-5' }}">
-                                    <p class="text-[13px] leading-[22px] text-[#627277]">{{ $review['date'] }}</p>
+                                <article wire:key="review-{{ $review->id }}" class="border-b border-[#E2EAEB] pb-6 {{ $loop->first ? '' : 'pt-5' }}">
+                                    <p class="text-[13px] leading-[22px] text-[#627277]">{{ \App\Support\Format::dateSentence($review->reviewed_at) }}</p>
                                     <p class="mt-1 flex items-center gap-[3px]">
-                                        @foreach (range(1, (int) floor($review['stars'])) as $i)
-                                            <flux:icon.star-fill wire:key="review-{{ $index }}-star-{{ $i }}" class="h-4 w-[17px]" />
+                                        @foreach (range(1, (int) floor($review->rating)) as $i)
+                                            <flux:icon.star-fill wire:key="review-{{ $review->id }}-star-{{ $i }}" class="h-4 w-[17px]" />
                                         @endforeach
-                                        @if ($review['stars'] > floor($review['stars']))
+                                        @if ($review->rating > floor($review->rating))
                                             <flux:icon.star-mid class="h-4 w-[17px]" />
                                         @endif
                                     </p>
-                                    <h3 class="mt-2.5 text-[15px] font-bold leading-[22px] text-[#0D171A]">{{ $review['title'] }}</h3>
-                                    <p class="mt-0.5 max-w-[1032px] text-[15px] leading-[22px] text-[#0D171A]">{{ $review['body'] }}</p>
+                                    <h3 class="mt-2.5 text-[15px] font-bold leading-[22px] text-[#0D171A]">{{ $review->title }}</h3>
+                                    <p class="mt-0.5 max-w-[1032px] text-[15px] leading-[22px] text-[#0D171A]">{{ $review->body }}</p>
                                     <div class="mt-7 flex items-center gap-3">
-                                        <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg text-white" style="background-color: {{ $review['avatar'] }}">{{ $review['initials'] }}</span>
+                                        <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg text-white" style="background-color: {{ $review->avatar_color }}">{{ $review->author_initials }}</span>
                                         <span class="text-[13px] leading-[22px]">
                                             <span class="block text-[#627277]">Recensito da</span>
-                                            <span class="block text-[#0D171A]">{{ $review['name'] }}</span>
+                                            <span class="block text-[#0D171A]">{{ $review->author_name }}</span>
                                         </span>
                                     </div>
                                 </article>
@@ -181,7 +166,7 @@
                 {{-- 2c. Card prenotazione (sticky su desktop) --}}
                 <aside class="w-full max-w-[453px] shrink-0 lg:sticky lg:top-24 lg:w-[453px]">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-[22px]">
-                        <p class="text-[28px] font-light text-[#2B2B2B]">12 &euro; all&rsquo;ora</p>
+                        <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_hour', ['price' => \App\Support\Format::money($service->price_cents)]) }}</p>
 
                         <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
                             {{-- TODO: dropdown selezione giorno --}}
@@ -223,13 +208,13 @@
                         <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
 
                         <div class="mt-6 flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                            <span>12 &euro; per 4 ore</span>
-                            <span>48 &euro;</span>
+                            <span>{{ __('format.for_hours', ['price' => \App\Support\Format::money($service->price_cents), 'count' => $hours]) }}</span>
+                            <span>{{ \App\Support\Format::money($service->price_cents * $hours) }}</span>
                         </div>
                         <hr class="mt-5 border-[#DEDEDE]">
                         <div class="mt-4 flex items-center justify-between text-[17px] font-bold text-[#2B2B2B]">
                             <span>Totale</span>
-                            <span>48 &euro;</span>
+                            <span>{{ \App\Support\Format::money($service->price_cents * $hours) }}</span>
                         </div>
                     </div>
                 </aside>
@@ -259,9 +244,9 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/servizio-hero.jpg') }}" alt="{{ $serviceName }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ asset('img/xd/'.$service->hero_img.'.jpg') }}" alt="{{ $service->name }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-black">{{ $serviceName }}</p>
+                            <p class="truncate text-sm font-semibold text-black">{{ $service->name }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />

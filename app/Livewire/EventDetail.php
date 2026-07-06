@@ -2,6 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Enums\ProductType;
+use App\Models\Event\Event;
+use App\Support\Format;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -23,31 +26,8 @@ class EventDetail extends Component
     public const TABS = ['informazioni', 'discussione'];
 
     /**
-     * "Cosa è incluso" — due colonne di voci campione come da XD
-     * (statiche come nelle pagine sorelle; included: check verde / X rosa).
-     */
-    public const INCLUDED = [
-        [
-            ['label' => 'Aria condizionata negli spazi comuni', 'included' => true],
-            ['label' => 'Pranzo', 'included' => true],
-            ['label' => 'Ascensore', 'included' => true],
-            ['label' => 'Wifi', 'included' => true],
-            ['label' => 'Noleggio bici', 'included' => false],
-            ['label' => 'Spa', 'included' => false],
-        ],
-        [
-            ['label' => 'Dog sitter', 'included' => true],
-            ['label' => 'Servizio veterinario', 'included' => true],
-            ['label' => 'Omaggio di benvenuto', 'included' => true],
-            ['label' => 'Dog Beach nelle vicinanze', 'included' => true],
-            ['label' => 'Supplemento animali', 'included' => false],
-            ['label' => 'Piscina per cani', 'included' => false],
-        ],
-    ];
-
-    /**
-     * Tab "Discussione" — thread di esempio come da XD (statici come le altre
-     * pagine; struttura pronta per essere sostituita da un backend reale).
+     * Tab "Discussione" — thread di esempio come da XD; le discussioni reali
+     * arrivano con lo step 5 (contenuti/social).
      */
     public const THREADS = [
         [
@@ -67,12 +47,12 @@ class EventDetail extends Component
 
     public function mount(string $event): void
     {
-        $entry = collect(Events::EVENTS)->firstWhere('slug', $event);
+        $model = Event::where('slug', $event)->first();
 
-        abort_unless($entry !== null, 404);
+        abort_unless($model !== null, 404);
 
         // Le attività multi-giorno hanno una scheda dedicata (stesso pattern struttura → servizio).
-        if ($entry['type'] === 'activity') {
+        if ($model->type === ProductType::Activity) {
             $this->redirectRoute('eventi.activity', ['activity' => $event]);
 
             return;
@@ -94,9 +74,8 @@ class EventDetail extends Component
 
     public function addToCart(): void
     {
-        // Evento gratuito: nessun acquisto (XD "Evento gratis - Dettaglio" non ha il bottone
-        // "Aggiungi al carrello"), quindi il pop-up carrello non deve poter aprirsi.
-        if ($this->isFree()) {
+        // CTA Partecipa (gratis o senza prezzo): nessun acquisto, il pop-up carrello non deve aprirsi.
+        if ($this->event()->hasJoinCta()) {
             return;
         }
 
@@ -106,9 +85,8 @@ class EventDetail extends Component
 
     public function joinEvent(): void
     {
-        // Evento a pagamento: nessuna partecipazione gratuita (il pill "Partecipa" esiste
-        // solo nella variante gratuita), quindi il pop-up partecipa non deve poter aprirsi.
-        if (! $this->isFree()) {
+        // Evento a pagamento: il pill "Partecipa" non esiste, il pop-up partecipa non deve aprirsi.
+        if (! $this->event()->hasJoinCta()) {
             return;
         }
 
@@ -121,30 +99,29 @@ class EventDetail extends Component
         $this->joinPopupOpen = false;
     }
 
-    /** Variante gratuita (price "Gratis") → artboard XD "Evento gratis - Dettaglio". */
-    private function isFree(): bool
-    {
-        $entry = collect(Events::EVENTS)->firstWhere('slug', $this->eventSlug);
-
-        return ($entry['price'] ?? null) === 'Gratis';
-    }
-
     public function closeCartPopup(): void
     {
         $this->cartPopupOpen = false;
     }
 
+    private function event(): Event
+    {
+        return Event::where('slug', $this->eventSlug)->firstOrFail();
+    }
+
     public function render()
     {
-        $event = collect(Events::EVENTS)->firstWhere('slug', $this->eventSlug);
+        $event = $this->event();
 
         return view('livewire.event-detail', [
             'event' => $event,
-            'isFree' => $this->isFree(),
-            // Prezzo nel pop-up: solo la parte numerica ("25 € a persona" → "25 €"); fallback fisso come i dati dei pop-up fratelli (valore XD).
-            'popupPrice' => str_replace(' a persona', '', $event['price'] ?? '25 €'),
-            'includedColumns' => self::INCLUDED,
+            'isFree' => $event->is_free,
+            'canJoin' => $event->hasJoinCta(),
+            // Prezzo nel pop-up: solo la parte numerica; fallback XD 25 € per gli eventi senza prezzo.
+            'popupPrice' => Format::money($event->price_cents ?? 2500),
+            'includedColumns' => [$event->amenityRows('hotel'), $event->amenityRows('animal')],
+            'faqs' => $event->faqs,
             'threads' => self::THREADS,
-        ])->title('AnimalAmo — '.$event['title']);
+        ])->title('AnimalAmo — '.$event->title);
     }
 }

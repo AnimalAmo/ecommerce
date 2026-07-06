@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, titolo, azioni, CTA galleria --}}
         <section class="relative h-[590px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/smartbox-dettaglio-hero.jpg') }}" alt="{{ $title }}" class="absolute inset-0 h-full w-full object-cover object-[center_68%]">
+            <img src="{{ asset('img/xd/'.$box->hero_img.'.jpg') }}" alt="{{ $box->title }}" class="absolute inset-0 h-full w-full object-cover object-[center_68%]">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -17,10 +17,10 @@
                         <flux:icon.arrow-back class="h-3 w-3 shrink-0" />
                         Indietro
                     </a>
-                    <h1 class="mt-7 text-[25px] font-bold leading-[30px] text-brand-yellow">{{ $title }}</h1>
+                    <h1 class="mt-7 text-[25px] font-bold leading-[30px] text-brand-yellow">{{ $box->title }}</h1>
                     <p class="mt-2.5 flex items-center gap-2 text-[13px] font-semibold text-white">
                         <flux:icon.profile class="h-[14px] w-[14px] shrink-0" />
-                        {{ $audience }} - 2 persone
+                        {{ $box->audience }} - {{ $box->audience_people }} persone
                     </p>
                 </div>
 
@@ -53,63 +53,25 @@
                     {{-- 2a. Descrizione breve --}}
                     <section>
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Descrizione breve</h2>
-                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata.</p>
+                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $box->description }}</p>
                     </section>
 
                     {{-- 2b. Informazioni generali --}}
                     <section class="mt-10">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Informazioni generali</h2>
-                        <ul class="mt-4 space-y-4">
-                            <li class="flex items-start gap-3.5">
-                                <flux:icon.calendar-return class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
-                                <div>
-                                    <p class="text-[15px] font-medium text-[#0D171A]">Cancellazione gratuita</p>
-                                    <p class="mt-1 max-w-[613px] text-[15px] text-[#555555]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3.5">
-                                <flux:icon.coffee class="h-[18px] w-[18px] shrink-0" />
-                                <div>
-                                    <p class="text-[15px] font-medium text-[#0D171A]">Colazione inclusa</p>
-                                    <p class="mt-1 text-[15px] text-[#555555]">Orario: 7:30-11:00</p>
-                                </div>
-                            </li>
-                            <li class="flex items-start gap-3.5">
-                                <flux:icon.lunch class="h-[18px] w-[18px] shrink-0" />
-                                <div>
-                                    <p class="text-[15px] font-medium text-[#0D171A]">Pranzo e cena inclusi</p>
-                                    <p class="mt-1 text-[15px] text-[#555555]">Orario pranzo: 12:30-14:30<br>Orario cena: 19:30-21:30</p>
-                                </div>
-                            </li>
-                        </ul>
+                        @include('partials.general-info', ['rows' => $box->general_info])
                     </section>
 
                     {{-- 3. Cosa troverai --}}
                     <section class="mt-10">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Cosa troverai</h2>
-                        <div class="mt-7 flex flex-wrap gap-3">
-                            <div class="min-h-[164px] w-[215px] rounded-[4px] border border-[#DEDEDE] bg-white p-4">
-                                <flux:icon.bed class="h-[18px] w-[18px]" />
-                                <p class="mt-[18px] text-[17px] font-medium text-[#2B2B2B]">Camera da letto</p>
-                                <p class="mt-2 text-[17px] font-light leading-[25px] text-[#2B2B2B]">1 letto matrimoniale<br>1 cuccia per il tuo cane</p>
-                            </div>
-                            <div class="min-h-[164px] w-[215px] rounded-[4px] border border-[#DEDEDE] bg-white p-4">
-                                <flux:icon.lunch class="h-[18px] w-[18px]" />
-                                <p class="mt-[18px] text-[17px] font-medium text-[#2B2B2B]">Cucina ed alimenti</p>
-                                <p class="mt-2 text-[17px] font-light leading-[25px] text-[#2B2B2B]">Cucina attrezzata<br>1 pasto per il tuo cane</p>
-                            </div>
-                            <div class="min-h-[164px] w-[215px] rounded-[4px] border border-[#DEDEDE] bg-white p-4">
-                                <flux:icon.spa class="h-[18px] w-[18px]" />
-                                <p class="mt-[18px] text-[17px] font-medium text-[#2B2B2B]">Accesso alla Spa</p>
-                                <p class="mt-2 text-[17px] font-light leading-[25px] text-[#2B2B2B]">2 accessi alla Spa<br>Dog sitter</p>
-                            </div>
-                        </div>
+                        @include('partials.feature-cards', ['features' => $box->features])
                     </section>
 
                     {{-- 4. Il tuo weekend --}}
                     <section class="mt-10">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">Il tuo weekend</h2>
-                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata.</p>
+                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $box->extended_description }}</p>
                     </section>
 
                     {{-- 5. Servizi Hotel / Servizi Animali --}}
@@ -169,17 +131,18 @@
                         </div>
                         <div class="mx-[22px] border-b border-[#DEDEDE]" aria-hidden="true"></div>
 
-                        <p class="mt-[22px] text-center text-[28px] font-bold leading-[38px] text-[#2B2B2B]">215 &euro;</p>
+                        <p class="mt-[22px] text-center text-[28px] font-bold leading-[38px] text-[#2B2B2B]">{{ \App\Support\Format::money($box->price_cents) }}</p>
 
                         <div class="mx-[22px] mt-4 rounded-[4px] border border-[#DEDEDE]">
                             <div class="grid grid-cols-2 divide-x divide-[#DEDEDE] border-b border-[#DEDEDE]">
                                 <div class="px-[15px] py-3">
                                     <p class="text-[17px] font-medium text-[#2B2B2B]">Valido dal</p>
+                                    {{-- Data campione XD: il "valido dal" reale dipenderà dall'acquisto (step 3-4) --}}
                                     <p class="mt-1 text-[17px] font-light text-[#2B2B2B]">17/01/2024</p>
                                 </div>
                                 <div class="px-[15px] py-3">
                                     <p class="text-[17px] font-medium text-[#2B2B2B]">Valido per</p>
-                                    <p class="mt-1 text-[17px] font-light text-[#2B2B2B]">1 anno</p>
+                                    <p class="mt-1 text-[17px] font-light text-[#2B2B2B]">{{ \App\Support\Format::validity($box->validity_months) }}</p>
                                 </div>
                             </div>
                             <div class="border-b border-[#DEDEDE] px-[15px] py-3">

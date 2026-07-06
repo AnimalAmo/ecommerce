@@ -4,8 +4,10 @@
 <article wire:key="{{ $wireKey }}" class="relative flex h-[170px] w-full rounded-[3px] border border-[#E9E9E9] bg-white p-[6px]">
     <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
 
-    {{-- Chip tag sovrapposta alla foto in alto a sinistra (testo SEMPRE bianco, anche sui colori chiari come in XD) --}}
-    <span class="absolute left-[11px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
+    {{-- Chip tag sovrapposta alla foto in alto a sinistra (testo SEMPRE bianco, anche sui colori chiari come in XD);
+         label e colore dalla tassonomia ProductType ($item['type'] = value dell'enum) --}}
+    @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
+    <span class="absolute left-[11px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
 
     <div class="flex min-w-0 flex-1 flex-col pb-px pl-1 pr-1 pt-[7px]">
         <h2 class="line-clamp-2 pr-[9px] text-base font-semibold leading-[22px] text-black">{{ $item['title'] }}</h2>

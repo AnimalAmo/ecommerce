@@ -65,8 +65,7 @@ class Cart extends Component
     public const ITEMS = [
         [
             'id' => 1,
-            'tag' => 'Struttura',
-            'tagColor' => '#FF9F3E',
+            'type' => 'structure',
             'title' => 'Hotel Brescia',
             'location' => 'Dario Boario Terme (BS), Italia',
             'dates' => ['checkIn' => '17/02/2024', 'checkOut' => '22/02/2024'],
@@ -77,8 +76,7 @@ class Cart extends Component
         ],
         [
             'id' => 2,
-            'tag' => 'Attività',
-            'tagColor' => '#8E53E6',
+            'type' => 'activity',
             'title' => 'Weekend di escursioni',
             'location' => 'Viareggio, Italia',
             'dates' => ['checkIn' => '21/05/2024', 'checkOut' => '23/05/2024'],
@@ -89,8 +87,7 @@ class Cart extends Component
         ],
         [
             'id' => 3,
-            'tag' => 'Soggiorno',
-            'tagColor' => '#8DE0FF',
+            'type' => 'stay',
             'title' => 'Weekend in Piemonte',
             'location' => 'Torino, Italia',
             'dates' => null,
@@ -109,8 +106,7 @@ class Cart extends Component
     public const GIFT_ITEMS = [
         [
             'id' => 1,
-            'tag' => 'Struttura',
-            'tagColor' => '#FF9F3E',
+            'type' => 'structure',
             'title' => 'Weekend in Piemonte',
             'location' => 'Torino, Italia',
             'dates' => null,

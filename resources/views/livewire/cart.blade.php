@@ -74,7 +74,8 @@
                                     {{-- Foto 278x185 con chip tipologia sovrapposta (16px dentro la foto) --}}
                                     <div class="relative hidden shrink-0 sm:block">
                                         <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[185px] w-[278px] rounded-[2px] object-cover">
-                                        <span class="absolute left-4 top-4 flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
+                                        @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
+                                        <span class="absolute left-4 top-4 flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
                                     </div>
 
                                     {{-- Blocco info: titolo + righe meta (la riga date manca quando 'dates' è null e le successive salgono, come nell'item 3 XD) --}}

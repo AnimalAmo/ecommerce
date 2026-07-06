@@ -16,6 +16,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RegionSeeder::class,
+            AmenitySeeder::class,
+            StructureSeeder::class,
+            EventSeeder::class,
+            SmartboxPackageSeeder::class,
         ]);
     }
 }

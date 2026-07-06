@@ -14,6 +14,10 @@ class Region extends Model
     protected $fillable = [
         'name',
         'slug',
+        'img',
+        'position',
+        'home_position',
+        'structures_count',
     ];
 
     public function getRouteKeyName(): string

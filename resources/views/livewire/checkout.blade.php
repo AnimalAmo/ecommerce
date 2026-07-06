@@ -150,7 +150,8 @@
                                         {{-- Foto 167x111 con chip tipologia sovrapposta (dump: offset 36/45 dentro la foto) --}}
                                         <div class="relative shrink-0">
                                             <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[111px] w-[167px] rounded-[2px] object-cover">
-                                            <span class="absolute left-9 top-[45px] flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
+                                            @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
+                                            <span class="absolute left-9 top-[45px] flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
                                         </div>
 
                                         {{-- Blocco info: titolo + righe meta come nel carrello (item 3 senza riga date; adulti + cane sulla stessa riga) --}}
@@ -248,7 +249,8 @@
                                 </div>
 
                                 {{-- Chip tipologia: nello step 3 al bordo destro della riga, allineata al titolo --}}
-                                <span class="absolute right-[11px] top-[30px] flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
+                                @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
+                                <span class="absolute right-[11px] top-[30px] flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
                             </div>
                         @endforeach
                     </div>

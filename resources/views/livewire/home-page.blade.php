@@ -48,12 +48,12 @@
         </div>
         <div class="grid grid-cols-3 gap-6">
             @foreach ($regions as $region)
-                <a href="#" wire:key="reg-{{ $loop->index }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
+                <a href="{{ route('holiday.region', ['region' => $region->slug]) }}" wire:key="reg-{{ $region->id }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
                     <div class="relative overflow-hidden">
-                        <img src="{{ asset('img/xd/'.$region['img'].'.jpg') }}" alt="{{ $region['name'] }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
+                        <img src="{{ asset('img/xd/'.$region->img.'.jpg') }}" alt="{{ __('catalog.region_title', ['region' => $region->name]) }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
                         <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
-                        <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ $region['structures'] }} Strutture</flux:badge>
-                        <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white">{{ $region['name'] }}</h3>
+                        <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ __('catalog.structures_count', ['count' => $region->structures_count]) }}</flux:badge>
+                        <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white">{{ __('catalog.region_title', ['region' => $region->name]) }}</h3>
                     </div>
                 </a>
             @endforeach
@@ -78,29 +78,29 @@
         <div class="{{ $px }} pb-16 pt-6">
             <div class="grid grid-cols-5 gap-6">
                 @foreach ($events as $event)
-                    <div wire:key="ev-{{ $loop->index }}" class="group rounded-[3px] border border-[#E9E9E9] bg-white p-2">
+                    <div wire:key="ev-{{ $event->id }}" class="group rounded-[3px] border border-[#E9E9E9] bg-white p-2">
                         <div class="relative overflow-hidden">
-                            <img src="{{ asset('img/xd/'.$event['img'].'.jpg') }}" alt="{{ $event['title'] }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ asset('img/xd/'.$event->img.'.jpg') }}" alt="{{ $event->title }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
                         </div>
                         <div class="p-2 pt-3">
                             <p class="flex items-center gap-1.5 text-[13px] text-brand-purple-soft">
                                 <flux:icon.time class="h-4 w-4 shrink-0" />
-                                {{ $event['date'] }}
+                                {{ \App\Support\Format::eventTimeSentence($event->starts_at) }}
                             </p>
                             <p class="mt-1 flex items-center gap-1.5 text-[13px] text-[#555555]">
                                 <flux:icon.pin class="h-4 w-4 shrink-0 text-[#555555]" />
-                                {{ $event['location'] }}
+                                {{ $event->location }}
                             </p>
-                            <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black">{{ $event['title'] }}</h3>
+                            <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black">{{ $event->title }}</h3>
                             <div class="mt-4 flex items-center justify-between gap-2">
                                 <flux:button href="#" size="sm" class="!rounded-full !border-0 !bg-[#E9E9E9] !px-5 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
                                     <flux:icon.check-1 class="h-4 w-4" />
                                     Partecipa
                                 </flux:button>
-                                @if ($event['price'])
-                                    <p class="text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold text-[#0D171A]">€ {{ $event['price'] }}</span></p>
+                                @if ($event->price_cents !== null)
+                                    <p class="text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold text-[#0D171A]">€ {{ \App\Support\Format::amount($event->price_cents) }}</span></p>
                                 @else
-                                    <p class="text-[15px] italic text-[#627277]">Gratis</p>
+                                    <p class="text-[15px] italic text-[#627277]">{{ __('format.free') }}</p>
                                 @endif
                             </div>
                         </div>
