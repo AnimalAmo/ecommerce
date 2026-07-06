@@ -48,6 +48,14 @@ class Checkout extends Component
     /** Metodi di pagamento ammessi. */
     public const PAYMENT_METHODS = ['carta', 'apple', 'google', 'klarna', 'paypal'];
 
+    /**
+     * Email destinataria della smartbox regalo mostrata nello step "Fatto!".
+     * Mock XD: nel flusso disegnato non esiste alcun campo per raccoglierla
+     * (il carrello chiede solo dedica e messaggio), quindi resta hardcoded.
+     */
+    // TODO: persistenza regalo backend — raccogliere l'email del destinatario nel flusso reale.
+    public const GIFT_RECIPIENT_EMAIL = 'sofia.rossi@gmail.com';
+
     /** Metodi alternativi alla carta, in ordine XD (copy fedele: "Google Play"). */
     public const ALT_METHODS = [
         'apple' => 'Apple Pay',

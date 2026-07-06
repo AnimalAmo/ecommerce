@@ -209,7 +209,12 @@
                 <h1 class="mt-[109px] text-center text-2xl font-bold leading-none text-[#68CDEB]">Grazie del tuo acquisto!</h1>
 
                 <div class="mx-auto mt-2 w-full max-w-[575px] {{ $card }} pb-[30px]">
-                    <p class="px-6 pt-11 text-xl font-normal leading-none text-[#555555]">Ecco il riepilogo, controlla l’email</p>
+                    @if ($gift)
+                        {{-- Copy regalo (XD "Checkout – flusso regalo smartbox 3": 18px nero su due righe) --}}
+                        <p class="px-6 pt-11 text-lg font-normal leading-6 text-black">La Smartbox è stata mandata all’email: {{ \App\Livewire\Checkout::GIFT_RECIPIENT_EMAIL }}<br>Ecco il riepilogo del tuo acquisto:</p>
+                    @else
+                        <p class="px-6 pt-11 text-xl font-normal leading-none text-[#555555]">Ecco il riepilogo, controlla l’email</p>
+                    @endif
 
                     <div class="mt-1 divide-y divide-[#E9E9E9] px-5">
                         @foreach ($items as $item)
