@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Flux\Flux;
 use Livewire\Component;
 
 class ProfileOrderSummary extends Component
@@ -15,6 +16,40 @@ class ProfileOrderSummary extends Component
     public function mount(): void
     {
         $this->past = in_array($this->order, array_column(ProfileOrders::ORDERS['passati'], 'id'), true);
+    }
+
+    /** Articolo in recensione nel pop-up (XD "Pop-up scrivi recensione"); null = chiuso. */
+    public ?string $reviewItemId = null;
+
+    public string $reviewTitle = '';
+
+    public string $reviewText = '';
+
+    /** "Scrivi una recensione": apre il pop-up con i campi azzerati. */
+    public function openReview(string $itemId): void
+    {
+        if (in_array($itemId, array_column(self::ITEMS, 'id'), true)) {
+            $this->reviewItemId = $itemId;
+            $this->reviewTitle = '';
+            $this->reviewText = '';
+
+            Flux::modal('scrivi-recensione')->show();
+        }
+    }
+
+    /** "Annulla": chiude il pop-up scartando i campi. */
+    public function closeReview(): void
+    {
+        $this->reviewItemId = null;
+
+        Flux::modal('scrivi-recensione')->close();
+    }
+
+    /** "Conferma": chiude e basta — mock senza backend. */
+    public function confirmReview(): void
+    {
+        // TODO: invio recensione backend
+        $this->closeReview();
     }
 
     /**
@@ -66,8 +101,17 @@ class ProfileOrderSummary extends Component
 
     public function render()
     {
+        $reviewItem = null;
+
+        foreach (self::ITEMS as $item) {
+            if ($item['id'] === $this->reviewItemId) {
+                $reviewItem = $item;
+            }
+        }
+
         return view('livewire.profile-order-summary', [
             'items' => self::ITEMS,
+            'reviewItem' => $reviewItem,
         ])->title('Riepilogo ordine — AnimalAmo');
     }
 }

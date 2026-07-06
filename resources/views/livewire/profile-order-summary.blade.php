@@ -28,7 +28,7 @@
                             <div class="flex min-h-0 w-full {{ $past ? 'h-[158px]' : 'h-full' }}">
                                 <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
 
-                                <div class="flex min-w-0 flex-1 flex-col pb-[5px] pl-1 pr-1 pt-[7px]">
+                                <div class="flex min-w-0 flex-1 flex-col pb-2 pl-1 pr-1 pt-[7px] border-b border-[#E9E9E9]">
                                     <h2 class="truncate text-base font-semibold leading-none text-black">{{ $item['title'] }}</h2>
 
                                     @if ($past)
@@ -64,11 +64,9 @@
                             </div>
 
                             @if ($past)
-                                {{-- TODO: apertura "Pop-up scrivi recensione" (artboard XD dedicato) --}}
-                                <flux:button variant="ghost" class="!ml-[150px] !mt-[7px] !h-auto !self-start !p-0 !text-sm !font-medium !leading-none !text-[#2B2B2B] hover:!bg-transparent hover:!text-[#2B2B2B] [&>span]:flex [&>span]:items-center [&>span]:gap-[5px]">
-                                    <flux:icon.pencil class="!h-[14px] !w-[14px] shrink-0" />
-                                    Scrivi una recensione
-                                </flux:button>
+                                {{-- Hover ciano: seconda variante colore del simbolo XD "scrivi recensione".
+                                     icon prop: matita e testo centrati nativamente dal flex del bottone --}}
+                                <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview('{{ $item['id'] }}')" class="!h-auto !w-full flex-1 !gap-[5px] !p-0 !text-sm !font-medium !text-[#2B2B2B] transition-colors hover:!bg-transparent hover:!text-[#68CDEB] [&_svg]:!size-[14px]">Scrivi una recensione</flux:button>
                             @endif
                         </article>
                     @endforeach
@@ -78,6 +76,61 @@
     </main>
 
     @include('partials.footer-minimal')
+
+    {{-- Pop-up scrivi recensione (XD 1020x512): box articolo centrato + campi titolo/recensione, Annulla/Conferma --}}
+    <flux:modal name="scrivi-recensione" :closable="false" class="w-full !max-w-[1020px] !rounded-[3px] !border !border-[#E9E9E9] bg-white !p-6 backdrop:!bg-black/30">
+        @if ($reviewItem !== null)
+            <flux:heading level="2" class="!text-center !text-2xl !font-bold !leading-none !text-[#0D171A]">Scrivi una recensione</flux:heading>
+
+            {{-- Box articolo 467x172 con bordo sottile #C8C8C8 (niente prezzo né azioni) --}}
+            <div class="relative mx-auto flex h-[172px] w-full max-w-[467px] rounded-[3px] border border-[#C8C8C8]/70 bg-white p-[7px]">
+                <span class="absolute left-[12px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $reviewItem['tagColor'] }}">{{ $reviewItem['tag'] }}</span>
+
+                <img src="{{ asset('img/xd/' . $reviewItem['photo']) }}" alt="{{ $reviewItem['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
+
+                <div class="flex min-w-0 flex-1 flex-col pl-1">
+                    <h3 class="truncate text-base font-semibold leading-none text-black">{{ $reviewItem['title'] }}</h3>
+
+                    <div class="mr-[9px] mt-[14px] h-px shrink-0 bg-[#E9E9E9]" aria-hidden="true"></div>
+
+                    <div class="mt-[10px] space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
+                            <span class="truncate">{{ $reviewItem['location'] }}</span>
+                        </div>
+                        @if ($reviewItem['dates'] !== null)
+                            <div class="flex items-center gap-2">
+                                <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
+                                <span>{{ $reviewItem['dates'] }}</span>
+                            </div>
+                        @endif
+                        <div class="flex items-center">
+                            <div class="flex w-[112px] items-center gap-2">
+                                <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
+                                <span>{{ $reviewItem['guests'] }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
+                                <span>{{ $reviewItem['dogs'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Campi come la dedica del carrello: placeholder #0D171A non corsivo --}}
+            <div class="mt-6">
+                <flux:input wire:model="reviewTitle" placeholder="Titolo" class="!min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
+
+                <flux:textarea wire:model="reviewText" placeholder="Recensione" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
+            </div>
+
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <flux:button variant="ghost" wire:click="closeReview" class="!h-auto !p-0 !text-lg !font-medium !text-[#959595] hover:!bg-transparent hover:!text-[#959595]">Annulla</flux:button>
+                <flux:button wire:click="confirmReview" class="!h-10 !w-[134px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#68CDEB]">Conferma</flux:button>
+            </div>
+        @endif
+    </flux:modal>
 
     {{-- Modali auth raggiungibili dall'header --}}
     <livewire:auth-modal />
