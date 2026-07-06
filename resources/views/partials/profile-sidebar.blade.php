@@ -6,8 +6,7 @@
         ['key' => 'pagamento', 'label' => 'Metodo di pagamento', 'href' => route('profilo.pagamento')],
         ['key' => 'sicurezza', 'label' => 'Sicurezza', 'href' => route('profilo.sicurezza')],
         ['key' => 'ordini', 'label' => 'I miei ordini', 'href' => route('profilo.ordini')],
-        // TODO: pagina Eventi a cui partecipo (artboard XD dedicato)
-        ['key' => 'eventi', 'label' => 'Eventi a cui partecipo', 'href' => '#'],
+        ['key' => 'eventi', 'label' => 'Eventi a cui partecipo', 'href' => route('profilo.eventi')],
     ];
 @endphp
 

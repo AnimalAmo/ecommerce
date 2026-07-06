@@ -29,8 +29,7 @@
                     {{-- Righe ordine (passo XD 122): conteggio + striscia miniature | data + totale + chevron --}}
                     <div class="divide-y divide-[#DEDEDE]">
                         @foreach ($orders as $order)
-                            {{-- TODO: pagina riepilogo ordine (artboard "Profilo – i miei ordini – riepilogo") --}}
-                            <a href="#" wire:key="order-{{ $order['id'] }}" class="flex items-start justify-between gap-6 py-6">
+                            <a href="{{ route('profilo.ordini.riepilogo', $order['id']) }}" wire:key="order-{{ $order['id'] }}" class="flex items-start justify-between gap-6 py-6">
                                 <div class="min-w-0">
                                     <p class="text-[13px] leading-none text-[#555555]">{{ $this->itemsLabel($order['items']) }}</p>
                                     <div class="mt-[15px] flex gap-[3px]">
