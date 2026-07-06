@@ -2,17 +2,25 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\RedirectsAfterAuth;
 use App\Livewire\Forms\LoginForm;
 use Flux\Flux;
 use Livewire\Component;
 
 class PartnerLoginModal extends Component
 {
+    use RedirectsAfterAuth;
+
     public LoginForm $form;
 
     public function login(): void
     {
-        // TODO: authenticate the partner once the users backend exists.
+        // Ruolo verificato prima di aprire la sessione (attemptWhen): un client già
+        // loggato che sbaglia modale non perde la sua sessione, e il messaggio resta
+        // quello delle credenziali errate (non riveliamo che l'account esiste).
+        $this->form->authenticate(fn ($user): bool => $user->hasRole('partner'));
+
+        $this->finishAuthentication('partner-login');
     }
 
     public function backToLogin(): void

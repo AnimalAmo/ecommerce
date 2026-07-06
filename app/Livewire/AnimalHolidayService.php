@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Enums\ProductType;
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
 use Livewire\Attributes\Title;
@@ -11,6 +12,8 @@ use Livewire\Component;
 #[Title('AnimalAmo — Dettaglio servizio')]
 class AnimalHolidayService extends Component
 {
+    use TogglesFavorites;
+
     /** Slug regione dalla rotta (es. "lombardia"). */
     public string $regionSlug = '';
 
@@ -71,6 +74,8 @@ class AnimalHolidayService extends Component
 
         return view('livewire.animal-holiday-service', [
             'service' => $service,
+            // I servizi sono righe Structure: alias morph 'structure'.
+            'isFav' => $this->isFavorite('structure', $service->id),
             'animalServices' => $service->amenityRows('animal'),
             'faqs' => $service->faqs,
             'reviews' => $service->reviews->take(3),

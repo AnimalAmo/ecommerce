@@ -25,10 +25,8 @@
                         {{-- TODO: condivisione (nessuna interazione definita nell'XD) --}}
                         <flux:icon.share class="h-[15px] w-[15px]" />
                     </flux:button>
-                    {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
-                    <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
-                        <flux:icon.heart class="h-4 w-4" />
-                    </flux:button>
+                    {{-- Le attività sono righe Event: alias morph 'event' --}}
+                    @include('partials.favorite-heart', ['type' => 'event', 'id' => $activity->id, 'active' => $isFav])
                 </div>
 
                 {{-- CTA galleria (TODO: galleria foto attività) --}}
@@ -283,11 +281,6 @@
     </main>
 
     @include('partials.site-footer')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 
     {{-- Pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa") — duplicato dal dettaglio evento come i pop-up fratelli tra le pagine;
          dati della pagina: foto hero attività e data check-in. Solo attività con pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}

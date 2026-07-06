@@ -47,7 +47,7 @@
                         @endforeach
                     </div>
 
-                    {{-- TODO: salvataggio metodo di pagamento backend — per ora il template è statico --}}
+                    {{-- TODO step 4 (Stripe): salvataggio metodo di pagamento — resta statico fino all'integrazione --}}
                     <flux:button class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
                 </section>
             </div>
@@ -55,9 +55,4 @@
     </main>
 
     @include('partials.footer-minimal')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

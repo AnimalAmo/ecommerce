@@ -49,10 +49,13 @@
                         <flux:icon.profile class="h-5 w-5" />
                     </flux:button>
                     <flux:menu>
-                        <flux:menu.item>Il mio profilo</flux:menu.item>
-                        <flux:menu.item>I miei ordini</flux:menu.item>
+                        <flux:menu.item href="{{ route('profilo') }}">Il mio profilo</flux:menu.item>
+                        <flux:menu.item href="{{ route('profilo.ordini') }}">I miei ordini</flux:menu.item>
                         <flux:menu.separator />
-                        <flux:menu.item>Esci</flux:menu.item>
+                        <form method="POST" action="{{ route('logout') }}" class="w-full">
+                            @csrf
+                            <flux:menu.item as="button" type="submit" class="w-full">Esci</flux:menu.item>
+                        </form>
                     </flux:menu>
                 </flux:dropdown>
             @endauth

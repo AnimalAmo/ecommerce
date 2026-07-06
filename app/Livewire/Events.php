@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -9,6 +10,8 @@ use Livewire\Component;
 #[Title('AnimalAmo — Attività ed Eventi')]
 class Events extends Component
 {
+    use TogglesFavorites;
+
     public string $where = '';
 
     public string $when = '';

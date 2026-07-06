@@ -24,12 +24,13 @@ class EventPagesTest extends TestCase
             ->assertSee('Brunch Pet Friendly')
             ->assertSee('OGGI ALLE 13:30')
             ->assertSee('LUN, 8 GEN ALLE 19:30')
-            ->assertSee("25\u{A0}€ a persona")
+            // Nella griglia l'importo sta in uno <span> semibold e "a persona" è unito da nbsp
+            ->assertSeeText("25\u{A0}€ a\u{A0}persona")
             ->assertSee('Gratis')
             ->assertSee('Durata di 5 giorni')
             ->assertSee('Partecipa')
             ->assertSee('Aggiungi al carrello')
-            ->assertSee("A partire da 0,00\u{A0}€");
+            ->assertSeeText("A partire da 0,00\u{A0}€");
     }
 
     public function test_paid_event_detail_derives_dates_and_price(): void

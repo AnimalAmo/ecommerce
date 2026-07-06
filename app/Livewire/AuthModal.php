@@ -2,17 +2,22 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\RedirectsAfterAuth;
 use App\Livewire\Forms\LoginForm;
 use Flux\Flux;
 use Livewire\Component;
 
 class AuthModal extends Component
 {
+    use RedirectsAfterAuth;
+
     public LoginForm $form;
 
     public function login(): void
     {
-        // TODO: authenticate once the users backend exists.
+        $this->form->authenticate();
+
+        $this->finishAuthentication('login');
     }
 
     public function openRegister(): void

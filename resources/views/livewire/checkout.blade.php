@@ -278,9 +278,4 @@
 
     {{-- Footer slim (direttiva utente: pagine funnel carrello/checkout) --}}
     @include('partials.footer-minimal')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

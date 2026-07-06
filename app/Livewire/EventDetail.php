@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Enums\ProductType;
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Support\Format;
 use Livewire\Attributes\Url;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class EventDetail extends Component
 {
+    use TogglesFavorites;
+
     /** Slug evento dalla rotta (es. "brunch-pet-friendly"); il nome differisce dal parametro {event} per non collidere col binding Livewire. */
     public string $eventSlug = '';
 
@@ -115,6 +118,7 @@ class EventDetail extends Component
 
         return view('livewire.event-detail', [
             'event' => $event,
+            'isFav' => $this->isFavorite('event', $event->id),
             'isFree' => $event->is_free,
             'canJoin' => $event->hasJoinCta(),
             // Prezzo nel pop-up: solo la parte numerica; fallback XD 25 € per gli eventi senza prezzo.

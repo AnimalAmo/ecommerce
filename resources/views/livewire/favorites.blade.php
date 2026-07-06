@@ -25,7 +25,7 @@
                     <div class="mt-[29px] flex h-[30px] items-center justify-end gap-3">
                         <span class="text-base leading-none text-black">Filtra:</span>
                         {{-- Pannello a filo sotto la pill (offset/gap 0), angoli alti squadrati come da XD.
-                             NOTA: il symbol master XD mostra solo Evento/Attività; esteso a "Tutte" + i 5 tag in pagina per funzionalità, stesso styling. --}}
+                             NOTA: il symbol master XD mostra solo Evento/Attività; esteso a "Tutte" + le tipologie distinte presenti in pagina, stesso styling. --}}
                         <flux:dropdown align="start" offset="0" gap="0">
                             <flux:button class="!h-[30px] !w-[105px] !justify-between !rounded-full !border !border-[#C8C8C8] !bg-white !px-3 !text-sm !font-normal !text-[#555555] !shadow-none">
                                 Tipologia
@@ -51,7 +51,7 @@
                                  media query px tra quelle rem e md:grid-cols-2 vincerebbe la cascata anche a 1920. --}}
                             <div class="grid grid-cols-1 gap-x-[22px] gap-y-4 md:grid-cols-2 min-[87.5rem]:grid-cols-3">
                                 @foreach ($visibleFavorites as $item)
-                                    {{-- Card condivisa: qui il cuore è sempre attivo (giallo) e rimuove il preferito --}}
+                                    {{-- Card condivisa: qui il cuore è sempre attivo (giallo) e cancella la riga favorites ($item['id'] = pk, unica tra i morph) --}}
                                     @include('partials.favorite-card', [
                                         'item' => $item,
                                         'wireKey' => 'favorite-' . $item['id'],
@@ -70,9 +70,4 @@
     </main>
 
     @include('partials.site-footer')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

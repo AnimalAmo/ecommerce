@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Enums\ProductType;
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Support\Format;
 use Livewire\Attributes\Url;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class ActivityDetail extends Component
 {
+    use TogglesFavorites;
+
     /** Slug attività dalla rotta (es. "weekend-escursioni"); il nome differisce dal parametro {activity} per non collidere col binding Livewire. */
     public string $activitySlug = '';
 
@@ -73,6 +76,8 @@ class ActivityDetail extends Component
 
         return view('livewire.activity-detail', [
             'activity' => $activity,
+            // Le attività sono righe Event: alias morph 'event'.
+            'isFav' => $this->isFavorite('event', $activity->id),
             // L'XD non definisce un design per le attività gratuite: allineato al linguaggio
             // della variante evento gratuito ("Gratis" corsivo + pill Partecipa, niente riepilogo prezzi).
             'isFree' => $activity->is_free,

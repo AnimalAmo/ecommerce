@@ -28,4 +28,6 @@ return [
     // "Valido per" del dettaglio smartbox
     'validity_years' => '{1} 1 anno|[2,*] :years anni',
     'validity_months' => '{1} 1 mese|[2,*] :months mesi',
+    // Card preferiti smartbox: riga durata = validità del cofanetto (maiuscole nel presenter)
+    'valid_for' => 'Valido per :validity',
 ];

@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             StructureSeeder::class,
             EventSeeder::class,
             SmartboxPackageSeeder::class,
+            RoleSeeder::class,
+            DemoUserSeeder::class,
         ]);
     }
 }

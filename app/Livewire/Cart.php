@@ -119,6 +119,44 @@ class Cart extends Component
         ],
     ];
 
+    /**
+     * Card campione come da XD (artboard "Preferiti – 2"): SOLO per il carosello
+     * "più amate" dello stato vuoto, da sostituire nello step 3.
+     * 'type' è il value ProductType: label e colore chip arrivano dall'enum.
+     */
+    private const SUGGESTED = [
+        [
+            'id' => 1,
+            'title' => 'Vacanza di relax in montagna',
+            'location' => 'Alpi, Italia',
+            'type' => 'activity',
+            'metaType' => 'durata',
+            'metaText' => 'DURATA DI 5 GIORNI',
+            'photo' => 'favorites-activity-mountain.jpg',
+            'price' => '0,00 €',
+        ],
+        [
+            'id' => 2,
+            'title' => 'Hotel con piscina sul lago',
+            'location' => 'Como, Italia',
+            'type' => 'structure',
+            'metaType' => 'rating',
+            'metaText' => '4,5',
+            'photo' => 'favorites-hotel-lake.jpg',
+            'price' => '0,00 €',
+        ],
+        [
+            'id' => 3,
+            'title' => 'Sessione pomeridiana di Puppy Yoga',
+            'location' => 'Milano, Italia',
+            'type' => 'event',
+            'metaType' => 'data',
+            'metaText' => 'LUN, 30 MAG ALLE 15:30',
+            'photo' => 'favorites-puppy-yoga.jpg',
+            'price' => '0,00 €',
+        ],
+    ];
+
     /** Dedica e messaggio di default del regalo come da mock XD (fallback se i campi restano vuoti). */
     public const GIFT_DEDICATION_DEFAULT = 'Sofia';
 
@@ -414,11 +452,8 @@ class Cart extends Component
             'editingItem' => $editingItem,
             'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
             'calendarLabel' => self::MONTHS[$this->calendarMonth].' '.$this->calendarYear,
-            // Le 3 card "più amate" dello stato vuoto = preferiti 1-3 (combaciano con l'XD).
-            'suggestions' => $this->items === [] ? array_values(array_filter(
-                Favorites::FAVORITES,
-                fn (array $fav): bool => in_array($fav['id'], [1, 2, 3], true),
-            )) : [],
+            // Le 3 card "più amate" dello stato vuoto (combaciano con l'XD).
+            'suggestions' => $this->items === [] ? self::SUGGESTED : [],
         ])->title('Carrello — AnimalAmo');
     }
 }
