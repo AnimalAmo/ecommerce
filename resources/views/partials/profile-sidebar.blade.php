@@ -4,9 +4,9 @@
     $profileNav = [
         ['key' => 'profilo', 'label' => 'Profilo', 'href' => route('profilo')],
         ['key' => 'pagamento', 'label' => 'Metodo di pagamento', 'href' => route('profilo.pagamento')],
-        // TODO: pagine Sicurezza / I miei ordini / Eventi a cui partecipo (artboard XD dedicati)
-        ['key' => 'sicurezza', 'label' => 'Sicurezza', 'href' => '#'],
-        ['key' => 'ordini', 'label' => 'I miei ordini', 'href' => '#'],
+        ['key' => 'sicurezza', 'label' => 'Sicurezza', 'href' => route('profilo.sicurezza')],
+        ['key' => 'ordini', 'label' => 'I miei ordini', 'href' => route('profilo.ordini')],
+        // TODO: pagina Eventi a cui partecipo (artboard XD dedicato)
         ['key' => 'eventi', 'label' => 'Eventi a cui partecipo', 'href' => '#'],
     ];
 @endphp
