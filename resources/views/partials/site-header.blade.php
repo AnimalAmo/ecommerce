@@ -1,0 +1,61 @@
+{{-- Header sito (condiviso: home, lavora con noi). Richiede $px definito dalla pagina. --}}
+<header class="sticky top-0 z-50 border-b border-gray-150 bg-white/95 backdrop-blur">
+    <div class="{{ $px }} flex h-20 items-center justify-between">
+        <div class="flex items-center gap-10">
+            <a href="/" class="shrink-0">
+                <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="w-[90px] h-auto">
+            </a>
+            <nav class="hidden items-center gap-9 text-sm font-normal text-black lg:flex">
+                <a href="/#holiday"   class="hover:font-bold">Holiday</a>
+                <a href="{{ route('eventi') }}" class="hover:font-bold">Attività ed Eventi</a>
+                <a href="{{ route('smartbox') }}" class="hover:font-bold">Smartbox</a>
+                <a href="{{ route('news') }}" class="hover:font-bold">News</a>
+                <a href="{{ route('community') }}" class="hover:font-bold">Community</a>
+                <a href="{{ route('about') }}" class="hover:font-bold">Chi siamo</a>
+                <a href="{{ route('work-with-us') }}" class="hover:font-bold">Diventa Partner</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-5">
+            <flux:dropdown>
+                <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">ITA / EUR</flux:button>
+                <flux:menu>
+                    <flux:menu.group heading="Lingua">
+                        <flux:menu.item>Italiano</flux:menu.item>
+                        <flux:menu.item>English</flux:menu.item>
+                    </flux:menu.group>
+                    <flux:menu.group heading="Valuta">
+                        <flux:menu.item>EUR &euro;</flux:menu.item>
+                        <flux:menu.item>USD $</flux:menu.item>
+                    </flux:menu.group>
+                </flux:menu>
+            </flux:dropdown>
+
+            @guest
+                <flux:modal.trigger name="login">
+                    <flux:button class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">Accedi / Registrati</flux:button>
+                </flux:modal.trigger>
+            @endguest
+
+            <flux:button variant="ghost" size="sm" square aria-label="Preferiti" href="{{ route('preferiti') }}" class="!text-ink hover:!text-brand-magenta">
+                <flux:icon.heart class="h-5 w-5" />
+            </flux:button>
+            <flux:button variant="ghost" size="sm" square aria-label="Carrello" href="{{ route('carrello') }}" class="!text-ink hover:!text-brand-cyan">
+                <flux:icon.cart class="h-5 w-5" />
+            </flux:button>
+
+            @auth
+                <flux:dropdown>
+                    <flux:button variant="ghost" size="sm" square aria-label="Profilo" class="!text-ink hover:!text-brand-cyan">
+                        <flux:icon.profile class="h-5 w-5" />
+                    </flux:button>
+                    <flux:menu>
+                        <flux:menu.item>Il mio profilo</flux:menu.item>
+                        <flux:menu.item>I miei ordini</flux:menu.item>
+                        <flux:menu.separator />
+                        <flux:menu.item>Esci</flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+            @endauth
+        </div>
+    </div>
+</header>

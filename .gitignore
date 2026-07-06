@@ -30,4 +30,5 @@ Thumbs.db
 /design/*.png
 /design/*.jpg
 .playwright-mcp/
-/public/img/xd/
+# note: /public/img/xd/ holds optimized web assets — tracked in git
+docs/analisi-entita-dinamiche.md

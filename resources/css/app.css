@@ -1,6 +1,16 @@
 @import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
 
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@layer base {
+    *,
+    *::before,
+    *::after {
+        transition: all 0.2s ease;
+    }
+}
 @source '../../storage/framework/views/*.php';
 @source '../views';
 @source '../../app/Livewire';
@@ -46,4 +56,12 @@
     /* XD desktop grid: 1920 canvas, 140px side margins, 12 cols, 16 gutter */
     --spacing-margin: 140px;
     --container-canvas: 1920px;
+}
+
+/* Tutti gli input del portale: radius 3px (XD). Fuori da @layer per vincere
+   sulle utility rounded-* dei componenti Flux. */
+input[data-flux-control],
+select[data-flux-control],
+textarea[data-flux-control] {
+    border-radius: 3px;
 }
