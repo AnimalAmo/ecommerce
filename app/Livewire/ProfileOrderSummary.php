@@ -9,12 +9,22 @@ class ProfileOrderSummary extends Component
     /** Id ordine dalla rotta (mock: il contenuto è sempre quello dell'artboard XD). */
     public string $order = '';
 
+    /** Ordine passato → variante XD "– 1": box 206px con "Scrivi una recensione". */
+    public bool $past = false;
+
+    public function mount(): void
+    {
+        $this->past = in_array($this->order, array_column(ProfileOrders::ORDERS['passati'], 'id'), true);
+    }
+
     /**
      * Articoli dell'ordine come da XD "Profilo – i miei ordini – riepilogo":
      * card "Box preferiti" senza cuore/borsa, prezzo riga fisso "0,00 €" da mock.
      * Il secondo articolo (smartbox) non ha la riga date, come nel carrello regalo.
+     * NOTA: l'artboard "– 1" (ordine passato) ripete gli stessi 3 articoli anche se
+     * l'ordine passato in lista ne ha 2 — copy-paste del designer, mock mantenuto.
      */
-    // TODO: ordine reale da backend + variante "– 1" con "Scrivi recensione" per gli ordini passati
+    // TODO: ordine reale da backend
     public const ITEMS = [
         [
             'id' => 'hotel-brescia',
