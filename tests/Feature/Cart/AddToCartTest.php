@@ -6,6 +6,7 @@ use App\Livewire\ActivityDetail;
 use App\Livewire\AnimalHolidayService;
 use App\Livewire\AnimalHolidayStructure;
 use App\Livewire\EventDetail;
+use App\Livewire\Events;
 use App\Livewire\SmartboxDetail;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
@@ -158,6 +159,51 @@ class AddToCartTest extends TestCase
         $this->assertSame(2500, $entry['price_cents']);
         // Pagina senza contatore: sempre 1 partecipante per aggiunta (decisione ratificata).
         $this->assertSame(['participants' => 1], $entry['options']);
+    }
+
+    public function test_grid_quick_add_creates_event_line_with_toast(): void
+    {
+        // Aggiunta rapida dalla card della griglia /eventi: nessun pop-up XD, conferma via toast.
+        $event = Event::where('slug', 'brunch-pet-friendly')->firstOrFail();
+
+        Livewire::test(Events::class)
+            ->call('addToCart', $event->id)
+            ->assertOk()
+            ->assertDispatched('toast-show');
+
+        $entry = array_values(session()->get(SessionCartStorage::SESSION_KEY, []))[0];
+        $this->assertSame('event', $entry['type']);
+        $this->assertSame($event->id, $entry['id']);
+        $this->assertSame(2500, $entry['price_cents']);
+        $this->assertSame(['participants' => 1], $entry['options']);
+    }
+
+    public function test_grid_quick_add_uses_widget_defaults_for_activities(): void
+    {
+        // Attività dalla griglia: stessi default del widget di dettaglio (2 adulti, 1 cane).
+        $activity = Event::where('slug', 'weekend-escursioni')->firstOrFail();
+
+        Livewire::test(Events::class)
+            ->call('addToCart', $activity->id)
+            ->assertDispatched('toast-show');
+
+        $entry = array_values(session()->get(SessionCartStorage::SESSION_KEY, []))[0];
+        $this->assertSame($activity->id, $entry['id']);
+        // 118 € a persona × 2 adulti.
+        $this->assertSame(23600, $entry['price_cents']);
+        $this->assertSame(['adulti' => 2, 'bambini' => 0, 'ragazzi' => 0], $entry['options']['guests']);
+        $this->assertSame(['cane' => 1], $entry['options']['animals']);
+    }
+
+    public function test_grid_quick_add_is_a_noop_for_free_events(): void
+    {
+        $free = Event::where('slug', 'festa-pet-friendly')->firstOrFail();
+
+        Livewire::test(Events::class)
+            ->call('addToCart', $free->id)
+            ->assertNotDispatched('toast-show');
+
+        $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
     }
 
     public function test_free_event_is_not_added_to_cart(): void

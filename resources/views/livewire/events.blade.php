@@ -82,8 +82,7 @@
                                 <h3 class="mt-[10px] text-[20px] font-semibold leading-[25px] text-black">{{ $event->title }}</h3>
                                 <div class="mt-auto flex items-center justify-between gap-2 pt-[18px]">
                                     @if (! $event->hasJoinCta())
-                                        {{-- TODO: azione Aggiungi al carrello --}}
-                                        <flux:button class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                                        <flux:button wire:click="addToCart({{ $event->id }})" class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                                             <flux:icon.cart class="h-4 w-4 shrink-0" />
                                             Aggiungi al carrello
                                         </flux:button>
