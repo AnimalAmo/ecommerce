@@ -85,11 +85,11 @@
         <div class="{{ $px }} pb-16 pt-6">
             <div class="grid grid-cols-5 gap-6">
                 @foreach ($events as $event)
-                    <div wire:key="ev-{{ $event->id }}" class="group rounded-[3px] border border-[#E9E9E9] bg-white p-2">
+                    <div wire:key="ev-{{ $event->id }}" class="group flex h-full flex-col rounded-[3px] border border-[#E9E9E9] bg-white p-2">
                         <div class="relative overflow-hidden">
                             <img src="{{ asset('img/xd/'.$event->img.'.jpg') }}" alt="{{ $event->title }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
                         </div>
-                        <div class="p-2 pt-3">
+                        <div class="flex flex-1 flex-col p-2 pt-3">
                             <p class="flex items-center gap-1.5 text-[13px] text-brand-purple-soft">
                                 <flux:icon.time class="h-4 w-4 shrink-0" />
                                 {{ \App\Support\Format::eventTimeSentence($event->starts_at) }}
@@ -99,15 +99,17 @@
                                 {{ $event->location }}
                             </p>
                             <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black">{{ $event->title }}</h3>
-                            <div class="mt-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                                <flux:button href="#" size="sm" class="!rounded-full !border-0 !bg-[#E9E9E9] !px-5 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
+                            {{-- Blocco pulsante+prezzo: sempre in fondo (mt-auto) e su un solo rigo,
+                                 pulsante e prezzo affiancati; 'A partire da' più piccolo per starci. --}}
+                            <div class="mt-auto flex items-center justify-between gap-2 pt-4">
+                                <flux:button href="#" size="sm" class="shrink-0 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
                                     <flux:icon.check-1 class="h-4 w-4" />
                                     Partecipa
                                 </flux:button>
                                 @if ($event->price_cents !== null)
-                                    <p class="ml-auto whitespace-nowrap text-[15px] font-normal text-[#627277]">A partire da <span class="font-semibold text-[#0D171A]">€ {{ \App\Support\Format::amount($event->price_cents) }}</span></p>
+                                    <p class="shrink-0 whitespace-nowrap text-right text-[13px] font-normal text-[#627277]">A partire da <span class="text-[15px] font-semibold text-[#0D171A]">€ {{ \App\Support\Format::amount($event->price_cents) }}</span></p>
                                 @else
-                                    <p class="ml-auto whitespace-nowrap text-[15px] italic text-[#627277]">{{ __('format.free') }}</p>
+                                    <p class="shrink-0 whitespace-nowrap text-[15px] italic text-[#627277]">{{ __('format.free') }}</p>
                                 @endif
                             </div>
                         </div>

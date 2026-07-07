@@ -5,14 +5,16 @@
             <a href="/" class="shrink-0">
                 <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="w-[90px] h-auto">
             </a>
+            {{-- Stato active della pagina corrente = stesso grassetto dell'hover. --}}
+            @php $navActive = fn (string ...$patterns): string => request()->routeIs(...$patterns) ? 'font-bold' : ''; @endphp
             <nav class="hidden items-center gap-9 text-sm font-normal text-black lg:flex">
-                <a href="/#holiday"   class="hover:font-bold">Holiday</a>
-                <a href="{{ route('eventi') }}" class="hover:font-bold">Attività ed Eventi</a>
-                <a href="{{ route('smartbox') }}" class="hover:font-bold">Smartbox</a>
-                <a href="{{ route('news') }}" class="hover:font-bold">News</a>
-                <a href="{{ route('community') }}" class="hover:font-bold">Community</a>
-                <a href="{{ route('about') }}" class="hover:font-bold">Chi siamo</a>
-                <a href="{{ route('work-with-us') }}" class="hover:font-bold">Diventa Partner</a>
+                <a href="/#holiday"   class="hover:font-bold {{ $navActive('home', 'holiday', 'holiday.*') }}">Holiday</a>
+                <a href="{{ route('eventi') }}" class="hover:font-bold {{ $navActive('eventi', 'eventi.*') }}">Attività ed Eventi</a>
+                <a href="{{ route('smartbox') }}" class="hover:font-bold {{ $navActive('smartbox', 'smartbox.*') }}">Smartbox</a>
+                <a href="{{ route('news') }}" class="hover:font-bold {{ $navActive('news', 'news.*') }}">News</a>
+                <a href="{{ route('community') }}" class="hover:font-bold {{ $navActive('community') }}">Community</a>
+                <a href="{{ route('about') }}" class="hover:font-bold {{ $navActive('about') }}">Chi siamo</a>
+                <a href="{{ route('work-with-us') }}" class="hover:font-bold {{ $navActive('work-with-us', 'work-with-us.*') }}">Diventa Partner</a>
             </nav>
         </div>
         <div class="flex items-center gap-5">
