@@ -26,6 +26,7 @@ class LangParityTest extends TestCase
                 'orders',
                 'payment',
                 'product-type',
+                'profile',
                 'validation',
             ],
         );

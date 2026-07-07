@@ -172,9 +172,19 @@ class PaypalGatewayTest extends TestCase
 
     // ── webhook ─────────────────────────────────────────────────────────
 
+    /** Webhook firmato e verificato: PAYPAL_WEBHOOK_ID configurato + verifica firma SUCCESS (fail-closed). */
+    private function fakeVerifiedSignature(): void
+    {
+        config(['payment.paypal.webhook_id' => 'WH-ID-1']);
+        Http::fake([
+            self::BASE.'/v1/oauth2/token' => Http::response(['access_token' => 'test-token']),
+            self::BASE.'/v1/notifications/verify-webhook-signature' => Http::response(['verification_status' => 'SUCCESS']),
+        ]);
+    }
+
     public function test_webhook_completes_a_pending_payment(): void
     {
-        Http::fake();
+        $this->fakeVerifiedSignature();
         $payment = $this->pendingPaypalPayment('PP-ORDER-1');
 
         $handled = (new PaypalGateway)->handleWebhook($this->captureCompletedEvent('PP-ORDER-1'), []);
@@ -188,7 +198,7 @@ class PaypalGatewayTest extends TestCase
 
     public function test_webhook_is_idempotent_when_the_payment_is_already_completed(): void
     {
-        Http::fake();
+        $this->fakeVerifiedSignature();
         $paidAt = now()->subDay()->startOfSecond();
         $payment = OrderPayment::factory()->completed()->create([
             'payment_method' => PaymentMethod::Paypal,
@@ -205,7 +215,7 @@ class PaypalGatewayTest extends TestCase
 
     public function test_webhook_with_unknown_order_returns_null(): void
     {
-        Http::fake();
+        $this->fakeVerifiedSignature();
 
         $handled = (new PaypalGateway)->handleWebhook($this->captureCompletedEvent('PP-UNKNOWN'), []);
 
@@ -214,13 +224,31 @@ class PaypalGatewayTest extends TestCase
 
     public function test_webhook_ignores_unrelated_event_types(): void
     {
-        Http::fake();
+        $this->fakeVerifiedSignature();
         $this->pendingPaypalPayment('PP-ORDER-1');
 
         $event = $this->captureCompletedEvent('PP-ORDER-1');
         $event['event_type'] = 'PAYMENT.CAPTURE.DENIED';
 
         $this->assertNull((new PaypalGateway)->handleWebhook($event, []));
+    }
+
+    public function test_webhook_is_rejected_when_webhook_id_is_not_configured(): void
+    {
+        // Fail-closed: senza PAYPAL_WEBHOOK_ID un webhook non firmato viene rifiutato
+        // (mai accettato/processato) — un POST falso su /webhooks/paypal non completa nulla.
+        config(['payment.paypal.webhook_id' => '']);
+        Http::fake();
+        $payment = $this->pendingPaypalPayment('PP-ORDER-1');
+
+        try {
+            (new PaypalGateway)->handleWebhook($this->captureCompletedEvent('PP-ORDER-1'), []);
+            $this->fail('Un webhook senza PAYPAL_WEBHOOK_ID configurato deve essere rifiutato.');
+        } catch (RuntimeException) {
+            // atteso
+        }
+
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
     }
 
     public function test_webhook_signature_verification_failure_throws(): void

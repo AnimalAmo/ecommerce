@@ -110,6 +110,9 @@ class BookingPricingService
      */
     public static function persons(array $options): int
     {
-        return (int) ($options['participants'] ?? array_sum($options['guests'] ?? []));
+        // Clamp minimo 1 come nights()/hours(): il client può idratare guests
+        // con valori negativi (stepper Livewire senza #[Locked]) — senza clamp
+        // il totale riga diventerebbe negativo e sconterebbe il carrello.
+        return max(1, (int) ($options['participants'] ?? array_sum($options['guests'] ?? [])));
     }
 }

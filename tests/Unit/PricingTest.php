@@ -148,6 +148,22 @@ class PricingTest extends TestCase
         ];
     }
 
+    public function test_ospiti_negativi_non_generano_una_riga_a_prezzo_negativo(): void
+    {
+        // Regressione security: il client può idratare editGuests con valori
+        // negativi (stepper Livewire senza #[Locked]). Senza clamp la riga
+        // sarebbe negativa (11800 × -40) e sconterebbe il totale carrello.
+        $activity = new Event(['type' => ProductType::Activity, 'price_cents' => 11800, 'is_free' => false]);
+
+        $quote = $this->pricing->quote($activity, [
+            'guests' => ['adulti' => -40, 'ragazzi' => 0, 'bambini' => 0],
+        ]);
+
+        // persons() clampa a minimo 1: la riga resta positiva, mai un credito.
+        $this->assertSame(11800, $quote);
+        $this->assertGreaterThan(0, $quote);
+    }
+
     public function test_evento_gratuito_non_e_acquistabile(): void
     {
         // CTA Partecipa: mai nel carrello, niente fallback di prezzo

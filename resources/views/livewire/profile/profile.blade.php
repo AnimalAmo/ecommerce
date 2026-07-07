@@ -36,6 +36,17 @@
                         @endforeach
                     </div>
 
+                    {{-- Ri-autenticazione: obbligatoria solo se si modifica l'email --}}
+                    @if ($email !== auth()->user()->email)
+                        <div class="mt-6 w-full min-[68rem]:w-[472px]" wire:key="field-currentPassword">
+                            <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">Password attuale (per cambiare l'email)</flux:label>
+                            <div class="mt-[11px]">
+                                <flux:input type="password" wire:model="currentPassword" placeholder="***************" class="{{ $inputClasses }} [&_input]:placeholder:!text-[#0D171A]" />
+                            </div>
+                            <flux:error name="currentPassword" class="!mt-1 !pl-[15px] !text-xs" />
+                        </div>
+                    @endif
+
                     <flux:button wire:click="save" class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
                 </section>
             </div>

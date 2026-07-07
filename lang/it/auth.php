@@ -16,4 +16,7 @@ return [
     'password' => 'La password inserita non è corretta.',
     'throttle' => 'Troppi tentativi di accesso. Riprova tra :seconds secondi.',
 
+    // Registrazione: password ancora da scegliere ("una", non "la" del login).
+    'choose_password' => 'Inserisci una password.',
+
 ];

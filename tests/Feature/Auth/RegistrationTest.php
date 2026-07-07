@@ -118,6 +118,27 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    /**
+     * Regressione security: lo step 1 rivela l'esistenza di un'email
+     * (unique:users). Senza throttle un attaccante enumera gli utenti in massa;
+     * il rate limiter per IP blocca dopo 10 tentativi.
+     */
+    public function test_registration_step_one_is_rate_limited(): void
+    {
+        $component = Livewire::test(RegisterModal::class)
+            ->set('form.email', 'enum-check@example.com');
+
+        // I primi 10 tentativi passano il rate limiter (falliscono solo sulla
+        // validazione degli altri campi, non sull'email).
+        for ($i = 0; $i < 10; $i++) {
+            $component->call('next')->assertHasNoErrors(['form.email']);
+        }
+
+        // L'11° tentativo è bloccato: l'errore ora è sull'email (throttle).
+        $component->call('next')->assertHasErrors(['form.email']);
+        $this->assertSame(1, $component->get('step'));
+    }
+
     public function test_duplicate_email_is_blocked_at_step_one(): void
     {
         User::factory()->create(['email' => 'giulia.rossi@example.com']);

@@ -79,7 +79,7 @@
             <div class="{{ $px }} flex min-h-[660px] flex-col justify-end pb-10 pt-24">
                 <h2 class="text-4xl font-extrabold text-white">Eventi pet friendly</h2>
                 <p class="mt-3 max-w-xl text-lg text-white/85">Esperienze, gite e attività da vivere insieme al tuo amico a quattro zampe.</p>
-                <a href="#" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri gli eventi</a>
+                <a href="{{ route('eventi') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri gli eventi</a>
             </div>
         </div>
         <div class="{{ $px }} pb-16 pt-6">
@@ -102,7 +102,7 @@
                             {{-- Blocco pulsante+prezzo: sempre in fondo (mt-auto) e su un solo rigo,
                                  pulsante e prezzo affiancati; 'A partire da' più piccolo per starci. --}}
                             <div class="mt-auto flex items-center justify-between gap-2 pt-4">
-                                <flux:button href="#" size="sm" class="shrink-0 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
+                                <flux:button href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event) : route('eventi.detail', $event) }}" size="sm" class="shrink-0 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
                                     <flux:icon.check-1 class="h-4 w-4" />
                                     Partecipa
                                 </flux:button>
@@ -117,7 +117,7 @@
                 @endforeach
             </div>
             <div class="mt-10 flex justify-center">
-                <a href="#" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
+                <a href="{{ route('eventi') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
             </div>
         </div>
     </section>
@@ -178,7 +178,7 @@
                 <div class="my-auto">
                     <h2 class="text-4xl font-extrabold text-white">Community</h2>
                     <p class="mt-3 max-w-md text-lg text-white/85">Confrontati con altri pet-lover: consigli, racconti di viaggio e domande prima di partire.</p>
-                    <a href="#" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri la community</a>
+                    <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri la community</a>
                 </div>
                 {{-- Box recensione XD: glass bianco su foto, blur 7px --}}
                 <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px]">
