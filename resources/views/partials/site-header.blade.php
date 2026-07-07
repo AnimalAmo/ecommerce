@@ -43,14 +43,14 @@
             @endguest
 
             <div class="flex items-center gap-3">
-                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.favorites') }}" href="{{ route('preferiti') }}" class="!text-ink hover:!text-brand-magenta">
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.favorites') }}" href="{{ route('preferiti') }}" class="!rounded-full !text-ink hover:!text-brand-magenta">
                     <flux:icon.heart class="h-5 w-5" />
                 </flux:button>
                 <livewire:commerce.cart-badge />
 
                 @auth
                     <flux:dropdown>
-                        <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.profile') }}" class="!text-ink hover:!text-brand-cyan">
+                        <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.profile') }}" class="!rounded-full !text-ink hover:!text-brand-cyan">
                             <flux:icon.profile class="h-5 w-5" />
                         </flux:button>
                         <flux:menu>
