@@ -2,10 +2,8 @@
 
 namespace App\Livewire\Content;
 
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('AnimalAmo — News')]
 class News extends Component
 {
     /**
@@ -26,6 +24,6 @@ class News extends Component
 
     public function render()
     {
-        return view('livewire.content.news', ['articles' => self::ARTICLES]);
+        return view('livewire.content.news', ['articles' => self::ARTICLES])->title(__('news.page_title'));
     }
 }

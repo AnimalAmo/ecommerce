@@ -3,10 +3,8 @@
 namespace App\Livewire\Partner;
 
 use App\Livewire\Forms\PartnerApplicationForm;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('AnimalAmo — Lavora con noi')]
 class WorkWithUs extends Component
 {
     public PartnerApplicationForm $form;
@@ -19,6 +17,7 @@ class WorkWithUs extends Component
 
     public function render()
     {
-        return view('livewire.partner.work-with-us');
+        return view('livewire.partner.work-with-us')
+            ->title(__('partner.title_work_with_us'));
     }
 }

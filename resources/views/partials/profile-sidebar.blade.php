@@ -2,11 +2,11 @@
 {{-- Riceve $active: chiave della voce corrente. Voci senza pagina: ancora inerte. --}}
 @php
     $profileNav = [
-        ['key' => 'profilo', 'label' => 'Profilo', 'href' => route('profilo')],
-        ['key' => 'pagamento', 'label' => 'Metodo di pagamento', 'href' => route('profilo.pagamento')],
-        ['key' => 'sicurezza', 'label' => 'Sicurezza', 'href' => route('profilo.sicurezza')],
-        ['key' => 'ordini', 'label' => 'I miei ordini', 'href' => route('profilo.ordini')],
-        ['key' => 'eventi', 'label' => 'Eventi a cui partecipo', 'href' => route('profilo.eventi')],
+        ['key' => 'profilo', 'label' => __('profile.nav_profile'), 'href' => route('profilo')],
+        ['key' => 'pagamento', 'label' => __('profile.nav_payment'), 'href' => route('profilo.pagamento')],
+        ['key' => 'sicurezza', 'label' => __('profile.nav_security'), 'href' => route('profilo.sicurezza')],
+        ['key' => 'ordini', 'label' => __('profile.nav_orders'), 'href' => route('profilo.ordini')],
+        ['key' => 'eventi', 'label' => __('profile.nav_events'), 'href' => route('profilo.eventi')],
     ];
 @endphp
 

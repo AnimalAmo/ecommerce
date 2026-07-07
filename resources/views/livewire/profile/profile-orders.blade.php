@@ -14,7 +14,7 @@
                 @include('partials.profile-sidebar', ['active' => 'ordini'])
 
                 <section class="w-full min-w-0 p-6 lg:w-[1012px] lg:shrink-0 {{ $card }}">
-                    <h1 class="text-2xl font-bold leading-none text-black">I miei ordini</h1>
+                    <h1 class="text-2xl font-bold leading-none text-black">{{ __('profile.orders_title') }}</h1>
 
                     {{-- Tab: stesso pattern dello stepper checkout (linea #DEDEDE, attivo ciano con sottolineatura 2.5px) --}}
                     <div class="relative mt-[50px]">

@@ -18,7 +18,7 @@
 
                 {{-- Card "Informazioni personali" 1012x555: due colonne di campi 472 (gap 20), righe a passo 79 --}}
                 <section class="w-full min-w-0 p-6 lg:w-[1012px] lg:shrink-0 {{ $card }}">
-                    <h1 class="text-2xl font-bold leading-none text-black">Informazioni personali</h1>
+                    <h1 class="text-2xl font-bold leading-none text-black">{{ __('profile.personal_info_title') }}</h1>
 
                     <div class="mt-6 flex flex-col gap-4 min-[68rem]:flex-row min-[68rem]:gap-5">
                         @foreach (['left' => $fieldsLeft, 'right' => $fieldsRight] as $col => $fields)
@@ -39,7 +39,7 @@
                     {{-- Ri-autenticazione: obbligatoria solo se si modifica l'email --}}
                     @if ($email !== auth()->user()->email)
                         <div class="mt-6 w-full min-[68rem]:w-[472px]" wire:key="field-currentPassword">
-                            <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">Password attuale (per cambiare l'email)</flux:label>
+                            <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ __('profile.field_current_password_email') }}</flux:label>
                             <div class="mt-[11px]">
                                 <flux:input type="password" wire:model="currentPassword" placeholder="***************" class="{{ $inputClasses }} [&_input]:placeholder:!text-[#0D171A]" />
                             </div>
@@ -47,7 +47,7 @@
                         </div>
                     @endif
 
-                    <flux:button wire:click="save" class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
+                    <flux:button wire:click="save" class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('profile.save') }}</flux:button>
                 </section>
             </div>
         </div>

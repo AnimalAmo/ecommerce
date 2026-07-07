@@ -12,28 +12,28 @@
             <div class="mx-auto w-full max-w-[1496px]">
                 @if ($items === [])
                     {{-- Titolo stato vuoto: "Carrello" Nunito Bold 36 nero (artboard "Carrello vuoto", niente conteggio) --}}
-                    <h1 class="text-4xl font-bold leading-none text-black">Carrello</h1>
+                    <h1 class="text-4xl font-bold leading-none text-black">{{ __('cart.ui.title') }}</h1>
 
                     {{-- Card vuota 865x305 centrata (stesso look dello stato vuoto preferiti).
                          Il doodle ciano a mano libera (Tracciato 654/655) è SALTATO: il Tracciato 655 arriva
                          con offset master corrotti nel .xd — stessa decisione presa su /preferiti. --}}
                     <div class="mx-auto mt-[37px] flex min-h-[305px] w-full max-w-[865px] flex-col items-center rounded-[3px] border border-[#E9E9E9] bg-white px-6 pt-14 text-center shadow-[0px_1px_10px_#0000001A]">
-                        <h2 class="text-2xl font-bold leading-none text-[#68CDEB]">Non hai ancora prenotato attività</h2>
-                        <p class="mt-10 text-lg font-medium leading-none text-black">Prepara i tuoi amici a quattro zampe: organizza la vostra prossima avventura.</p>
-                        <flux:button href="{{ url('/eventi') }}" class="mt-[63px] !h-10 !w-[244px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Esperienze pensate per te</flux:button>
+                        <h2 class="text-2xl font-bold leading-none text-[#68CDEB]">{{ __('cart.ui.empty_heading') }}</h2>
+                        <p class="mt-10 text-lg font-medium leading-none text-black">{{ __('cart.ui.empty_text') }}</p>
+                        <flux:button href="{{ url('/eventi') }}" class="mt-[63px] !h-10 !w-[244px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.empty_cta') }}</flux:button>
                     </div>
 
                     {{-- Sezione "Le attività più amate": heading + linea a tutta larghezza + card reali (top prodotti per numero di preferiti) --}}
-                    <h2 class="mt-[120px] text-2xl font-medium leading-none text-black">Le attività più amate su Animal-amo</h2>
+                    <h2 class="mt-[120px] text-2xl font-medium leading-none text-black">{{ __('cart.ui.most_loved') }}</h2>
                     <div class="mt-[22px] h-px w-full bg-[#E9E9E9]" aria-hidden="true"></div>
 
                     <div class="relative mt-[18px]">
                         {{-- TODO: carosello reale — frecce e puntini per ora solo visivi come gli altri TODO --}}
                         {{-- !absolute obbligatorio: flux:button porta già "relative" e in cascata vincerebbe su "absolute" --}}
-                        <flux:button variant="ghost" square aria-label="Card precedenti" class="!absolute -left-[17px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+                        <flux:button variant="ghost" square aria-label="{{ __('cart.ui.prev_cards') }}" class="!absolute -left-[17px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
                             <flux:icon.chevron-left class="!h-5 !w-5 text-[#2B2B2B]" />
                         </flux:button>
-                        <flux:button variant="ghost" square aria-label="Card successive" class="!absolute -right-[9px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+                        <flux:button variant="ghost" square aria-label="{{ __('cart.ui.next_cards') }}" class="!absolute -right-[9px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
                             <flux:icon.chevron-right class="!h-5 !w-5 text-[#2B2B2B]" />
                         </flux:button>
 
@@ -56,12 +56,12 @@
                     {{-- Puntini paginazione 9px (uno per card reale): attivo #2B2B2B, inattivi #DEDEDE --}}
                     <div class="mt-6 flex items-center justify-center gap-[10px]">
                         @foreach ($suggestions as $index => $suggested)
-                            <flux:button variant="ghost" square wire:key="dot-{{ $index }}" aria-label="Pagina {{ $index + 1 }}" class="!h-[9px] !w-[9px] !min-w-0 !rounded-full !p-0 {{ $index === 0 ? '!bg-[#2B2B2B] hover:!bg-[#2B2B2B]' : '!bg-[#DEDEDE] hover:!bg-[#DEDEDE]' }}"></flux:button>
+                            <flux:button variant="ghost" square wire:key="dot-{{ $index }}" aria-label="{{ __('cart.ui.page_number', ['number' => $index + 1]) }}" class="!h-[9px] !w-[9px] !min-w-0 !rounded-full !p-0 {{ $index === 0 ? '!bg-[#2B2B2B] hover:!bg-[#2B2B2B]' : '!bg-[#DEDEDE] hover:!bg-[#DEDEDE]' }}"></flux:button>
                         @endforeach
                     </div>
                 @else
                     {{-- Titolo 20px regular grigio (non un H1 bold) con conteggio dinamico e singolare/plurale --}}
-                    <h1 class="text-xl font-normal leading-none text-[#555555]">Carrello ({{ $count }} {{ $count === 1 ? 'articolo' : 'articoli' }})</h1>
+                    <h1 class="text-xl font-normal leading-none text-[#555555]">{{ __('cart.ui.title') }} ({{ $count }} {{ $count === 1 ? __('cart.ui.item_one') : __('cart.ui.item_many') }})</h1>
 
                     <div class="mt-[54px] flex flex-col gap-[35px] min-[87.5rem]:flex-row min-[87.5rem]:items-start">
                         {{-- Colonna sinistra: card articoli 1062, gap verticale 20 --}}
@@ -123,11 +123,11 @@
                                         <div class="flex w-[100px] items-center justify-center border-l border-[#E9E9E9]">
                                             {{-- Eventi: data fissa e 1 partecipante, nessuna Modifica --}}
                                             @if ($item['family'] !== 'event')
-                                                <flux:button variant="ghost" wire:click="openEdit('{{ $item['id'] }}')" class="!h-auto !p-0 !text-sm !font-medium !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">Modifica</flux:button>
+                                                <flux:button variant="ghost" wire:click="openEdit('{{ $item['id'] }}')" class="!h-auto !p-0 !text-sm !font-medium !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">{{ __('cart.ui.edit') }}</flux:button>
                                             @endif
                                         </div>
                                         <div class="flex w-[124px] items-center justify-center border-l border-[#E9E9E9]">
-                                            <flux:button variant="ghost" wire:click="removeItem('{{ $item['id'] }}')" class="!h-auto !p-0 !text-sm !font-medium !text-[#EA2E68] hover:!bg-transparent hover:!text-[#EA2E68]">Elimina</flux:button>
+                                            <flux:button variant="ghost" wire:click="removeItem('{{ $item['id'] }}')" class="!h-auto !p-0 !text-sm !font-medium !text-[#EA2E68] hover:!bg-transparent hover:!text-[#EA2E68]">{{ __('cart.ui.remove') }}</flux:button>
                                         </div>
                                     </div>
                                     </div>
@@ -143,9 +143,9 @@
 
                                             {{-- Campi dedica: stile input checkout ma vuoti (placeholder #0D171A non corsivo);
                                                  persistiti sulla riga (options.gift) alla CTA "Vai al checkout" --}}
-                                            <flux:input wire:model="giftDedication.{{ $item['id'] }}" placeholder="Dedicato a" class="mt-4 !min-w-0 !max-w-[972px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
+                                            <flux:input wire:model="giftDedication.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_dedication_placeholder') }}" class="mt-4 !min-w-0 !max-w-[972px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
                                             {{-- flux:textarea NON ha wrapper (la radice È la textarea stessa): classi dirette, niente selettori [&_textarea] --}}
-                                            <flux:textarea wire:model="giftMessage.{{ $item['id'] }}" placeholder="Messaggio" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !max-w-[972px] !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
+                                            <flux:textarea wire:model="giftMessage.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_message_placeholder') }}" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !max-w-[972px] !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
                                         </div>
                                     @endif
                                 </article>
@@ -156,10 +156,10 @@
                         <aside class="w-full shrink-0 min-[87.5rem]:w-[399px]">
                             <div class="rounded-[3px] border border-[#E9E9E9] bg-white {{ $gift ? 'pb-[23px]' : 'pb-[34px]' }} shadow-[0px_1px_10px_#0000001A]">
                                 <div class="flex items-start justify-between px-6 pt-10">
-                                    <span class="text-sm leading-none text-[#555555]">Totale ({{ $count }} {{ $count === 1 ? 'articolo' : 'articoli' }})</span>
+                                    <span class="text-sm leading-none text-[#555555]">{{ __('cart.ui.total') }} ({{ $count }} {{ $count === 1 ? __('cart.ui.item_one') : __('cart.ui.item_many') }})</span>
                                     <div class="text-right">
                                         <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
-                                        <div class="mt-[2px] text-xs leading-none text-[#627277]">Tasse e commissioni comprese</div>
+                                        <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ __('cart.ui.taxes_included') }}</div>
                                     </div>
                                 </div>
 
@@ -168,7 +168,7 @@
                                 {{-- TODO: campo inserimento coupon non in scope — per ora solo trigger visivo --}}
                                 <flux:button variant="ghost" class="!h-[54px] !w-full !justify-start !rounded-none !px-[18px] !text-sm !font-bold !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB] [&>span]:flex [&>span]:items-center [&>span]:gap-[9px]">
                                     <flux:icon.coupon-code class="!h-[30px] !w-[30px] shrink-0" />
-                                    Inserisci codice promozionale
+                                    {{ __('cart.ui.promo_code') }}
                                 </flux:button>
 
                                 <div class="mx-[17px] h-px bg-[#E9E9E9]" aria-hidden="true"></div>
@@ -176,12 +176,12 @@
                                 <div class="px-[15px] {{ $gift ? 'pt-[10px]' : 'pt-5' }}">
                                     <div class="flex items-center gap-5">
                                         <flux:icon.lock class="h-5 w-5 shrink-0 text-[#1E2E33]" />
-                                        <span class="text-sm leading-none text-[#0D171A]">Metodo di pagamento sicuro</span>
+                                        <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.secure_payment') }}</span>
                                     </div>
                                     @unless ($gift)
                                         <div class="mt-5 flex items-start gap-5">
                                             <flux:icon.calendar-return class="h-5 w-5 shrink-0 text-[#1E2E33]" />
-                                            <span class="text-sm leading-[19px] text-[#627277]">Cancellazione gratuita<br>(Non oltre 2 settimane prima dell’evento)</span>
+                                            <span class="text-sm leading-[19px] text-[#627277]">{{ __('cart.ui.free_cancellation') }}<br>{{ __('cart.ui.free_cancellation_note') }}</span>
                                         </div>
                                     @endunless
                                 </div>
@@ -191,9 +191,9 @@
                                 <div class="{{ $gift ? 'mt-[23px]' : 'mt-[31px]' }} flex justify-center">
                                     @if ($gift)
                                         {{-- In modalità regalo la CTA persiste dedica/messaggio sulle righe e apre il checkout regalo (?regalo=1) --}}
-                                        <flux:button wire:click="goToCheckout" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
+                                        <flux:button wire:click="goToCheckout" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('cart.ui.go_to_checkout') }}</flux:button>
                                     @else
-                                        <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
+                                        <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('cart.ui.go_to_checkout') }}</flux:button>
                                     @endif
                                 </div>
                             </div>
@@ -211,7 +211,7 @@
          (structure = date/ospiti/animali, service = giorno/orari/animali, activity = ospiti/animali, smartbox = animali) --}}
     <flux:modal name="edit-booking" :closable="false" class="w-full !max-w-[491px] !rounded-[3px] !border !border-[#E9E9E9] bg-white !p-6 backdrop:!bg-black/30">
         @if ($editingItem !== null)
-            <flux:heading level="2" class="!text-2xl !font-bold !text-[#0D171A]">Modifica prenotazione</flux:heading>
+            <flux:heading level="2" class="!text-2xl !font-bold !text-[#0D171A]">{{ __('cart.ui.edit_booking') }}</flux:heading>
 
             <div class="mt-4 space-y-4">
                 @if ($editingFamily === 'structure')
@@ -219,12 +219,12 @@
                     <div class="rounded-[4px] border border-[#DEDEDE]">
                         <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-[4px] !p-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-stretch">
                             <span class="flex w-[222px] flex-col justify-center gap-[7px] pl-[15px]">
-                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Check-in</span>
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('cart.ui.check_in') }}</span>
                                 <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
                             </span>
                             <span class="w-px self-stretch bg-[#DEDEDE]" aria-hidden="true"></span>
                             <span class="flex flex-1 flex-col justify-center gap-[7px] pl-4">
-                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Check-out</span>
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('cart.ui.check_out') }}</span>
                                 <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckOut ?? '—' }}</span>
                             </span>
                         </flux:button>
@@ -243,7 +243,7 @@
                     <div class="rounded-[4px] border border-[#DEDEDE]">
                         <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                             <span class="flex flex-col gap-[7px]">
-                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Giorno</span>
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('cart.ui.day') }}</span>
                                 <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
                             </span>
                             <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'date' ? 'rotate-180' : '' }}" />
@@ -260,7 +260,7 @@
                     <div class="rounded-[4px] border border-[#DEDEDE]">
                         <flux:button variant="ghost" wire:click="toggleField('orari')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                             <span class="flex flex-col gap-[7px]">
-                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Orari</span>
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('cart.ui.times') }}</span>
                                 <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editTimeFrom }} - {{ $editTimeTo }}</span>
                             </span>
                             <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'orari' ? 'rotate-180' : '' }}" />
@@ -270,7 +270,7 @@
                             <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
                             <div class="flex gap-4 px-6 pb-4 pt-[10px]">
                                 <div class="flex-1">
-                                    <div class="text-sm leading-none text-[#627277]">Dalle</div>
+                                    <div class="text-sm leading-none text-[#627277]">{{ __('cart.ui.from') }}</div>
                                     <flux:select wire:model="editTimeFrom" class="mt-2">
                                         @foreach ($bookingHours as $hour)
                                             <flux:select.option value="{{ $hour }}">{{ $hour }}</flux:select.option>
@@ -278,7 +278,7 @@
                                     </flux:select>
                                 </div>
                                 <div class="flex-1">
-                                    <div class="text-sm leading-none text-[#627277]">Alle</div>
+                                    <div class="text-sm leading-none text-[#627277]">{{ __('cart.ui.to') }}</div>
                                     <flux:select wire:model="editTimeTo" class="mt-2">
                                         @foreach ($bookingHours as $hour)
                                             <flux:select.option value="{{ $hour }}">{{ $hour }}</flux:select.option>
@@ -295,7 +295,7 @@
                     <div class="rounded-[4px] border border-[#DEDEDE]">
                         <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                                 <span class="flex flex-col gap-[7px]">
-                                    <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Ospiti</span>
+                                    <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('cart.ui.guests') }}</span>
                                     <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::guests($editGuests) }}</span>
                                 </span>
                                 <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
@@ -314,7 +314,7 @@
                 <div class="rounded-[4px] border border-[#DEDEDE]">
                     <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                             <span class="flex flex-col gap-[7px]">
-                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Animali</span>
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('cart.ui.animals') }}</span>
                                 <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
                             </span>
                             <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
@@ -331,8 +331,8 @@
 
             {{-- Footer: Annulla scarta le copie di lavoro, Conferma le riversa nella riga (rivalidazione+riprezzo server) --}}
             <div class="mt-8 flex items-center justify-end gap-6">
-                <flux:button variant="ghost" wire:click="closeEdit" class="!h-auto !p-0 !text-lg !font-medium !text-[#959595] hover:!bg-transparent hover:!text-[#959595]">Annulla</flux:button>
-                <flux:button wire:click="confirmEdit" class="!h-10 !w-[134px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#68CDEB]">Conferma</flux:button>
+                <flux:button variant="ghost" wire:click="closeEdit" class="!h-auto !p-0 !text-lg !font-medium !text-[#959595] hover:!bg-transparent hover:!text-[#959595]">{{ __('cart.ui.cancel') }}</flux:button>
+                <flux:button wire:click="confirmEdit" class="!h-10 !w-[134px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#68CDEB]">{{ __('cart.ui.confirm') }}</flux:button>
             </div>
         @endif
     </flux:modal>

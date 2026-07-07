@@ -11,9 +11,9 @@
             <p class="mt-4 max-w-[1295px] text-lg leading-6 text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
             {{-- Filtri (XD: quattro pill dropdown "Componente 20"; comportamento dropdown TODO) --}}
-            <p class="mt-10 text-lg font-semibold leading-6 text-black">Filtra la tua ricerca:</p>
+            <p class="mt-10 text-lg font-semibold leading-6 text-black">{{ __('smartbox.filter_your_search') }}</p>
             <div class="mt-[17px] flex flex-wrap items-center gap-[11px]">
-                @foreach (['Tipologia', 'Fascia di prezzo', 'Numero di persone', 'Luogo'] as $filter)
+                @foreach ([__('smartbox.filter_type'), __('smartbox.filter_price'), __('smartbox.filter_people'), __('smartbox.filter_place')] as $filter)
                     <flux:button wire:key="filter-{{ $loop->index }}" class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
                         {{ $filter }}
                         <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
@@ -36,7 +36,7 @@
                                 <flux:icon.profile class="h-[14px] w-[14px] shrink-0" />
                                 {{ $box->audience }}
                             </p>
-                            <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">A partire da <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">{{ \App\Support\Format::money($box->price_from_cents) }}</span></p>
+                            <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">{{ __('smartbox.from_price_label') }} <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">{{ \App\Support\Format::money($box->price_from_cents) }}</span></p>
                         </div>
                         <a href="{{ route('smartbox.detail', $box->slug) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $box->title }}"></a>
                         @include('partials.favorite-heart', ['type' => 'smartbox_package', 'id' => $box->id, 'active' => $this->isFavorite('smartbox_package', $box->id), 'classes' => '!absolute !right-[18px] !top-[18px] !z-[2]'])
@@ -46,13 +46,13 @@
 
             {{-- Paginazione (XD "Raggruppa 744"): pill reali del paginator, stile invariato --}}
             @if ($boxes->hasPages())
-                <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
+                <nav class="mt-10 flex items-center justify-center gap-3" aria-label="{{ __('smartbox.pagination') }}">
                     @if ($boxes->onFirstPage())
-                        <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                        <flux:button variant="ghost" square disabled aria-label="{{ __('smartbox.prev_page') }}" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
                             <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
                         </flux:button>
                     @else
-                        <flux:button variant="ghost" square wire:click="previousPage" aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-black">
+                        <flux:button variant="ghost" square wire:click="previousPage" aria-label="{{ __('smartbox.prev_page') }}" class="!h-auto !w-auto !p-1 !text-black">
                             <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
                         </flux:button>
                     @endif
@@ -60,11 +60,11 @@
                         <flux:button wire:key="page-{{ $page }}" square wire:click="gotoPage({{ $page }})" :aria-current="$page === $boxes->currentPage() ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === $boxes->currentPage() ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
                     @endforeach
                     @if ($boxes->hasMorePages())
-                        <flux:button variant="ghost" square wire:click="nextPage" aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
+                        <flux:button variant="ghost" square wire:click="nextPage" aria-label="{{ __('smartbox.next_page') }}" class="!h-auto !w-auto !p-1 !text-black">
                             <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
                         </flux:button>
                     @else
-                        <flux:button variant="ghost" square disabled aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                        <flux:button variant="ghost" square disabled aria-label="{{ __('smartbox.next_page') }}" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
                             <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
                         </flux:button>
                     @endif

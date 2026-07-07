@@ -4,11 +4,9 @@ namespace App\Livewire\Catalog;
 
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\SmartboxPackage\SmartboxPackage;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Title('AnimalAmo — Smartbox')]
 class Smartbox extends Component
 {
     use TogglesFavorites;
@@ -22,6 +20,6 @@ class Smartbox extends Component
         return view('livewire.catalog.smartbox', [
             // Ordine di griglia XD (riga per riga).
             'boxes' => SmartboxPackage::orderBy('position')->paginate(self::PER_PAGE),
-        ]);
+        ])->title(__('smartbox.meta_title'));
     }
 }

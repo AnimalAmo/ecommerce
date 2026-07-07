@@ -93,6 +93,6 @@ class Favorites extends Component
             'favorites' => $favorites,
             'visibleFavorites' => $visibleFavorites,
             'types' => $types,
-        ])->title('Preferiti — AnimalAmo');
+        ])->title(__('favorites.page_title'));
     }
 }

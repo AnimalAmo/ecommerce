@@ -33,17 +33,17 @@
                         @if ($step === 1)
                             {{-- Card "Verifica i tuoi dati personali": 5 campi precompilati con spunta ciano quando pieni --}}
                             <div class="{{ $card }} p-6 pb-8">
-                                <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">Verifica i tuoi dati personali</h1>
+                                <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.verify_personal_data') }}</h1>
 
                                 <div class="mt-1 space-y-4">
                                     @foreach ([
-                                        ['model' => 'firstName', 'label' => 'Nome *', 'type' => 'text'],
-                                        ['model' => 'lastName', 'label' => 'Cognome *', 'type' => 'text'],
-                                        ['model' => 'email', 'label' => 'Email *', 'type' => 'email'],
-                                        ['model' => 'country', 'label' => 'Paese', 'type' => 'text'],
-                                        ['model' => 'phone', 'label' => 'Cellulare *', 'type' => 'tel'],
+                                        ['model' => 'firstName', 'label' => __('checkout.ui.field_first_name'), 'type' => 'text'],
+                                        ['model' => 'lastName', 'label' => __('checkout.ui.field_last_name'), 'type' => 'text'],
+                                        ['model' => 'email', 'label' => __('checkout.ui.field_email'), 'type' => 'email'],
+                                        ['model' => 'country', 'label' => __('checkout.ui.field_country'), 'type' => 'text'],
+                                        ['model' => 'phone', 'label' => __('checkout.ui.field_phone'), 'type' => 'tel'],
                                         {{-- Campo solo flusso regalo: email a cui inviare la smartbox (assente in XD, necessario per l'invio reale) --}}
-                                        ...($gift ? [['model' => 'recipientEmail', 'label' => 'Email del destinatario *', 'type' => 'email']] : []),
+                                        ...($gift ? [['model' => 'recipientEmail', 'label' => __('checkout.ui.field_recipient_email'), 'type' => 'email']] : []),
                                     ] as $field)
                                         <div wire:key="field-{{ $field['model'] }}">
                                             <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
@@ -58,15 +58,15 @@
                                     @endforeach
                                 </div>
 
-                                <p class="mt-[21px] text-[11px] leading-[15px] text-[#959595]">Ti contatteremo solo in caso di aggiornamenti importanti o modifiche alla tua prenotazione</p>
+                                <p class="mt-[21px] text-[11px] leading-[15px] text-[#959595]">{{ __('checkout.ui.contact_note') }}</p>
 
-                                <flux:button wire:click="goToStep(2)" class="mt-4 !h-10 !w-[197px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Prosegui l’acquisto</flux:button>
+                                <flux:button wire:click="goToStep(2)" class="mt-4 !h-10 !w-[197px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('checkout.ui.continue_purchase') }}</flux:button>
                             </div>
                         @else
                             {{-- Card "Seleziona un metodo di pagamento": righe metodo (solo gateway abilitati) + element/bottoni del provider.
                                  Il watchdog sblocca "Paga ora" se il dispatch process-payment non trova alcun element montato --}}
                             <div class="{{ $card }} p-6" x-data="paymentWatchdog()" x-on:process-payment.window="start()">
-                                <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">Seleziona un metodo di pagamento</h1>
+                                <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.select_payment_method') }}</h1>
 
                                 @if (! $hasCardMethod && $altMethods === [])
                                     {{-- Nessun gateway abilitato/configurato: box cortese al posto delle righe, nessun crash --}}
@@ -96,7 +96,7 @@
                                             </div>
 
                                             {{-- "Paga ora" spento finché l'Element non è montato (markElementReady dal JS): mai un click nel vuoto --}}
-                                            <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">Paga ora</flux:button>
+                                            <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">{{ __('checkout.ui.pay_now') }}</flux:button>
                                         @endif
                                     @endif
 
@@ -128,14 +128,14 @@
                                                     <p x-show="walletUnavailable" style="display: none;" class="text-[13px] leading-5 text-[#959595]">{{ __('payment.errors.wallet_unavailable') }}</p>
                                                 </div>
                                             @elseif ($method === \App\Enums\PaymentMethod::Klarna)
-                                                <p class="mt-2 text-[13px] leading-none text-[#959595]">Verrai reindirizzato al provider per completare il pagamento</p>
+                                                <p class="mt-2 text-[13px] leading-none text-[#959595]">{{ __('checkout.ui.redirect_note') }}</p>
                                                 {{-- Payment Element (solo klarna): la conferma reindirizza a Klarna e torna sul return_url --}}
                                                 <div wire:ignore wire:key="stripe-klarna-{{ $clientSecret }}" class="mt-3"
                                                     x-data="stripePayment(@js($clientSecret), @js($stripeKey), { method: 'klarna', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
                                                     <div x-ref="element"></div>
                                                 </div>
                                                 {{-- "Paga ora" spento finché l'Element non è montato (markElementReady dal JS): mai un click nel vuoto --}}
-                                                <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mb-1 mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">Paga ora</flux:button>
+                                                <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mb-1 mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">{{ __('checkout.ui.pay_now') }}</flux:button>
                                             @else
                                                 {{-- PayPal: bottoni dell'SDK classico (la CTA del provider sostituisce "Paga ora") --}}
                                                 <div wire:ignore wire:key="paypal-{{ $paypalOrderId }}" class="my-3 max-w-[295px]"
@@ -153,7 +153,7 @@
                     {{-- Card "Riepilogo dell'ordine" (575, condivisa dagli step 1 e 2): stessi dati del carrello --}}
                     <aside class="w-full min-w-0 min-[87.5rem]:w-[575px] min-[87.5rem]:shrink-0">
                         <div class="{{ $card }} pb-6">
-                            <h2 class="px-6 pt-12 text-2xl font-bold leading-none text-[#0D171A]">Riepilogo dell’ordine</h2>
+                            <h2 class="px-6 pt-12 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.order_summary') }}</h2>
 
                             <div class="divide-y divide-[#E9E9E9] px-5">
                                 @foreach ($items as $item)
@@ -214,10 +214,10 @@
                                     @if ($item['gift'] && ($item['giftDedication'] !== null || $item['giftMessage'] !== null))
                                         <div wire:key="summary-gift-{{ $item['id'] }}" class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
                                             @if ($item['giftDedication'] !== null)
-                                                <p class="leading-none">Dedicato a: {{ $item['giftDedication'] }}</p>
+                                                <p class="leading-none">{{ __('checkout.ui.dedicated_to', ['name' => $item['giftDedication']]) }}</p>
                                             @endif
                                             @if ($item['giftMessage'] !== null)
-                                                <p class="mt-4 leading-[21px]">Messaggio: {{ $item['giftMessage'] }}</p>
+                                                <p class="mt-4 leading-[21px]">{{ __('checkout.ui.message', ['message' => $item['giftMessage']]) }}</p>
                                             @endif
                                         </div>
                                     @endif
@@ -228,10 +228,10 @@
 
                             {{-- Riga totale a destra con nota tasse (il "476 €" ripetuto nel mock XD regalo è un refuso del designer: somma reale) --}}
                             <div class="flex items-start justify-between px-6 pt-[46px]">
-                                <span class="text-2xl font-bold leading-none text-[#0D171A]">Totale</span>
+                                <span class="text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.total') }}</span>
                                 <div class="text-right">
                                     <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
-                                    <div class="mt-[2px] text-xs leading-none text-[#627277]">Tasse e commissioni comprese</div>
+                                    <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ __('checkout.ui.taxes_included') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -239,14 +239,14 @@
                 </div>
             @else
                 {{-- Step 3 "Fatto!": heading ciano sopra la card riepilogo compatta --}}
-                <h1 class="mt-[109px] text-center text-2xl font-bold leading-none text-[#68CDEB]">Grazie del tuo acquisto!</h1>
+                <h1 class="mt-[109px] text-center text-2xl font-bold leading-none text-[#68CDEB]">{{ __('checkout.ui.thank_you') }}</h1>
 
                 <div class="mx-auto mt-2 w-full max-w-[575px] {{ $card }} pb-[30px]">
                     @if ($gift)
                         {{-- Copy regalo (XD "Checkout – flusso regalo smartbox 3": 18px nero su due righe); email dalle options della riga regalo --}}
-                        <p class="px-6 pt-11 text-lg font-normal leading-6 text-black">La Smartbox è stata mandata all’email: {{ $giftRecipientEmail }}<br>Ecco il riepilogo del tuo acquisto:</p>
+                        <p class="px-6 pt-11 text-lg font-normal leading-6 text-black">{{ __('checkout.ui.gift_sent', ['email' => $giftRecipientEmail]) }}<br>{{ __('checkout.ui.gift_sent_summary') }}</p>
                     @else
-                        <p class="px-6 pt-11 text-xl font-normal leading-none text-[#555555]">Ecco il riepilogo, controlla l’email</p>
+                        <p class="px-6 pt-11 text-xl font-normal leading-none text-[#555555]">{{ __('checkout.ui.check_email') }}</p>
                     @endif
 
                     <div class="mt-1 divide-y divide-[#E9E9E9] px-5">
@@ -320,8 +320,8 @@
 
                     {{-- CTA finali: coppia centrata (gap 24) — Home nera + acquisti brand-cyan #6CD1EF --}}
                     <div class="mt-[33px] flex flex-col items-center justify-center gap-6 sm:flex-row">
-                        <flux:button href="{{ route('home') }}" class="!h-10 !w-[178px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Torna alla Home</flux:button>
-                        <flux:button href="{{ route('profilo.ordini') }}" class="!h-10 !w-[192px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Vai ai tuoi acquisti</flux:button>
+                        <flux:button href="{{ route('home') }}" class="!h-10 !w-[178px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('checkout.ui.back_home') }}</flux:button>
+                        <flux:button href="{{ route('profilo.ordini') }}" class="!h-10 !w-[192px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('checkout.ui.go_to_purchases') }}</flux:button>
                     </div>
                 </div>
             @endif

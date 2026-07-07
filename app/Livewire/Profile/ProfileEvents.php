@@ -11,7 +11,8 @@ class ProfileEvents extends Component
     #[Url(as: 'tab', except: 'programma')]
     public string $tab = 'programma';
 
-    public const TABS = ['programma' => 'In programma', 'passati' => 'Passati'];
+    /** chiave stato → chiave lang della label (le chiavi restano la whitelist ?tab). */
+    public const TABS = ['programma' => 'profile.tab_upcoming', 'passati' => 'profile.tab_past'];
 
     /**
      * Eventi mock come da XD "Profilo – Eventi a cui partecipo" (un solo evento in programma).
@@ -43,8 +44,8 @@ class ProfileEvents extends Component
     public function render()
     {
         return view('livewire.profile.profile-events', [
-            'tabs' => self::TABS,
+            'tabs' => array_map(fn ($key) => __($key), self::TABS),
             'events' => self::EVENTS[$this->tab],
-        ])->title('Eventi a cui partecipo — AnimalAmo');
+        ])->title(__('profile.title_events'));
     }
 }

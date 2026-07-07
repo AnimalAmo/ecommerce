@@ -13,15 +13,15 @@
         <div class="{{ $px }} flex min-h-[560px] max-h-[976px] flex-col justify-center py-24 lg:h-[calc(100svh-5rem)]">
             {{-- Box hero (stile XD: #152E36, radius 2px): titolo, testo, Dove/Quando --}}
             <div class="w-full max-w-2xl rounded-[2px] bg-[#152E36] px-4 py-6 shadow-[0px_3px_6px_#00000029]">
-                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white">Viaggia con il tuo migliore amico.</h1>
+                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white">{{ __('home.hero_title') }}</h1>
                 <p class="mt-4 text-sm leading-relaxed text-white/70">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
 
                 {{-- Search bar stile XD: pill bianco (border #F4F4F4, radius 100px) con input + pulsante dentro --}}
                 <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2">
                     <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
-                        <flux:label class="sr-only">Dove</flux:label>
+                        <flux:label class="sr-only">{{ __('home.search_where') }}</flux:label>
                         <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <flux:input wire:model="where" type="text" placeholder="Dove" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
+                        <flux:input wire:model="where" type="text" placeholder="{{ __('home.search_where') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
                     </flux:field>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
                     {{-- "Quando": trigger + popover Alpine col calendario range condiviso. Il popover NON si
@@ -30,13 +30,13 @@
                     <div x-data="{ open: false }" class="relative flex flex-1 items-center">
                         <flux:button type="button" variant="ghost" x-on:click="open = ! open" class="!flex !h-auto !w-full !items-center !justify-start !gap-3 !rounded-none !bg-transparent !px-4 !py-2 !shadow-none hover:!bg-transparent [&>span]:!flex [&>span]:!min-w-0 [&>span]:!items-center [&>span]:!gap-3">
                             <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
-                            <span class="truncate text-sm {{ $editCheckIn ? 'text-ink' : 'text-gray-400' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : 'Quando' }}</span>
+                            <span class="truncate text-sm {{ $editCheckIn ? 'text-ink' : 'text-gray-400' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : __('home.search_when') }}</span>
                         </flux:button>
                         <div x-show="open" x-on:click.outside="open = false" x-transition.opacity style="display: none" class="absolute left-0 top-full z-50 mt-3 w-[320px] rounded-[4px] border border-[#DEDEDE] bg-white p-[10px] text-left shadow-[0px_3px_6px_#00000029]">
                             @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
                         </div>
                     </div>
-                    <flux:button type="submit" square aria-label="Cerca" class="!h-auto !w-auto shrink-0 !rounded-full !bg-brand-cyan !p-3.5 !text-white hover:!bg-brand-cyan-soft">
+                    <flux:button type="submit" square aria-label="{{ __('home.search_cta') }}" class="!h-auto !w-auto shrink-0 !rounded-full !bg-brand-cyan !p-3.5 !text-white hover:!bg-brand-cyan-soft">
                         <flux:icon.search class="h-5 w-5" />
                     </flux:button>
                 </form>
@@ -50,7 +50,7 @@
         <div class="mb-10 flex items-end justify-between">
             <div>
                 <h2 class="text-4xl font-extrabold">Animal Holiday</h2>
-                <p class="mt-3 max-w-xl text-lg text-gray-500">Hotel, B&amp;B e strutture dove il tuo animale è sempre il benvenuto.</p>
+                <p class="mt-3 max-w-xl text-lg text-gray-500">{{ __('home.holiday_subtitle') }}</p>
             </div>
         </div>
         <div class="grid grid-cols-3 gap-6">
@@ -66,7 +66,7 @@
             @endforeach
         </div>
         <div class="mt-10 flex justify-center">
-            <a href="{{ route('holiday') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
+            <a href="{{ route('holiday') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">{{ __('home.see_all') }}</a>
         </div>
     </section>
 
@@ -77,9 +77,9 @@
             <img src="{{ asset('img/eventi-bg.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#00000099_0%,#71717100_100%)]"></div>
             <div class="{{ $px }} flex min-h-[660px] flex-col justify-end pb-10 pt-24">
-                <h2 class="text-4xl font-extrabold text-white">Eventi pet friendly</h2>
-                <p class="mt-3 max-w-xl text-lg text-white/85">Esperienze, gite e attività da vivere insieme al tuo amico a quattro zampe.</p>
-                <a href="{{ route('eventi') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri gli eventi</a>
+                <h2 class="text-4xl font-extrabold text-white">{{ __('home.events_title') }}</h2>
+                <p class="mt-3 max-w-xl text-lg text-white/85">{{ __('home.events_subtitle') }}</p>
+                <a href="{{ route('eventi') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.events_cta') }}</a>
             </div>
         </div>
         <div class="{{ $px }} pb-16 pt-6">
@@ -104,10 +104,10 @@
                             <div class="mt-auto flex items-center justify-between gap-2 pt-4">
                                 <flux:button href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event->slug) : route('eventi.detail', $event->slug) }}" size="sm" class="shrink-0 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
                                     <flux:icon.check-1 class="h-4 w-4" />
-                                    Partecipa
+                                    {{ __('home.join') }}
                                 </flux:button>
                                 @if ($event->price_cents !== null)
-                                    <p class="shrink-0 whitespace-nowrap text-right text-[13px] font-normal text-[#627277]">A partire da <span class="text-[15px] font-semibold text-[#0D171A]">€ {{ \App\Support\Format::amount($event->price_cents) }}</span></p>
+                                    <p class="shrink-0 whitespace-nowrap text-right text-[13px] font-normal text-[#627277]">{{ __('home.from_price_label') }} <span class="text-[15px] font-semibold text-[#0D171A]">€ {{ \App\Support\Format::amount($event->price_cents) }}</span></p>
                                 @else
                                     <p class="shrink-0 whitespace-nowrap text-[15px] italic text-[#627277]">{{ __('format.free') }}</p>
                                 @endif
@@ -117,7 +117,7 @@
                 @endforeach
             </div>
             <div class="mt-10 flex justify-center">
-                <a href="{{ route('eventi') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
+                <a href="{{ route('eventi') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">{{ __('home.see_all') }}</a>
             </div>
         </div>
     </section>
@@ -128,9 +128,9 @@
         <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A]">
             <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover">
             <div class="flex flex-col items-end justify-center bg-white p-16 text-right">
-                <h2 class="text-[36px] font-bold leading-tight text-black">Acquista una Smartbox</h2>
-                <p class="mt-4 text-[18px] text-[#555555]">Cofanetti di soggiorni ed esperienze pet-friendly. Il regalo perfetto per chi ama viaggiare con il proprio animale.</p>
-                <flux:button href="{{ route('smartbox') }}" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">Trova il regalo giusto</flux:button>
+                <h2 class="text-[36px] font-bold leading-tight text-black">{{ __('home.smartbox_title') }}</h2>
+                <p class="mt-4 text-[18px] text-[#555555]">{{ __('home.smartbox_subtitle') }}</p>
+                <flux:button href="{{ route('smartbox') }}" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">{{ __('home.smartbox_cta') }}</flux:button>
             </div>
         </div>
     </section>
@@ -139,7 +139,7 @@
     <section id="news" class="scroll-mt-20 bg-brand-cyan-bg py-8">
         <div class="{{ $px }}">
             <div class="text-center">
-                <h2 class="text-[36px] font-bold text-black">News</h2>
+                <h2 class="text-[36px] font-bold text-black">{{ __('home.news_title') }}</h2>
                 <p class="mt-3 text-[18px] font-normal text-[#555555]">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
             </div>
             <div class="mt-10 grid grid-cols-3 gap-6">
@@ -156,14 +156,14 @@
                             <div class="flex justify-center">
                                 {{-- Le card home non hanno slug proprio: si risolve per immagine su News::ARTICLES (la card fuori elenco rimanda a /news) --}}
                                 @php $newsSlug = collect(\App\Livewire\Content\News::ARTICLES)->firstWhere('img', $article['img'])['slug'] ?? null; @endphp
-                                <flux:button variant="ghost" :href="$newsSlug ? route('news.detail', $newsSlug) : route('news')" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">Continua a leggere...</flux:button>
+                                <flux:button variant="ghost" :href="$newsSlug ? route('news.detail', $newsSlug) : route('news')" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">{{ __('home.news_read_more') }}</flux:button>
                             </div>
                         </div>
                     </div>
                 @endforeach
             </div>
             <div class="mt-10 flex justify-center">
-                <a href="{{ route('news') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">Vedi tutto</a>
+                <a href="{{ route('news') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">{{ __('home.see_all') }}</a>
             </div>
         </div>
     </section>
@@ -176,17 +176,17 @@
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(270deg,#00000099_0%,#71717100_100%)]"></div>
             <div class="{{ $px }} flex min-h-[660px] flex-col pb-[98px]">
                 <div class="my-auto">
-                    <h2 class="text-4xl font-extrabold text-white">Community</h2>
-                    <p class="mt-3 max-w-md text-lg text-white/85">Confrontati con altri pet-lover: consigli, racconti di viaggio e domande prima di partire.</p>
-                    <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">Scopri la community</a>
+                    <h2 class="text-4xl font-extrabold text-white">{{ __('home.community_title') }}</h2>
+                    <p class="mt-3 max-w-md text-lg text-white/85">{{ __('home.community_subtitle') }}</p>
+                    <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.community_cta') }}</a>
                 </div>
                 {{-- Box recensione XD: glass bianco su foto, blur 7px --}}
                 <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px]">
                     <div class="flex items-center justify-between gap-6">
                         <p class="text-[13px] font-semibold text-brand-yellow">25/11/23</p>
-                        <p class="text-[13px] font-semibold text-brand-yellow">6 Risposte</p>
+                        <p class="text-[13px] font-semibold text-brand-yellow">{{ __('home.community_replies') }}</p>
                     </div>
-                    <p class="mt-2 text-lg text-white mb-2">"Qualcuno ha consigli per un primo viaggio in treno con un cane di taglia media? Vorrei che fosse un'esperienza tranquilla per entrambi 🐾"</p>
+                    <p class="mt-2 text-lg text-white mb-2">{{ __('home.community_quote') }}</p>
                     <p class="text-lg italic text-white">- Sofia</p>
                 </div>
             </div>

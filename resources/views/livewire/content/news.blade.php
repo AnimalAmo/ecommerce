@@ -9,7 +9,7 @@
         {{-- Colonna contenuti XD: x211..1709 → 1498px centrati dentro il container $px --}}
         <div class="{{ $px }} pt-10 pb-[120px]">
             <div class="mx-auto w-full max-w-[1498px]">
-                <h1 class="text-4xl font-bold text-black">News</h1>
+                <h1 class="text-4xl font-bold text-black">{{ __('news.title') }}</h1>
                 <p class="mt-4 max-w-[1295px] text-lg leading-6 text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
                 {{-- Griglia news (XD: simbolo "Box News" 480x482, 3 colonne × 2 righe; ombra 0 1 5 #0000001A, senza bordo) --}}
@@ -27,7 +27,7 @@
                                 </p>
                                 <h3 class="mt-4 max-w-[369px] text-[20px] font-semibold leading-[25px] text-black">{{ $article['title'] }}</h3>
                                 <p class="mt-[18px] line-clamp-4 max-w-[428px] text-sm leading-[23px] font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
-                                <a href="{{ route('news.detail', $article['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-5 text-sm font-normal text-[#242C2C]">Continua a leggere…</a>
+                                <a href="{{ route('news.detail', $article['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-5 text-sm font-normal text-[#242C2C]">{{ __('news.read_more') }}</a>
                             </div>
                             {{-- Link overlay all'articolo --}}
                             <a href="{{ route('news.detail', $article['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $article['title'] }}"></a>
@@ -38,7 +38,7 @@
                 {{-- Bottone "Carica altro" (XD: simbolo "Button vedi tutto" 145x40 r20 #0D171A, label override) --}}
                 <div class="mt-10 flex justify-center">
                     {{-- TODO: azione Carica altro --}}
-                    <flux:button class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">Carica altro</flux:button>
+                    <flux:button class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('news.load_more') }}</flux:button>
                 </div>
             </div>
         </div>

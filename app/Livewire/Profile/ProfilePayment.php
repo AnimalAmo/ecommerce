@@ -17,6 +17,6 @@ class ProfilePayment extends Component
 
     public function render()
     {
-        return view('livewire.profile.profile-payment')->title('Metodo di pagamento — AnimalAmo');
+        return view('livewire.profile.profile-payment')->title(__('profile.title_payment'));
     }
 }

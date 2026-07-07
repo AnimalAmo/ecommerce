@@ -210,6 +210,6 @@ class Community extends Component
         return view('livewire.content.community', [
             'visiblePosts' => $visiblePosts,
             'tags' => self::TAGS,
-        ])->title('Community — AnimalAmo');
+        ])->title(__('community.page_title'));
     }
 }

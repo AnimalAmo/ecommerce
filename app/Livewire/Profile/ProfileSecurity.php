@@ -61,6 +61,6 @@ class ProfileSecurity extends Component
     {
         return view('livewire.profile.profile-security', [
             'privacyPlaceholder' => self::PRIVACY_PLACEHOLDER,
-        ])->title('Sicurezza — AnimalAmo');
+        ])->title(__('profile.title_security'));
     }
 }
