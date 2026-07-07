@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Profile;
 
-use App\Livewire\Profile;
+use App\Livewire\Profile\Profile;
 use App\Models\Pet\Pet;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;

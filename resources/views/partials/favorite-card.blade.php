@@ -44,9 +44,12 @@
              e bianco bordato #E9E9E9 con cuore nero outline (cuore). --}}
         <div class="mt-auto flex items-center justify-end gap-[5px]">
             <span class="mr-[7px] text-[11px] font-semibold leading-none text-[#0D171A]">A partire da {{ $item['price'] }}</span>
-            <flux:button wire:click="{{ $bagAction }}" square aria-label="{{ $bagActive ? 'Rimuovi dal carrello' : 'Aggiungi al carrello' }}" class="!h-[30px] !w-[30px] !min-w-0 !rounded-full !border-0 !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center {{ $bagActive ? '!bg-[#FFE13E] hover:!bg-[#FFE13E]' : '!bg-gray-100 hover:!bg-gray-100' }}">
-                <flux:icon.shopping-bag class="!h-[14px] !w-[14px] text-black" />
-            </flux:button>
+            {{-- Borsa nascosta per i prodotti non acquistabili (eventi gratuiti/"Partecipa"). --}}
+            @if ($item['can_add_to_cart'] ?? true)
+                <flux:button wire:click="{{ $bagAction }}" square aria-label="{{ $bagActive ? 'Rimuovi dal carrello' : 'Aggiungi al carrello' }}" class="!h-[30px] !w-[30px] !min-w-0 !rounded-full !border-0 !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center {{ $bagActive ? '!bg-[#FFE13E] hover:!bg-[#FFE13E]' : '!bg-gray-100 hover:!bg-gray-100' }}">
+                    <flux:icon.shopping-bag class="!h-[14px] !w-[14px] text-black" />
+                </flux:button>
+            @endif
             <flux:button wire:click="{{ $heartAction }}" square aria-label="{{ $heartActive ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti' }}" class="!h-[30px] !w-[30px] !min-w-0 !rounded-full !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center {{ $heartActive ? '!border-0 !bg-brand-yellow hover:!bg-brand-yellow' : '!border !border-[#E9E9E9] !bg-white hover:!bg-white' }}">
                 <flux:icon.heart class="h-[14px] w-[14px] text-black" />
             </flux:button>

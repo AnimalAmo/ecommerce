@@ -13,7 +13,7 @@ use Illuminate\Database\Seeder;
  * per il login B2B. Va eseguito DOPO i seeder catalogo (i preferiti puntano lì).
  *
  * Preferiti di Giulia — l'artboard XD "Preferiti – 2" cita prodotti fuori
- * catalogo mock (vedi commento su App\Livewire\Favorites::FAVORITES), quindi i
+ * catalogo mock (vedi commento su App\Livewire\Commerce\Favorites::FAVORITES), quindi i
  * preferiti persistenti referenziano righe reali del catalogo (slug → famiglia):
  *  - puppy-yoga-milano        → event   (card XD "Puppy Yoga, Milano — LUN 30 MAG 15:30", match esatto)
  *  - pomeriggio-addestramento → event   (card XD "Pomeriggio di addestramento, Milano", match esatto)

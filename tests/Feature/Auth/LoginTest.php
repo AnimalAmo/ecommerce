@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Livewire\AuthModal;
+use App\Livewire\Auth\AuthModal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;

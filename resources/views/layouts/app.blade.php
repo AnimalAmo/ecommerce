@@ -17,9 +17,9 @@
 
         {{-- Modali auth raggiungibili dall'header + toast globale ("Modifiche salvate.", invisibile
              finché non mostrato): istanze uniche per pagina, prima degli script come da Flux --}}
-        <livewire:auth-modal />
-        <livewire:register-modal />
-        <livewire:partner-login-modal />
+        <livewire:auth.auth-modal />
+        <livewire:auth.register-modal />
+        <livewire:auth.partner-login-modal />
         <flux:toast />
 
         @livewireScripts

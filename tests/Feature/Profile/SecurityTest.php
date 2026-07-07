@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Profile;
 
-use App\Livewire\ProfileSecurity;
+use App\Livewire\Profile\ProfileSecurity;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;

@@ -1,0 +1,150 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\RouteCollection;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
+use Tests\TestCase;
+
+class LocalizationTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * Re-load the web routes with the target request bound so mcamara
+     * registers that locale's translated slugs.
+     *
+     * In production, route files load *after* the incoming request is bound,
+     * so LaravelLocalization::setLocale() sees the /en prefix and registers
+     * the English slugs. The test harness boots the app in setUp() — before
+     * any request exists — so it only ever registers the default (it) slugs.
+     * This helper mirrors the production boot order for a given URL.
+     */
+    private function reloadRoutesFor(string $uri): void
+    {
+        $this->app->instance('request', Request::create($uri, 'GET'));
+
+        // The mcamara service is a singleton that captured the request at
+        // construction (in setUp, before any URL existed). Rebuild it against
+        // the freshly bound request so it reads the /en prefix.
+        $this->app->forgetInstance(\Mcamara\LaravelLocalization\LaravelLocalization::class);
+        $this->app->forgetInstance('laravellocalization');
+        LaravelLocalization::clearResolvedInstance('laravellocalization');
+        $loc = app('laravellocalization');
+        // Populate the lazily-loaded supportedLocales property before setLocale,
+        // otherwise the /en segment is not recognised as a supported locale.
+        $loc->getSupportedLocales();
+        $loc->setLocale();
+
+        $router = $this->app['router'];
+        $router->setRoutes(new RouteCollection);
+        require base_path('routes/web.php');
+        $router->getRoutes()->refreshNameLookups();
+        $router->getRoutes()->refreshActionLookups();
+    }
+
+    // ============ Default locale (it): no URL prefix ============
+
+    public function test_default_italian_urls_have_no_prefix_and_respond_200(): void
+    {
+        $this->get('/carrello')->assertOk();
+        $this->get('/chi-siamo')->assertOk();
+        $this->get('/preferiti')->assertOk();
+    }
+
+    public function test_home_responds_200_without_prefix(): void
+    {
+        $this->get('/')->assertOk();
+    }
+
+    // ============ Non-default locale (en): /en prefix + translated slugs ============
+
+    public function test_english_cart_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/cart');
+        $this->get('/en/cart')->assertOk();
+    }
+
+    public function test_english_about_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/about-us');
+        $this->get('/en/about-us')->assertOk();
+    }
+
+    public function test_english_favourites_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/favourites');
+        $this->get('/en/favourites')->assertOk();
+    }
+
+    public function test_english_slug_with_italian_path_is_not_reachable(): void
+    {
+        // The Italian slug under the /en prefix must not resolve as 200.
+        $this->reloadRoutesFor('/en/carrello');
+        $response = $this->get('/en/carrello');
+
+        $this->assertNotSame(200, $response->getStatusCode());
+    }
+
+    // ============ Route helpers ============
+
+    public function test_route_helper_returns_italian_slug_in_default_locale(): void
+    {
+        app()->setLocale('it');
+        LaravelLocalization::setLocale('it');
+
+        $this->assertStringEndsWith('/carrello', route('carrello'));
+    }
+
+    public function test_get_localized_url_builds_english_prefixed_translated_url(): void
+    {
+        $localized = LaravelLocalization::getLocalizedURL('en', route('carrello'));
+
+        $this->assertStringEndsWith('/en/cart', $localized);
+    }
+
+    // ============ Locale switch ============
+
+    public function test_locale_switch_changes_locale_and_redirects(): void
+    {
+        $response = $this->withHeaders(['referer' => url('/carrello')])
+            ->get('/locale/en');
+
+        $response->assertRedirect();
+        $this->assertSame('en', session('locale'));
+    }
+
+    public function test_locale_switch_ignores_a_cross_origin_referer(): void
+    {
+        // Referer verso un host esterno: mai redirect fuori dominio (open redirect).
+        $response = $this->withHeaders(['referer' => 'https://evil.example.com/phish'])
+            ->get('/locale/en');
+
+        $target = $response->headers->get('Location');
+        $this->assertSame(request()->getHost(), parse_url($target, PHP_URL_HOST));
+    }
+
+    public function test_locale_switch_ignores_an_unsupported_locale(): void
+    {
+        $response = $this->withHeaders(['referer' => url('/carrello')])
+            ->get('/locale/de');
+
+        $response->assertRedirect();
+        $this->assertNull(session('locale'));
+        $this->assertSame(request()->getHost(), parse_url($response->headers->get('Location'), PHP_URL_HOST));
+    }
+
+    // ============ Webhooks stay outside the localized group ============
+
+    public function test_webhooks_are_excluded_from_localization(): void
+    {
+        // Webhooks must never receive a locale prefix: they are POST (ignored
+        // by httpMethodsIgnored) and their path is in urlsIgnored, and they are
+        // registered outside the localized route group.
+        $this->assertContains('POST', config('laravellocalization.httpMethodsIgnored'));
+        $this->assertContains('/webhooks', config('laravellocalization.urlsIgnored'));
+        $this->assertContains('/webhooks/*', config('laravellocalization.urlsIgnored'));
+    }
+}

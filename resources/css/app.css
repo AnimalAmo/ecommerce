@@ -11,6 +11,13 @@
         transition: all 0.2s ease;
     }
 }
+
+/* Nav header: niente hover "appiccicato" finché il mouse non si muove dopo un reload
+   (JS toggla .nav-hover-idle su <html> — vedi resources/js/app.js). */
+.nav-hover-idle header nav a:hover {
+    font-weight: 400 !important;
+}
+
 @source '../../storage/framework/views/*.php';
 @source '../views';
 @source '../../app/Livewire';

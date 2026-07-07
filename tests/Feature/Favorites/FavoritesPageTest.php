@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Favorites;
 
-use App\Livewire\Favorites;
+use App\Livewire\Commerce\Favorites;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

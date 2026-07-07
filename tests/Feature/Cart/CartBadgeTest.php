@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Cart;
 
-use App\Livewire\CartBadge;
+use App\Livewire\Commerce\CartBadge;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\User;
 use App\Services\Cart\CartManager;

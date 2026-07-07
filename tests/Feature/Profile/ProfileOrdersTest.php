@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Profile;
 
-use App\Livewire\ProfileOrders;
+use App\Livewire\Profile\ProfileOrders;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\User;

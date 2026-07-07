@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Livewire\RegisterModal;
+use App\Livewire\Auth\RegisterModal;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Events\Registered;

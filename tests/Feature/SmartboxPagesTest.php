@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\Smartbox;
+use App\Livewire\Catalog\Smartbox;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

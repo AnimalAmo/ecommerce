@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Cart;
 
-use App\Livewire\ActivityDetail;
-use App\Livewire\AnimalHolidayService;
-use App\Livewire\AnimalHolidayStructure;
-use App\Livewire\EventDetail;
-use App\Livewire\Events;
-use App\Livewire\SmartboxDetail;
+use App\Livewire\Catalog\ActivityDetail;
+use App\Livewire\Catalog\AnimalHolidayService;
+use App\Livewire\Catalog\AnimalHolidayStructure;
+use App\Livewire\Catalog\EventDetail;
+use App\Livewire\Catalog\Events;
+use App\Livewire\Catalog\SmartboxDetail;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Favorites;
 
-use App\Livewire\Events;
+use App\Livewire\Catalog\Events;
 use App\Models\Event\Event;
 use App\Models\Favorite\Favorite;
 use App\Models\User;
