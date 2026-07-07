@@ -6,6 +6,7 @@ return [
     'hero_title' => 'Community',
     'composer_heading' => 'Start a conversation, ask a question!',
     'composer_placeholder' => 'Write something …',
+    'login_to_post' => 'Log in to post and reply in the community.',
     'select_tags' => 'Select tags:',
     'publish' => 'Publish',
     'sections_aria' => 'Community sections',

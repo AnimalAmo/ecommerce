@@ -54,7 +54,17 @@
                     <h1 class="text-4xl font-bold leading-none text-white">{{ __('community.hero_title') }}</h1>
                     <p class="mt-[28px] text-lg leading-[25px] text-white">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut l voluptua.</p>
 
+                    {{-- Solo gli utenti loggati possono scrivere; gli ospiti leggono e vedono la CTA di accesso. --}}
+                    @guest
+                        <div class="mt-6 flex w-full flex-wrap items-center justify-between gap-4 rounded-[4px] border border-[#E9E9E9] bg-white/0 px-6 py-5 backdrop-blur-[7px] backdrop-brightness-110">
+                            <p class="text-[15px] leading-6 text-white">{{ __('community.login_to_post') }}</p>
+                            <flux:modal.trigger name="login">
+                                <flux:button class="!shrink-0 !rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">{{ __('nav.login_register') }}</flux:button>
+                            </flux:modal.trigger>
+                        </div>
+                    @endguest
                     {{-- Card composer (XD "Rettangolo 635": blur 7, brightness +10, fill opacity 0); padding 16/24, altezza fluida così il bottone resta dentro i padding --}}
+                    @auth
                     <div class="mt-6 w-full rounded-[4px] border border-[#E9E9E9] bg-white/0 px-6 py-4 backdrop-blur-[7px] backdrop-brightness-110">
                         <h2 class="text-[22px] font-bold leading-[30px] text-white">{{ __('community.composer_heading') }}</h2>
 
@@ -72,6 +82,7 @@
                             <flux:button wire:click="publish" class="!h-[39px] !w-[120px] !rounded-full !border !border-[#E9FF7D] !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('community.publish') }}</flux:button>
                         </div>
                     </div>
+                    @endauth
                 </div>
             </div>
         </section>
@@ -152,11 +163,13 @@
                                 </div>
                             @endforeach
 
-                            {{-- Riga risposta: input pill con bottone "Rispondi" dentro il bordo destro --}}
+                            {{-- Riga risposta: solo utenti loggati (ospiti leggono soltanto). --}}
+                            @auth
                             <div class="relative mt-[26px]">
                                 <flux:input type="text" wire:model="replyDrafts.{{ $post['id'] }}" wire:keydown.enter="reply({{ $post['id'] }})" placeholder="{{ __('community.composer_placeholder') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!rounded-full [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!pl-6 [&_input]:!pr-[135px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
                                 <flux:button wire:click="reply({{ $post['id'] }})" class="!absolute !right-0 !top-0 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none">{{ __('community.reply') }}</flux:button>
                             </div>
+                            @endauth
                         </article>
                     @empty
                         {{-- Ricerca/filtro senza risultati (nessun design XD) --}}
