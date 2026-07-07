@@ -32,8 +32,8 @@
                     <div class="w-full min-w-0 min-[87.5rem]:w-[654px] min-[87.5rem]:shrink-0">
                         @if ($step === 1)
                             {{-- Card "Verifica i tuoi dati personali": 5 campi precompilati con spunta ciano quando pieni --}}
-                            <div class="{{ $card }} p-6 pb-8">
-                                <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.verify_personal_data') }}</h1>
+                            <div class="{{ $card }} px-6 pb-8">
+                                <h1 class="my-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.verify_personal_data') }}</h1>
 
                                 <div class="mt-1 space-y-4">
                                     @foreach ([

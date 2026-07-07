@@ -72,7 +72,8 @@ class EventPagesTest extends TestCase
             ->assertOk()
             ->assertSee('Oggi alle ore 13:30')
             ->assertSee('Oggi dalle 13:30 alle 16:30')
-            ->assertSee("25\u{A0}€ a persona")
+            // Il prezzo è in grassetto (span) dentro "… a persona": in ordine, non contiguo.
+            ->assertSeeInOrder(["25\u{A0}€", 'a persona'])
             ->assertSee('Dario Boario Terme (BS), Italia')
             ->assertSee('Cascina Brescia')
             ->assertSee('Aggiungi al carrello');

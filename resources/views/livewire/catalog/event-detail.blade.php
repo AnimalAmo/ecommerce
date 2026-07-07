@@ -54,7 +54,7 @@
                 {{-- "Gratis" in corsivo peso normale (XD Nunito-Italic 25px) al posto della riga prezzo Light --}}
                 <p class="mt-[9px] text-[25px] italic leading-[34px] text-black">{{ __('format.free') }}</p>
             @else
-                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{{ $event->price_cents !== null ? __('format.per_person', ['price' => \App\Support\Format::money($event->price_cents)]) : __('format.from_price', ['price' => \App\Support\Format::money(0)]) }}</p>
+                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{!! $event->price_cents !== null ? __('format.per_person', ['price' => '<span class="font-bold">'.e(\App\Support\Format::money($event->price_cents)).'</span>']) : __('format.from_price', ['price' => '<span class="font-bold">'.e(\App\Support\Format::money(0)).'</span>']) !!}</p>
             @endif
 
             {{-- 3. Tab bar (switch Livewire Informazioni / Discussione) + azioni Preferiti / Aggiungi al carrello --}}
@@ -111,14 +111,14 @@
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
                             <li class="flex items-start gap-4">
-                                <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                <flux:icon.time class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ \App\Support\Format::eventTimeRange($event->starts_at, $event->ends_at) }}</p>
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-4">
-                                <flux:icon.pin class="mt-0.5 h-[15px] w-3 shrink-0 text-[#0D171A]" />
+                                <flux:icon.pin class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $event->venue->address }}</p>
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->venue_note }}</p>
@@ -136,9 +136,9 @@
                                     @foreach ($items as $item)
                                         <li wire:key="included-{{ $column }}-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] leading-[21px] text-[#0D171A]">
                                             @if ($item['included'])
-                                                <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
+                                                <flux:icon.check class="h-[18px] w-[18px] shrink-0 text-[#37C443]" />
                                             @else
-                                                <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
+                                                <flux:icon.close class="h-[18px] w-[18px] shrink-0 text-[#EA2E68]" />
                                             @endif
                                             {{ $item['label'] }}
                                         </li>
