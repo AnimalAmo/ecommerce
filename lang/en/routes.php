@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'holiday' => 'animal-holiday',
+    'holiday.region' => 'animal-holiday/{region}',
+    'holiday.service' => 'animal-holiday/{region}/services/{service}',
+    'holiday.structure' => 'animal-holiday/{region}/{structure}',
+    'eventi' => 'events',
+    'eventi.activity' => 'events/activities/{activity}',
+    'eventi.detail' => 'events/{event}',
+    'smartbox' => 'smartbox',
+    'smartbox.detail' => 'smartbox/{box}',
+    'about' => 'about-us',
+    'community' => 'community',
+    'preferiti' => 'favourites',
+    'carrello' => 'cart',
+    'checkout' => 'checkout',
+    'profilo' => 'profile',
+    'profilo.pagamento' => 'profile/payment-method',
+    'profilo.sicurezza' => 'profile/security',
+    'profilo.ordini' => 'profile/my-orders',
+    'profilo.ordini.riepilogo' => 'profile/my-orders/{order}',
+    'profilo.eventi' => 'profile/my-events',
+    'news' => 'news',
+    'news.detail' => 'news/{article}',
+    'work-with-us' => 'work-with-us',
+    'work-with-us.thanks' => 'work-with-us/thank-you',
+];

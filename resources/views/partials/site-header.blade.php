@@ -19,11 +19,15 @@
         </div>
         <div class="flex items-center gap-5">
             <flux:dropdown>
-                <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">ITA / EUR</flux:button>
+                <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">{{ strtoupper(app()->getLocale()) }} / EUR</flux:button>
                 <flux:menu>
                     <flux:menu.group heading="Lingua">
-                        <flux:menu.item>Italiano</flux:menu.item>
-                        <flux:menu.item>English</flux:menu.item>
+                        @foreach (\Mcamara\LaravelLocalization\Facades\LaravelLocalization::getSupportedLocales() as $code => $properties)
+                            <flux:menu.item
+                                href="{{ route('locale.switch', $code) }}"
+                                icon="{{ $code === app()->getLocale() ? 'check' : '' }}"
+                            >{{ ucfirst($properties['native']) }}</flux:menu.item>
+                        @endforeach
                     </flux:menu.group>
                     <flux:menu.group heading="Valuta">
                         <flux:menu.item>EUR &euro;</flux:menu.item>
