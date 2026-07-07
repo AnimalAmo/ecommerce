@@ -97,6 +97,7 @@ class EventDetail extends Component
             return;
         }
 
+        $this->dispatch('cart-updated');
         $this->cartPopupOpen = true;
     }
 

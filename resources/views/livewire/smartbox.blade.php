@@ -44,18 +44,32 @@
                 @endforeach
             </div>
 
-            {{-- Paginazione (statica; pagina 1 attiva, prev disabilitato) --}}
-            <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
-                <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
-                    <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
-                </flux:button>
-                @foreach (range(1, 4) as $page)
-                    <flux:button wire:key="page-{{ $page }}" square :aria-current="$page === 1 ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === 1 ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
-                @endforeach
-                <flux:button variant="ghost" square aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
-                    <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
-                </flux:button>
-            </nav>
+            {{-- Paginazione (XD "Raggruppa 744"): pill reali del paginator, stile invariato --}}
+            @if ($boxes->hasPages())
+                <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
+                    @if ($boxes->onFirstPage())
+                        <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                            <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
+                        </flux:button>
+                    @else
+                        <flux:button variant="ghost" square wire:click="previousPage" aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-black">
+                            <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
+                        </flux:button>
+                    @endif
+                    @foreach (range(1, $boxes->lastPage()) as $page)
+                        <flux:button wire:key="page-{{ $page }}" square wire:click="gotoPage({{ $page }})" :aria-current="$page === $boxes->currentPage() ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === $boxes->currentPage() ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
+                    @endforeach
+                    @if ($boxes->hasMorePages())
+                        <flux:button variant="ghost" square wire:click="nextPage" aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
+                            <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
+                        </flux:button>
+                    @else
+                        <flux:button variant="ghost" square disabled aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                            <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
+                        </flux:button>
+                    @endif
+                </nav>
+            @endif
         </div>
     </main>
 

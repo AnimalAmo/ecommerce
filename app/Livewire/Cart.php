@@ -103,6 +103,7 @@ class Cart extends Component
     public function removeItem(int|string $key): void
     {
         $this->cart()->removeItem($key);
+        $this->dispatch('cart-updated');
     }
 
     /** "Modifica" apre il pop-up condiviso caricando le copie di lavoro dalle options della riga. */
@@ -181,6 +182,7 @@ class Cart extends Component
             return;
         }
 
+        $this->dispatch('cart-updated');
         $this->closeEdit();
     }
 

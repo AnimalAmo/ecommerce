@@ -247,6 +247,35 @@ class AvailabilityTest extends TestCase
         $this->availability->ensureAvailable($event, ['participants' => 9]);
     }
 
+    public function test_evento_disponibile_con_posti_residui_sufficienti(): void
+    {
+        // 5 posti già venduti su 8: 3 richiesti riempiono esattamente la capienza
+        $event = Event::factory()->make([
+            'starts_at' => '2026-07-20 15:30:00',
+            'max_participants' => 8,
+            'booked_participants' => 5,
+        ]);
+
+        $this->availability->ensureAvailable($event, ['participants' => 3]);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function test_evento_conta_i_posti_gia_venduti_nella_capienza(): void
+    {
+        // 5 venduti su 8: 4 richiesti sforano anche se 4 < max_participants
+        $event = Event::factory()->make([
+            'starts_at' => '2026-07-20 15:30:00',
+            'max_participants' => 8,
+            'booked_participants' => 5,
+        ]);
+
+        $this->expectException(CartValidationException::class);
+        $this->expectExceptionMessage('Non ci sono abbastanza posti disponibili.');
+
+        $this->availability->ensureAvailable($event, ['participants' => 4]);
+    }
+
     public function test_capienza_illimitata_con_max_participants_null(): void
     {
         $event = Event::factory()->make(['starts_at' => '2026-07-20 15:30:00', 'max_participants' => null]);

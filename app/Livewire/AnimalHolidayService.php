@@ -92,6 +92,7 @@ class AnimalHolidayService extends Component
             return;
         }
 
+        $this->dispatch('cart-updated');
         $this->expandedField = null;
         $this->cartPopupOpen = true;
     }

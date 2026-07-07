@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\Orders\OrderQueryService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -13,45 +15,10 @@ class ProfileOrders extends Component
 
     public const TABS = ['programma' => 'In programma', 'passati' => 'Passati'];
 
-    /**
-     * Ordini mock come da XD "Profilo – i miei ordini" (In programma) e "– 1" (Passati):
-     * data, numero articoli, totale e striscia di miniature.
-     */
-    // TODO: ordini reali da backend + pagina riepilogo ordine (artboard "Profilo – i miei ordini – riepilogo")
-    public const ORDERS = [
-        'programma' => [
-            [
-                'id' => 'ord-476',
-                'date' => '17/01/2024',
-                'items' => 3,
-                'price' => 476,
-                'photos' => ['cart-hotel-brescia.jpg', 'cart-weekend-piemonte.jpg', 'cart-excursions-viareggio.jpg'],
-            ],
-            [
-                'id' => 'ord-312',
-                'date' => '04/10/2023',
-                'items' => 2,
-                'price' => 312,
-                'photos' => ['order-programma-2a.jpg', 'order-programma-2b.jpg'],
-            ],
-            [
-                'id' => 'ord-83',
-                'date' => '10/02/2023',
-                'items' => 1,
-                'price' => 83,
-                'photos' => ['event-puppy-yoga.jpg'],
-            ],
-        ],
-        'passati' => [
-            [
-                'id' => 'ord-345',
-                'date' => '22/06/2023',
-                'items' => 2,
-                'price' => 345,
-                'photos' => ['order-passati-1a.jpg', 'order-passati-1b.jpg'],
-            ],
-        ],
-    ];
+    public function mount(): void
+    {
+        $this->normalizeTab();
+    }
 
     public function setTab(string $tab): void
     {
@@ -60,17 +27,22 @@ class ProfileOrders extends Component
         }
     }
 
-    /** Etichetta articoli ("1 articolo" / "N articoli"). */
-    public function itemsLabel(int $items): string
+    /** Il binding #[Url] accetta qualunque ?tab=…: fuori whitelist → 'programma'. */
+    private function normalizeTab(): void
     {
-        return $items === 1 ? '1 articolo' : $items.' articoli';
+        if (! array_key_exists($this->tab, self::TABS)) {
+            $this->tab = 'programma';
+        }
     }
 
-    public function render()
+    public function render(OrderQueryService $orders)
     {
+        $this->normalizeTab();
+
         return view('livewire.profile-orders', [
             'tabs' => self::TABS,
-            'orders' => self::ORDERS[$this->tab],
+            // Bucket derivato nel service: passato ⇔ max(items.booked_until) < now().
+            'orders' => $orders->listFor(Auth::user(), $this->tab === 'passati'),
         ])->title('I miei ordini — AnimalAmo');
     }
 }

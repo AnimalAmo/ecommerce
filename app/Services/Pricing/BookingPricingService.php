@@ -103,8 +103,12 @@ class BookingPricingService
         return max(1, (int) ceil($from->diffInMinutes($to) / 60));
     }
 
-    /** Persone: participants (evento) o somma ospiti (attività). */
-    private static function persons(array $options): int
+    /**
+     * Persone: participants (evento) o somma ospiti (attività). Helper
+     * condiviso: stessa aritmetica per pricing, availability (capienza) e
+     * ReserveAvailabilityPipe (consumo posti) — UNA implementazione.
+     */
+    public static function persons(array $options): int
     {
         return (int) ($options['participants'] ?? array_sum($options['guests'] ?? []));
     }

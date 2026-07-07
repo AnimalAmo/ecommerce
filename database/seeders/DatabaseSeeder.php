@@ -21,8 +21,10 @@ class DatabaseSeeder extends Seeder
             StructureClosureSeeder::class,
             EventSeeder::class,
             SmartboxPackageSeeder::class,
+            PaymentGatewaySeeder::class,
             RoleSeeder::class,
             DemoUserSeeder::class,
+            DemoOrderSeeder::class,
         ]);
     }
 }

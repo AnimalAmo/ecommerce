@@ -36,29 +36,29 @@
                 </flux:modal.trigger>
             @endguest
 
-            <flux:button variant="ghost" size="sm" square aria-label="Preferiti" href="{{ route('preferiti') }}" class="!text-ink hover:!text-brand-magenta">
-                <flux:icon.heart class="h-5 w-5" />
-            </flux:button>
-            <flux:button variant="ghost" size="sm" square aria-label="Carrello" href="{{ route('carrello') }}" class="!text-ink hover:!text-brand-cyan">
-                <flux:icon.cart class="h-5 w-5" />
-            </flux:button>
+            <div class="flex items-center gap-3">
+                <flux:button variant="ghost" size="sm" square aria-label="Preferiti" href="{{ route('preferiti') }}" class="!text-ink hover:!text-brand-magenta">
+                    <flux:icon.heart class="h-5 w-5" />
+                </flux:button>
+                <livewire:cart-badge />
 
-            @auth
-                <flux:dropdown>
-                    <flux:button variant="ghost" size="sm" square aria-label="Profilo" class="!text-ink hover:!text-brand-cyan">
-                        <flux:icon.profile class="h-5 w-5" />
-                    </flux:button>
-                    <flux:menu>
-                        <flux:menu.item href="{{ route('profilo') }}">Il mio profilo</flux:menu.item>
-                        <flux:menu.item href="{{ route('profilo.ordini') }}">I miei ordini</flux:menu.item>
-                        <flux:menu.separator />
-                        <form method="POST" action="{{ route('logout') }}" class="w-full">
-                            @csrf
-                            <flux:menu.item as="button" type="submit" class="w-full">Esci</flux:menu.item>
-                        </form>
-                    </flux:menu>
-                </flux:dropdown>
-            @endauth
+                @auth
+                    <flux:dropdown>
+                        <flux:button variant="ghost" size="sm" square aria-label="Profilo" class="!text-ink hover:!text-brand-cyan">
+                            <flux:icon.profile class="h-5 w-5" />
+                        </flux:button>
+                        <flux:menu>
+                            <flux:menu.item href="{{ route('profilo') }}">Il mio profilo</flux:menu.item>
+                            <flux:menu.item href="{{ route('profilo.ordini') }}">I miei ordini</flux:menu.item>
+                            <flux:menu.separator />
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                @csrf
+                                <flux:menu.item as="button" type="submit" class="w-full">Esci</flux:menu.item>
+                            </form>
+                        </flux:menu>
+                    </flux:dropdown>
+                @endauth
+            </div>
         </div>
     </div>
 </header>

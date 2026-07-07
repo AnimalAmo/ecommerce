@@ -76,6 +76,7 @@ class SmartboxDetail extends Component
             return;
         }
 
+        $this->dispatch('cart-updated');
         $this->animalsOpen = false;
         $this->cartPopupOpen = true;
     }

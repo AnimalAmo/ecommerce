@@ -101,8 +101,9 @@ class AvailabilityService
 
     /**
      * Event/activity: non ancora iniziato (starts_at null = attività senza data
-     * puntuale, nessun vincolo) e persone richieste entro la capienza massima
-     * (null = illimitata). Validazione contro il massimo, non contro il venduto.
+     * puntuale, nessun vincolo) e posti residui sufficienti — i posti già
+     * venduti (booked_participants, consumato da ReserveAvailabilityPipe)
+     * contano nella capienza massima (null = illimitata).
      */
     private function ensureEventAvailable(Event $event, array $options): void
     {
@@ -110,9 +111,9 @@ class AvailabilityService
             throw CartValidationException::pastDate();
         }
 
-        $persons = (int) ($options['participants'] ?? array_sum($options['guests'] ?? []));
+        $persons = BookingPricingService::persons($options);
 
-        if ($event->max_participants !== null && $persons > $event->max_participants) {
+        if ($event->max_participants !== null && ($event->booked_participants ?? 0) + $persons > $event->max_participants) {
             throw CartValidationException::soldOut();
         }
     }

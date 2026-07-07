@@ -29,18 +29,19 @@
                     {{-- Righe ordine (passo XD 122): conteggio + striscia miniature | data + totale + chevron --}}
                     <div class="divide-y divide-[#DEDEDE]">
                         @foreach ($orders as $order)
-                            <a href="{{ route('profilo.ordini.riepilogo', $order['id']) }}" wire:key="order-{{ $order['id'] }}" class="flex items-start justify-between gap-6 py-6">
+                            <a href="{{ route('profilo.ordini.riepilogo', $order['number']) }}" wire:key="order-{{ $order['number'] }}" class="flex items-start justify-between gap-6 py-6">
                                 <div class="min-w-0">
-                                    <p class="text-[13px] leading-none text-[#555555]">{{ $this->itemsLabel($order['items']) }}</p>
+                                    <p class="text-[13px] leading-none text-[#555555]">{{ $order['itemsLabel'] }}</p>
                                     <div class="mt-[15px] flex gap-[3px]">
+                                        {{-- Strip miniature = photo_url snapshot delle righe ordine --}}
                                         @foreach ($order['photos'] as $photo)
-                                            <img src="{{ asset('img/xd/' . $photo) }}" alt="" class="h-[66px] w-[99px] rounded-[2px] object-cover" wire:key="photo-{{ $order['id'] }}-{{ $loop->index }}">
+                                            <img src="{{ $photo }}" alt="" class="h-[66px] w-[99px] rounded-[2px] object-cover" wire:key="photo-{{ $order['number'] }}-{{ $loop->index }}">
                                         @endforeach
                                     </div>
                                 </div>
                                 <div class="flex shrink-0 flex-col items-end">
                                     <p class="text-[13px] leading-none text-[#555555]">{{ $order['date'] }}</p>
-                                    <p class="mt-2 text-2xl font-semibold leading-none text-[#2B2B2B]">{{ $order['price'] }} €</p>
+                                    <p class="mt-2 text-2xl font-semibold leading-none text-[#2B2B2B]">{{ $order['price'] }}</p>
                                     <flux:icon.arrow-forward class="mt-3 h-[17px] w-[10px] text-[#2B2B2B]" />
                                 </div>
                             </a>

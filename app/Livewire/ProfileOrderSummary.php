@@ -2,33 +2,40 @@
 
 namespace App\Livewire;
 
+use App\Models\Order\Order;
+use App\Services\Orders\OrderQueryService;
 use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class ProfileOrderSummary extends Component
 {
-    /** Id ordine dalla rotta (mock: il contenuto è sempre quello dell'artboard XD). */
+    /** order_number dalla rotta ({order}), scopato sull'utente autenticato (altrui → 404). */
     public string $order = '';
 
     /** Ordine passato → variante XD "– 1": box 206px con "Scrivi una recensione". */
     public bool $past = false;
 
-    public function mount(): void
-    {
-        $this->past = in_array($this->order, array_column(ProfileOrders::ORDERS['passati'], 'id'), true);
-    }
-
-    /** Articolo in recensione nel pop-up (XD "Pop-up scrivi recensione"); null = chiuso. */
-    public ?string $reviewItemId = null;
+    /** Riga ordine in recensione nel pop-up (XD "Pop-up scrivi recensione"); null = chiuso. */
+    public ?int $reviewItemId = null;
 
     public string $reviewTitle = '';
 
     public string $reviewText = '';
 
-    /** "Scrivi una recensione": apre il pop-up con i campi azzerati. */
-    public function openReview(string $itemId): void
+    /** Ordine risolto una volta per request (mount, azioni e render). */
+    private ?Order $resolvedOrder = null;
+
+    public function mount(OrderQueryService $orders): void
     {
-        if (in_array($itemId, array_column(self::ITEMS, 'id'), true)) {
+        // Bucket derivato: stesso criterio della lista (max booked_until < now()).
+        $this->past = $orders->isPast($this->orderModel());
+    }
+
+    /** "Scrivi una recensione": apre il pop-up con i campi azzerati. */
+    public function openReview(int $itemId): void
+    {
+        if ($this->orderModel()->items->contains('id', $itemId)) {
             $this->reviewItemId = $itemId;
             $this->reviewTitle = '';
             $this->reviewText = '';
@@ -45,73 +52,34 @@ class ProfileOrderSummary extends Component
         Flux::modal('scrivi-recensione')->close();
     }
 
-    /** "Conferma": chiude e basta — mock senza backend. */
+    /** "Conferma": chiude e basta — submit ancora mock (recensioni reali = step 5). */
     public function confirmReview(): void
     {
-        // TODO: invio recensione backend
+        // TODO: invio recensione backend (step 5)
         $this->closeReview();
     }
 
-    /**
-     * Articoli dell'ordine come da XD "Profilo – i miei ordini – riepilogo":
-     * card "Box preferiti" senza cuore/borsa, prezzo riga fisso "0,00 €" da mock.
-     * Il secondo articolo (smartbox) non ha la riga date, come nel carrello regalo.
-     * NOTA: l'artboard "– 1" (ordine passato) ripete gli stessi 3 articoli anche se
-     * l'ordine passato in lista ne ha 2 — copy-paste del designer, mock mantenuto.
-     */
-    // TODO: ordine reale da backend
-    public const ITEMS = [
-        [
-            'id' => 'hotel-brescia',
-            'title' => 'Hotel Brescia',
-            'tag' => 'Strutture',
-            'tagColor' => '#FF9F3E',
-            'photo' => 'cart-hotel-brescia.jpg',
-            'location' => 'Dario Boario Terme (BS), Italia',
-            'dates' => '17/02/2024 - 22/02/2024',
-            'guests' => '2 adulti',
-            'dogs' => '1 cane',
-            'price' => '0,00 €',
-        ],
-        [
-            'id' => 'weekend-piemonte',
-            'title' => 'Weekend in Piemonte',
-            'tag' => 'Soggiorno',
-            'tagColor' => '#8DE0FF',
-            'photo' => 'cart-weekend-piemonte.jpg',
-            'location' => 'Torino, Italia',
-            'dates' => null,
-            'guests' => '2 adulti',
-            'dogs' => '1 cane',
-            'price' => '0,00 €',
-        ],
-        [
-            'id' => 'weekend-escursioni',
-            'title' => 'Weekend di escursioni',
-            'tag' => 'Attività',
-            'tagColor' => '#8E53E6',
-            'photo' => 'cart-excursions-viareggio.jpg',
-            'location' => 'Viareggio, Italia',
-            'dates' => '17/02/2024 - 22/02/2024',
-            'guests' => '2 adulti',
-            'dogs' => '1 cane',
-            'price' => '0,00 €',
-        ],
-    ];
-
-    public function render()
+    public function render(OrderQueryService $orders)
     {
-        $reviewItem = null;
-
-        foreach (self::ITEMS as $item) {
-            if ($item['id'] === $this->reviewItemId) {
-                $reviewItem = $item;
-            }
-        }
+        $items = $orders->presentItems($this->orderModel());
 
         return view('livewire.profile-order-summary', [
-            'items' => self::ITEMS,
-            'reviewItem' => $reviewItem,
+            'items' => $items,
+            'reviewItem' => collect($items)->firstWhere('id', $this->reviewItemId),
         ])->title('Riepilogo ordine — AnimalAmo');
+    }
+
+    /** Ordine per order_number scopato sull'utente: inesistente o di altri → 404. */
+    private function orderModel(): Order
+    {
+        if ($this->resolvedOrder === null) {
+            $order = app(OrderQueryService::class)->findForUser(Auth::user(), $this->order);
+
+            abort_if($order === null, 404);
+
+            $this->resolvedOrder = $order;
+        }
+
+        return $this->resolvedOrder;
     }
 }

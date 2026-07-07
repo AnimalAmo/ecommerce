@@ -63,81 +63,89 @@
                                 <flux:button wire:click="goToStep(2)" class="mt-4 !h-10 !w-[197px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Prosegui l’acquisto</flux:button>
                             </div>
                         @else
-                            {{-- Card "Seleziona un metodo di pagamento": opzione carta con sub-form + metodi alternativi --}}
-                            <div class="{{ $card }} p-6">
+                            {{-- Card "Seleziona un metodo di pagamento": righe metodo (solo gateway abilitati) + element/bottoni del provider.
+                                 Il watchdog sblocca "Paga ora" se il dispatch process-payment non trova alcun element montato --}}
+                            <div class="{{ $card }} p-6" x-data="paymentWatchdog()" x-on:process-payment.window="start()">
                                 <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">Seleziona un metodo di pagamento</h1>
 
-                                {{-- Opzione 1: riga-bottone; selezionata mostra il sub-form carta (nessun glifo radio in XD) --}}
-                                {{-- Riga metodo: cerchio "check" XD r8 — selezionato #EDFF00 con check nero, altrimenti bianco bordo #C8C8C8 --}}
-                                <flux:button variant="ghost" wire:click="selectPayment('carta')" class="mt-5 !h-auto !w-full !justify-start !p-0 !text-base !font-normal !text-[#0D171A] hover:!bg-transparent hover:!text-[#0D171A] [&>span]:flex [&>span]:items-center [&>span]:gap-[10px]">
-                                    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $paymentMethod === 'carta' ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white' }}">
-                                        @if ($paymentMethod === 'carta')
-                                            <flux:icon.check class="h-[10px] w-[10px] text-black" />
-                                        @endif
-                                    </span>
-                                    Carta di credito o di debito
-                                </flux:button>
-
-                                @if ($paymentMethod === 'carta')
-                                    <div class="mt-1 space-y-4">
-                                        @foreach ([
-                                            ['model' => 'cardHolder', 'label' => 'Titolare della carta *'],
-                                            ['model' => 'cardNumber', 'label' => 'Numero della carta *'],
-                                        ] as $field)
-                                            <div wire:key="field-{{ $field['model'] }}">
-                                                <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
-                                                <div class="relative mt-[11px]">
-                                                    <flux:input type="text" wire:model.live="{{ $field['model'] }}" class="{{ $inputClasses }}" />
-                                                    @if ($this->{$field['model']} !== '')
-                                                        <flux:icon.check class="pointer-events-none absolute right-5 top-1/2 !h-[14px] !w-[14px] -translate-y-1/2 text-[#68CDEB]" />
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-
-                                        {{-- Scadenza + CVV affiancati (295x40, gap 16) --}}
-                                        <div class="flex flex-col gap-4 sm:flex-row">
-                                            @foreach ([
-                                                ['model' => 'cardExpiry', 'label' => 'Data di scadenza *'],
-                                                ['model' => 'cardCvv', 'label' => 'Codice di sicurezza *'],
-                                            ] as $field)
-                                                <div class="w-full sm:w-[295px]" wire:key="field-{{ $field['model'] }}">
-                                                    <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
-                                                    <div class="relative mt-[11px]">
-                                                        <flux:input type="text" wire:model.live="{{ $field['model'] }}" class="{{ $inputClasses }}" />
-                                                        @if ($this->{$field['model']} !== '')
-                                                            <flux:icon.check class="pointer-events-none absolute right-5 top-1/2 !h-[14px] !w-[14px] -translate-y-1/2 text-[#68CDEB]" />
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-
-                                    <flux:button wire:click="goToStep(3)" class="mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Paga ora</flux:button>
+                                @if (! $hasCardMethod && $altMethods === [])
+                                    {{-- Nessun gateway abilitato/configurato: box cortese al posto delle righe, nessun crash --}}
+                                    <div class="mb-2 mt-5 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[13px] leading-5 text-[#555555]">{{ __('checkout.payment_unavailable') }}</div>
                                 @endif
 
-                                <div class="mt-[15px] h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                @if ($hasCardMethod)
+                                    {{-- Opzione 1: riga-bottone carta; selezionata mostra il Payment Element (ex sub-form mock: obbligo PCI) --}}
+                                    {{-- Riga metodo: cerchio "check" XD r8 — selezionato #EDFF00 con check nero, altrimenti bianco bordo #C8C8C8 --}}
+                                    <flux:button variant="ghost" wire:click="selectPayment('card')" class="mt-5 !h-auto !w-full !justify-start !p-0 !text-base !font-normal !text-[#0D171A] hover:!bg-transparent hover:!text-[#0D171A] [&>span]:flex [&>span]:items-center [&>span]:gap-[10px]">
+                                        <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $paymentMethod === 'card' ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white' }}">
+                                            @if ($paymentMethod === 'card')
+                                                <flux:icon.check class="h-[10px] w-[10px] text-black" />
+                                            @endif
+                                        </span>
+                                        {{ \App\Enums\PaymentMethod::Card->label() }}
+                                    </flux:button>
 
-                                {{-- Metodi alternativi (righe 15px, passo 36): cliccarne uno lo seleziona e nasconde il sub-form carta --}}
+                                    @if ($paymentMethod === 'card')
+                                        @if ($paymentUnavailable || $clientSecret === null)
+                                            <div class="mt-4 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[13px] leading-5 text-[#555555]">{{ __('checkout.payment_unavailable') }}</div>
+                                        @else
+                                            {{-- Payment Element (solo card), Appearance API allineata agli input Flux della pagina --}}
+                                            <div wire:ignore wire:key="stripe-card-{{ $clientSecret }}" class="mt-4"
+                                                x-data="stripePayment(@js($clientSecret), @js($stripeKey), { method: 'card', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
+                                                <div x-ref="element"></div>
+                                            </div>
+
+                                            {{-- "Paga ora" spento finché l'Element non è montato (markElementReady dal JS): mai un click nel vuoto --}}
+                                            <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">Paga ora</flux:button>
+                                        @endif
+                                    @endif
+
+                                    <div class="mt-[15px] h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                @endif
+
+                                {{-- Metodi alternativi (righe 15px, passo 36): il container del provider appare sotto la riga selezionata --}}
                                 <div class="mt-1.5">
-                                    @foreach ($altMethods as $method => $label)
-                                        <flux:button variant="ghost" wire:click="selectPayment('{{ $method }}')" class="!h-9 !w-full !justify-start !p-0 !text-[15px] !font-normal !text-[#0D171A] hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:gap-[10px]" wire:key="method-{{ $method }}">
-                                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $paymentMethod === $method ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white' }}">
-                                                @if ($paymentMethod === $method)
+                                    @foreach ($altMethods as $method)
+                                        <flux:button variant="ghost" wire:click="selectPayment('{{ $method->value }}')" class="!h-9 !w-full !justify-start !p-0 !text-[15px] !font-normal !text-[#0D171A] hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:gap-[10px]" wire:key="method-{{ $method->value }}">
+                                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $paymentMethod === $method->value ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white' }}">
+                                                @if ($paymentMethod === $method->value)
                                                     <flux:icon.check class="h-[10px] w-[10px] text-black" />
                                                 @endif
                                             </span>
-                                            {{ $label }}
+                                            {{ $method->label() }}
                                         </flux:button>
+
+                                        @if ($paymentMethod === $method->value)
+                                            @php $sessionReady = $method->gatewayCode() === 'stripe' ? $clientSecret !== null : $paypalOrderId !== null; @endphp
+
+                                            @if ($paymentUnavailable || ! $sessionReady)
+                                                <div wire:key="unavailable-{{ $method->value }}" class="my-3 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[13px] leading-5 text-[#555555]">{{ __('checkout.payment_unavailable') }}</div>
+                                            @elseif ($method->usesExpressCheckout())
+                                                {{-- Apple/Google Pay: Express Checkout Element (bottone brand del wallet; fallback se il device non lo supporta) --}}
+                                                <div wire:ignore wire:key="ece-{{ $method->value }}-{{ $clientSecret }}" class="my-3 max-w-[295px]"
+                                                    x-data="stripeExpressCheckout(@js($clientSecret), @js($stripeKey), { wallet: @js($method === \App\Enums\PaymentMethod::ApplePay ? 'applePay' : 'googlePay'), returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
+                                                    <div x-ref="element"></div>
+                                                    <p x-show="walletUnavailable" style="display: none;" class="text-[13px] leading-5 text-[#959595]">{{ __('payment.errors.wallet_unavailable') }}</p>
+                                                </div>
+                                            @elseif ($method === \App\Enums\PaymentMethod::Klarna)
+                                                <p class="mt-2 text-[13px] leading-none text-[#959595]">Verrai reindirizzato al provider per completare il pagamento</p>
+                                                {{-- Payment Element (solo klarna): la conferma reindirizza a Klarna e torna sul return_url --}}
+                                                <div wire:ignore wire:key="stripe-klarna-{{ $clientSecret }}" class="mt-3"
+                                                    x-data="stripePayment(@js($clientSecret), @js($stripeKey), { method: 'klarna', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
+                                                    <div x-ref="element"></div>
+                                                </div>
+                                                {{-- "Paga ora" spento finché l'Element non è montato (markElementReady dal JS): mai un click nel vuoto --}}
+                                                <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mb-1 mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">Paga ora</flux:button>
+                                            @else
+                                                {{-- PayPal: bottoni dell'SDK classico (la CTA del provider sostituisce "Paga ora") --}}
+                                                <div wire:ignore wire:key="paypal-{{ $paypalOrderId }}" class="my-3 max-w-[295px]"
+                                                    x-data="paypalButtons(@js($paypalOrderId), @js($paypalClientId), { errorMessage: @js(__('checkout.paypal_error')) })">
+                                                    <div x-ref="element"></div>
+                                                </div>
+                                            @endif
+                                        @endif
                                     @endforeach
                                 </div>
-
-                                @if ($paymentMethod !== 'carta')
-                                    <p class="mt-3 text-[13px] leading-none text-[#959595]">Verrai reindirizzato al provider per completare il pagamento</p>
-                                    {{-- TODO: integrazione Stripe/provider reale --}}
-                                    <flux:button wire:click="goToStep(3)" class="mb-1 mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Paga ora</flux:button>
-                                @endif
                             </div>
                         @endif
                     </div>

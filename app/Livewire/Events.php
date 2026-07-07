@@ -62,6 +62,7 @@ class Events extends Component
             return;
         }
 
+        $this->dispatch('cart-updated');
         Flux::toast(text: __('cart.added'), variant: 'success');
     }
 
