@@ -10,6 +10,7 @@ use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
 use App\Services\FavoriteService;
+use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,7 +25,18 @@ class AddFavoriteToCartTest extends TestCase
     {
         parent::setUp();
 
+        // Clock congelato al mattino: gli eventi seedati "oggi" (es. brunch alle 13:30)
+        // restano futuri a prescindere dall'ora reale del run (niente flake pomeridiano).
+        Carbon::setTestNow(Carbon::today()->setTime(8, 0));
+
         $this->seed(DatabaseSeeder::class);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 
     public function test_toggle_cart_adds_a_structure_hotel_with_the_detail_default_options(): void

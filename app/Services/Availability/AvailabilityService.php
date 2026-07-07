@@ -111,6 +111,24 @@ class AvailabilityService
             throw CartValidationException::pastDate();
         }
 
+        // Rifiuta input malevolo dal client (editGuests idratato senza clamp):
+        // conteggi negativi o totale nullo — non affidarsi ai soli stepper UI.
+        $guests = (array) ($options['guests'] ?? []);
+
+        foreach ($guests as $count) {
+            if ((int) $count < 0) {
+                throw CartValidationException::invalidParticipants();
+            }
+        }
+
+        $rawPersons = array_key_exists('participants', $options)
+            ? (int) $options['participants']
+            : array_sum(array_map('intval', $guests));
+
+        if ($rawPersons < 1) {
+            throw CartValidationException::invalidParticipants();
+        }
+
         $persons = BookingPricingService::persons($options);
 
         if ($event->max_participants !== null && ($event->booked_participants ?? 0) + $persons > $event->max_participants) {

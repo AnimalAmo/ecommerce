@@ -7,6 +7,7 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // In produzione tutti gli URL generati (link, asset, webhook nelle email di
+        // conferma, callback dei gateway) devono essere HTTPS anche dietro un proxy.
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Alias morph stabili per i target polimorfici (amenities/faqs/reviews, favorites)
         // e per model_has_roles di spatie/laravel-permission ('user').
         Relation::enforceMorphMap([

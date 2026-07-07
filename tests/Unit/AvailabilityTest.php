@@ -299,6 +299,35 @@ class AvailabilityTest extends TestCase
         ]);
     }
 
+    public function test_attivita_con_ospiti_negativi_rifiutata(): void
+    {
+        // Regressione security: editGuests idratato dal client con valori
+        // negativi (bypass degli stepper) — la disponibilità deve rifiutarli
+        // prima che il pricing produca una riga a prezzo negativo.
+        $activity = Event::factory()->activity(2)->make(['max_participants' => 20]);
+
+        $this->expectException(CartValidationException::class);
+        $this->expectExceptionMessage('Il numero di partecipanti selezionato non è valido.');
+
+        $this->availability->ensureAvailable($activity, [
+            'animals' => ['cane' => 1],
+            'guests' => ['adulti' => -40, 'ragazzi' => 0, 'bambini' => 0],
+        ]);
+    }
+
+    public function test_attivita_con_totale_ospiti_nullo_rifiutata(): void
+    {
+        $activity = Event::factory()->activity(2)->make(['max_participants' => 20]);
+
+        $this->expectException(CartValidationException::class);
+        $this->expectExceptionMessage('Il numero di partecipanti selezionato non è valido.');
+
+        $this->availability->ensureAvailable($activity, [
+            'animals' => ['cane' => 1],
+            'guests' => ['adulti' => 0, 'ragazzi' => 0, 'bambini' => 0],
+        ]);
+    }
+
     public function test_attivita_senza_data_puntuale_disponibile(): void
     {
         $activity = Event::factory()->activity(2)->make(['max_participants' => 20]);

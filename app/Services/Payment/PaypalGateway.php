@@ -195,17 +195,19 @@ class PaypalGateway implements PaymentGatewayInterface
     }
 
     /**
-     * Verifica firma via API PayPal. Senza PAYPAL_WEBHOOK_ID la verifica è
-     * saltata con warning (comportamento matsuri); esito != SUCCESS → 400.
+     * Verifica firma via API PayPal. Senza PAYPAL_WEBHOOK_ID NON possiamo
+     * verificare: fail-closed (come Stripe) — un webhook non firmato non deve
+     * MAI essere accettato, così un POST falso su /webhooks/paypal viene rifiutato
+     * (400) invece di completare un pagamento. Configurare PAYPAL_WEBHOOK_ID in prod.
      */
     private function verifyWebhookSignature(array $payload, array $headers): void
     {
         $webhookId = (string) config('payment.paypal.webhook_id');
 
         if ($webhookId === '') {
-            Log::warning('PayPal webhook: PAYPAL_WEBHOOK_ID non configurato, firma non verificata');
+            Log::warning('PayPal webhook: PAYPAL_WEBHOOK_ID non configurato, webhook rifiutato');
 
-            return;
+            throw new RuntimeException('PayPal webhook id not configured; unsigned webhook rejected.');
         }
 
         $response = $this->request()->post('/v1/notifications/verify-webhook-signature', [

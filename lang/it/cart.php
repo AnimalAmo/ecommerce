@@ -9,6 +9,7 @@ return [
     'invalid_times' => 'L\'orario di fine deve essere successivo all\'inizio.',
     'sold_out' => 'Non ci sono abbastanza posti disponibili.',
     'not_purchasable' => 'Questo prodotto non è acquistabile.',
+    'invalid_participants' => 'Il numero di partecipanti selezionato non è valido.',
     // Toast di conferma aggiunta
     'added' => 'Aggiunto al carrello.',
     // Riga validità della card smartbox ('Smartbox valida per 12 mesi', :validity via Format::validity)

@@ -52,4 +52,10 @@ class CartValidationException extends RuntimeException
     {
         return new self(__('cart.not_purchasable'));
     }
+
+    /** Numero di partecipanti/ospiti non valido (negativo o totale nullo). */
+    public static function invalidParticipants(): self
+    {
+        return new self(__('cart.invalid_participants'));
+    }
 }

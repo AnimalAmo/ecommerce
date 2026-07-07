@@ -53,6 +53,8 @@ class ProfileUpdateTest extends TestCase
         Livewire::actingAs($user)
             ->test(Profile::class)
             ->set(self::VALID)
+            // L'email cambia rispetto al valore del factory: serve la password attuale.
+            ->set('currentPassword', 'password')
             ->call('save')
             ->assertHasNoErrors()
             ->assertDispatched('toast-show');
@@ -78,6 +80,7 @@ class ProfileUpdateTest extends TestCase
         Livewire::actingAs($user)
             ->test(Profile::class)
             ->set([...self::VALID, 'petType' => 'Coniglio'])
+            ->set('currentPassword', 'password')
             ->call('save')
             ->assertHasNoErrors();
 
@@ -121,5 +124,43 @@ class ProfileUpdateTest extends TestCase
             ->set([...self::VALID, 'email' => 'altrui@example.com'])
             ->call('save')
             ->assertHasErrors(['email' => 'unique']);
+    }
+
+    /**
+     * Regressione security: cambiare l'email (vettore di takeover permanente via
+     * recupero password dirottato) richiede la password attuale.
+     */
+    public function test_email_change_requires_current_password(): void
+    {
+        $user = User::factory()->create(['email' => 'vittima@example.com', 'password' => 'password']);
+
+        // Nuova email senza password attuale: bloccato, email invariata.
+        Livewire::actingAs($user)
+            ->test(Profile::class)
+            ->set([...self::VALID, 'email' => 'attaccante@example.com'])
+            ->call('save')
+            ->assertHasErrors(['currentPassword' => 'required']);
+
+        $this->assertSame('vittima@example.com', $user->fresh()->email);
+
+        // Password attuale errata: ancora bloccato.
+        Livewire::actingAs($user)
+            ->test(Profile::class)
+            ->set([...self::VALID, 'email' => 'attaccante@example.com'])
+            ->set('currentPassword', 'sbagliata')
+            ->call('save')
+            ->assertHasErrors(['currentPassword' => 'current_password']);
+
+        $this->assertSame('vittima@example.com', $user->fresh()->email);
+
+        // Password attuale corretta: il cambio email va a buon fine.
+        Livewire::actingAs($user)
+            ->test(Profile::class)
+            ->set([...self::VALID, 'email' => 'attaccante@example.com'])
+            ->set('currentPassword', 'password')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('attaccante@example.com', $user->fresh()->email);
     }
 }

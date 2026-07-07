@@ -9,6 +9,7 @@ return [
     'invalid_times' => 'The end time must be after the start time.',
     'sold_out' => 'There are not enough spots available.',
     'not_purchasable' => 'This product cannot be purchased.',
+    'invalid_participants' => 'The selected number of participants is not valid.',
     // Add-to-cart confirmation toast
     'added' => 'Added to cart.',
     // Validity line of the smartbox card ('Smartbox valid for 12 months', :validity via Format::validity)

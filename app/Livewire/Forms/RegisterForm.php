@@ -81,7 +81,7 @@ class RegisterForm extends Form
     {
         return [
             // Password ancora da scegliere: "una", non "la" del generico lang (login).
-            'password.required' => 'Inserisci una password.',
+            'password.required' => __('auth.choose_password'),
         ];
     }
 

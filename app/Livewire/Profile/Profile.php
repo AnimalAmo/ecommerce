@@ -31,6 +31,9 @@ class Profile extends Component
 
     public string $phone = '';
 
+    /** Password attuale: richiesta solo quando si cambia l'email (anti-takeover). */
+    public string $currentPassword = '';
+
     /** Campi in ordine XD per colonna (label → proprietà). */
     public const FIELDS_LEFT = [
         'firstName' => 'Nome',
@@ -64,7 +67,7 @@ class Profile extends Component
 
     protected function rules(): array
     {
-        return [
+        $rules = [
             'firstName' => ['required', 'string', 'max:255'],
             'lastName' => ['required', 'string', 'max:255'],
             'birthDate' => ['required', 'date_format:d/m/Y', 'before:today'],
@@ -75,13 +78,23 @@ class Profile extends Component
             'zip' => ['required', 'string', 'max:10'],
             'phone' => ['required', 'string', 'max:30'],
         ];
+
+        // Cambiare l'email consente il takeover permanente (recupero password
+        // dirottato): esige la password attuale come ri-autenticazione.
+        if ($this->email !== Auth::user()->email) {
+            $rules['currentPassword'] = ['required', 'current_password'];
+        }
+
+        return $rules;
     }
 
     protected function messages(): array
     {
         return [
             // "In uso", non "registrata" del custom lang: qui l'email appartiene a un altro account.
-            'email.unique' => 'Questa email è già in uso.',
+            'email.unique' => __('profile.email_in_use'),
+            'currentPassword.required' => __('profile.current_password_for_email'),
+            'currentPassword.current_password' => __('profile.current_password_incorrect'),
         ];
     }
 
@@ -105,7 +118,9 @@ class Profile extends Component
         // Aggiorna la specie del primo animale, o lo crea se assente.
         $user->pets()->updateOrCreate([], ['species' => $this->petType]);
 
-        Flux::toast(text: 'Modifiche salvate.', variant: 'success');
+        $this->reset('currentPassword');
+
+        Flux::toast(text: __('profile.saved'), variant: 'success');
     }
 
     public function render()
