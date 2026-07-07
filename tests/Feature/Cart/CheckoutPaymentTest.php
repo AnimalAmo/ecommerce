@@ -6,7 +6,7 @@ use App\Actions\Order\PlaceOrderAction;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Livewire\Checkout;
+use App\Livewire\Commerce\Checkout;
 use App\Models\Event\Event;
 use App\Models\Order\Order;
 use App\Models\PaymentGateway\PaymentGateway;

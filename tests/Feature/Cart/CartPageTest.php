@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Cart;
 
-use App\Livewire\Cart;
+use App\Livewire\Commerce\Cart;
 use App\Models\CartItem\CartItem;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;

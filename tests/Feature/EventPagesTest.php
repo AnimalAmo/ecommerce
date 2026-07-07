@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\Events;
+use App\Livewire\Catalog\Events;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;

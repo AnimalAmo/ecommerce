@@ -40,7 +40,7 @@
                 <flux:button variant="ghost" size="sm" square aria-label="Preferiti" href="{{ route('preferiti') }}" class="!text-ink hover:!text-brand-magenta">
                     <flux:icon.heart class="h-5 w-5" />
                 </flux:button>
-                <livewire:cart-badge />
+                <livewire:commerce.cart-badge />
 
                 @auth
                     <flux:dropdown>
