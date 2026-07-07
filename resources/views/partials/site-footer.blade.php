@@ -15,7 +15,6 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('news') }}" class="hover:text-brand-cyan">{{ __('nav.footer.news') }}</a></li>
                     <li><a href="{{ route('community') }}" class="hover:text-brand-cyan">{{ __('nav.footer.community') }}</a></li>
-                    <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">{{ __('nav.footer.become_partner') }}</a></li>
                 </ul>
             </div>
             <div>
@@ -23,14 +22,14 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('about') }}" class="hover:text-brand-cyan">{{ __('nav.footer.about') }}</a></li>
                     <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">{{ __('nav.footer.work_with_us') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.contacts') }}</a></li>
                 </ul>
             </div>
             <div>
                 <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">{{ __('nav.footer.help_support') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.faq') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.customer_support') }}</a></li>
+                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.how_it_works') }}</a></li>
+                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
+                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.support') }}</a></li>
                 </ul>
             </div>
         </div>
