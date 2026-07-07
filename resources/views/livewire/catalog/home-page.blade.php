@@ -102,7 +102,7 @@
                             {{-- Blocco pulsante+prezzo: sempre in fondo (mt-auto) e su un solo rigo,
                                  pulsante e prezzo affiancati; 'A partire da' più piccolo per starci. --}}
                             <div class="mt-auto flex items-center justify-between gap-2 pt-4">
-                                <flux:button href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event) : route('eventi.detail', $event) }}" size="sm" class="shrink-0 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
+                                <flux:button href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event->slug) : route('eventi.detail', $event->slug) }}" size="sm" class="shrink-0 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !text-[#0D171A] !shadow-none hover:!bg-brand-yellow">
                                     <flux:icon.check-1 class="h-4 w-4" />
                                     Partecipa
                                 </flux:button>
