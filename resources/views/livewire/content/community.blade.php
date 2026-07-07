@@ -98,7 +98,7 @@
                 <div class="mt-8 flex items-center gap-4">
                     <div class="flex h-[50px] w-full max-w-[589px] items-center rounded-full border border-[#E9E9E9] bg-white pl-[18px]">
                         <flux:icon.magnifying-glass class="h-[18px] w-[18px] shrink-0 text-[#959595]" />
-                        <flux:input type="text" wire:model.live.debounce.300ms="search" placeholder="Cerca" class="!min-w-0 !flex-1 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-[48px] [&_input]:!rounded-full [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!px-4 [&_input]:!text-lg [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
+                        <flux:input type="text" wire:model.live.debounce.300ms="search" placeholder="Cerca" class="!min-w-0 !flex-1 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-[48px] [&_input]:!rounded-full [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!px-4 [&_input]:!text-lg [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
                     </div>
 
                     {{-- Aperto (XD symbol "Open"): pannello 159px a filo sotto la pill (offset/gap 0), angoli alti squadrati --}}
