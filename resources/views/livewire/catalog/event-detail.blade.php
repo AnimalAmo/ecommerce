@@ -46,7 +46,8 @@
         <div class="{{ $px }} pb-[120px] pt-10">
             {{-- 2. Testata: orario, titolo, prezzo --}}
             <p class="flex items-center gap-2 text-[15px] font-medium leading-[21px] text-brand-purple-soft">
-                <flux:icon.time class="h-[15px] w-[15px] shrink-0" />
+                {{-- Icona nera come il pin/marker (il testo orario resta viola). --}}
+                <flux:icon.time class="h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                 {{ \App\Support\Format::eventTimeFull($event->starts_at) }}
             </p>
             <h1 class="mt-[9px] text-[25px] font-bold leading-[30px] text-black">{{ $event->title }}</h1>
