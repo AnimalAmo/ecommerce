@@ -153,7 +153,7 @@
                     {{-- Card "Riepilogo dell'ordine" (575, condivisa dagli step 1 e 2): stessi dati del carrello --}}
                     <aside class="w-full min-w-0 min-[87.5rem]:w-[575px] min-[87.5rem]:shrink-0">
                         <div class="{{ $card }} pb-6">
-                            <h2 class="px-6 pt-12 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.order_summary') }}</h2>
+                            <h2 class="px-6 py-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.order_summary') }}</h2>
 
                             <div class="divide-y divide-[#E9E9E9] px-5">
                                 @foreach ($items as $item)

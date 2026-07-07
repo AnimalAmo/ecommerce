@@ -38,7 +38,7 @@
                 {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"), derivata da starts_at --}}
                 <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
                     <div class="h-6 w-full bg-brand-purple-soft" aria-hidden="true"></div>
-                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
+                    <p class="flex h-[65px] items-center justify-center text-[20px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
                 </div>
             </div>
         </section>
@@ -74,21 +74,21 @@
                     </flux:button>
                 </nav>
                 <div class="flex shrink-0 items-center gap-4 pb-[10px]">
-                    {{-- TODO: azione Preferiti --}}
-                    <flux:button class="!h-[39px] !w-[128px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                    {{-- Preferiti reali: attivo = "Mi interessa" su fondo brand-yellow, l'icona resta. --}}
+                    <flux:button wire:click="toggleFavorite('event', {{ $event->id }})" class="!h-[39px] !min-w-[128px] !shrink-0 !gap-2 !rounded-full !border-0 !px-5 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2 {{ $isFav ? '!bg-brand-yellow hover:!bg-brand-yellow' : '!bg-gray-150 hover:!bg-[#DEDEDE]' }}">
                         <flux:icon.heart class="h-4 w-4 shrink-0" />
-                        {{ __('events.favorites') }}
+                        {{ $isFav ? __('events.interested') : __('events.favorites') }}
                     </flux:button>
                     @if ($canJoin)
                         {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello" --}}
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
-                        <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
+                        <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.check-1 class="h-4 w-4 shrink-0" />
                             {{ __('events.join') }}
                         </flux:button>
                     @else
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
-                        <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
+                        <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.cart class="h-4 w-4 shrink-0" />
                             {{ __('events.add_to_cart') }}
                         </flux:button>

@@ -35,6 +35,7 @@ return [
     'tab_info' => 'Informazioni',
     'tab_discussion' => 'Discussione',
     'favorites' => 'Preferiti',
+    'interested' => 'Mi interessa',
 
     // Sezioni contenuto
     'description' => 'Descrizione',

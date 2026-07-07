@@ -35,6 +35,7 @@ return [
     'tab_info' => 'Information',
     'tab_discussion' => 'Discussion',
     'favorites' => 'Favourites',
+    'interested' => "I'm interested",
 
     // Content sections
     'description' => 'Description',
