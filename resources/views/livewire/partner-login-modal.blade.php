@@ -11,10 +11,12 @@
             <flux:field>
                 <flux:label class="!text-xs !text-[#555555]">Email</flux:label>
                 <flux:input type="email" wire:model="form.email" placeholder="Email" />
+                <flux:error name="form.email" class="!mt-1 !text-xs" />
             </flux:field>
             <flux:field>
                 <flux:label class="!text-xs !text-[#555555]">Password</flux:label>
                 <flux:input type="password" wire:model="form.password" placeholder="Password" />
+                <flux:error name="form.password" class="!mt-1 !text-xs" />
             </flux:field>
         </div>
         <div class="mt-2 text-right">

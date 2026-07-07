@@ -23,7 +23,7 @@
                         <flux:button href="{{ url('/eventi') }}" class="mt-[63px] !h-10 !w-[244px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Esperienze pensate per te</flux:button>
                     </div>
 
-                    {{-- Sezione "Le attività più amate": heading + linea a tutta larghezza + fila di 3 card preferiti (senza box contenitore) --}}
+                    {{-- Sezione "Le attività più amate": heading + linea a tutta larghezza + card reali (top prodotti per numero di preferiti) --}}
                     <h2 class="mt-[120px] text-2xl font-medium leading-none text-black">Le attività più amate su Animal-amo</h2>
                     <div class="mt-[22px] h-px w-full bg-[#E9E9E9]" aria-hidden="true"></div>
 
@@ -37,7 +37,7 @@
                             <flux:icon.chevron-right class="!h-5 !w-5 text-[#2B2B2B]" />
                         </flux:button>
 
-                        {{-- 3 card = preferiti 1-3 (stesso passo 490/card 468 di /preferiti, ma appoggiate direttamente sulla pagina) --}}
+                        {{-- Fino a 3 card = top preferiti reali (stesso passo 490/card 468 di /preferiti, ma appoggiate direttamente sulla pagina) --}}
                         <div class="grid grid-cols-1 gap-x-[22px] gap-y-4 md:grid-cols-2 min-[87.5rem]:mx-6 min-[87.5rem]:grid-cols-3">
                             @foreach ($suggestions as $item)
                                 {{-- Cuore bianco che diventa giallo al click (stato locale, TODO backend reale) --}}
@@ -45,18 +45,18 @@
                                     'item' => $item,
                                     'wireKey' => 'suggestion-' . $item['id'],
                                     'heartActive' => in_array($item['id'], $suggestFavorites, true),
-                                    'heartAction' => 'toggleSuggestionFavorite(' . $item['id'] . ')',
+                                    'heartAction' => "toggleSuggestionFavorite('" . $item['id'] . "')",
                                     'bagActive' => in_array($item['id'], $suggestInCart, true),
-                                    'bagAction' => 'toggleSuggestionCart(' . $item['id'] . ')',
+                                    'bagAction' => "toggleSuggestionCart('" . $item['id'] . "')",
                                 ])
                             @endforeach
                         </div>
                     </div>
 
-                    {{-- Puntini paginazione 9px: attivo #2B2B2B, inattivi #DEDEDE --}}
+                    {{-- Puntini paginazione 9px (uno per card reale): attivo #2B2B2B, inattivi #DEDEDE --}}
                     <div class="mt-6 flex items-center justify-center gap-[10px]">
-                        @foreach ([true, false, false] as $index => $active)
-                            <flux:button variant="ghost" square wire:key="dot-{{ $index }}" aria-label="Pagina {{ $index + 1 }}" class="!h-[9px] !w-[9px] !min-w-0 !rounded-full !p-0 {{ $active ? '!bg-[#2B2B2B] hover:!bg-[#2B2B2B]' : '!bg-[#DEDEDE] hover:!bg-[#DEDEDE]' }}"></flux:button>
+                        @foreach ($suggestions as $index => $suggested)
+                            <flux:button variant="ghost" square wire:key="dot-{{ $index }}" aria-label="Pagina {{ $index + 1 }}" class="!h-[9px] !w-[9px] !min-w-0 !rounded-full !p-0 {{ $index === 0 ? '!bg-[#2B2B2B] hover:!bg-[#2B2B2B]' : '!bg-[#DEDEDE] hover:!bg-[#DEDEDE]' }}"></flux:button>
                         @endforeach
                     </div>
                 @else
@@ -71,14 +71,14 @@
                                      nel flusso regalo la card cresce in basso con pill validità + campi dedica (XD y251..~721) --}}
                                 <article wire:key="cart-item-{{ $item['id'] }}" class="min-h-[223px] w-full rounded-[3px] border border-[#E9E9E9] bg-white p-[18px] shadow-[0px_1px_10px_#0000001A]">
                                     <div class="flex gap-[19px]">
-                                    {{-- Foto 278x185 con chip tipologia sovrapposta (16px dentro la foto) --}}
+                                    {{-- Foto 278x185 con chip tipologia sovrapposta (16px dentro la foto); chip = ProductType REALE del prodotto --}}
                                     <div class="relative hidden shrink-0 sm:block">
-                                        <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[185px] w-[278px] rounded-[2px] object-cover">
+                                        <img src="{{ $item['photoUrl'] }}" alt="{{ $item['title'] }}" class="h-[185px] w-[278px] rounded-[2px] object-cover">
                                         @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
                                         <span class="absolute left-4 top-4 flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
                                     </div>
 
-                                    {{-- Blocco info: titolo + righe meta (la riga date manca quando 'dates' è null e le successive salgono, come nell'item 3 XD) --}}
+                                    {{-- Blocco info: titolo + righe meta (le righe assenti — date, ospiti — fanno salire le successive, come nell'item 3 XD) --}}
                                     <div class="min-w-0 flex-1 pt-[30px]">
                                         <h2 class="truncate text-xl font-semibold leading-[27px] text-black">{{ $item['title'] }}</h2>
                                         <div class="mt-[14px] space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
@@ -89,36 +89,50 @@
                                             @if ($item['dates'] !== null)
                                                 <div class="flex items-center gap-2">
                                                     <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
-                                                    <span>{{ $item['dates']['checkIn'] }} - {{ $item['dates']['checkOut'] }}</span>
+                                                    {{-- checkOut null (evento a data singola): solo il check-in --}}
+                                                    <span>{{ $item['dates']['checkIn'] }}@if ($item['dates']['checkOut'] !== null) - {{ $item['dates']['checkOut'] }}@endif</span>
+                                                </div>
+                                            @elseif ($item['serviceSlot'] !== null)
+                                                {{-- Riga giorno + orario del servizio ('17/12/2023, 10:00 - 16:00') al posto della riga date --}}
+                                                <div class="flex items-center gap-2">
+                                                    <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
+                                                    <span>{{ $item['serviceSlot'] }}</span>
                                                 </div>
                                             @endif
-                                            <div class="flex items-center gap-2">
-                                                <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
-                                                <span>{{ $this->guestsLabel($item['guests']) }}</span>
-                                            </div>
-                                            {{-- Icona cane: nessuna heroicon a tema, uso la zampa custom del set XD --}}
-                                            <div class="flex items-center gap-2">
-                                                <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
-                                                <span>{{ $this->dogsLabel($item['dogs']) }}</span>
-                                            </div>
+                                            @if ($item['guests'] !== null)
+                                                <div class="flex items-center gap-2">
+                                                    <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
+                                                    <span>{{ \App\Support\Format::guests($item['guests']) }}</span>
+                                                </div>
+                                            @endif
+                                            @if ($item['animals'] !== null)
+                                                {{-- Icona cane: nessuna heroicon a tema, uso la zampa custom del set XD --}}
+                                                <div class="flex items-center gap-2">
+                                                    <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
+                                                    <span>{{ \App\Support\Format::animals($item['animals']) }}</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
 
                                     {{-- Zona destra: 3 divisori verticali (x 720/820/920 dal bordo card) con prezzo / Modifica / Elimina centrati fra loro --}}
                                     <div class="mt-[71px] flex h-[50px] shrink-0 self-start">
                                         <div class="flex w-[100px] items-center justify-center border-l border-[#E9E9E9]">
-                                            <span class="text-2xl font-bold leading-none text-[#0D171A]">{{ $item['price'] }} €</span>
+                                            <span class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($item['price']) }}</span>
                                         </div>
                                         <div class="flex w-[100px] items-center justify-center border-l border-[#E9E9E9]">
-                                            <flux:button variant="ghost" wire:click="openEdit({{ $item['id'] }})" class="!h-auto !p-0 !text-sm !font-medium !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">Modifica</flux:button>
+                                            {{-- Eventi: data fissa e 1 partecipante, nessuna Modifica --}}
+                                            @if ($item['family'] !== 'event')
+                                                <flux:button variant="ghost" wire:click="openEdit('{{ $item['id'] }}')" class="!h-auto !p-0 !text-sm !font-medium !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">Modifica</flux:button>
+                                            @endif
                                         </div>
                                         <div class="flex w-[124px] items-center justify-center border-l border-[#E9E9E9]">
-                                            <flux:button variant="ghost" wire:click="removeItem({{ $item['id'] }})" class="!h-auto !p-0 !text-sm !font-medium !text-[#EA2E68] hover:!bg-transparent hover:!text-[#EA2E68]">Elimina</flux:button>
+                                            <flux:button variant="ghost" wire:click="removeItem('{{ $item['id'] }}')" class="!h-auto !p-0 !text-sm !font-medium !text-[#EA2E68] hover:!bg-transparent hover:!text-[#EA2E68]">Elimina</flux:button>
                                         </div>
                                     </div>
                                     </div>
 
-                                    @if ($item['gift'] ?? false)
+                                    @if ($item['gift'])
                                         {{-- Estensione regalo smartbox sotto l'area info (offset 6: pill/campi a x=24 dal bordo card come in XD) --}}
                                         <div class="ml-[6px] mt-6">
                                             {{-- Pill validità 409x47 --}}
@@ -127,8 +141,8 @@
                                                 <span class="truncate text-[17px] font-medium leading-none text-[#2B2B2B]">{{ $item['giftValidity'] }}</span>
                                             </div>
 
-                                            {{-- Campi dedica: stile input checkout ma vuoti (placeholder #0D171A non corsivo) --}}
-                                            {{-- TODO: persistenza regalo backend — dedica e messaggio vivono solo nello stato del componente --}}
+                                            {{-- Campi dedica: stile input checkout ma vuoti (placeholder #0D171A non corsivo);
+                                                 persistiti sulla riga (options.gift) alla CTA "Vai al checkout" --}}
                                             <flux:input wire:model="giftDedication.{{ $item['id'] }}" placeholder="Dedicato a" class="mt-4 !min-w-0 !max-w-[972px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
                                             {{-- flux:textarea NON ha wrapper (la radice È la textarea stessa): classi dirette, niente selettori [&_textarea] --}}
                                             <flux:textarea wire:model="giftMessage.{{ $item['id'] }}" placeholder="Messaggio" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !max-w-[972px] !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
@@ -144,7 +158,7 @@
                                 <div class="flex items-start justify-between px-6 pt-10">
                                     <span class="text-sm leading-none text-[#555555]">Totale ({{ $count }} {{ $count === 1 ? 'articolo' : 'articoli' }})</span>
                                     <div class="text-right">
-                                        <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ $total }} €</div>
+                                        <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
                                         <div class="mt-[2px] text-xs leading-none text-[#627277]">Tasse e commissioni comprese</div>
                                     </div>
                                 </div>
@@ -176,7 +190,7 @@
 
                                 <div class="{{ $gift ? 'mt-[23px]' : 'mt-[31px]' }} flex justify-center">
                                     @if ($gift)
-                                        {{-- In modalità regalo la CTA salva dedica/messaggio in sessione e apre il checkout regalo (?regalo=1) --}}
+                                        {{-- In modalità regalo la CTA persiste dedica/messaggio sulle righe e apre il checkout regalo (?regalo=1) --}}
                                         <flux:button wire:click="goToCheckout" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
                                     @else
                                         <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">Vai al checkout</flux:button>
@@ -193,14 +207,15 @@
     {{-- Footer slim (direttiva utente: pagine funnel carrello/checkout) --}}
     @include('partials.footer-minimal')
 
-    {{-- Pop-up "Modifica prenotazione" (symbol XD, 3 stati): uno solo, alimentato dall'articolo selezionato --}}
+    {{-- Pop-up "Modifica prenotazione" (symbol XD): uno solo, accordion per famiglia della riga selezionata
+         (structure = date/ospiti/animali, service = giorno/orari/animali, activity = ospiti/animali, smartbox = animali) --}}
     <flux:modal name="edit-booking" :closable="false" class="w-full !max-w-[491px] !rounded-[3px] !border !border-[#E9E9E9] bg-white !p-6 backdrop:!bg-black/30">
         @if ($editingItem !== null)
             <flux:heading level="2" class="!text-2xl !font-bold !text-[#0D171A]">Modifica prenotazione</flux:heading>
 
             <div class="mt-4 space-y-4">
-                {{-- Campo date: solo per gli articoli con date (l'item 3 apre con soli Ospiti + Animali) --}}
-                @if ($editCheckIn !== null)
+                @if ($editingFamily === 'structure')
+                    {{-- Campo date (range check-in/check-out) --}}
                     <div class="rounded-[4px] border border-[#DEDEDE]">
                         <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-[4px] !p-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-stretch">
                             <span class="flex w-[222px] flex-col justify-center gap-[7px] pl-[15px]">
@@ -215,85 +230,92 @@
                         </flux:button>
 
                         @if ($expandedField === 'date')
-                            {{-- Calendario inline (stato "date"): mese reale generato in PHP dal mese del check-in --}}
+                            {{-- Calendario inline condiviso (giorni chiusi della struttura + passati disabilitati) --}}
                             <div class="px-[10px] pb-4">
-                                <div class="mt-2 flex items-center justify-center gap-6">
-                                    <flux:button variant="ghost" square wire:click="previousMonth" aria-label="Mese precedente" class="!h-6 !w-6 !min-w-0 !p-0 hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                                        <flux:icon.chevron-left class="!h-[14px] !w-[14px] text-black" />
-                                    </flux:button>
-                                    <span class="w-[110px] text-center text-[15px] font-semibold leading-none text-black">{{ $calendarLabel }}</span>
-                                    <flux:button variant="ghost" square wire:click="nextMonth" aria-label="Mese successivo" class="!h-6 !w-6 !min-w-0 !p-0 hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                                        <flux:icon.chevron-right class="!h-[14px] !w-[14px] text-black" />
-                                    </flux:button>
-                                </div>
+                                @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                            </div>
+                        @endif
+                    </div>
+                @endif
 
-                                <div class="mt-5 grid grid-cols-7 text-center text-[15px] leading-none text-[#555555]">
-                                    @foreach (['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'] as $dow)
-                                        <span wire:key="dow-{{ $dow }}">{{ $dow }}</span>
-                                    @endforeach
-                                </div>
+                @if ($editingFamily === 'service')
+                    {{-- Campo Giorno (calendario a giorno singolo, stesso stile del campo date) --}}
+                    <div class="rounded-[4px] border border-[#DEDEDE]">
+                        <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                            <span class="flex flex-col gap-[7px]">
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Giorno</span>
+                                <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
+                            </span>
+                            <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'date' ? 'rotate-180' : '' }}" />
+                        </flux:button>
 
-                                {{-- Giorni: click → check-in, secondo click successivo → check-out; i giorni nell'intervallo hanno il cerchio giallo 28px --}}
-                                <div class="mt-2">
-                                    @foreach ($calendar as $weekIndex => $week)
-                                        <div class="grid grid-cols-7" wire:key="week-{{ $weekIndex }}">
-                                            @foreach ($week as $day)
-                                                <div class="flex h-10 items-center justify-center" wire:key="day-{{ $day['date'] }}">
-                                                    <flux:button variant="ghost" square wire:click="selectDay('{{ $day['date'] }}')" class="!h-7 !w-7 !min-w-0 !rounded-full !p-0 !text-[15px] !font-normal {{ $day['inRange'] ? '!bg-brand-yellow hover:!bg-brand-yellow' : 'hover:!bg-gray-100' }} {{ $day['inMonth'] ? '!text-[#2B2B2B]' : '!text-[#959595]' }} [&>span]:flex [&>span]:items-center [&>span]:justify-center">{{ $day['day'] }}</flux:button>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @endforeach
+                        @if ($expandedField === 'date')
+                            <div class="px-[10px] pb-4">
+                                @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Campo Orari (nuovo accordion: l'XD non definisce l'editing del servizio — estrapolazione ratificata) --}}
+                    <div class="rounded-[4px] border border-[#DEDEDE]">
+                        <flux:button variant="ghost" wire:click="toggleField('orari')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                            <span class="flex flex-col gap-[7px]">
+                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Orari</span>
+                                <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editTimeFrom }} - {{ $editTimeTo }}</span>
+                            </span>
+                            <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'orari' ? 'rotate-180' : '' }}" />
+                        </flux:button>
+
+                        @if ($expandedField === 'orari')
+                            <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                            <div class="flex gap-4 px-6 pb-4 pt-[10px]">
+                                <div class="flex-1">
+                                    <div class="text-sm leading-none text-[#627277]">Dalle</div>
+                                    <flux:select wire:model="editTimeFrom" class="mt-2">
+                                        @foreach ($bookingHours as $hour)
+                                            <flux:select.option value="{{ $hour }}">{{ $hour }}</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm leading-none text-[#627277]">Alle</div>
+                                    <flux:select wire:model="editTimeTo" class="mt-2">
+                                        @foreach ($bookingHours as $hour)
+                                            <flux:select.option value="{{ $hour }}">{{ $hour }}</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
                                 </div>
                             </div>
                         @endif
                     </div>
                 @endif
 
-                {{-- Campo Ospiti --}}
-                <div class="rounded-[4px] border border-[#DEDEDE]">
-                    <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
-                            <span class="flex flex-col gap-[7px]">
-                                <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Ospiti</span>
-                                <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $this->guestsLabel($editGuests) }}</span>
-                            </span>
-                            <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
-                    </flux:button>
+                @if (in_array($editingFamily, ['structure', 'activity'], true))
+                    {{-- Campo Ospiti --}}
+                    <div class="rounded-[4px] border border-[#DEDEDE]">
+                        <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                <span class="flex flex-col gap-[7px]">
+                                    <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Ospiti</span>
+                                    <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::guests($editGuests) }}</span>
+                                </span>
+                                <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
+                        </flux:button>
 
-                    @if ($expandedField === 'ospiti')
-                        <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
-                        <div class="px-6 pb-3 pt-[10px]">
-                            @foreach ([
-                                ['key' => 'adulti', 'name' => 'Adulto', 'hint' => 'Età 17 - 99'],
-                                ['key' => 'ragazzi', 'name' => 'Ragazzi', 'hint' => 'Età 8 - 16'],
-                                ['key' => 'bambini', 'name' => 'Bambini', 'hint' => 'Fino a 7 anni'],
-                            ] as $row)
-                                <div class="flex h-[57px] items-center justify-between" wire:key="guest-row-{{ $row['key'] }}">
-                                    <div>
-                                        <div class="text-base leading-none text-[#0D171A]">{{ $row['name'] }}</div>
-                                        <div class="mt-[6px] text-sm leading-none text-[#627277]">{{ $row['hint'] }}</div>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <flux:button variant="ghost" square wire:click="decrementGuest('{{ $row['key'] }}')" aria-label="Diminuisci {{ $row['name'] }}" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border !border-[#E2EAEB] !bg-white !p-0 !shadow-none hover:!bg-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                                            <flux:icon.minus class="!h-3 !w-3 text-black" />
-                                        </flux:button>
-                                        <span class="w-[42px] text-center text-base leading-none text-[#1E2E33]">{{ $editGuests[$row['key']] }}</span>
-                                        <flux:button variant="ghost" square wire:click="incrementGuest('{{ $row['key'] }}')" aria-label="Aumenta {{ $row['name'] }}" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border !border-[#E2EAEB] !bg-white !p-0 !shadow-none hover:!bg-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                                            <flux:icon.plus class="!h-3 !w-3 text-black" />
-                                        </flux:button>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
+                        @if ($expandedField === 'ospiti')
+                            <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                            <div class="px-6 pb-3 pt-[10px]">
+                                @include('partials.booking.guest-steppers', ['guests' => $editGuests, 'guestsAtMax' => $guestsAtMax])
+                            </div>
+                        @endif
+                    </div>
+                @endif
 
-                {{-- Campo Animali (nessun master XD per lo stato aperto — derivato dallo stato ospiti) --}}
+                {{-- Campo Animali (tutte le famiglie modificabili; nessun master XD per lo stato aperto — derivato dallo stato ospiti) --}}
                 <div class="rounded-[4px] border border-[#DEDEDE]">
                     <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-[4px] !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                             <span class="flex flex-col gap-[7px]">
                                 <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Animali</span>
-                                <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $this->dogsLabel($editDogs) }}</span>
+                                <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
                             </span>
                             <flux:icon.chevron-down class="!h-3 !w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
                     </flux:button>
@@ -301,33 +323,17 @@
                     @if ($expandedField === 'animali')
                         <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
                         <div class="px-6 pb-3 pt-[10px]">
-                            <div class="flex h-[57px] items-center justify-between">
-                                <div class="text-base leading-none text-[#0D171A]">Cani</div>
-                                <div class="flex items-center">
-                                    <flux:button variant="ghost" square wire:click="decrementDogs" aria-label="Diminuisci cani" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border !border-[#E2EAEB] !bg-white !p-0 !shadow-none hover:!bg-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                                        <flux:icon.minus class="!h-3 !w-3 text-black" />
-                                    </flux:button>
-                                    <span class="w-[42px] text-center text-base leading-none text-[#1E2E33]">{{ $editDogs }}</span>
-                                    <flux:button variant="ghost" square wire:click="incrementDogs" aria-label="Aumenta cani" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border !border-[#E2EAEB] !bg-white !p-0 !shadow-none hover:!bg-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                                        <flux:icon.plus class="!h-3 !w-3 text-black" />
-                                    </flux:button>
-                                </div>
-                            </div>
+                            @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
                         </div>
                     @endif
                 </div>
             </div>
 
-            {{-- Footer: Annulla scarta le copie di lavoro, Conferma le riversa nell'articolo --}}
+            {{-- Footer: Annulla scarta le copie di lavoro, Conferma le riversa nella riga (rivalidazione+riprezzo server) --}}
             <div class="mt-8 flex items-center justify-end gap-6">
                 <flux:button variant="ghost" wire:click="closeEdit" class="!h-auto !p-0 !text-lg !font-medium !text-[#959595] hover:!bg-transparent hover:!text-[#959595]">Annulla</flux:button>
                 <flux:button wire:click="confirmEdit" class="!h-10 !w-[134px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#68CDEB]">Conferma</flux:button>
             </div>
         @endif
     </flux:modal>
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

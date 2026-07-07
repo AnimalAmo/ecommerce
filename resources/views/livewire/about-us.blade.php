@@ -60,9 +60,4 @@
     </main>
 
     @include('partials.site-footer')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

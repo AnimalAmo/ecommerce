@@ -33,6 +33,8 @@ class EventSeeder extends Seeder
                 'starts_at' => $row['starts_at'] ?? null,
                 'ends_at' => $row['ends_at'] ?? null,
                 'duration_days' => $row['duration_days'] ?? null,
+                // Capienza demo (step 3): default 30, override per riga (8 = evento piccolo, 20 = escursioni).
+                'max_participants' => $row['max_participants'] ?? 30,
                 'price_cents' => $row['price_cents'] ?? null,
                 'is_free' => $row['is_free'] ?? false,
                 'img' => $row['img'],
@@ -67,8 +69,8 @@ class EventSeeder extends Seeder
     private static function gridEvents(): array
     {
         return [
-            ['position' => 1, 'slug' => 'brunch-pet-friendly', 'title' => 'Brunch Pet Friendly', 'location' => 'San Pellegrino, Italia', 'starts_at' => Carbon::today()->setTime(13, 30), 'ends_at' => Carbon::today()->setTime(16, 30), 'price_cents' => 2500, 'img' => 'event-brunch-pet-friendly'],
-            ['position' => 2, 'slug' => 'weekend-escursioni', 'title' => 'Weekend di escursioni', 'location' => 'Viareggio, Italia', 'type' => 'activity', 'price_cents' => 11800, 'img' => 'event-weekend-escursioni'],
+            ['position' => 1, 'slug' => 'brunch-pet-friendly', 'title' => 'Brunch Pet Friendly', 'location' => 'San Pellegrino, Italia', 'starts_at' => Carbon::today()->setTime(13, 30), 'ends_at' => Carbon::today()->setTime(16, 30), 'price_cents' => 2500, 'max_participants' => 8, 'img' => 'event-brunch-pet-friendly'],
+            ['position' => 2, 'slug' => 'weekend-escursioni', 'title' => 'Weekend di escursioni', 'location' => 'Viareggio, Italia', 'type' => 'activity', 'price_cents' => 11800, 'max_participants' => 20, 'img' => 'event-weekend-escursioni'],
             ['position' => 3, 'slug' => 'festa-pet-friendly', 'title' => 'Festa Pet Friendly', 'location' => 'Milano, Italia', 'starts_at' => '2024-01-08 19:30', 'ends_at' => '2024-01-08 21:30', 'is_free' => true, 'img' => 'event-festa-pet-friendly'],
             ['position' => 4, 'slug' => 'raduno-cuccioli', 'title' => 'Raduno per cuccioli', 'location' => 'San Pellegrino, Italia', 'starts_at' => '2019-01-18 15:00', 'ends_at' => '2019-01-18 17:00', 'is_free' => true, 'img' => 'event-raduno-cuccioli'],
             ['position' => 5, 'slug' => 'weekend-mare', 'title' => 'Weekend al mare', 'location' => 'Genova, Italia', 'type' => 'activity', 'price_cents' => 21000, 'img' => 'event-weekend-mare'],

@@ -29,23 +29,18 @@
                                         <div class="mt-[11px]">
                                             <flux:input type="text" wire:model="{{ $model }}" class="{{ $inputClasses }}" />
                                         </div>
+                                        <flux:error name="{{ $model }}" class="!mt-1 !pl-[15px] !text-xs" />
                                     </div>
                                 @endforeach
                             </div>
                         @endforeach
                     </div>
 
-                    {{-- TODO: salvataggio profilo backend — per ora il template è statico --}}
-                    <flux:button class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
+                    <flux:button wire:click="save" class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
                 </section>
             </div>
         </div>
     </main>
 
     @include('partials.footer-minimal')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

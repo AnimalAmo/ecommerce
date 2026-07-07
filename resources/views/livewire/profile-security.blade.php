@@ -26,14 +26,16 @@
                             <div class="w-full min-[68rem]:w-[472px]" wire:key="field-{{ $field['model'] }}">
                                 <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
                                 <div class="mt-[11px]">
-                                    <flux:input type="password" wire:model="{{ $field['model'] }}" class="{{ $inputClasses }}" />
+                                    {{-- Asterischi XD resi come placeholder (un valore precompilato verrebbe inviato) --}}
+                                    <flux:input type="password" wire:model="{{ $field['model'] }}" placeholder="***************" class="{{ $inputClasses }} [&_input]:placeholder:!text-[#0D171A]" />
                                 </div>
+                                <flux:error name="{{ $field['model'] }}" class="!mt-1 !pl-[15px] !text-xs" />
                             </div>
                         @endforeach
                     </div>
 
                     {{-- Link e testi privacy come da XD (y321..533): magenta 13px, lorem 15px, elimina #EA2E68 --}}
-                    {{-- TODO: flussi reimposta password / impostazioni privacy / elimina account --}}
+                    {{-- TODO: flussi reimposta password / impostazioni privacy / elimina account — flussi non presenti nel design, da segnalare al cliente --}}
                     <a href="#" class="mt-4 block text-[13px] leading-none text-brand-magenta">Reimposta password</a>
 
                     <p class="mt-[30px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A]">{{ $privacyPlaceholder }}</p>
@@ -44,17 +46,11 @@
 
                     <a href="#" class="mt-4 block text-[13px] leading-none text-[#EA2E68]">Elimina account</a>
 
-                    {{-- TODO: salvataggio sicurezza backend — per ora il template è statico --}}
-                    <flux:button class="mt-[37px] !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
+                    <flux:button wire:click="save" class="mt-[37px] !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
                 </section>
             </div>
         </div>
     </main>
 
     @include('partials.footer-minimal')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

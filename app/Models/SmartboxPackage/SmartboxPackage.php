@@ -35,6 +35,9 @@ class SmartboxPackage extends Model
     {
         return [
             'type' => ProductType::class,
+            // Cast espliciti sui cents: il pricing (step 3) fa aritmetica, non solo display.
+            'price_cents' => 'integer',
+            'price_from_cents' => 'integer',
             'general_info' => 'array',
             'features' => 'array',
         ];

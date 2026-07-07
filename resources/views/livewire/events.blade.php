@@ -82,8 +82,7 @@
                                 <h3 class="mt-[10px] text-[20px] font-semibold leading-[25px] text-black">{{ $event->title }}</h3>
                                 <div class="mt-auto flex items-center justify-between gap-2 pt-[18px]">
                                     @if (! $event->hasJoinCta())
-                                        {{-- TODO: azione Aggiungi al carrello --}}
-                                        <flux:button class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                                        <flux:button wire:click="addToCart({{ $event->id }})" class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                                             <flux:icon.cart class="h-4 w-4 shrink-0" />
                                             Aggiungi al carrello
                                         </flux:button>
@@ -94,47 +93,53 @@
                                             Partecipa
                                         </flux:button>
                                     @endif
-                                    <p class="whitespace-nowrap text-right text-[15px] font-semibold tracking-[0.025em] text-[#0D171A]">
-                                        @if ($event->price_cents !== null)
-                                            {{ __('format.per_person', ['price' => \App\Support\Format::money($event->price_cents)]) }}
-                                        @elseif ($event->is_free)
-                                            {{ __('format.free') }}
-                                        @else
-                                            {{ __('format.from_price', ['price' => \App\Support\Format::money(0)]) }}
-                                        @endif
-                                    </p>
+                                    @if ($event->price_cents !== null)
+                                        {{-- Stesso stile prezzo delle card eventi in home (label grigia, importo scuro semibold); min-w-0 così il testo va a capo dentro i padding della card, con "a persona" indivisibile --}}
+                                        <p class="min-w-0 text-right text-[15px] font-normal leading-tight text-[#627277]">{!! str_replace('a persona', 'a&nbsp;persona', __('format.per_person', ['price' => '<span class="whitespace-nowrap font-semibold text-[#0D171A]">'.e(\App\Support\Format::money($event->price_cents)).'</span>'])) !!}</p>
+                                    @elseif ($event->is_free)
+                                        {{-- Gratis come in home: italic regular, stesso grigio della label "a persona" --}}
+                                        <p class="whitespace-nowrap text-right text-[15px] italic text-[#627277]">{{ __('format.free') }}</p>
+                                    @else
+                                        <p class="min-w-0 text-right text-[15px] font-normal leading-tight text-[#627277]">{!! __('format.from_price', ['price' => '<span class="whitespace-nowrap font-semibold text-[#0D171A]">'.e(\App\Support\Format::money(0)).'</span>']) !!}</p>
+                                    @endif
                                 </div>
                             </div>
                             {{-- Le attività multi-giorno aprono la scheda attività, gli eventi la scheda evento --}}
                             <a href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event->slug) : route('eventi.detail', $event->slug) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $event->title }}"></a>
-                            {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
-                            <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!absolute !right-[18px] !top-[18px] !z-[2] !h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
-                                <flux:icon.heart class="h-4 w-4" />
-                            </flux:button>
+                            @include('partials.favorite-heart', ['type' => 'event', 'id' => $event->id, 'active' => $this->isFavorite('event', $event->id), 'classes' => '!absolute !right-[18px] !top-[18px] !z-[2]'])
                         </article>
                     @endforeach
                 </div>
 
-                {{-- Paginazione (XD "Raggruppa 744": statica; pagina 1 attiva, prev disabilitato) --}}
-                <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
-                    <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
-                        <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
-                    </flux:button>
-                    @foreach (range(1, 4) as $page)
-                        <flux:button wire:key="page-{{ $page }}" square :aria-current="$page === 1 ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === 1 ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
-                    @endforeach
-                    <flux:button variant="ghost" square aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
-                        <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
-                    </flux:button>
-                </nav>
+                {{-- Paginazione (XD "Raggruppa 744"): pill reali del paginator, stile invariato --}}
+                @if ($events->hasPages())
+                    <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
+                        @if ($events->onFirstPage())
+                            <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                                <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
+                            </flux:button>
+                        @else
+                            <flux:button variant="ghost" square wire:click="previousPage" aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-black">
+                                <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
+                            </flux:button>
+                        @endif
+                        @foreach (range(1, $events->lastPage()) as $page)
+                            <flux:button wire:key="page-{{ $page }}" square wire:click="gotoPage({{ $page }})" :aria-current="$page === $events->currentPage() ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === $events->currentPage() ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
+                        @endforeach
+                        @if ($events->hasMorePages())
+                            <flux:button variant="ghost" square wire:click="nextPage" aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
+                                <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
+                            </flux:button>
+                        @else
+                            <flux:button variant="ghost" square disabled aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                                <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
+                            </flux:button>
+                        @endif
+                    </nav>
+                @endif
             </div>
         </div>
     </main>
 
     @include('partials.site-footer')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Events;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class EventPagesTest extends TestCase
@@ -24,12 +26,44 @@ class EventPagesTest extends TestCase
             ->assertSee('Brunch Pet Friendly')
             ->assertSee('OGGI ALLE 13:30')
             ->assertSee('LUN, 8 GEN ALLE 19:30')
-            ->assertSee("25\u{A0}€ a persona")
+            // Nella griglia l'importo sta in uno <span> semibold e "a persona" è unito da nbsp
+            ->assertSeeText("25\u{A0}€ a\u{A0}persona")
             ->assertSee('Gratis')
             ->assertSee('Durata di 5 giorni')
             ->assertSee('Partecipa')
             ->assertSee('Aggiungi al carrello')
-            ->assertSee("A partire da 0,00\u{A0}€");
+            ->assertSeeText("A partire da 0,00\u{A0}€");
+    }
+
+    public function test_events_grid_paginates_home_events_on_page_two(): void
+    {
+        // 17 eventi seminati: 12 con position (griglia XD, pagina 1) + 5 solo-home.
+        $this->get('/eventi')
+            ->assertOk()
+            ->assertSee('Brunch Pet Friendly')
+            ->assertDontSee('Passeggiata a cavallo')
+            ->assertSee('Pagina successiva');
+
+        $this->get('/eventi?page=2')
+            ->assertOk()
+            ->assertSee('Passeggiata a cavallo')
+            ->assertSee('Trekking al lago')
+            ->assertDontSee('Brunch Pet Friendly');
+    }
+
+    public function test_events_pagination_pills_navigate_between_pages(): void
+    {
+        // La pagina 1 è la griglia XD intatta; gotoPage(2) mostra gli eventi home
+        // ordinati per home_position, nextPage/previousPage ruotano coerentemente.
+        Livewire::test(Events::class)
+            ->assertSee('Brunch Pet Friendly')
+            ->call('gotoPage', 2)
+            ->assertSee('Passeggiata a cavallo')
+            ->assertDontSee('Brunch Pet Friendly')
+            ->call('previousPage')
+            ->assertSee('Brunch Pet Friendly')
+            ->call('nextPage')
+            ->assertSee('Weekend al mare');
     }
 
     public function test_paid_event_detail_derives_dates_and_price(): void

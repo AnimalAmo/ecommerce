@@ -15,6 +15,13 @@
     <body>
         {{ $slot }}
 
+        {{-- Modali auth raggiungibili dall'header + toast globale ("Modifiche salvate.", invisibile
+             finché non mostrato): istanze uniche per pagina, prima degli script come da Flux --}}
+        <livewire:auth-modal />
+        <livewire:register-modal />
+        <livewire:partner-login-modal />
+        <flux:toast />
+
         @livewireScripts
         @fluxScripts
     </body>

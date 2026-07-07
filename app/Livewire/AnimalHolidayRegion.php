@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
 use Livewire\Attributes\Title;
@@ -10,6 +11,8 @@ use Livewire\Component;
 #[Title('AnimalAmo — Animal Holiday')]
 class AnimalHolidayRegion extends Component
 {
+    use TogglesFavorites;
+
     /** Slug regione dalla rotta (es. "lombardia"). */
     public string $regionSlug = '';
 

@@ -186,9 +186,4 @@
 
     {{-- ============ FOOTER ============ --}}
     @include('partials.site-footer')
-
-    {{-- ============ MODALI AUTH (componenti dedicati) ============ --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

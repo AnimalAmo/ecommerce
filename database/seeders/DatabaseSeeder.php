@@ -18,8 +18,13 @@ class DatabaseSeeder extends Seeder
             RegionSeeder::class,
             AmenitySeeder::class,
             StructureSeeder::class,
+            StructureClosureSeeder::class,
             EventSeeder::class,
             SmartboxPackageSeeder::class,
+            PaymentGatewaySeeder::class,
+            RoleSeeder::class,
+            DemoUserSeeder::class,
+            DemoOrderSeeder::class,
         ]);
     }
 }

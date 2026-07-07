@@ -26,7 +26,7 @@
                             <span class="absolute left-[11px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
 
                             <div class="flex min-h-0 w-full {{ $past ? 'h-[158px]' : 'h-full' }}">
-                                <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
+                                <img src="{{ $item['photo'] }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
 
                                 <div class="flex min-w-0 flex-1 flex-col pb-2 pl-1 pr-1 pt-[7px] border-b border-[#E9E9E9]">
                                     <h2 class="truncate text-base font-semibold leading-none text-black">{{ $item['title'] }}</h2>
@@ -35,28 +35,36 @@
                                         <div class="mr-[9px] mt-[14px] h-px shrink-0 bg-[#E9E9E9]" aria-hidden="true"></div>
                                     @endif
 
-                                    {{-- Righe meta 13px a passo 24 (pin/calendar/ospiti+cane come il riepilogo checkout) --}}
+                                    {{-- Righe meta 13px a passo 24 (pin/calendar/ospiti+cane come il riepilogo checkout); le righe assenti fanno salire le successive --}}
                                     <div class="{{ $past ? 'mt-[10px]' : 'mt-[17px]' }} space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
-                                        <div class="flex items-center gap-2">
-                                            <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
-                                            <span class="truncate">{{ $item['location'] }}</span>
-                                        </div>
+                                        @if ($item['location'] !== null)
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
+                                                <span class="truncate">{{ $item['location'] }}</span>
+                                            </div>
+                                        @endif
                                         @if ($item['dates'] !== null)
                                             <div class="flex items-center gap-2">
                                                 <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
                                                 <span>{{ $item['dates'] }}</span>
                                             </div>
                                         @endif
-                                        <div class="flex items-center">
-                                            <div class="flex w-[112px] items-center gap-2">
-                                                <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
-                                                <span>{{ $item['guests'] }}</span>
+                                        @if ($item['guests'] !== null || $item['animals'] !== null)
+                                            <div class="flex items-center">
+                                                @if ($item['guests'] !== null)
+                                                    <div class="flex w-[112px] items-center gap-2">
+                                                        <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
+                                                        <span>{{ $item['guests'] }}</span>
+                                                    </div>
+                                                @endif
+                                                @if ($item['animals'] !== null)
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
+                                                        <span>{{ $item['animals'] }}</span>
+                                                    </div>
+                                                @endif
                                             </div>
-                                            <div class="flex items-center gap-2">
-                                                <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
-                                                <span>{{ $item['dogs'] }}</span>
-                                            </div>
-                                        </div>
+                                        @endif
                                     </div>
 
                                     <p class="mt-auto text-[11px] font-semibold leading-none text-[#0D171A]">{{ $item['price'] }}</p>
@@ -66,11 +74,25 @@
                             @if ($past)
                                 {{-- Hover ciano: seconda variante colore del simbolo XD "scrivi recensione".
                                      icon prop: matita e testo centrati nativamente dal flex del bottone --}}
-                                <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview('{{ $item['id'] }}')" class="!h-auto !w-full flex-1 !gap-[5px] !p-0 !text-sm !font-medium !text-[#2B2B2B] transition-colors hover:!bg-transparent hover:!text-[#68CDEB] [&_svg]:!size-[14px]">Scrivi una recensione</flux:button>
+                                <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }})" class="!h-auto !w-full flex-1 !gap-[5px] !p-0 !text-sm !font-medium !text-[#2B2B2B] transition-colors hover:!bg-transparent hover:!text-[#68CDEB] [&_svg]:!size-[14px]">Scrivi una recensione</flux:button>
                             @endif
                         </article>
                     @endforeach
                 </div>
+
+                {{-- Dedica e messaggio dalle options.gift delle righe regalo (stesso stile del riepilogo checkout regalo) --}}
+                @foreach ($items as $item)
+                    @if ($item['giftDedication'] !== null || $item['giftMessage'] !== null)
+                        <div wire:key="gift-{{ $item['id'] }}" class="mt-6 text-[15px] font-normal text-[#0D171A]">
+                            @if ($item['giftDedication'] !== null)
+                                <p class="leading-none">Dedicato a: {{ $item['giftDedication'] }}</p>
+                            @endif
+                            @if ($item['giftMessage'] !== null)
+                                <p class="mt-4 leading-[21px]">Messaggio: {{ $item['giftMessage'] }}</p>
+                            @endif
+                        </div>
+                    @endif
+                @endforeach
             </div>
         </div>
     </main>
@@ -86,7 +108,7 @@
             <div class="relative mx-auto flex h-[172px] w-full max-w-[467px] rounded-[3px] border border-[#C8C8C8]/70 bg-white p-[7px]">
                 <span class="absolute left-[12px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $reviewItem['tagColor'] }}">{{ $reviewItem['tag'] }}</span>
 
-                <img src="{{ asset('img/xd/' . $reviewItem['photo']) }}" alt="{{ $reviewItem['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
+                <img src="{{ $reviewItem['photo'] }}" alt="{{ $reviewItem['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
 
                 <div class="flex min-w-0 flex-1 flex-col pl-1">
                     <h3 class="truncate text-base font-semibold leading-none text-black">{{ $reviewItem['title'] }}</h3>
@@ -94,26 +116,34 @@
                     <div class="mr-[9px] mt-[14px] h-px shrink-0 bg-[#E9E9E9]" aria-hidden="true"></div>
 
                     <div class="mt-[10px] space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
-                        <div class="flex items-center gap-2">
-                            <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
-                            <span class="truncate">{{ $reviewItem['location'] }}</span>
-                        </div>
+                        @if ($reviewItem['location'] !== null)
+                            <div class="flex items-center gap-2">
+                                <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
+                                <span class="truncate">{{ $reviewItem['location'] }}</span>
+                            </div>
+                        @endif
                         @if ($reviewItem['dates'] !== null)
                             <div class="flex items-center gap-2">
                                 <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
                                 <span>{{ $reviewItem['dates'] }}</span>
                             </div>
                         @endif
-                        <div class="flex items-center">
-                            <div class="flex w-[112px] items-center gap-2">
-                                <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
-                                <span>{{ $reviewItem['guests'] }}</span>
+                        @if ($reviewItem['guests'] !== null || $reviewItem['animals'] !== null)
+                            <div class="flex items-center">
+                                @if ($reviewItem['guests'] !== null)
+                                    <div class="flex w-[112px] items-center gap-2">
+                                        <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
+                                        <span>{{ $reviewItem['guests'] }}</span>
+                                    </div>
+                                @endif
+                                @if ($reviewItem['animals'] !== null)
+                                    <div class="flex items-center gap-2">
+                                        <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
+                                        <span>{{ $reviewItem['animals'] }}</span>
+                                    </div>
+                                @endif
                             </div>
-                            <div class="flex items-center gap-2">
-                                <flux:icon.animal class="h-[11px] w-[11px] shrink-0" />
-                                <span>{{ $reviewItem['dogs'] }}</span>
-                            </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -131,9 +161,4 @@
             </div>
         @endif
     </flux:modal>
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 </div>

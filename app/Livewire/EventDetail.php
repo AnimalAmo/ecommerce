@@ -3,13 +3,19 @@
 namespace App\Livewire;
 
 use App\Enums\ProductType;
+use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
+use App\Services\Cart\CartManager;
 use App\Support\Format;
+use Flux\Flux;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class EventDetail extends Component
 {
+    use TogglesFavorites;
+
     /** Slug evento dalla rotta (es. "brunch-pet-friendly"); il nome differisce dal parametro {event} per non collidere col binding Livewire. */
     public string $eventSlug = '';
 
@@ -74,12 +80,24 @@ class EventDetail extends Component
 
     public function addToCart(): void
     {
+        $event = $this->event();
+
         // CTA Partecipa (gratis o senza prezzo): nessun acquisto, il pop-up carrello non deve aprirsi.
-        if ($this->event()->hasJoinCta()) {
+        if ($event->hasJoinCta()) {
             return;
         }
 
-        // TODO: carrello reale — per ora mostra solo il pop-up di conferma.
+        try {
+            // Pagina senza contatore partecipanti: sempre 1 persona per aggiunta (decisione ratificata).
+            app(CartManager::class)->addItem('event', $event->id, ['participants' => 1], false);
+        } catch (CartValidationException $exception) {
+            // Violazione disponibilità (es. capienza esaurita): toast danger, niente pop-up.
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return;
+        }
+
+        $this->dispatch('cart-updated');
         $this->cartPopupOpen = true;
     }
 
@@ -115,10 +133,12 @@ class EventDetail extends Component
 
         return view('livewire.event-detail', [
             'event' => $event,
+            'isFav' => $this->isFavorite('event', $event->id),
             'isFree' => $event->is_free,
             'canJoin' => $event->hasJoinCta(),
-            // Prezzo nel pop-up: solo la parte numerica; fallback XD 25 € per gli eventi senza prezzo.
-            'popupPrice' => Format::money($event->price_cents ?? 2500),
+            // Prezzo nel pop-up: solo eventi acquistabili (prezzo reale, mai il fallback mock);
+            // i gratuiti/senza prezzo hanno la CTA Partecipa e il pop-up carrello non esiste.
+            'popupPrice' => $event->price_cents !== null ? Format::money($event->price_cents) : null,
             'includedColumns' => [$event->amenityRows('hotel'), $event->amenityRows('animal')],
             'faqs' => $event->faqs,
             'threads' => self::THREADS,

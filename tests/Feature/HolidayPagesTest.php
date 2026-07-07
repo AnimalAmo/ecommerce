@@ -81,8 +81,8 @@ class HolidayPagesTest extends TestCase
         $this->get('/animal-holiday/lombardia/servizi/dog-sitting')
             ->assertOk()
             ->assertSee("12\u{A0}€ all’ora")
-            ->assertSee("12\u{A0}€ per 4 ore")
-            ->assertSee("48\u{A0}€")
+            ->assertSee("12\u{A0}€ per 6 ore")
+            ->assertSee("72\u{A0}€")
             ->assertSee('Dog sitting a casa')
             ->assertSee('4,5 stelle');
     }

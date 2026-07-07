@@ -34,10 +34,8 @@
                         {{-- TODO: condivisione (nessuna interazione definita nell'XD) --}}
                         <flux:icon.share class="h-[15px] w-[15px]" />
                     </flux:button>
-                    {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
-                    <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
-                        <flux:icon.heart class="h-4 w-4" />
-                    </flux:button>
+                    {{-- I servizi sono righe Structure: alias morph 'structure' --}}
+                    @include('partials.favorite-heart', ['type' => 'structure', 'id' => $service->id, 'active' => $isFav])
                 </div>
 
                 {{-- CTA galleria (TODO: galleria foto servizio) --}}
@@ -169,52 +167,102 @@
                         <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_hour', ['price' => \App\Support\Format::money($service->price_cents)]) }}</p>
 
                         <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
-                            {{-- TODO: dropdown selezione giorno --}}
-                            <flux:button variant="ghost" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none border-b border-[#DEDEDE] !px-[15px] !py-3 !text-left hover:!bg-transparent">
-                                <span>
-                                    <span class="block text-[17px] font-medium text-[#2B2B2B]">Giorno</span>
-                                    <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">17/12/2023</span>
-                                </span>
-                                <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
-                            </flux:button>
-                            <div class="grid grid-cols-2 divide-x divide-[#DEDEDE] border-b border-[#DEDEDE]">
-                                {{-- TODO: dropdown selezione orario di inizio --}}
-                                <flux:button variant="ghost" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none !px-[15px] !py-3 !text-left hover:!bg-transparent">
-                                    <span>
-                                        <span class="block text-[17px] font-medium text-[#2B2B2B]">Dalle:</span>
-                                        <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">10:00</span>
+                            {{-- Giorno: apre il calendario condiviso a giorno singolo (accordion nello stile del pop-up carrello) --}}
+                            <div class="border-b border-[#DEDEDE]">
+                                <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span class="flex flex-col gap-[7px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Giorno</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
                                     </span>
-                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
+                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'date' ? 'rotate-180' : '' }}" />
                                 </flux:button>
-                                {{-- TODO: dropdown selezione orario di fine --}}
-                                <flux:button variant="ghost" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none !px-[15px] !py-3 !text-left hover:!bg-transparent">
-                                    <span>
-                                        <span class="block text-[17px] font-medium text-[#2B2B2B]">Alle:</span>
-                                        <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">16:00</span>
-                                    </span>
-                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
-                                </flux:button>
+
+                                @if ($expandedField === 'date')
+                                    {{-- Calendario inline condiviso (giorni chiusi del servizio + passati disabilitati) --}}
+                                    <div class="px-[10px] pb-4">
+                                        @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                                    </div>
+                                @endif
                             </div>
-                            {{-- TODO: dropdown selezione animali --}}
-                            <flux:button variant="ghost" class="!flex !h-auto !w-full items-center !justify-between !gap-4 !whitespace-normal !rounded-none !px-[15px] !py-3 !text-left hover:!bg-transparent">
-                                <span>
-                                    <span class="block text-[17px] font-medium text-[#2B2B2B]">Animali</span>
-                                    <span class="mt-1 block text-[17px] font-light text-[#2B2B2B]">1 cani</span>
-                                </span>
-                                <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black" />
-                            </flux:button>
+                            {{-- Dalle / Alle: entrambe le celle aprono il pannello orari (select 08:00–20:00) --}}
+                            <div class="border-b border-[#DEDEDE]">
+                                <div class="grid grid-cols-2 divide-x divide-[#DEDEDE]">
+                                    <flux:button variant="ghost" wire:click="toggleField('orari')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                        <span class="flex flex-col gap-[7px]">
+                                            <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Dalle:</span>
+                                            <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editTimeFrom }}</span>
+                                        </span>
+                                        <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'orari' ? 'rotate-180' : '' }}" />
+                                    </flux:button>
+                                    <flux:button variant="ghost" wire:click="toggleField('orari')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                        <span class="flex flex-col gap-[7px]">
+                                            <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Alle:</span>
+                                            <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editTimeTo }}</span>
+                                        </span>
+                                        <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'orari' ? 'rotate-180' : '' }}" />
+                                    </flux:button>
+                                </div>
+
+                                @if ($expandedField === 'orari')
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="flex gap-4 px-6 pb-4 pt-[10px]">
+                                        <div class="flex-1">
+                                            <div class="text-sm leading-none text-[#627277]">Dalle</div>
+                                            <flux:select wire:model.live="editTimeFrom" class="mt-2">
+                                                @foreach ($bookingHours as $hour)
+                                                    <flux:select.option value="{{ $hour }}">{{ $hour }}</flux:select.option>
+                                                @endforeach
+                                            </flux:select>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="text-sm leading-none text-[#627277]">Alle</div>
+                                            <flux:select wire:model.live="editTimeTo" class="mt-2">
+                                                @foreach ($bookingHours as $hour)
+                                                    <flux:select.option value="{{ $hour }}">{{ $hour }}</flux:select.option>
+                                                @endforeach
+                                            </flux:select>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            {{-- Animali: apre lo stepper condiviso per specie --}}
+                            <div>
+                                <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                    <span class="flex flex-col gap-[7px]">
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Animali</span>
+                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
+                                    </span>
+                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
+                                </flux:button>
+
+                                @if ($expandedField === 'animali')
+                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                    <div class="px-6 pb-3 pt-[10px]">
+                                        @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
+                                    </div>
+                                @endif
+                            </div>
                         </div>
 
                         <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
 
-                        <div class="mt-6 flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                            <span>{{ __('format.for_hours', ['price' => \App\Support\Format::money($service->price_cents), 'count' => $hours]) }}</span>
-                            <span>{{ \App\Support\Format::money($service->price_cents * $hours) }}</span>
+                        <div class="mt-6 space-y-3">
+                            <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
+                                <span>{{ __('format.for_hours', ['price' => \App\Support\Format::money($service->price_cents), 'count' => $hours]) }}</span>
+                                <span>{{ \App\Support\Format::money($hoursCents) }}</span>
+                            </div>
+                            {{-- Supplemento animali per ora: riga mostrata solo se il seed lo valorizza --}}
+                            @if ($animalSupplementCents > 0)
+                                <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
+                                    <span>Supplemento animali</span>
+                                    <span>{{ \App\Support\Format::money($animalSupplementCents) }}</span>
+                                </div>
+                            @endif
                         </div>
                         <hr class="mt-5 border-[#DEDEDE]">
                         <div class="mt-4 flex items-center justify-between text-[17px] font-bold text-[#2B2B2B]">
                             <span>Totale</span>
-                            <span>{{ \App\Support\Format::money($service->price_cents * $hours) }}</span>
+                            <span>{{ \App\Support\Format::money($totalCents) }}</span>
                         </div>
                     </div>
                 </aside>
@@ -223,11 +271,6 @@
     </main>
 
     @include('partials.site-footer')
-
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
 
     {{-- Pop-up "Aggiunto al carrello" — stesso pattern del dettaglio struttura, con giorno/orario del servizio --}}
     @if ($cartPopupOpen)
@@ -250,7 +293,7 @@
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
-                                    17/12/2023
+                                    {{ $editCheckIn }}
                                 </li>
                                 <li class="flex items-center gap-[5px]">
                                     {{-- Icona orologio (variante tintabile di flux:icon.time) --}}
@@ -260,18 +303,17 @@
                                             <path d="M17.526,10.688h-.989v3.954L20,16.717l.494-.811-2.966-1.759Z" transform="translate(-7.231 -4.017)" />
                                         </g>
                                     </svg>
-                                    10:00 - 16:00
+                                    {{ $editTimeFrom }} - {{ $editTimeTo }}
                                 </li>
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.animal class="h-[15px] w-[15px] shrink-0" />
-                                    1 cane
+                                    {{ \App\Support\Format::animals($editAnimals) }}
                                 </li>
                             </ul>
                         </div>
                     </div>
 
-                    {{-- TODO: pagina Carrello --}}
-                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
                 </div>
             </div>
         </div>

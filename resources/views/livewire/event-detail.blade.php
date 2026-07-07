@@ -26,10 +26,7 @@
                         {{-- TODO: condivisione (nessuna interazione definita nell'XD) --}}
                         <flux:icon.share class="h-[15px] w-[15px]" />
                     </flux:button>
-                    {{-- Base bianca come !bg-[#fff] (non !bg-white): nel CSS compilato i valori arbitrari precedono !bg-brand-yellow, così il toggle vince --}}
-                    <flux:button square x-data="{ fav: false }" @click="fav = !fav" ::class="fav && '!bg-brand-yellow'" ::aria-pressed="fav" aria-label="Aggiungi ai preferiti" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-[#fff] !text-black !shadow-none">
-                        <flux:icon.heart class="h-4 w-4" />
-                    </flux:button>
+                    @include('partials.favorite-heart', ['type' => 'event', 'id' => $event->id, 'active' => $isFav])
                 </div>
 
                 {{-- CTA galleria (TODO: galleria foto evento) --}}
@@ -233,11 +230,6 @@
 
     @include('partials.site-footer')
 
-    {{-- Modali auth raggiungibili dall'header --}}
-    <livewire:auth-modal />
-    <livewire:register-modal />
-    <livewire:partner-login-modal />
-
     {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista") — stesso pattern del dettaglio struttura, con data e prezzo dell'evento.
          Solo eventi con CTA carrello (doppia cintura oltre alla guardia in addToCart). --}}
     @if (! $canJoin && $cartPopupOpen)
@@ -269,8 +261,7 @@
                     {{-- Prezzo in basso a destra sopra il bottone (XD "25 €" @1724,250) --}}
                     <p class="absolute right-4 top-[118px] text-lg font-semibold leading-6 text-black">{{ $popupPrice }}</p>
 
-                    {{-- TODO: pagina Carrello --}}
-                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
                 </div>
             </div>
         </div>

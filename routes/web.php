@@ -25,6 +25,8 @@ use App\Livewire\Smartbox;
 use App\Livewire\SmartboxDetail;
 use App\Livewire\WorkWithUs;
 use App\Livewire\WorkWithUsThanks;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomePage::class)->name('home');
@@ -42,12 +44,23 @@ Route::get('/community', Community::class)->name('community');
 Route::get('/preferiti', Favorites::class)->name('preferiti');
 Route::get('/carrello', Cart::class)->name('carrello');
 Route::get('/checkout', Checkout::class)->name('checkout');
-Route::get('/profilo', Profile::class)->name('profilo');
-Route::get('/profilo/metodo-pagamento', ProfilePayment::class)->name('profilo.pagamento');
-Route::get('/profilo/sicurezza', ProfileSecurity::class)->name('profilo.sicurezza');
-Route::get('/profilo/i-miei-ordini', ProfileOrders::class)->name('profilo.ordini');
-Route::get('/profilo/i-miei-ordini/{order}', ProfileOrderSummary::class)->name('profilo.ordini.riepilogo');
-Route::get('/profilo/eventi-a-cui-partecipo', ProfileEvents::class)->name('profilo.eventi');
+Route::middleware('auth')->group(function () {
+    Route::get('/profilo', Profile::class)->name('profilo');
+    Route::get('/profilo/metodo-pagamento', ProfilePayment::class)->name('profilo.pagamento');
+    Route::get('/profilo/sicurezza', ProfileSecurity::class)->name('profilo.sicurezza');
+    Route::get('/profilo/i-miei-ordini', ProfileOrders::class)->name('profilo.ordini');
+    Route::get('/profilo/i-miei-ordini/{order}', ProfileOrderSummary::class)->name('profilo.ordini.riepilogo');
+    Route::get('/profilo/eventi-a-cui-partecipo', ProfileEvents::class)->name('profilo.eventi');
+});
+
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('home');
+})->name('logout');
 Route::get('/news', News::class)->name('news');
 Route::get('/news/{article}', NewsDetail::class)->name('news.detail');
 Route::get('/lavora-con-noi', WorkWithUs::class)->name('work-with-us');

@@ -25,18 +25,22 @@
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Nome</flux:label>
                     <flux:input wire:model="form.firstName" placeholder="Nome" />
+                    <flux:error name="form.firstName" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Cognome</flux:label>
                     <flux:input wire:model="form.lastName" placeholder="Cognome" />
+                    <flux:error name="form.lastName" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Data di nascita</flux:label>
                     <flux:input type="date" wire:model="form.birthDate" />
+                    <flux:error name="form.birthDate" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Email</flux:label>
                     <flux:input type="email" wire:model="form.email" placeholder="Email" />
+                    <flux:error name="form.email" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @elseif ($step === 2)
@@ -44,14 +48,17 @@
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Cellulare</flux:label>
                     <flux:input type="tel" wire:model="form.phone" placeholder="Cellulare" />
+                    <flux:error name="form.phone" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Password</flux:label>
                     <flux:input type="password" wire:model="form.password" placeholder="Password" />
+                    <flux:error name="form.password" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Ripeti password</flux:label>
                     <flux:input type="password" wire:model="form.passwordConfirmation" placeholder="Ripeti password" />
+                    <flux:error name="form.passwordConfirmation" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @elseif ($step === 3)
@@ -59,14 +66,17 @@
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Indirizzo</flux:label>
                     <flux:input wire:model="form.address" placeholder="Indirizzo" />
+                    <flux:error name="form.address" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Città</flux:label>
                     <flux:input wire:model="form.city" placeholder="Città" />
+                    <flux:error name="form.city" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Cap</flux:label>
                     <flux:input wire:model="form.postalCode" placeholder="Cap" />
+                    <flux:error name="form.postalCode" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @else
@@ -74,6 +84,7 @@
                 <flux:field>
                     <flux:label class="!text-xs !text-gray-600">Tipologia animale</flux:label>
                     <flux:input wire:model="form.petType" placeholder="Tipologia animale" />
+                    <flux:error name="form.petType" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
 
@@ -85,6 +96,7 @@
                 <flux:field variant="inline">
                     <flux:checkbox wire:model="form.privacyConsent" class="!size-5 [--color-accent:var(--color-brand-cyan)] [--color-accent-foreground:#fff] [&_[data-flux-checkbox-indicator]]:size-5 [&_[data-flux-checkbox-indicator]]:rounded-full [&_[data-flux-checkbox-indicator]]:border-brand-cyan" />
                     <flux:label class="!text-xs !text-gray-600">Acconsento all’uso dei miei dati personali per ricevere promozioni esclusive.</flux:label>
+                    <flux:error name="form.privacyConsent" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @endif

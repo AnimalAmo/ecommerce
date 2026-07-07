@@ -36,5 +36,6 @@ The app is served by a Homestead-style VM: `http://animalamo.test` → `192.168.
 
 ## Conventions
 
+- **Services over fat components**: business logic (queries + presentation, toggles, multi-step flows) lives in `app/Services/<Domain>Service.php`; Livewire components stay thin adapters (UI state + wiring). First example: `FavoriteService`. Validation messages live in `lang/it/validation.php` (custom/attributes), not per-class `messages()` overrides unless lang can't express the string.
 - Commit messages: Conventional Commits, English, no Co-Authored-By/AI-attribution trailers.
 - Recurring XD spec details arrive as raw CSS snippets (border/radius/padding in px) — translate literally into arbitrary-value Tailwind classes (`rounded-[3px]`, `border-[#E9E9E9]`) unless a token matches exactly.

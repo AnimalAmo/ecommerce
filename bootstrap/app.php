@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Niente pagina /login: gli ospiti sulle rotte protette tornano alla home.
+        $middleware->redirectGuestsTo(fn () => route('home'));
+
+        // I webhook dei gateway arrivano senza sessione: esenti da CSRF
+        // (la firma dell'evento è la loro autenticazione).
+        $middleware->preventRequestForgery(except: [
+            'webhooks/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
