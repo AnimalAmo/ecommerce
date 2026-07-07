@@ -106,8 +106,8 @@
                     </section>
                 </div>
 
-                {{-- 2c. Card "Box acquista" (sovrappone il bordo inferiore dell'hero su desktop) --}}
-                <aside class="relative z-10 w-full max-w-[453px] shrink-0 lg:-mt-[26px] lg:w-[453px]">
+                {{-- 2c. Card "Box acquista": stesso pt-10 della colonna sinistra così i due top si allineano su desktop. --}}
+                <aside class="relative z-10 w-full max-w-[453px] shrink-0 lg:w-[453px] lg:pt-10">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white">
                         {{-- Acquista / Regala (toggle server-driven: ?regalo=1 preseleziona Regala, la riga nasce con is_gift) --}}
                         <div class="flex h-[57px] items-stretch">
