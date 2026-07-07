@@ -20,11 +20,19 @@
                         <flux:input wire:model="where" type="text" placeholder="Dove" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
                     </flux:field>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
-                    <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
-                        <flux:label class="sr-only">Quando</flux:label>
-                        <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <flux:input wire:model="when" type="text" placeholder="Quando" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
-                    </flux:field>
+                    {{-- "Quando": trigger + popover Alpine col calendario range condiviso. Il popover NON si
+                         chiude al click su un giorno (il range richiede 2 click); i wire:click del calendario
+                         restano funzionanti dentro. Le date raccolte (editCheckIn/editCheckOut) NON filtrano
+                         ancora gli eventi: servono per lo step disponibilità (step 6). --}}
+                    <div x-data="{ open: false }" class="relative flex flex-1 items-center">
+                        <flux:button type="button" variant="ghost" x-on:click="open = ! open" class="!flex !h-auto !w-full !items-center !justify-start !gap-3 !rounded-none !bg-transparent !px-4 !py-2 !shadow-none hover:!bg-transparent [&>span]:!flex [&>span]:!min-w-0 [&>span]:!items-center [&>span]:!gap-3">
+                            <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
+                            <span class="truncate text-sm {{ $editCheckIn ? 'text-ink' : 'text-gray-400' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : 'Quando' }}</span>
+                        </flux:button>
+                        <div x-show="open" x-on:click.outside="open = false" x-transition.opacity style="display: none" class="absolute left-0 top-full z-50 mt-3 w-[320px] rounded-[4px] border border-[#DEDEDE] bg-white p-[10px] text-left shadow-[0px_3px_6px_#00000029]">
+                            @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                        </div>
+                    </div>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
                     <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
                         <flux:label class="sr-only">Aggiungi ospiti</flux:label>

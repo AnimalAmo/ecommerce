@@ -3,7 +3,9 @@
 namespace App\Livewire\Commerce;
 
 use App\Enums\ProductType;
+use App\Exceptions\CartValidationException;
 use App\Services\FavoriteService;
+use Flux\Flux;
 use Livewire\Component;
 
 class Favorites extends Component
@@ -22,15 +24,41 @@ class Favorites extends Component
         $this->inCart = array_values(array_diff($this->inCart, [$id]));
     }
 
-    /** Il bottone borsa aggiunge/toglie dal carrello (per ora solo stato visivo). */
+    /**
+     * Il bottone borsa aggiunge il preferito al carrello con le opzioni di
+     * default della sua famiglia (delegato a FavoriteService::addToCart) e ne
+     * marca lo stato visivo. Ospite → modale login (come il cuore preferiti).
+     * Già in carrello = no-op: l'add del carrello è idempotente e la card non
+     * rimuove (semplificazione ratificata — la rimozione vive nel carrello).
+     */
     public function toggleCart(int $id): void
     {
-        // TODO: carrello reale (step 3).
-        if (in_array($id, $this->inCart, true)) {
-            $this->inCart = array_values(array_diff($this->inCart, [$id]));
-        } else {
-            $this->inCart[] = $id;
+        if (! auth()->check()) {
+            Flux::modal('login')->show();
+
+            return;
         }
+
+        if (in_array($id, $this->inCart, true)) {
+            return;
+        }
+
+        try {
+            $added = app(FavoriteService::class)->addToCart(auth()->user(), $id);
+        } catch (CartValidationException $exception) {
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return;
+        }
+
+        // Prodotto non acquistabile (evento gratuito): nessuna riga, nessun feedback.
+        if (! $added) {
+            return;
+        }
+
+        $this->inCart[] = $id;
+        $this->dispatch('cart-updated');
+        Flux::toast(text: __('cart.added'), variant: 'success');
     }
 
     /** Selezione dal menu "Tipologia"; null (voce "Tutte") azzera il filtro. La coerenza col contenuto è garantita in render(). */

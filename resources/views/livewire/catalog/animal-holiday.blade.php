@@ -41,6 +41,10 @@
             </form>
 
             {{-- Griglia regioni (stesse card Box Holiday della home) --}}
+            @if ($regions->isEmpty())
+                {{-- Zero risultati per "Dove": il fallback con alternative simili arriva allo step 6. --}}
+                <p class="mt-10 text-lg text-[#555555]">Nessuna località trovata</p>
+            @else
             <div class="mt-10 grid grid-cols-3 gap-6">
                 @foreach ($regions as $region)
                     <a href="{{ route('holiday.region', ['region' => $region->slug]) }}" wire:key="reg-{{ $region->id }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
@@ -53,6 +57,7 @@
                     </a>
                 @endforeach
             </div>
+            @endif
         </div>
     </main>
 

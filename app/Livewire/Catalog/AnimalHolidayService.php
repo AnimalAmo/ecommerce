@@ -42,8 +42,14 @@ class AnimalHolidayService extends Component
     /** Campo espanso del widget prenotazione: null | 'date' | 'orari' | 'animali' (uno alla volta, come il pop-up del carrello). */
     public ?string $expandedField = null;
 
+    /** Recensioni mostrate: parte da 3 (XD), cresce a step di 3 con "Carica altre recensioni". */
+    public int $reviewsShown = 3;
+
     /** Campi espandibili ammessi nel widget ('date' = giorno singolo del servizio). */
     public const FIELDS = ['date', 'orari', 'animali'];
+
+    /** Step di paginazione incrementale delle recensioni. */
+    private const REVIEWS_STEP = 3;
 
     public function mount(string $region, string $service): void
     {
@@ -102,9 +108,10 @@ class AnimalHolidayService extends Component
         $this->cartPopupOpen = false;
     }
 
+    /** Mostra il blocco successivo di recensioni (step di 3), con clamp al totale disponibile. */
     public function loadMoreReviews(): void
     {
-        // TODO: paginare le recensioni quando il design definirà la pagina 2.
+        $this->reviewsShown = min($this->reviewsShown + self::REVIEWS_STEP, $this->service()->reviews->count());
     }
 
     public function render()
@@ -118,7 +125,7 @@ class AnimalHolidayService extends Component
             'isFav' => $this->isFavorite('structure', $service->id),
             'animalServices' => $service->amenityRows('animal'),
             'faqs' => $service->faqs,
-            'reviews' => $service->reviews->take(3),
+            'reviews' => $service->reviews->take($this->reviewsShown),
             'reviewsCount' => $service->reviews->count(),
             // Preventivo live: ore reali dall'intervallo scelto, supplemento animali (riga solo se > 0), totale server-side.
             'hours' => $hours,

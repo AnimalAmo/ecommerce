@@ -7,7 +7,10 @@ use App\Models\Event\Event;
 use App\Models\Favorite\Favorite;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Services\Cart\CartManager;
 use App\Support\Format;
+use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
@@ -39,6 +42,36 @@ class FavoriteService
         if (! $favorite->wasRecentlyCreated) {
             $favorite->delete();
         }
+    }
+
+    /**
+     * Aggiunge al carrello il preferito dell'utente ($favoriteId = riga favorites):
+     * risolve alias morph, prodotto e opzioni di default per famiglia (gli stessi
+     * default delle schede di dettaglio), poi delega la scrittura al CartManager.
+     * Ritorna false (no-op) per i prodotti non acquistabili; propaga
+     * CartValidationException — l'adapter Livewire la traduce in toast danger.
+     */
+    public function addToCart(User $user, int $favoriteId): bool
+    {
+        $favorite = $user->favorites()->with('favoritable')->whereKey($favoriteId)->first();
+
+        // Riga inesistente/di un altro utente o prodotto sparito dal catalogo: 404 (mai riga fantasma).
+        abort_unless($favorite !== null && $favorite->favoritable !== null, 404);
+
+        // Evento gratuito / "Partecipa" (is_free o senza prezzo): non è acquistabile,
+        // come nella griglia eventi — no-op (il bag non è nemmeno mostrato, vedi present()).
+        if ($favorite->favoritable instanceof Event && $favorite->favoritable->hasJoinCta()) {
+            return false;
+        }
+
+        app(CartManager::class)->addItem(
+            $favorite->favoritable_type,
+            $favorite->favoritable_id,
+            $this->defaultCartOptions($favorite->favoritable, self::defaultSpecies($user)),
+            false,
+        );
+
+        return true;
     }
 
     /**
@@ -130,8 +163,65 @@ class FavoriteService
         return $card + [
             'id' => $favorite->id,
             'type' => $product->type->value,
+            // Alias morph + PK del prodotto (dalla riga Favorite): l'aggiunta reale
+            // al carrello deriva la famiglia dal ProductType, ma scrive sull'alias.
+            'favoritable_type' => $favorite->favoritable_type,
+            'favoritable_id' => $favorite->favoritable_id,
+            // Eventi gratuiti / "Partecipa" non sono acquistabili: niente bottone borsa.
+            'can_add_to_cart' => ! ($product instanceof Event && $product->hasJoinCta()),
             // Stessa foto della card listing del prodotto (colonna img, asset img/xd/).
             'photo' => $product->img.'.jpg',
         ];
+    }
+
+    /**
+     * Opzioni di default del carrello per il prodotto preferito, per famiglia
+     * (stessi default dei widget di dettaglio). La famiglia è derivata dal
+     * ProductType del prodotto — service/activity distinguono la variante,
+     * l'alias morph resta structure/event/smartbox_package.
+     *
+     * @return array<string, mixed>
+     */
+    private function defaultCartOptions(Model $product, string $species): array
+    {
+        $today = new DateTimeImmutable('today');
+
+        return match ($product->type) {
+            // Servizio (riga Structure): giorno singolo oggi+7, fascia 10:00–16:00, 1 animale.
+            ProductType::Service => [
+                'animals' => [$species => 1],
+                'day' => $today->modify('+7 days')->format('Y-m-d'),
+                'time_from' => '10:00',
+                'time_to' => '16:00',
+            ],
+            // Attività (riga Event): 2 adulti + 1 animale; le date derivano dalla riga evento.
+            ProductType::Activity => [
+                'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
+                'animals' => [$species => 1],
+            ],
+            // Evento: sempre 1 partecipante (nessun contatore in scheda).
+            ProductType::Event => [
+                'participants' => 1,
+            ],
+            // Hotel (riga Structure): soggiorno oggi+7 → oggi+12, 2 adulti, 1 animale.
+            ProductType::Structure => [
+                'check_in' => $today->modify('+7 days')->format('Y-m-d'),
+                'check_out' => $today->modify('+12 days')->format('Y-m-d'),
+                'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
+                'animals' => [$species => 1],
+            ],
+            // Smartbox (stay/wellness/adventure): solo animali, niente regalo.
+            default => [
+                'animals' => [$species => 1],
+            ],
+        };
+    }
+
+    /** Specie preselezionata dello stepper animali: primo pet dell'utente, altrimenti 'cane'. */
+    private static function defaultSpecies(User $user): string
+    {
+        $species = mb_strtolower(trim((string) $user->pets()->first()?->species));
+
+        return $species !== '' ? $species : 'cane';
     }
 }

@@ -37,8 +37,14 @@ class AnimalHolidayStructure extends Component
     /** Campo espanso del widget prenotazione: null | 'date' | 'ospiti' | 'animali' (uno alla volta, come il pop-up del carrello). */
     public ?string $expandedField = null;
 
+    /** Recensioni mostrate: parte da 3 (XD), cresce a step di 3 con "Carica altre recensioni". */
+    public int $reviewsShown = 3;
+
     /** Campi espandibili ammessi nel widget. */
     public const FIELDS = ['date', 'ospiti', 'animali'];
+
+    /** Step di paginazione incrementale delle recensioni. */
+    private const REVIEWS_STEP = 3;
 
     public function mount(string $region, string $structure): void
     {
@@ -108,9 +114,10 @@ class AnimalHolidayStructure extends Component
         $this->cartPopupOpen = false;
     }
 
+    /** Mostra il blocco successivo di recensioni (step di 3), con clamp al totale disponibile. */
     public function loadMoreReviews(): void
     {
-        // TODO: paginare le recensioni quando il design definirà la pagina 2.
+        $this->reviewsShown = min($this->reviewsShown + self::REVIEWS_STEP, $this->structure()->reviews->count());
     }
 
     public function render()
@@ -124,7 +131,7 @@ class AnimalHolidayStructure extends Component
             'hotelServices' => $structure->amenityRows('hotel'),
             'animalServices' => $structure->amenityRows('animal'),
             'faqs' => $structure->faqs,
-            'reviews' => $structure->reviews->take(3),
+            'reviews' => $structure->reviews->take($this->reviewsShown),
             'reviewsCount' => $structure->reviews->count(),
             // Preventivo live: notti reali, supplemento animali (riga solo se > 0) e totale quotato server-side.
             'nights' => $nights,
