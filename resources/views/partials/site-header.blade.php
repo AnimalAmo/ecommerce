@@ -2,13 +2,13 @@
 <header class="sticky top-0 z-50 border-b border-gray-150 bg-white/95 backdrop-blur">
     <div class="{{ $px }} flex h-20 items-center justify-between">
         <div class="flex items-center gap-10">
-            <a href="/" class="shrink-0">
+            <a href="{{ route('home') }}" class="shrink-0">
                 <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="w-[90px] h-auto">
             </a>
             {{-- Stato active della pagina corrente = stesso grassetto dell'hover. --}}
             @php $navActive = fn (string ...$patterns): string => request()->routeIs(...$patterns) ? 'font-bold' : ''; @endphp
             <nav class="hidden items-center gap-9 text-sm font-normal text-black lg:flex">
-                <a href="/#holiday"   class="hover:font-bold {{ $navActive('home', 'holiday', 'holiday.*') }}">{{ __('nav.menu.holiday') }}</a>
+                <a href="{{ route('home') }}#holiday"   class="hover:font-bold {{ $navActive('home', 'holiday', 'holiday.*') }}">{{ __('nav.menu.holiday') }}</a>
                 <a href="{{ route('eventi') }}" class="hover:font-bold {{ $navActive('eventi', 'eventi.*') }}">{{ __('nav.menu.events') }}</a>
                 <a href="{{ route('smartbox') }}" class="hover:font-bold {{ $navActive('smartbox', 'smartbox.*') }}">{{ __('nav.menu.smartbox') }}</a>
                 <a href="{{ route('news') }}" class="hover:font-bold {{ $navActive('news', 'news.*') }}">{{ __('nav.menu.news') }}</a>
