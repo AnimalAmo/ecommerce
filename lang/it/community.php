@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'page_title' => 'Community — AnimalAmo',
-    'hero_alt' => 'Community AnimalAmo',
-    'hero_title' => 'Community',
+    'page_title' => 'Animal Network — AnimalAmo',
+    'hero_alt' => 'Animal Network AnimalAmo',
+    'hero_title' => 'Animal Network',
     'composer_heading' => 'Inizia una conversazione, fai una domanda!',
     'composer_placeholder' => 'Scrivi qualcosa …',
     'login_to_post' => 'Accedi per pubblicare e rispondere nella community.',

@@ -21,8 +21,9 @@
                 {{-- 2. Chi siamo (XD: titolo Nunito Bold 36 a y660, paragrafi 18 regular a y725) --}}
                 <h1 class="text-4xl font-bold text-black">{{ __('about.heading') }}</h1>
                 <div class="mt-[29px] space-y-6 text-lg text-black">
-                    <p>{{ $lorem }}</p>
-                    <p>{{ $lorem }}</p>
+                    @foreach (__('about.body') as $paragraph)
+                        <p>{{ $paragraph }}</p>
+                    @endforeach
                 </div>
 
                 {{-- 3. Card fotografiche (XD y973..1338: 738x365 + 736x365, gap 24, r7, overlay nero 25%) --}}

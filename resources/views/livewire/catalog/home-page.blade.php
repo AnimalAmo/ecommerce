@@ -14,7 +14,7 @@
             {{-- Box hero (stile XD: #152E36, radius 2px): titolo, testo, Dove/Quando --}}
             <div class="w-full max-w-2xl rounded-[2px] bg-[#152E36] px-4 py-6 shadow-[0px_3px_6px_#00000029]">
                 <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white">{{ __('home.hero_title') }}</h1>
-                <p class="mt-4 text-sm leading-relaxed text-white/70">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
+                <p class="mt-4 text-sm leading-relaxed text-white/70">{{ __('home.hero_text') }}</p>
 
                 {{-- Search bar stile XD: pill bianco (border #F4F4F4, radius 100px) con input + pulsante dentro --}}
                 <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2">
@@ -49,7 +49,8 @@
     <section id="holiday" class="{{ $px }} scroll-mt-20 py-20">
         <div class="mb-10 flex items-end justify-between">
             <div>
-                <h2 class="text-4xl font-extrabold">Animal Holiday</h2>
+                <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.holiday_kicker') }}</p>
+                <h2 class="text-4xl font-extrabold">{{ __('home.holiday_title') }}</h2>
                 <p class="mt-3 max-w-xl text-lg text-gray-500">{{ __('home.holiday_subtitle') }}</p>
             </div>
         </div>
@@ -128,6 +129,7 @@
         <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A]">
             <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover">
             <div class="flex flex-col items-end justify-center bg-white p-16 text-right">
+                <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.smartbox_kicker') }}</p>
                 <h2 class="text-[36px] font-bold leading-tight text-black">{{ __('home.smartbox_title') }}</h2>
                 <p class="mt-4 text-[18px] text-[#555555]">{{ __('home.smartbox_subtitle') }}</p>
                 <flux:button href="{{ route('smartbox') }}" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">{{ __('home.smartbox_cta') }}</flux:button>
@@ -139,8 +141,9 @@
     <section id="news" class="scroll-mt-20 bg-brand-cyan-bg py-8">
         <div class="{{ $px }}">
             <div class="text-center">
+                <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.news_kicker') }}</p>
                 <h2 class="text-[36px] font-bold text-black">{{ __('home.news_title') }}</h2>
-                <p class="mt-3 text-[18px] font-normal text-[#555555]">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
+                <p class="mt-3 text-[18px] font-normal text-[#555555]">{{ __('home.news_subtitle') }}</p>
             </div>
             <div class="mt-10 grid grid-cols-3 gap-6">
                 @foreach ($news as $article)
@@ -176,6 +179,7 @@
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(270deg,#00000099_0%,#71717100_100%)]"></div>
             <div class="{{ $px }} flex min-h-[660px] flex-col pb-[98px]">
                 <div class="my-auto">
+                    <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-yellow">{{ __('home.community_kicker') }}</p>
                     <h2 class="text-4xl font-extrabold text-white">{{ __('home.community_title') }}</h2>
                     <p class="mt-3 max-w-md text-lg text-white/85">{{ __('home.community_subtitle') }}</p>
                     <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.community_cta') }}</a>

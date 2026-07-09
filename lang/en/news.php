@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'page_title' => 'AnimalAmo — News',
+    'page_title' => 'AnimalAmo — Animal Times',
     'detail_page_title' => 'AnimalAmo — :title',
-    'title' => 'News',
+    'title' => 'Animal Times',
     'read_more' => 'Continue reading…',
     'load_more' => 'Load more',
     'back' => 'Back',
