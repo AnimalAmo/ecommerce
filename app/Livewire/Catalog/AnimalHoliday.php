@@ -3,11 +3,9 @@
 namespace App\Livewire\Catalog;
 
 use App\Models\Region\Region;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-#[Title('AnimalAmo — Animal Holiday')]
 class AnimalHoliday extends Component
 {
     /** Filtro "Dove": deep-linkabile (?dove=…); la hero home ci reindirizza con ?dove. */
@@ -38,6 +36,6 @@ class AnimalHoliday extends Component
                 ->when($term !== '', fn ($query) => $query->whereLike('name', '%'.addcslashes($term, '\%_').'%'))
                 ->orderBy('position')
                 ->get(),
-        ]);
+        ])->title(__('holiday.meta_title'));
     }
 }

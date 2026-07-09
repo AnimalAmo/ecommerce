@@ -68,6 +68,6 @@ class NewsDetail extends Component
             'body' => self::BODY,
             'hero' => $hero,
             'related' => $related,
-        ])->title('AnimalAmo — '.$article['title']);
+        ])->title(__('news.detail_page_title', ['title' => $article['title']]));
     }
 }

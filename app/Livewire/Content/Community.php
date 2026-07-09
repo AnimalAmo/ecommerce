@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Content;
 
+use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -121,9 +123,15 @@ class Community extends Component
         }
     }
 
-    /** Pubblica dal composer: prepend in-memory alla lista "Tutti i post". */
+    /** Pubblica dal composer: prepend in-memory alla lista "Tutti i post". Solo utenti loggati (ospite → login). */
     public function publish(): void
     {
+        if (! Auth::check()) {
+            Flux::modal('login')->show();
+
+            return;
+        }
+
         $body = trim($this->composerBody);
 
         if ($body === '') {
@@ -141,7 +149,7 @@ class Community extends Component
             'title' => Str::limit(trim(Str::before($body, "\n")), 60, '…'),
             'tag' => $tag,
             'tagColor' => self::TAG_COLORS[$tag] ?? '#555555',
-            'author' => 'Tommaso (Io)',
+            'author' => Auth::user()->name,
             'body' => $body,
             'replies' => [],
             'mine' => true,
@@ -167,9 +175,15 @@ class Community extends Component
         $this->activeFilters = array_values(array_diff($this->activeFilters, [$tag]));
     }
 
-    /** Appende una risposta in-memory alla card e svuota l'input. */
+    /** Appende una risposta in-memory alla card e svuota l'input. Solo utenti loggati (ospite → login). */
     public function reply(int $postId): void
     {
+        if (! Auth::check()) {
+            Flux::modal('login')->show();
+
+            return;
+        }
+
         $body = trim($this->replyDrafts[$postId] ?? '');
 
         if ($body === '') {
@@ -179,7 +193,7 @@ class Community extends Component
         // TODO: backend reale.
         foreach ($this->posts as &$post) {
             if ($post['id'] === $postId) {
-                $post['replies'][] = ['author' => 'Tommaso (Io)', 'body' => $body];
+                $post['replies'][] = ['author' => Auth::user()->name, 'body' => $body];
                 break;
             }
         }
@@ -210,6 +224,6 @@ class Community extends Component
         return view('livewire.content.community', [
             'visiblePosts' => $visiblePosts,
             'tags' => self::TAGS,
-        ])->title('Community — AnimalAmo');
+        ])->title(__('community.page_title'));
     }
 }

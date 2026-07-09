@@ -15,14 +15,14 @@
                 @include('partials.profile-sidebar', ['active' => 'pagamento'])
 
                 <section class="w-full min-w-0 p-6 lg:w-[1012px] lg:shrink-0 {{ $card }}">
-                    <h1 class="text-2xl font-bold leading-none text-black">Informazioni del metodo di pagamento</h1>
+                    <h1 class="text-2xl font-bold leading-none text-black">{{ __('profile.payment_title') }}</h1>
 
                     <div class="mt-6 space-y-4">
                         {{-- Riga 1: titolare + numero carta affiancati (472 + gap 20) --}}
                         <div class="flex flex-col gap-4 min-[68rem]:flex-row min-[68rem]:gap-5">
                             @foreach ([
-                                ['model' => 'cardHolder', 'label' => 'Titolare carta'],
-                                ['model' => 'cardNumber', 'label' => 'Numero della carta'],
+                                ['model' => 'cardHolder', 'label' => __('profile.payment_card_holder')],
+                                ['model' => 'cardNumber', 'label' => __('profile.payment_card_number')],
                             ] as $field)
                                 <div class="w-full min-[68rem]:w-[472px]" wire:key="field-{{ $field['model'] }}">
                                     <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
@@ -35,8 +35,8 @@
 
                         {{-- Righe 2-3: scadenza e cvv da 295px, vuoti con placeholder come in XD --}}
                         @foreach ([
-                            ['model' => 'cardExpiry', 'label' => 'Data di scadenza', 'placeholder' => 'MM/AA'],
-                            ['model' => 'cardCvv', 'label' => 'Codice di sicurezza', 'placeholder' => '3 cifre'],
+                            ['model' => 'cardExpiry', 'label' => __('profile.payment_card_expiry'), 'placeholder' => __('profile.payment_expiry_placeholder')],
+                            ['model' => 'cardCvv', 'label' => __('profile.payment_card_cvv'), 'placeholder' => __('profile.payment_cvv_placeholder')],
                         ] as $field)
                             <div class="w-full min-[68rem]:w-[295px]" wire:key="field-{{ $field['model'] }}">
                                 <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
@@ -48,7 +48,7 @@
                     </div>
 
                     {{-- TODO step 4 (Stripe): salvataggio metodo di pagamento — resta statico fino all'integrazione --}}
-                    <flux:button class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
+                    <flux:button class="mt-8 !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('profile.save') }}</flux:button>
                 </section>
             </div>
         </div>

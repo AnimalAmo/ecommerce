@@ -3,17 +3,17 @@
      azioni wire del componente ospitante (trait HasBookingCalendar): previousMonth / nextMonth / selectDay('Y-m-d').
      I giorni passati o chiusi (disabled) sono greyed e non cliccabili. --}}
 <div class="mt-2 flex items-center justify-center gap-6">
-    <flux:button variant="ghost" square wire:click="previousMonth" aria-label="Mese precedente" class="!h-6 !w-6 !min-w-0 !p-0 hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+    <flux:button variant="ghost" square wire:click="previousMonth" aria-label="{{ __('nav.booking.previous_month') }}" class="!h-6 !w-6 !min-w-0 !p-0 hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center">
         <flux:icon.chevron-left class="!h-[14px] !w-[14px] text-black" />
     </flux:button>
     <span class="w-[110px] text-center text-[15px] font-semibold leading-none text-black">{{ $calendarLabel }}</span>
-    <flux:button variant="ghost" square wire:click="nextMonth" aria-label="Mese successivo" class="!h-6 !w-6 !min-w-0 !p-0 hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+    <flux:button variant="ghost" square wire:click="nextMonth" aria-label="{{ __('nav.booking.next_month') }}" class="!h-6 !w-6 !min-w-0 !p-0 hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center">
         <flux:icon.chevron-right class="!h-[14px] !w-[14px] text-black" />
     </flux:button>
 </div>
 
 <div class="mt-5 grid grid-cols-7 text-center text-[15px] leading-none text-[#555555]">
-    @foreach (['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'] as $dow)
+    @foreach (__('nav.booking.dow') as $dow)
         <span wire:key="dow-{{ $dow }}">{{ $dow }}</span>
     @endforeach
 </div>

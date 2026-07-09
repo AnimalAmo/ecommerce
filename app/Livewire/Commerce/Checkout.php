@@ -389,7 +389,12 @@ class Checkout extends Component
         return view('livewire.commerce.checkout', [
             'items' => $items,
             'total' => $this->cart()->total($this->gift),
-            'steps' => self::STEPS,
+            // Etichette dei tab dello stepper localizzate (le chiavi numeriche restano da STEPS).
+            'steps' => [
+                1 => __('checkout.ui.step_data'),
+                2 => __('checkout.ui.step_payment'),
+                3 => __('checkout.ui.step_done'),
+            ],
             // Righe metodo: solo i PaymentMethod il cui gateway è abilitato.
             'hasCardMethod' => in_array(PaymentMethod::Card, $methods, true),
             'altMethods' => array_values(array_filter($methods, fn (PaymentMethod $method): bool => $method !== PaymentMethod::Card)),
@@ -402,7 +407,7 @@ class Checkout extends Component
             'giftRecipientEmail' => $this->placedGiftRecipientEmail !== ''
                 ? $this->placedGiftRecipientEmail
                 : ($this->cart()->items(true)->first()?->options['gift']['recipient_email'] ?? $this->recipientEmail),
-        ])->title('Checkout — AnimalAmo');
+        ])->title(__('checkout.ui.page_title'));
     }
 
     /**

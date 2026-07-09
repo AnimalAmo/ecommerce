@@ -219,7 +219,7 @@ class Cart extends Component
             'bookingHours' => self::bookingHours(),
             // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
             'suggestions' => $items === [] ? $this->suggestions() : [],
-        ])->title('Carrello — AnimalAmo');
+        ])->title(__('cart.ui.page_title'));
     }
 
     /** Struttura del calendario del pop-up: il purchasable della riga in modifica (solo structure/service). */

@@ -15,7 +15,7 @@
                 <div class="pt-[74px]">
                     <a href="{{ route('holiday.region', $regionSlug) }}" class="inline-flex items-center gap-2 text-[13px] leading-6 text-white">
                         <flux:icon.arrow-back class="h-3 w-3 shrink-0" />
-                        Indietro
+                        {{ __('holiday.back') }}
                     </a>
                     <h1 class="mt-7 text-[25px] font-bold leading-[30px] text-brand-yellow">{{ $structure->name }}</h1>
                     <p class="mt-2.5 flex items-center gap-2 text-[13px] font-semibold text-white">
@@ -30,7 +30,7 @@
 
                 {{-- Condividi + Preferiti (toggle: cerchio brand-yellow quando attivo) --}}
                 <div class="absolute right-4 top-[125px] flex items-center gap-4 lg:right-8">
-                    <flux:button square aria-label="Condividi" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-white !text-ink !shadow-none">
+                    <flux:button square aria-label="{{ __('holiday.share') }}" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-white !text-ink !shadow-none">
                         {{-- TODO: condivisione (nessuna interazione definita nell'XD) --}}
                         <flux:icon.share class="h-[15px] w-[15px]" />
                     </flux:button>
@@ -40,7 +40,7 @@
                 {{-- CTA galleria (TODO: galleria foto struttura) --}}
                 <flux:button class="!absolute bottom-[22px] right-4 h-10 !gap-2.5 !rounded-full !border-0 !bg-brand-cyan !px-7 !text-[15px] !font-bold !text-white !shadow-none lg:right-8">
                     <flux:icon.eye class="h-[19px] w-[19px] shrink-0" />
-                    Vedere tutte le foto
+                    {{ __('holiday.view_all_photos') }}
                 </flux:button>
             </div>
         </section>
@@ -53,26 +53,26 @@
 
                     {{-- 2a. Descrizione breve --}}
                     <section>
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">Descrizione breve</h2>
+                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.short_description') }}</h2>
                         <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $structure->description }}</p>
                     </section>
 
                     {{-- 2b. Informazioni generali --}}
                     <section class="mt-10">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">Informazioni generali</h2>
+                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.general_info') }}</h2>
                         @include('partials.general-info', ['rows' => $structure->general_info])
                     </section>
 
                     {{-- 3. Cosa troverai --}}
                     <section class="mt-10">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">Cosa troverai</h2>
+                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.what_you_find') }}</h2>
                         @include('partials.feature-cards', ['features' => $structure->features])
                     </section>
 
                     {{-- 4. Servizi Hotel / Servizi Animali --}}
                     <section class="mt-8 flex flex-wrap gap-3">
                         <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4">
-                            <h2 class="text-[25px] font-bold leading-[30px] text-black">Servizi Hotel</h2>
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.hotel_services') }}</h2>
                             <ul class="mt-2 space-y-[7px]">
                                 @foreach ($hotelServices as $service)
                                     <li wire:key="srv-hotel-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
@@ -87,7 +87,7 @@
                             </ul>
                         </div>
                         <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 lg:px-[22px]">
-                            <h2 class="text-[25px] font-bold leading-[30px] text-black">Servizi Animali</h2>
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.animal_services') }}</h2>
                             <ul class="mt-2 space-y-[7px]">
                                 @foreach ($animalServices as $service)
                                     <li wire:key="srv-animal-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
@@ -105,10 +105,10 @@
 
                     {{-- 5. Dove siamo --}}
                     <section class="mt-8">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">Dove siamo</h2>
+                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
                         <div class="relative mt-5 overflow-hidden rounded-[4px]">
                             {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                            <img src="{{ asset('img/xd/'.$structure->map_img.'.jpg') }}" alt="Mappa della zona — {{ $structure->name }}" class="h-[389px] w-full object-cover">
+                            <img src="{{ asset('img/xd/'.$structure->map_img.'.jpg') }}" alt="{{ __('holiday.map_alt', ['name' => $structure->name]) }}" class="h-[389px] w-full object-cover">
                             <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
                                 <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                                 {{ $structure->name }}
@@ -118,7 +118,7 @@
 
                     {{-- 6. Domande frequenti (accordion; prima riga aperta come da XD) --}}
                     <section class="mt-14" x-data="{ open: 0 }">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">Domande frequenti</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('holiday.faq') }}</h2>
                         <div class="mt-4">
                             @foreach ($faqs as $index => $faq)
                                 <div wire:key="faq-{{ $faq->id }}" class="border-b border-[#E2EAEB]">
@@ -134,7 +134,7 @@
 
                     {{-- 7. Recensioni dei clienti --}}
                     <section class="mt-14">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">Recensioni dei clienti</h2>
+                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.reviews') }}</h2>
                         <p class="mt-2 flex items-center gap-2.5">
                             <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($structure->rating) }}</span>
                             <span class="flex items-center gap-[3px]">
@@ -148,7 +148,7 @@
                         </p>
                         <p class="mt-1.5 flex items-baseline gap-3">
                             <span class="text-lg font-semibold text-black">{{ $reviewsCount }}</span>
-                            <span class="text-[15px] text-black">Recensioni</span>
+                            <span class="text-[15px] text-black">{{ __('holiday.reviews_count_label') }}</span>
                         </p>
 
                         <div class="mt-6">
@@ -168,7 +168,7 @@
                                     <div class="mt-7 flex items-center gap-3">
                                         <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg text-white" style="background-color: {{ $review->avatar_color }}">{{ $review->author_initials }}</span>
                                         <span class="text-[13px] leading-[22px]">
-                                            <span class="block text-[#627277]">Recensito da</span>
+                                            <span class="block text-[#627277]">{{ __('holiday.reviewed_by') }}</span>
                                             <span class="block text-[#0D171A]">{{ $review->author_name }}</span>
                                         </span>
                                     </div>
@@ -177,7 +177,7 @@
                         </div>
 
                         @if ($reviewsCount > count($reviews))
-                            <flux:button wire:click="loadMoreReviews" class="mt-6 inline-flex h-10 items-center !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none">Carica altre recensioni</flux:button>
+                            <flux:button wire:click="loadMoreReviews" class="mt-6 inline-flex h-10 items-center !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none">{{ __('holiday.load_more_reviews') }}</flux:button>
                         @endif
                     </section>
                 </div>
@@ -192,12 +192,12 @@
                             <div class="border-b border-[#DEDEDE]">
                                 <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-none !p-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-stretch">
                                     <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Check-in</span>
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.checkin') }}</span>
                                         <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
                                     </span>
                                     <span class="w-px self-stretch bg-[#DEDEDE]" aria-hidden="true"></span>
                                     <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Check-out</span>
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.checkout') }}</span>
                                         <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckOut ?? '—' }}</span>
                                     </span>
                                 </flux:button>
@@ -213,7 +213,7 @@
                             <div class="border-b border-[#DEDEDE]">
                                 <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                                     <span class="flex flex-col gap-[7px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Ospiti</span>
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.guests') }}</span>
                                         <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::guests($editGuests) }}</span>
                                     </span>
                                     <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
@@ -230,7 +230,7 @@
                             <div>
                                 <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                                     <span class="flex flex-col gap-[7px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">Animali</span>
+                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.animals') }}</span>
                                         <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
                                     </span>
                                     <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
@@ -245,7 +245,7 @@
                             </div>
                         </div>
 
-                        <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">Aggiungi al carrello</flux:button>
+                        <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('holiday.add_to_cart') }}</flux:button>
 
                         <div class="mt-6 space-y-3">
                             <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
@@ -255,14 +255,14 @@
                             {{-- Supplemento animali per notte: riga mostrata solo se il seed lo valorizza --}}
                             @if ($animalSupplementCents > 0)
                                 <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                                    <span>Supplemento animali</span>
+                                    <span>{{ __('holiday.animal_supplement') }}</span>
                                     <span>{{ \App\Support\Format::money($animalSupplementCents) }}</span>
                                 </div>
                             @endif
                         </div>
                         <hr class="mt-5 border-[#DEDEDE]">
                         <div class="mt-4 flex items-center justify-between text-[17px] font-bold text-[#2B2B2B]">
-                            <span>Totale</span>
+                            <span>{{ __('holiday.total') }}</span>
                             <span>{{ \App\Support\Format::money($totalCents) }}</span>
                         </div>
                     </div>
@@ -275,15 +275,15 @@
 
     {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up aggiunta al carrello") — card ancorata in alto a destra sotto l'header --}}
     @if ($cartPopupOpen)
-        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="{{ __('holiday.added_to_cart') }}" x-data @keydown.escape.window="$wire.closeCartPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>
 
             <div class="{{ $px }} pointer-events-none relative">
                 <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
-                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto al carrello</h2>
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">{{ __('holiday.added_to_cart') }}</h2>
 
-                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="{{ __('holiday.close') }}" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
                         <flux:icon.close class="h-[18px] w-[18px]" />
                     </flux:button>
 
@@ -311,7 +311,7 @@
                         </div>
                     </div>
 
-                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('holiday.go_to_cart') }}</flux:button>
                 </div>
             </div>
         </div>

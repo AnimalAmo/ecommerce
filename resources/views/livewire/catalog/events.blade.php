@@ -9,15 +9,15 @@
         {{-- Colonna contenuti XD: x211..1709 → 1498px centrati dentro il container $px --}}
         <div class="{{ $px }} pt-10 pb-20">
             <div class="mx-auto w-full max-w-[1498px]">
-                <h1 class="text-4xl font-bold text-black">Attività ed Eventi</h1>
+                <h1 class="text-4xl font-bold text-black">{{ __('events.title') }}</h1>
                 <p class="mt-4 max-w-[1295px] text-lg leading-6 text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
                 {{-- Barra ricerca (simbolo "Ricerca" condiviso con Animal Holiday) --}}
                 <form wire:submit="search" class="mt-10 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2 shadow-[1px_1px_10px_#0000001A]">
                     <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
-                        <flux:label class="sr-only">Dove</flux:label>
+                        <flux:label class="sr-only">{{ __('events.search_where') }}</flux:label>
                         <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <flux:input wire:model="where" type="text" placeholder="Dove" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
+                        <flux:input wire:model="where" type="text" placeholder="{{ __('events.search_where') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
                     </flux:field>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
                     {{-- "Quando": trigger + popover Alpine col calendario range condiviso. Il popover NON si
@@ -27,7 +27,7 @@
                     <div x-data="{ open: false }" class="relative flex flex-1 items-center">
                         <flux:button type="button" variant="ghost" x-on:click="open = ! open" class="!flex !h-auto !w-full !items-center !justify-start !gap-3 !rounded-none !bg-transparent !px-4 !py-2 !shadow-none hover:!bg-transparent [&>span]:!flex [&>span]:!min-w-0 [&>span]:!items-center [&>span]:!gap-3">
                             <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
-                            <span class="truncate text-sm {{ $editCheckIn ? 'text-ink' : 'text-gray-400' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : 'Quando' }}</span>
+                            <span class="truncate text-sm {{ $editCheckIn ? 'text-ink' : 'text-gray-400' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : __('events.search_when') }}</span>
                         </flux:button>
                         <div x-show="open" x-on:click.outside="open = false" x-transition.opacity style="display: none" class="absolute left-0 top-full z-50 mt-3 w-[320px] rounded-[4px] border border-[#DEDEDE] bg-white p-[10px] text-left shadow-[0px_3px_6px_#00000029]">
                             @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
@@ -35,30 +35,30 @@
                     </div>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
                     <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
-                        <flux:label class="sr-only">Aggiungi ospiti</flux:label>
+                        <flux:label class="sr-only">{{ __('events.search_guests') }}</flux:label>
                         <flux:icon.team class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <flux:input wire:model="guests" type="text" placeholder="Aggiungi ospiti" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
+                        <flux:input wire:model="guests" type="text" placeholder="{{ __('events.search_guests') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
                     </flux:field>
                     <span class="h-6 w-px shrink-0 bg-gray-200"></span>
                     <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
-                        <flux:label class="sr-only">Animali</flux:label>
+                        <flux:label class="sr-only">{{ __('events.search_animals') }}</flux:label>
                         <flux:icon.animal class="h-5 w-5 shrink-0 text-brand-cyan" />
-                        <flux:input wire:model="animals" type="text" placeholder="Animali" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
+                        <flux:input wire:model="animals" type="text" placeholder="{{ __('events.search_animals') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
                     </flux:field>
-                    <flux:button type="submit" square aria-label="Cerca" class="!h-auto !w-auto shrink-0 !rounded-full !bg-brand-cyan !p-3.5 !text-white hover:!bg-brand-cyan-soft">
+                    <flux:button type="submit" square aria-label="{{ __('events.search_cta') }}" class="!h-auto !w-auto shrink-0 !rounded-full !bg-brand-cyan !p-3.5 !text-white hover:!bg-brand-cyan-soft">
                         <flux:icon.search class="h-5 w-5" />
                     </flux:button>
                 </form>
 
                 {{-- Filtri (XD: due pill dropdown "Componente 20"; comportamento dropdown TODO) --}}
-                <p class="mt-10 text-lg font-semibold leading-6 text-black">Filtra la tua ricerca:</p>
+                <p class="mt-10 text-lg font-semibold leading-6 text-black">{{ __('events.filter_your_search') }}</p>
                 <div class="mt-[17px] flex items-center gap-[13px]">
                     <flux:button class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
-                        Tipologia
+                        {{ __('events.filter_type') }}
                         <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
                     </flux:button>
                     <flux:button class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
-                        Fascia di prezzo
+                        {{ __('events.filter_price') }}
                         <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
                     </flux:button>
                 </div>
@@ -92,13 +92,13 @@
                                     @if (! $event->hasJoinCta())
                                         <flux:button wire:click="addToCart({{ $event->id }})" class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                                             <flux:icon.cart class="h-4 w-4 shrink-0" />
-                                            Aggiungi al carrello
+                                            {{ __('events.add_to_cart') }}
                                         </flux:button>
                                     @else
                                         {{-- TODO: azione Partecipa --}}
                                         <flux:button class="relative !z-[2] !h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none">
                                             <flux:icon.check-1 class="h-4 w-4 shrink-0" />
-                                            Partecipa
+                                            {{ __('events.join') }}
                                         </flux:button>
                                     @endif
                                     @if ($event->price_cents !== null)
@@ -121,13 +121,13 @@
 
                 {{-- Paginazione (XD "Raggruppa 744"): pill reali del paginator, stile invariato --}}
                 @if ($events->hasPages())
-                    <nav class="mt-10 flex items-center justify-center gap-3" aria-label="Paginazione">
+                    <nav class="mt-10 flex items-center justify-center gap-3" aria-label="{{ __('events.pagination') }}">
                         @if ($events->onFirstPage())
-                            <flux:button variant="ghost" square disabled aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                            <flux:button variant="ghost" square disabled aria-label="{{ __('events.prev_page') }}" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
                                 <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
                             </flux:button>
                         @else
-                            <flux:button variant="ghost" square wire:click="previousPage" aria-label="Pagina precedente" class="!h-auto !w-auto !p-1 !text-black">
+                            <flux:button variant="ghost" square wire:click="previousPage" aria-label="{{ __('events.prev_page') }}" class="!h-auto !w-auto !p-1 !text-black">
                                 <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
                             </flux:button>
                         @endif
@@ -135,11 +135,11 @@
                             <flux:button wire:key="page-{{ $page }}" square wire:click="gotoPage({{ $page }})" :aria-current="$page === $events->currentPage() ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === $events->currentPage() ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
                         @endforeach
                         @if ($events->hasMorePages())
-                            <flux:button variant="ghost" square wire:click="nextPage" aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-black">
+                            <flux:button variant="ghost" square wire:click="nextPage" aria-label="{{ __('events.next_page') }}" class="!h-auto !w-auto !p-1 !text-black">
                                 <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
                             </flux:button>
                         @else
-                            <flux:button variant="ghost" square disabled aria-label="Pagina successiva" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
+                            <flux:button variant="ghost" square disabled aria-label="{{ __('events.next_page') }}" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
                                 <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
                             </flux:button>
                         @endif

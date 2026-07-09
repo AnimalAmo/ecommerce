@@ -2,10 +2,8 @@
 
 namespace App\Livewire\Content;
 
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('Chi siamo — AnimalAmo')]
 class AboutUs extends Component
 {
     /**
@@ -16,6 +14,6 @@ class AboutUs extends Component
 
     public function render()
     {
-        return view('livewire.content.about-us', ['lorem' => self::LOREM]);
+        return view('livewire.content.about-us', ['lorem' => self::LOREM])->title(__('about.page_title'));
     }
 }

@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Livewire\Catalog\Events;
+use App\Models\Event\Event;
+use App\Support\Format;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -24,7 +27,8 @@ class EventPagesTest extends TestCase
         $this->get('/eventi')
             ->assertOk()
             ->assertSee('Brunch Pet Friendly')
-            ->assertSee('OGGI ALLE 13:30')
+            // Il brunch "di oggi" del mock è seminato a +7 giorni: la label è derivata dinamicamente.
+            ->assertSee(Format::eventTime(Carbon::today()->addDays(7)->setTime(13, 30)))
             ->assertSee('LUN, 8 GEN ALLE 19:30')
             // Nella griglia l'importo sta in uno <span> semibold e "a persona" è unito da nbsp
             ->assertSeeText("25\u{A0}€ a\u{A0}persona")
@@ -33,6 +37,20 @@ class EventPagesTest extends TestCase
             ->assertSee('Partecipa')
             ->assertSee('Aggiungi al carrello')
             ->assertSeeText("A partire da 0,00\u{A0}€");
+    }
+
+    public function test_no_paid_dated_event_is_seeded_in_the_past(): void
+    {
+        // Un evento a pagamento con data passata non sarebbe acquistabile (availability):
+        // il seeder li proietta nel futuro, questa è la rete di sicurezza contro regressioni.
+        $pastPaid = Event::query()
+            ->where('is_free', false)
+            ->whereNotNull('price_cents')
+            ->whereNotNull('starts_at')
+            ->where('starts_at', '<', now())
+            ->pluck('slug');
+
+        $this->assertCount(0, $pastPaid, 'Eventi a pagamento con data passata: '.$pastPaid->implode(', '));
     }
 
     public function test_events_grid_paginates_home_events_on_page_two(): void
@@ -68,11 +86,16 @@ class EventPagesTest extends TestCase
 
     public function test_paid_event_detail_derives_dates_and_price(): void
     {
+        $start = Carbon::today()->addDays(7)->setTime(13, 30);
+        $end = Carbon::today()->addDays(7)->setTime(16, 30);
+
         $this->get('/eventi/brunch-pet-friendly')
             ->assertOk()
-            ->assertSee('Oggi alle ore 13:30')
-            ->assertSee('Oggi dalle 13:30 alle 16:30')
-            ->assertSee("25\u{A0}€ a persona")
+            // Brunch "di oggi" seminato a +7 giorni: testata e info generali derivate dinamicamente.
+            ->assertSee(Format::eventTimeFull($start))
+            ->assertSee(Format::eventTimeRange($start, $end))
+            // Il prezzo è in grassetto (span) dentro "… a persona": in ordine, non contiguo.
+            ->assertSeeInOrder(["25\u{A0}€", 'a persona'])
             ->assertSee('Dario Boario Terme (BS), Italia')
             ->assertSee('Cascina Brescia')
             ->assertSee('Aggiungi al carrello');

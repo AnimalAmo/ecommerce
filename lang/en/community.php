@@ -1,0 +1,21 @@
+<?php
+
+return [
+    'page_title' => 'Animal Network — AnimalAmo',
+    'hero_alt' => 'AnimalAmo Animal Network',
+    'hero_title' => 'Animal Network',
+    'composer_heading' => 'Start a conversation, ask a question!',
+    'composer_placeholder' => 'Write something …',
+    'login_to_post' => 'Log in to post and reply in the community.',
+    'select_tags' => 'Select tags:',
+    'publish' => 'Publish',
+    'sections_aria' => 'Community sections',
+    'tab_all' => 'All posts',
+    'tab_mine' => 'My posts',
+    'search_placeholder' => 'Search',
+    'filter_type' => 'Filter by type',
+    'remove_filter_aria' => 'Remove filter :filter',
+    'reply' => 'Reply',
+    'no_posts' => 'No posts found',
+    'see_all' => 'See all',
+];

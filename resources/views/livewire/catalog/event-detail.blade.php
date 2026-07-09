@@ -16,13 +16,13 @@
                 <div class="pt-[74px]">
                     <a href="{{ route('eventi') }}" class="inline-flex items-center gap-2 text-[13px] leading-6 text-white">
                         <flux:icon.arrow-back class="h-3 w-3 shrink-0" />
-                        Indietro
+                        {{ __('events.back') }}
                     </a>
                 </div>
 
                 {{-- Condividi + Preferiti (toggle: cerchio brand-yellow quando attivo) --}}
                 <div class="absolute right-4 top-[125px] flex items-center gap-4 lg:right-8">
-                    <flux:button square aria-label="Condividi" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-white !text-ink !shadow-none">
+                    <flux:button square aria-label="{{ __('events.share') }}" class="!h-[30px] !w-[30px] !rounded-full !border-0 !bg-white !text-ink !shadow-none">
                         {{-- TODO: condivisione (nessuna interazione definita nell'XD) --}}
                         <flux:icon.share class="h-[15px] w-[15px]" />
                     </flux:button>
@@ -32,13 +32,13 @@
                 {{-- CTA galleria (TODO: galleria foto evento) --}}
                 <flux:button class="!absolute bottom-[22px] right-4 h-10 !gap-2.5 !rounded-full !border-0 !bg-brand-cyan !px-7 !text-[15px] !font-bold !text-white !shadow-none lg:right-8">
                     <flux:icon.eye class="h-[19px] w-[19px] shrink-0" />
-                    Vedere tutte le foto
+                    {{ __('events.view_all_photos') }}
                 </flux:button>
 
                 {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"), derivata da starts_at --}}
                 <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
                     <div class="h-6 w-full bg-brand-purple-soft" aria-hidden="true"></div>
-                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
+                    <p class="flex h-[65px] items-center justify-center text-[20px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
                 </div>
             </div>
         </section>
@@ -46,7 +46,8 @@
         <div class="{{ $px }} pb-[120px] pt-10">
             {{-- 2. Testata: orario, titolo, prezzo --}}
             <p class="flex items-center gap-2 text-[15px] font-medium leading-[21px] text-brand-purple-soft">
-                <flux:icon.time class="h-[15px] w-[15px] shrink-0" />
+                {{-- Icona nera come il pin/marker (il testo orario resta viola). --}}
+                <flux:icon.time class="h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                 {{ \App\Support\Format::eventTimeFull($event->starts_at) }}
             </p>
             <h1 class="mt-[9px] text-[25px] font-bold leading-[30px] text-black">{{ $event->title }}</h1>
@@ -54,43 +55,43 @@
                 {{-- "Gratis" in corsivo peso normale (XD Nunito-Italic 25px) al posto della riga prezzo Light --}}
                 <p class="mt-[9px] text-[25px] italic leading-[34px] text-black">{{ __('format.free') }}</p>
             @else
-                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{{ $event->price_cents !== null ? __('format.per_person', ['price' => \App\Support\Format::money($event->price_cents)]) : __('format.from_price', ['price' => \App\Support\Format::money(0)]) }}</p>
+                <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{!! $event->price_cents !== null ? __('format.per_person', ['price' => '<span class="font-bold">'.e(\App\Support\Format::money($event->price_cents)).'</span>']) : __('format.from_price', ['price' => '<span class="font-bold">'.e(\App\Support\Format::money(0)).'</span>']) !!}</p>
             @endif
 
             {{-- 3. Tab bar (switch Livewire Informazioni / Discussione) + azioni Preferiti / Aggiungi al carrello --}}
             <div class="flex items-end justify-between gap-4 border-b border-[#DEDEDE]">
-                <nav class="flex items-end gap-[39px]" aria-label="Sezioni evento">
+                <nav class="flex items-end gap-[39px]" aria-label="{{ __('events.sections_nav_event') }}">
                     <flux:button variant="ghost" wire:click="switchTab('informazioni')" :aria-current="$tab === 'informazioni' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'informazioni' ? '!text-[#68CDEB] hover:!text-[#68CDEB]' : '!text-[#C8C8C8]' }}">
-                        Informazioni
+                        {{ __('events.tab_info') }}
                         @if ($tab === 'informazioni')
                             <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#68CDEB]" aria-hidden="true"></span>
                         @endif
                     </flux:button>
                     <flux:button variant="ghost" wire:click="switchTab('discussione')" :aria-current="$tab === 'discussione' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'discussione' ? '!text-[#68CDEB] hover:!text-[#68CDEB]' : '!text-[#C8C8C8]' }}">
-                        Discussione
+                        {{ __('events.tab_discussion') }}
                         @if ($tab === 'discussione')
                             <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#68CDEB]" aria-hidden="true"></span>
                         @endif
                     </flux:button>
                 </nav>
                 <div class="flex shrink-0 items-center gap-4 pb-[10px]">
-                    {{-- TODO: azione Preferiti --}}
-                    <flux:button class="!h-[39px] !w-[128px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
+                    {{-- Preferiti reali: attivo = "Mi interessa" su fondo brand-yellow, l'icona resta. --}}
+                    <flux:button wire:click="toggleFavorite('event', {{ $event->id }})" class="!h-[39px] !min-w-[128px] !shrink-0 !gap-2 !rounded-full !border-0 !px-5 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2 {{ $isFav ? '!bg-brand-yellow hover:!bg-brand-yellow' : '!bg-gray-150 hover:!bg-[#DEDEDE]' }}">
                         <flux:icon.heart class="h-4 w-4 shrink-0" />
-                        Preferiti
+                        {{ $isFav ? __('events.interested') : __('events.favorites') }}
                     </flux:button>
                     @if ($canJoin)
                         {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello" --}}
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
-                        <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
+                        <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.check-1 class="h-4 w-4 shrink-0" />
-                            Partecipa
+                            {{ __('events.join') }}
                         </flux:button>
                     @else
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
-                        <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
+                        <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.cart class="h-4 w-4 shrink-0" />
-                            Aggiungi al carrello
+                            {{ __('events.add_to_cart') }}
                         </flux:button>
                     @endif
                 </div>
@@ -102,23 +103,23 @@
                 <div class="min-w-0 flex-1 lg:max-w-[896px]">
                     {{-- 4a. Descrizione --}}
                     <section>
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">Descrizione</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.description') }}</h2>
                         <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $event->description }}</p>
                     </section>
 
                     {{-- 4b. Informazioni generali --}}
                     <section class="mt-10">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">Informazioni generali</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
                             <li class="flex items-start gap-4">
-                                <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                <flux:icon.time class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ \App\Support\Format::eventTimeRange($event->starts_at, $event->ends_at) }}</p>
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
                                 </div>
                             </li>
                             <li class="flex items-start gap-4">
-                                <flux:icon.pin class="mt-0.5 h-[15px] w-3 shrink-0 text-[#0D171A]" />
+                                <flux:icon.pin class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $event->venue->address }}</p>
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->venue_note }}</p>
@@ -129,16 +130,16 @@
 
                     {{-- 4c. Cosa è incluso (box bordato, check verdi / X rosa su due colonne) --}}
                     <section class="mt-8 min-h-[250px] w-full rounded-[4px] border border-[#DEDEDE] bg-white px-4 pb-6 pt-[22px]">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">Cosa è incluso</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.included') }}</h2>
                         <div class="mt-[13px] grid grid-cols-1 gap-x-6 gap-y-[7px] sm:grid-cols-2">
                             @foreach ($includedColumns as $column => $items)
                                 <ul wire:key="included-col-{{ $column }}" class="space-y-[7px]">
                                     @foreach ($items as $item)
                                         <li wire:key="included-{{ $column }}-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] leading-[21px] text-[#0D171A]">
                                             @if ($item['included'])
-                                                <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
+                                                <flux:icon.check class="h-[18px] w-[18px] shrink-0 text-[#37C443]" />
                                             @else
-                                                <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
+                                                <flux:icon.close class="h-[18px] w-[18px] shrink-0 text-[#EA2E68]" />
                                             @endif
                                             {{ $item['label'] }}
                                         </li>
@@ -171,14 +172,14 @@
                 <div class="min-w-0 flex-1 lg:max-w-[896px]">
                     {{-- 6a. Fai una domanda --}}
                     <section>
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">Fai una domanda</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.ask_question') }}</h2>
                         {{-- TODO: invio domanda --}}
-                        <flux:input type="text" placeholder="Scrivi qualcosa …" class="mt-[13px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-[61px] [&_input]:!rounded-[4px] [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!px-[11px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
+                        <flux:input type="text" placeholder="{{ __('events.write_placeholder') }}" class="mt-[13px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-[61px] [&_input]:!rounded-[4px] [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!px-[11px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
                     </section>
 
                     {{-- 6b. Attività recenti: card thread con risposta in linea --}}
                     <section class="mt-[31px]">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">Attività recenti</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.recent_activity') }}</h2>
                         <div class="mt-[25px] space-y-6">
                             @foreach ($threads as $thread)
                                 <article wire:key="thread-{{ $loop->index }}" class="rounded-[4px] bg-white pb-6 pl-[17px] pr-6 pt-6 shadow-[1px_1px_2.5px_rgba(0,0,0,0.10)]">
@@ -191,8 +192,8 @@
                                     {{-- Riga risposta: input pill con bottone "Rispondi" sovrapposto al bordo destro (XD x887 su input 159→1014) --}}
                                     <div class="relative mt-[23px]">
                                         {{-- TODO: invio risposta --}}
-                                        <flux:input type="text" placeholder="Scrivi qualcosa …" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!rounded-full [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!pl-3 [&_input]:!pr-[135px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
-                                        <flux:button class="!absolute !right-0 !top-0 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none">Rispondi</flux:button>
+                                        <flux:input type="text" placeholder="{{ __('events.write_placeholder') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!rounded-full [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!pl-3 [&_input]:!pr-[135px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
+                                        <flux:button class="!absolute !right-0 !top-0 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none">{{ __('events.reply') }}</flux:button>
                                     </div>
                                 </article>
                             @endforeach
@@ -203,7 +204,7 @@
                 {{-- 7. Colonna destra: card "Domande frequenti" (XD Rettangolo 647 718x437 — su questa tab l'XD sostituisce la mappa con le FAQ) --}}
                 <aside class="w-full shrink-0 lg:w-[718px]">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white px-[22px] pb-[1px] pt-[29px]">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">Domande frequenti</h2>
+                        <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">{{ __('events.faq') }}</h2>
                         @if ($faqs->isNotEmpty())
                             {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
                             <div class="mt-[31px] flex items-start justify-between gap-4">
@@ -233,15 +234,15 @@
     {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up evento acquista") — stesso pattern del dettaglio struttura, con data e prezzo dell'evento.
          Solo eventi con CTA carrello (doppia cintura oltre alla guardia in addToCart). --}}
     @if (! $canJoin && $cartPopupOpen)
-        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto al carrello" x-data @keydown.escape.window="$wire.closeCartPopup()">
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="{{ __('events.added_to_cart') }}" x-data @keydown.escape.window="$wire.closeCartPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeCartPopup" aria-hidden="true"></div>
 
             <div class="{{ $px }} pointer-events-none relative">
                 <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
-                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto al carrello</h2>
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">{{ __('events.added_to_cart') }}</h2>
 
-                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                    <flux:button variant="ghost" size="sm" square wire:click="closeCartPopup" aria-label="{{ __('events.close') }}" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
                         <flux:icon.close class="h-[18px] w-[18px]" />
                     </flux:button>
 
@@ -261,7 +262,7 @@
                     {{-- Prezzo in basso a destra sopra il bottone (XD "25 €" @1724,250) --}}
                     <p class="absolute right-4 top-[118px] text-lg font-semibold leading-6 text-black">{{ $popupPrice }}</p>
 
-                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai al carrello</flux:button>
+                    <flux:button href="{{ route('carrello') }}" class="!ml-auto !mt-4 !flex !h-10 !w-[159px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('events.go_to_cart') }}</flux:button>
                 </div>
             </div>
         </div>
@@ -270,15 +271,15 @@
     {{-- Pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa") — gemello del pop-up carrello: stessa card 400x230 a destra, senza riga prezzo.
          Solo eventi con pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}
     @if ($canJoin && $joinPopupOpen)
-        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Aggiunto agli eventi" x-data @keydown.escape.window="$wire.closeJoinPopup()">
+        <div class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="{{ __('events.added_to_events') }}" x-data @keydown.escape.window="$wire.closeJoinPopup()">
             {{-- Overlay: click fuori dalla card chiude il pop-up --}}
             <div class="absolute inset-0 bg-black/30" wire:click="closeJoinPopup" aria-hidden="true"></div>
 
             <div class="{{ $px }} pointer-events-none relative">
                 <div class="pointer-events-auto relative ml-auto mt-[116px] w-full max-w-[400px] rounded-[3px] border border-gray-150 bg-white p-4">
-                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">Aggiunto agli eventi</h2>
+                    <h2 class="text-lg font-bold leading-6 text-brand-magenta">{{ __('events.added_to_events') }}</h2>
 
-                    <flux:button variant="ghost" size="sm" square wire:click="closeJoinPopup" aria-label="Chiudi" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
+                    <flux:button variant="ghost" size="sm" square wire:click="closeJoinPopup" aria-label="{{ __('events.close') }}" class="!absolute !right-2 !top-2 !text-[#959595] hover:!bg-transparent hover:!text-ink">
                         <flux:icon.close class="h-[18px] w-[18px]" />
                     </flux:button>
 
@@ -296,7 +297,7 @@
                     </div>
 
                     {{-- TODO: pagina "I miei eventi" (l'XD punta a un artboard con la lista eventi dell'utente) --}}
-                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[162px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">Vai agli eventi</flux:button>
+                    <flux:button href="#" class="!ml-auto !mt-4 !flex !h-10 !w-[162px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('events.go_to_events') }}</flux:button>
                 </div>
             </div>
         </div>

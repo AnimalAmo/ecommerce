@@ -13,7 +13,8 @@ class ProfileOrders extends Component
     #[Url(as: 'tab', except: 'programma')]
     public string $tab = 'programma';
 
-    public const TABS = ['programma' => 'In programma', 'passati' => 'Passati'];
+    /** chiave stato → chiave lang della label (le chiavi restano la whitelist ?tab). */
+    public const TABS = ['programma' => 'profile.tab_upcoming', 'passati' => 'profile.tab_past'];
 
     public function mount(): void
     {
@@ -40,9 +41,9 @@ class ProfileOrders extends Component
         $this->normalizeTab();
 
         return view('livewire.profile.profile-orders', [
-            'tabs' => self::TABS,
+            'tabs' => array_map(fn ($key) => __($key), self::TABS),
             // Bucket derivato nel service: passato ⇔ max(items.booked_until) < now().
             'orders' => $orders->listFor(Auth::user(), $this->tab === 'passati'),
-        ])->title('I miei ordini — AnimalAmo');
+        ])->title(__('profile.title_orders'));
     }
 }

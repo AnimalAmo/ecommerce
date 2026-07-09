@@ -10,12 +10,12 @@
         <div class="{{ $px }} flex justify-center pt-[160px] pb-32">
             {{-- Card (XD: 865x358, bianco op 0.5, bordo #E9E9E9, r 3) --}}
             <div class="relative w-full max-w-[865px] rounded-[3px] border border-gray-150 bg-white/50 px-8 pb-[70px] pt-[74px] text-center">
-                <flux:heading level="1" class="!text-4xl !font-bold !text-brand-cyan">Grazie!</flux:heading>
+                <flux:heading level="1" class="!text-4xl !font-bold !text-brand-cyan">{{ __('partner.thanks_heading') }}</flux:heading>
 
-                <p class="mt-8 text-lg text-black">La tua richiesta è stata inoltrata correttamente.<br>Ti risponderemo il prima possibile.</p>
+                <p class="mt-8 text-lg text-black">{{ __('partner.thanks_line_1') }}<br>{{ __('partner.thanks_line_2') }}</p>
 
                 <div class="mt-10">
-                    <flux:button href="{{ route('home') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">Torna alla Home</flux:button>
+                    <flux:button href="{{ route('home') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">{{ __('partner.back_home') }}</flux:button>
                 </div>
 
                 {{-- Aeroplanino di carta (XD "Tracciato 654", rotazione 135° già applicata al path) --}}

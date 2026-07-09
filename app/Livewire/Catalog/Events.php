@@ -11,12 +11,10 @@ use App\Services\Cart\CartManager;
 use Flux\Flux;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Title('AnimalAmo — Attività ed Eventi')]
 class Events extends Component
 {
     // Datepicker "Quando": mountHasBookingCalendar() è invocato in automatico da Livewire
@@ -95,7 +93,7 @@ class Events extends Component
             // Datepicker "Quando": calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),
             'calendarLabel' => $this->calendarLabel(),
-        ]);
+        ])->title(__('events.meta_title'));
     }
 
     /** Filtro "Dove" (trim, case-insensitive): titolo OR location OR nome della venue. */

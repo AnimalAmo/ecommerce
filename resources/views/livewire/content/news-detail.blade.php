@@ -10,7 +10,7 @@
             {{-- Indietro (XD: simbolo "Indietro" a 142,142 — freccia + label 13px #959595) --}}
             <a href="{{ route('news') }}" class="inline-flex items-center gap-2 text-[13px] leading-6 text-[#959595] transition hover:text-ink">
                 <flux:icon.arrow-back class="h-3 w-3 shrink-0" />
-                Indietro
+                {{ __('news.back') }}
             </a>
 
             {{-- Titolo articolo (XD: Nunito-Bold 36px nero, frame 709px) --}}
@@ -29,7 +29,7 @@
 
             {{-- Articoli correlati (XD: colonna x211..1711 → 1500px centrati; 4 card 354x482, gap 28) --}}
             <section class="mx-auto mt-[60px] w-full max-w-[1500px]">
-                <h2 class="text-2xl font-medium text-black">Articoli correlati</h2>
+                <h2 class="text-2xl font-medium text-black">{{ __('news.related') }}</h2>
 
                 <div class="mt-5 grid grid-cols-4 gap-[28px]">
                     @foreach ($related as $item)
@@ -45,7 +45,7 @@
                                 </p>
                                 <h3 class="mt-4 max-w-[314px] text-base font-semibold leading-[21px] text-black">{{ $item['title'] }}</h3>
                                 <p class="mt-2.5 line-clamp-4 max-w-[314px] text-sm font-normal leading-[23px] text-[#555555]">{{ $item['excerpt'] }}</p>
-                                <a href="{{ route('news.detail', $item['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-4 text-sm font-normal text-[#242C2C]">Continua a leggere…</a>
+                                <a href="{{ route('news.detail', $item['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-4 text-sm font-normal text-[#242C2C]">{{ __('news.read_more') }}</a>
                             </div>
                             {{-- Link overlay all'articolo correlato --}}
                             <a href="{{ route('news.detail', $item['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $item['title'] }}"></a>

@@ -34,20 +34,20 @@ class Profile extends Component
     /** Password attuale: richiesta solo quando si cambia l'email (anti-takeover). */
     public string $currentPassword = '';
 
-    /** Campi in ordine XD per colonna (label → proprietà). */
+    /** Campi in ordine XD per colonna (proprietà → chiave lang della label). */
     public const FIELDS_LEFT = [
-        'firstName' => 'Nome',
-        'lastName' => 'Cognome',
-        'birthDate' => 'Data di nascita',
-        'email' => 'Email',
-        'petType' => 'Tipologia animale',
+        'firstName' => 'profile.field_first_name',
+        'lastName' => 'profile.field_last_name',
+        'birthDate' => 'profile.field_birth_date',
+        'email' => 'profile.field_email',
+        'petType' => 'profile.field_pet_type',
     ];
 
     public const FIELDS_RIGHT = [
-        'address' => 'Indirizzo',
-        'city' => 'Città',
-        'zip' => 'Cap',
-        'phone' => 'Cellulare',
+        'address' => 'profile.field_address',
+        'city' => 'profile.field_city',
+        'zip' => 'profile.field_zip',
+        'phone' => 'profile.field_phone',
     ];
 
     public function mount(): void
@@ -126,8 +126,8 @@ class Profile extends Component
     public function render()
     {
         return view('livewire.profile.profile', [
-            'fieldsLeft' => self::FIELDS_LEFT,
-            'fieldsRight' => self::FIELDS_RIGHT,
-        ])->title('Profilo — AnimalAmo');
+            'fieldsLeft' => array_map(fn ($key) => __($key), self::FIELDS_LEFT),
+            'fieldsRight' => array_map(fn ($key) => __($key), self::FIELDS_RIGHT),
+        ])->title(__('profile.title_profile'));
     }
 }

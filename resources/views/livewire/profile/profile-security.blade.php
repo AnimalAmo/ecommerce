@@ -15,11 +15,11 @@
                 @include('partials.profile-sidebar', ['active' => 'sicurezza'])
 
                 <section class="w-full min-w-0 p-6 lg:w-[1012px] lg:shrink-0 {{ $card }}">
-                    <h1 class="text-2xl font-bold leading-none text-black">Sicurezza e Privacy</h1>
+                    <h1 class="text-2xl font-bold leading-none text-black">{{ __('profile.security_title') }}</h1>
 
                     {{-- Password attuale: ri-autenticazione obbligatoria prima del cambio --}}
                     <div class="mt-6 w-full min-[68rem]:w-[472px]" wire:key="field-currentPassword">
-                        <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">Password attuale</flux:label>
+                        <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ __('profile.current_password_label') }}</flux:label>
                         <div class="mt-[11px]">
                             <flux:input type="password" wire:model="currentPassword" placeholder="***************" class="{{ $inputClasses }} [&_input]:placeholder:!text-[#0D171A]" />
                         </div>
@@ -29,8 +29,8 @@
                     {{-- Password + conferma affiancate (472 + gap 20) --}}
                     <div class="mt-4 flex flex-col gap-4 min-[68rem]:flex-row min-[68rem]:gap-5">
                         @foreach ([
-                            ['model' => 'password', 'label' => 'Password'],
-                            ['model' => 'passwordConfirm', 'label' => 'Conferma Password'],
+                            ['model' => 'password', 'label' => __('profile.password_label')],
+                            ['model' => 'passwordConfirm', 'label' => __('profile.password_confirm_label')],
                         ] as $field)
                             <div class="w-full min-[68rem]:w-[472px]" wire:key="field-{{ $field['model'] }}">
                                 <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
@@ -45,17 +45,17 @@
 
                     {{-- Link e testi privacy come da XD (y321..533): magenta 13px, lorem 15px, elimina #EA2E68 --}}
                     {{-- TODO: flussi reimposta password / impostazioni privacy / elimina account — flussi non presenti nel design, da segnalare al cliente --}}
-                    <a href="#" class="mt-4 block text-[13px] leading-none text-brand-magenta">Reimposta password</a>
+                    <a href="#" class="mt-4 block text-[13px] leading-none text-brand-magenta">{{ __('profile.reset_password') }}</a>
 
                     <p class="mt-[30px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A]">{{ $privacyPlaceholder }}</p>
 
-                    <a href="#" class="mt-[14px] block text-[13px] leading-none text-brand-magenta">Impostazioni sulla privacy</a>
+                    <a href="#" class="mt-[14px] block text-[13px] leading-none text-brand-magenta">{{ __('profile.privacy_settings') }}</a>
 
                     <p class="mt-[29px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A]">{{ $privacyPlaceholder }}</p>
 
-                    <a href="#" class="mt-4 block text-[13px] leading-none text-[#EA2E68]">Elimina account</a>
+                    <a href="#" class="mt-4 block text-[13px] leading-none text-[#EA2E68]">{{ __('profile.delete_account') }}</a>
 
-                    <flux:button wire:click="save" class="mt-[37px] !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">Salva</flux:button>
+                    <flux:button wire:click="save" class="mt-[37px] !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('profile.save') }}</flux:button>
                 </section>
             </div>
         </div>

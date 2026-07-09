@@ -13,10 +13,8 @@ use App\Services\Pricing\BookingPricingService;
 use DateTimeImmutable;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('AnimalAmo — Dettaglio servizio')]
 class AnimalHolidayService extends Component
 {
     use HasBookingCalendar;

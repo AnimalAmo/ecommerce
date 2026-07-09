@@ -30,8 +30,11 @@ class EventSeeder extends Seeder
                 'type' => $isActivity ? ProductType::Activity : ProductType::Event,
                 'title' => $row['title'],
                 'location' => $row['location'],
-                'starts_at' => $row['starts_at'] ?? null,
-                'ends_at' => $row['ends_at'] ?? null,
+                // Le date del mock sono nel passato (anni scelti per il giorno-settimana):
+                // le proiettiamo nel FUTURO mantenendo giorno/mese/giorno-settimana, così
+                // gli eventi restano acquistabili (availability) e il rendering "VEN, 18 GEN" non cambia.
+                'starts_at' => self::resolveDate($row['starts_at'] ?? null),
+                'ends_at' => self::resolveDate($row['ends_at'] ?? null),
                 'duration_days' => $row['duration_days'] ?? null,
                 // Capienza demo (step 3): default 30, override per riga (8 = evento piccolo, 20 = escursioni).
                 'max_participants' => $row['max_participants'] ?? 30,
@@ -61,15 +64,42 @@ class EventSeeder extends Seeder
     }
 
     /**
+     * Proietta una data del mock nel futuro mantenendo giorno-del-mese, mese e
+     * giorno-della-settimana (così "VEN, 18 GEN" resta identico, cambia solo l'anno);
+     * le date già Carbon (eventi "oggi"+N) sono passate così come sono. null resta null.
+     */
+    private static function resolveDate(Carbon|string|null $date): ?Carbon
+    {
+        if ($date === null) {
+            return null;
+        }
+
+        if ($date instanceof Carbon) {
+            return $date;
+        }
+
+        $original = Carbon::parse($date);
+        $weekday = $original->dayOfWeek;
+
+        for ($year = now()->year; ; $year++) {
+            $candidate = Carbon::create($year, $original->month, $original->day, $original->hour, $original->minute);
+
+            if ($candidate->isFuture() && $candidate->dayOfWeek === $weekday) {
+                return $candidate;
+            }
+        }
+    }
+
+    /**
      * Le 12 card della griglia /eventi, VERBATIM da XD (ordine riga per riga).
-     * Gli anni sono scelti perché il giorno della settimana derivato coincida con
-     * quello stampato nel mock (es. "VEN, 18 GEN" → 2019). "Oggi" del mock = data
-     * di seeding. duration_days null = weekend (riga durata assente in griglia).
+     * Gli anni delle date fisse sono scelti perché il giorno-settimana derivato
+     * coincida col mock ("VEN, 18 GEN"); resolveDate() le proietta poi nel futuro.
+     * Gli eventi "di oggi" del mock sono spostati a +7 giorni (sempre acquistabili).
      */
     private static function gridEvents(): array
     {
         return [
-            ['position' => 1, 'slug' => 'brunch-pet-friendly', 'title' => 'Brunch Pet Friendly', 'location' => 'San Pellegrino, Italia', 'starts_at' => Carbon::today()->setTime(13, 30), 'ends_at' => Carbon::today()->setTime(16, 30), 'price_cents' => 2500, 'max_participants' => 8, 'img' => 'event-brunch-pet-friendly'],
+            ['position' => 1, 'slug' => 'brunch-pet-friendly', 'title' => 'Brunch Pet Friendly', 'location' => 'San Pellegrino, Italia', 'starts_at' => Carbon::today()->addDays(7)->setTime(13, 30), 'ends_at' => Carbon::today()->addDays(7)->setTime(16, 30), 'price_cents' => 2500, 'max_participants' => 8, 'img' => 'event-brunch-pet-friendly'],
             ['position' => 2, 'slug' => 'weekend-escursioni', 'title' => 'Weekend di escursioni', 'location' => 'Viareggio, Italia', 'type' => 'activity', 'price_cents' => 11800, 'max_participants' => 20, 'img' => 'event-weekend-escursioni'],
             ['position' => 3, 'slug' => 'festa-pet-friendly', 'title' => 'Festa Pet Friendly', 'location' => 'Milano, Italia', 'starts_at' => '2024-01-08 19:30', 'ends_at' => '2024-01-08 21:30', 'is_free' => true, 'img' => 'event-festa-pet-friendly'],
             ['position' => 4, 'slug' => 'raduno-cuccioli', 'title' => 'Raduno per cuccioli', 'location' => 'San Pellegrino, Italia', 'starts_at' => '2019-01-18 15:00', 'ends_at' => '2019-01-18 17:00', 'is_free' => true, 'img' => 'event-raduno-cuccioli'],
@@ -88,9 +118,9 @@ class EventSeeder extends Seeder
     private static function homeEvents(): array
     {
         return [
-            ['home_position' => 1, 'slug' => 'passeggiata-a-cavallo', 'title' => 'Passeggiata a cavallo', 'location' => 'Genova, Italia', 'starts_at' => Carbon::today()->setTime(12, 30), 'ends_at' => Carbon::today()->setTime(14, 30), 'is_free' => true, 'img' => 'event-cavallo'],
+            ['home_position' => 1, 'slug' => 'passeggiata-a-cavallo', 'title' => 'Passeggiata a cavallo', 'location' => 'Genova, Italia', 'starts_at' => Carbon::today()->addDays(7)->setTime(12, 30), 'ends_at' => Carbon::today()->addDays(7)->setTime(14, 30), 'is_free' => true, 'img' => 'event-cavallo'],
             ['home_position' => 2, 'slug' => 'weekend-mare-fiesole', 'title' => 'Weekend al mare', 'location' => 'Fiesole (FI), Toscana', 'starts_at' => '2024-01-08 19:30', 'ends_at' => '2024-01-08 21:30', 'price_cents' => 2500, 'img' => 'event-mare'],
-            ['home_position' => 3, 'slug' => 'esperienza-asini-fattoria', 'title' => 'Esperienza con gli asini in fattoria', 'location' => 'Manciano (GR), Toscana', 'starts_at' => Carbon::today()->setTime(15, 0), 'ends_at' => Carbon::today()->setTime(17, 0), 'price_cents' => 1800, 'img' => 'event-asini'],
+            ['home_position' => 3, 'slug' => 'esperienza-asini-fattoria', 'title' => 'Esperienza con gli asini in fattoria', 'location' => 'Manciano (GR), Toscana', 'starts_at' => Carbon::today()->addDays(7)->setTime(15, 0), 'ends_at' => Carbon::today()->addDays(7)->setTime(17, 0), 'price_cents' => 1800, 'img' => 'event-asini'],
             ['home_position' => 4, 'slug' => 'weekend-maneggio', 'title' => 'Weekend in maneggio', 'location' => 'Massa Lubrense (NA), Campania', 'starts_at' => '2019-01-18 15:00', 'ends_at' => '2019-01-18 17:00', 'price_cents' => 3500, 'img' => 'event-maneggio'],
             ['home_position' => 5, 'slug' => 'trekking-lago', 'title' => 'Trekking al lago', 'location' => 'Molveno (TN), Trentino', 'starts_at' => '2024-01-20 09:00', 'ends_at' => '2024-01-20 11:00', 'price_cents' => 1200, 'img' => 'event-cavallo'],
         ];

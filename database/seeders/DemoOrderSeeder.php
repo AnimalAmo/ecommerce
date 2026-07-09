@@ -187,8 +187,10 @@ class DemoOrderSeeder extends Seeder
                 'price_cents' => $puppyYoga->price_cents,
                 'is_gift' => false,
                 'options' => ['animals' => ['cane' => 1], 'participants' => 1],
-                'booked_from' => $puppyYoga->starts_at,
-                'booked_until' => $puppyYoga->ends_at,
+                // Finestra CONCLUSA fissa (l'evento è ora proiettato nel futuro dal seeder,
+                // ma questo ordine deve restare nel tab "Passati"): sempre nel passato.
+                'booked_from' => CarbonImmutable::now()->subMonths(4)->setTime(15, 0),
+                'booked_until' => CarbonImmutable::now()->subMonths(4)->setTime(17, 0),
             ],
         ]);
     }

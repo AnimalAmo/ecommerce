@@ -1,5 +1,5 @@
 <div class="relative">
-    <flux:button variant="ghost" size="sm" square aria-label="Carrello" href="{{ route('carrello') }}" class="!text-ink hover:!text-brand-cyan">
+    <flux:button variant="ghost" size="sm" square aria-label="Carrello" href="{{ route('carrello') }}" class="!rounded-full !text-ink hover:!text-brand-cyan">
         <flux:icon.cart class="h-5 w-5" />
     </flux:button>
     @if ($count > 0)

@@ -1,14 +1,14 @@
 {{-- Modale registrazione a step (XD: "Pop-Up - Registrati - primo/secondo/terzo/quarto step") --}}
 <flux:modal name="register" :closable="false" class="w-full !max-w-[537px] !rounded-none bg-white !px-8 !py-6 backdrop:!bg-black/30">
     <div class="flex">
-        <flux:button variant="ghost" size="xs" wire:click="back" icon="arrow-back" icon:class="!size-3.5" class="!gap-1.5 !px-0 !text-[13px] !font-normal !text-gray-400 hover:!bg-transparent hover:!text-ink">Indietro</flux:button>
+        <flux:button variant="ghost" size="xs" wire:click="back" icon="arrow-back" icon:class="!size-3.5" class="!gap-1.5 !px-0 !text-[13px] !font-normal !text-gray-400 hover:!bg-transparent hover:!text-ink">{{ __('auth-modal.back') }}</flux:button>
     </div>
 
     <flux:heading level="2" class="mt-8 text-center !text-lg !font-semibold !text-[#0D171A]">
         @switch($step)
-            @case(3) Indirizzo @break
-            @case(4) Animale domestico @break
-            @default Informazioni personali
+            @case(3) {{ __('auth-modal.register.address') }} @break
+            @case(4) {{ __('auth-modal.register.pet') }} @break
+            @default {{ __('auth-modal.register.personal_info') }}
         @endswitch
     </flux:heading>
 
@@ -23,67 +23,67 @@
         @if ($step === 1)
             <div class="space-y-4">
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Nome</flux:label>
-                    <flux:input wire:model="form.firstName" placeholder="Nome" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.first_name') }}</flux:label>
+                    <flux:input wire:model="form.firstName" placeholder="{{ __('auth-modal.register.first_name') }}" />
                     <flux:error name="form.firstName" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Cognome</flux:label>
-                    <flux:input wire:model="form.lastName" placeholder="Cognome" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.last_name') }}</flux:label>
+                    <flux:input wire:model="form.lastName" placeholder="{{ __('auth-modal.register.last_name') }}" />
                     <flux:error name="form.lastName" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Data di nascita</flux:label>
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.birth_date') }}</flux:label>
                     <flux:input type="date" wire:model="form.birthDate" />
                     <flux:error name="form.birthDate" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Email</flux:label>
-                    <flux:input type="email" wire:model="form.email" placeholder="Email" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.email') }}</flux:label>
+                    <flux:input type="email" wire:model="form.email" placeholder="{{ __('auth-modal.email') }}" />
                     <flux:error name="form.email" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @elseif ($step === 2)
             <div class="space-y-4">
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Cellulare</flux:label>
-                    <flux:input type="tel" wire:model="form.phone" placeholder="Cellulare" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.phone') }}</flux:label>
+                    <flux:input type="tel" wire:model="form.phone" placeholder="{{ __('auth-modal.register.phone') }}" />
                     <flux:error name="form.phone" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Password</flux:label>
-                    <flux:input type="password" wire:model="form.password" placeholder="Password" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.password') }}</flux:label>
+                    <flux:input type="password" wire:model="form.password" placeholder="{{ __('auth-modal.password') }}" />
                     <flux:error name="form.password" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Ripeti password</flux:label>
-                    <flux:input type="password" wire:model="form.passwordConfirmation" placeholder="Ripeti password" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.repeat_password') }}</flux:label>
+                    <flux:input type="password" wire:model="form.passwordConfirmation" placeholder="{{ __('auth-modal.register.repeat_password') }}" />
                     <flux:error name="form.passwordConfirmation" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @elseif ($step === 3)
             <div class="space-y-4">
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Indirizzo</flux:label>
-                    <flux:input wire:model="form.address" placeholder="Indirizzo" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.address_field') }}</flux:label>
+                    <flux:input wire:model="form.address" placeholder="{{ __('auth-modal.register.address_field') }}" />
                     <flux:error name="form.address" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Città</flux:label>
-                    <flux:input wire:model="form.city" placeholder="Città" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.city') }}</flux:label>
+                    <flux:input wire:model="form.city" placeholder="{{ __('auth-modal.register.city') }}" />
                     <flux:error name="form.city" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Cap</flux:label>
-                    <flux:input wire:model="form.postalCode" placeholder="Cap" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.postal_code') }}</flux:label>
+                    <flux:input wire:model="form.postalCode" placeholder="{{ __('auth-modal.register.postal_code') }}" />
                     <flux:error name="form.postalCode" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @else
             <div class="space-y-4">
                 <flux:field>
-                    <flux:label class="!text-xs !text-gray-600">Tipologia animale</flux:label>
-                    <flux:input wire:model="form.petType" placeholder="Tipologia animale" />
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.pet_type') }}</flux:label>
+                    <flux:input wire:model="form.petType" placeholder="{{ __('auth-modal.register.pet_type') }}" />
                     <flux:error name="form.petType" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
@@ -91,18 +91,18 @@
             <div class="mt-6 space-y-3">
                 <flux:field variant="inline">
                     <flux:checkbox wire:model="form.newsletter" class="!size-5 [--color-accent:var(--color-brand-cyan)] [--color-accent-foreground:#fff] [&_[data-flux-checkbox-indicator]]:size-5 [&_[data-flux-checkbox-indicator]]:rounded-full [&_[data-flux-checkbox-indicator]]:border-brand-cyan" />
-                    <flux:label class="!text-xs !text-gray-600">Iscriviti alla newsletter</flux:label>
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.newsletter') }}</flux:label>
                 </flux:field>
                 <flux:field variant="inline">
                     <flux:checkbox wire:model="form.privacyConsent" class="!size-5 [--color-accent:var(--color-brand-cyan)] [--color-accent-foreground:#fff] [&_[data-flux-checkbox-indicator]]:size-5 [&_[data-flux-checkbox-indicator]]:rounded-full [&_[data-flux-checkbox-indicator]]:border-brand-cyan" />
-                    <flux:label class="!text-xs !text-gray-600">Acconsento all’uso dei miei dati personali per ricevere promozioni esclusive.</flux:label>
+                    <flux:label class="!text-xs !text-gray-600">{{ __('auth-modal.register.privacy_consent') }}</flux:label>
                     <flux:error name="form.privacyConsent" class="!mt-1 !text-xs" />
                 </flux:field>
             </div>
         @endif
 
         <div class="mt-8 flex justify-center">
-            <flux:button type="submit" class="!rounded-full !bg-brand-cyan !px-8 !text-[15px] !font-bold !text-white hover:!bg-[#4FB9DB]">Prosegui</flux:button>
+            <flux:button type="submit" class="!rounded-full !bg-brand-cyan !px-8 !text-[15px] !font-bold !text-white hover:!bg-[#4FB9DB]">{{ __('auth-modal.register.continue') }}</flux:button>
         </div>
     </form>
 </flux:modal>

@@ -15,7 +15,7 @@
 
                 <section class="w-full min-w-0 p-6 lg:w-[1012px] lg:shrink-0 {{ $card }}">
                     {{-- Titolo card XD ≠ voce sidebar: l'artboard usa "I miei interessi" --}}
-                    <h1 class="text-2xl font-bold leading-none text-black">I miei interessi</h1>
+                    <h1 class="text-2xl font-bold leading-none text-black">{{ __('profile.interests_title') }}</h1>
 
                     {{-- Tab identiche a "I miei ordini" --}}
                     <div class="relative mt-[50px]">
@@ -29,7 +29,7 @@
 
                     @if ($events === [])
                         {{-- Nessun artboard XD per questo stato: stessa riga minimale dei preferiti --}}
-                        <p class="mt-6 text-[15px] leading-[21px] text-[#959595]">Nessun risultato</p>
+                        <p class="mt-6 text-[15px] leading-[21px] text-[#959595]">{{ __('profile.no_results') }}</p>
                     @else
                         {{-- Box evento 468x170 (variante evento del "Box preferiti"), 2 per riga --}}
                         <div class="mt-6 grid grid-cols-1 gap-x-[28px] gap-y-4 md:grid-cols-2">
@@ -58,7 +58,7 @@
                                             {{-- TODO: azione Partecipa (stesso bottone della pagina Eventi) --}}
                                             <flux:button class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none">
                                                 <flux:icon.check-1 class="h-4 w-4 shrink-0" />
-                                                Partecipa
+                                                {{ __('profile.attend') }}
                                             </flux:button>
                                             <span class="pb-[3px] text-[11px] font-semibold leading-none text-[#0D171A]">{{ $event['price'] }}</span>
                                         </div>

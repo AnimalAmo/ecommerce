@@ -3,34 +3,33 @@
     <div class="{{ $px }} border-b border-black pb-10 pt-16">
         <div class="grid grid-cols-4 gap-10">
             <div>
-                <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Esperienze</h4>
+                <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.experiences') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('holiday') }}" class="hover:text-brand-cyan">Animal Holiday</a></li>
-                    <li><a href="{{ route('eventi') }}" class="hover:text-brand-cyan">Attività ed Eventi</a></li>
+                    <li><a href="{{ route('eventi') }}" class="hover:text-brand-cyan">{{ __('nav.footer.events') }}</a></li>
                     <li><a href="{{ route('smartbox') }}" class="hover:text-brand-cyan">Smartbox</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Servizi</h4>
+                <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.services') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="{{ route('news') }}" class="hover:text-brand-cyan">News</a></li>
-                    <li><a href="{{ route('community') }}" class="hover:text-brand-cyan">Community</a></li>
-                    <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">Diventa Partner</a></li>
+                    <li><a href="{{ route('news') }}" class="hover:text-brand-cyan">{{ __('nav.footer.news') }}</a></li>
+                    <li><a href="{{ route('community') }}" class="hover:text-brand-cyan">{{ __('nav.footer.community') }}</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Azienda</h4>
+                <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.company') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="{{ route('about') }}" class="hover:text-brand-cyan">Chi siamo</a></li>
-                    <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">Lavora con noi</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">Contatti</a></li>
+                    <li><a href="{{ route('about') }}" class="hover:text-brand-cyan">{{ __('nav.footer.about') }}</a></li>
+                    <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">{{ __('nav.footer.work_with_us') }}</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="mb-[18px] text-base font-extrabold uppercase tracking-wide text-[#2B2B2B]">Help &amp; Support</h4>
+                <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.help_support') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="#" class="hover:text-brand-cyan">FAQ</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">Assistenza clienti</a></li>
+                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.how_it_works') }}</a></li>
+                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
+                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.support') }}</a></li>
                 </ul>
             </div>
         </div>
@@ -41,10 +40,10 @@
         </div>
     </div>
     <div class="{{ $px }} flex items-center justify-center gap-4 py-6 text-xs font-light text-[#8D8D8D]">
-        <span>Copyright © {{ date('Y') }}</span>
-        <a href="#" class="hover:text-brand-cyan">Termini e condizioni</a>
-        <a href="#" class="hover:text-brand-cyan">Informazioni privacy</a>
-        <a href="#" class="hover:text-brand-cyan">Informativa cookie</a>
-        <a href="#" class="hover:text-brand-cyan">Gestisci cookie</a>
+        <span>{{ __('nav.footer.copyright') }} {{ date('Y') }}</span>
+        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.terms') }}</a>
+        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.privacy') }}</a>
+        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.cookie_policy') }}</a>
+        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.manage_cookies') }}</a>
     </div>
 </footer>

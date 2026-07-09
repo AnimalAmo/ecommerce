@@ -66,7 +66,7 @@ class ProfileOrderSummary extends Component
         return view('livewire.profile.profile-order-summary', [
             'items' => $items,
             'reviewItem' => collect($items)->firstWhere('id', $this->reviewItemId),
-        ])->title('Riepilogo ordine — AnimalAmo');
+        ])->title(__('profile.title_order_summary'));
     }
 
     /** Ordine per order_number scopato sull'utente: inesistente o di altri → 404. */

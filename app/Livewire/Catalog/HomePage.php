@@ -5,10 +5,8 @@ namespace App\Livewire\Catalog;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Models\Event\Event;
 use App\Models\Region\Region;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('AnimalAmo — Viaggi e servizi pet-friendly')]
 class HomePage extends Component
 {
     // Datepicker "Quando": riusa la macchina del calendario range (editCheckIn/editCheckOut).
@@ -45,6 +43,6 @@ class HomePage extends Component
             // Datepicker "Quando" nella hero: calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),
             'calendarLabel' => $this->calendarLabel(),
-        ]);
+        ])->title(__('home.meta_title'));
     }
 }
