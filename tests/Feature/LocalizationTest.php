@@ -105,6 +105,23 @@ class LocalizationTest extends TestCase
         $this->assertStringEndsWith('/en/cart', $localized);
     }
 
+    // ============ Header links preserve the active locale ============
+
+    public function test_english_home_header_links_keep_the_en_prefix(): void
+    {
+        // Regression: on an /en page, the logo and the "Animal Holiday" nav link
+        // were hardcoded to "/" and "/#holiday" — the bare default-locale home.
+        // Clicking either silently dropped the /en prefix and reverted to Italian,
+        // so the language never persisted across page navigation.
+        $this->reloadRoutesFor('/en');
+        $response = $this->get('/en');
+        $response->assertOk();
+
+        $response->assertDontSee('href="/"', false);
+        $response->assertDontSee('href="/#holiday"', false);
+        $response->assertSee('/en#holiday', false);
+    }
+
     // ============ Locale switch ============
 
     public function test_locale_switch_changes_locale_and_redirects(): void
