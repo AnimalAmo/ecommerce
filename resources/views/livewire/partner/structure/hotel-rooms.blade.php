@@ -67,11 +67,11 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.from') }}</flux:label>
-                                    <flux:time-picker wire:model="form.checkinFrom" type="input" placeholder="--:--" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                    <flux:time-picker wire:model="form.checkinFrom" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.to') }}</flux:label>
-                                    <flux:time-picker wire:model="form.checkinTo" type="input" placeholder="--:--" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                    <flux:time-picker wire:model="form.checkinTo" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                             </div>
                         </div>
@@ -80,11 +80,11 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.from') }}</flux:label>
-                                    <flux:time-picker wire:model="form.checkoutFrom" type="input" placeholder="--:--" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                    <flux:time-picker wire:model="form.checkoutFrom" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.to') }}</flux:label>
-                                    <flux:time-picker wire:model="form.checkoutTo" type="input" placeholder="--:--" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                    <flux:time-picker wire:model="form.checkoutTo" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                             </div>
                         </div>

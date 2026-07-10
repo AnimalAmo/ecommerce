@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Translatable\Facades\Translatable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,5 +40,10 @@ class AppServiceProvider extends ServiceProvider
             'smartbox_package' => SmartboxPackage::class,
             'user' => User::class,
         ]);
+
+        // Contenuti partner (spatie/laravel-translatable): l'italiano è la lingua
+        // richiesta, l'inglese opzionale — su locale EN senza traduzione si mostra
+        // l'IT. (Diverso da app.fallback_locale=en, che riguarda i lang file UI.)
+        Translatable::fallback(fallbackLocale: 'it');
     }
 }

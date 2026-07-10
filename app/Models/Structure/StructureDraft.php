@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * Bozza di onboarding di un servizio partner (wizard multi-step: hotel 11,
@@ -15,9 +16,25 @@ use Illuminate\Support\Facades\Storage;
  */
 class StructureDraft extends Model
 {
+    use HasTranslations;
+
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_COMPLETED = 'completed';
+
+    /**
+     * Testi liberi del partner, localizzati it/en (spatie/laravel-translatable,
+     * JSON in colonna). Un valore stringa assegnato finisce sul locale corrente,
+     * quindi gli step non ancora convertiti ai tab lingua restano compatibili.
+     */
+    public array $translatable = [
+        'name',
+        'description',
+        'detailed_description',
+        'meeting_point',
+        'additional_other',
+        'animal_services_other',
+    ];
 
     protected $fillable = [
         'user_id',
