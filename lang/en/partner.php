@@ -320,6 +320,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — what is included (step 8 of 12) — options reuse hotel_services.svc_*
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_included' => [
+        'title' => 'AnimalAmo — What is included',
+        'step' => 'Step 8 of 12',
+        'heading' => 'What is included?',
+        'section' => 'Add the information to describe the services available (you can select more than one option)',
+        'helper' => 'They will help the user assess the structure.',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — what is included for animals (step 9 of 12) — options reuse hotel_animal_services.*
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_included_animals' => [
+        'title' => 'AnimalAmo — What is included for animals',
+        'step' => 'Step 9 of 12',
+        'heading' => 'What is included for animals?',
+        'section' => 'Add the information to describe the services you offer (you can select more than one option)',
+        'helper' => 'They will help the user assess the structure.',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Smartbox — accommodation / what you will find (step 7 of 12)
     |--------------------------------------------------------------------------
     */

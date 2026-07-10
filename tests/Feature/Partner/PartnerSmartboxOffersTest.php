@@ -29,7 +29,8 @@ class PartnerSmartboxOffersTest extends TestCase
             ->set('amenities', ['camera_da_letto', 'cucina'])
             ->set('additional', ['piscina', 'spa'])
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.smartbox.included'));
 
         $draft = StructureDraft::first();
         $this->assertSame(['camera_da_letto', 'cucina'], $draft->services);

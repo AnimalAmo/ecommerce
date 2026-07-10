@@ -320,6 +320,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — cosa è incluso (step 8 di 12) — opzioni riusano hotel_services.svc_*
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_included' => [
+        'title' => 'AnimalAmo — Cosa è incluso',
+        'step' => 'Step 8 di 12',
+        'heading' => 'Cosa è incluso?',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi presenti (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cosa è incluso per gli animali (step 9 di 12) — opzioni riusano hotel_animal_services.*
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_included_animals' => [
+        'title' => 'AnimalAmo — Cosa è incluso per gli animali',
+        'step' => 'Step 9 di 12',
+        'heading' => 'Cos’è incluso per gli animali?',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi che offri (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Smartbox — alloggio / cosa troverai (step 7 di 12)
     |--------------------------------------------------------------------------
     */

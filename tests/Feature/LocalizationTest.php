@@ -145,6 +145,18 @@ class LocalizationTest extends TestCase
         $this->get('/en/partner/smartbox/what-you-will-find')->assertOk();
     }
 
+    public function test_english_partner_smartbox_included_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/whats-included');
+        $this->get('/en/partner/smartbox/whats-included')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_included_animals_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/whats-included-animals');
+        $this->get('/en/partner/smartbox/whats-included-animals')->assertOk();
+    }
+
     public function test_english_partner_activity_name_url_uses_en_prefix_and_translated_slug(): void
     {
         $this->reloadRoutesFor('/en/partner/activity/name');

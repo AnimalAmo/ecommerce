@@ -38,6 +38,8 @@ return [
     'partner.smartbox.cancellation' => 'partner/smartbox/cancellation',
     'partner.smartbox.meals' => 'partner/smartbox/meals',
     'partner.smartbox.offers' => 'partner/smartbox/what-you-will-find',
+    'partner.smartbox.included' => 'partner/smartbox/whats-included',
+    'partner.smartbox.included-animals' => 'partner/smartbox/whats-included-animals',
     'partner.activity.name' => 'partner/activity/name',
     'partner.activity.location' => 'partner/activity/location',
     'partner.activity.description' => 'partner/activity/description',

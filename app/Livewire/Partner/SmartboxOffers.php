@@ -35,8 +35,7 @@ class SmartboxOffers extends Component
             'services' => $this->amenities,
             'additional_services' => $this->additional,
         ], 7);
-
-        // TODO: advance to step 8 of 12 del flusso smartbox once it exists.
+        $this->redirectRoute('partner.smartbox.included');
     }
 
     public function render()
