@@ -116,9 +116,8 @@ return [
 
         'security_title' => 'AnimalAmo — Security',
         'security_heading' => 'Security',
-        'current_password' => 'Current password',
-        'new_password' => 'New password',
-        'confirm_password' => 'Confirm password',
+        'password' => 'Password',
+        'reset_password' => 'Reset password',
         'privacy_settings' => 'Privacy settings',
         'delete_account' => 'Delete account',
     ],

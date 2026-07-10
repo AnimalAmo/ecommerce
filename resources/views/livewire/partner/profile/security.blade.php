@@ -2,6 +2,7 @@
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php $fieldClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]'; @endphp
 @php $labelClass = '!text-xs !font-normal !text-[#555555]'; @endphp
+@php $ctaClass = '!text-[13px] !font-semibold !text-[#FF3EA5] !decoration-current hover:!text-[#DD2A8A]'; @endphp
 
 <div class="flex min-h-screen flex-col bg-[linear-gradient(296deg,#FF3EA51A_0%,#68CDEB1A_100%)] font-sans text-ink antialiased">
 
@@ -16,34 +17,30 @@
                 <div class="flex-1 rounded-[10px] bg-white p-6">
                     <h1 class="text-2xl font-bold text-[#0D171A]">{{ __('partner.profile.security_heading') }}</h1>
 
-                    <form wire:submit="save" class="mt-8 max-w-[520px]">
-                        <div class="flex flex-col gap-5">
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.current_password') }} *</flux:label>
-                                <flux:input type="password" wire:model="currentPassword" class="{{ $fieldClass }}" />
-                            </flux:field>
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.new_password') }} *</flux:label>
-                                <flux:input type="password" wire:model="password" class="{{ $fieldClass }}" />
-                            </flux:field>
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.confirm_password') }} *</flux:label>
-                                <flux:input type="password" wire:model="passwordConfirm" class="{{ $fieldClass }}" />
-                            </flux:field>
+                    {{-- Password (sola visualizzazione) + link reimposta --}}
+                    <div class="mt-8 max-w-[520px]">
+                        <flux:field>
+                            <flux:label class="{{ $labelClass }}">{{ __('partner.profile.password') }} *</flux:label>
+                            <flux:input type="password" value="password" readonly class="{{ $fieldClass }}" />
+                        </flux:field>
+                        <div class="mt-3">
+                            <flux:link href="#" class="{{ $ctaClass }}">{{ __('partner.profile.reset_password') }}</flux:link>
                         </div>
-
-                        <div class="mt-8 flex items-center justify-start">
-                            <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-10 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.profile.save') }}</flux:button>
-                        </div>
-                    </form>
+                    </div>
 
                     {{-- Impostazioni sulla Privacy (copy segnaposto, in attesa del testo cliente) --}}
-                    <div class="mt-12 border-t border-gray-150 pt-8">
-                        <h2 class="text-lg font-bold text-[#0D171A]">{{ __('partner.profile.privacy_settings') }}</h2>
-                        <p class="mt-4 max-w-[820px] text-[15px] leading-relaxed text-[#627277]">{{ $privacyPlaceholder }}</p>
+                    <div class="mt-12 max-w-[820px]">
+                        <p class="text-[15px] leading-relaxed text-[#627277]">{{ $privacyText }}</p>
+                        <div class="mt-4">
+                            <flux:link href="#" class="{{ $ctaClass }}">{{ __('partner.profile.privacy_settings') }}</flux:link>
+                        </div>
+                    </div>
 
-                        <div class="mt-8">
-                            <flux:link href="#" class="!text-[15px] !font-bold !text-[#E5484D] hover:!underline">{{ __('partner.profile.delete_account') }}</flux:link>
+                    {{-- Elimina account (copy segnaposto + flusso backend pendente) --}}
+                    <div class="mt-10 max-w-[820px]">
+                        <p class="text-[15px] leading-relaxed text-[#627277]">{{ $deleteText }}</p>
+                        <div class="mt-4">
+                            <flux:button variant="ghost" class="!px-0 {{ $ctaClass }}">{{ __('partner.profile.delete_account') }}</flux:button>
                         </div>
                     </div>
                 </div>

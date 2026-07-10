@@ -116,9 +116,8 @@ return [
 
         'security_title' => 'AnimalAmo — Sicurezza',
         'security_heading' => 'Sicurezza',
-        'current_password' => 'Password attuale',
-        'new_password' => 'Nuova password',
-        'confirm_password' => 'Conferma password',
+        'password' => 'Password',
+        'reset_password' => 'Reimposta password',
         'privacy_settings' => 'Impostazioni sulla Privacy',
         'delete_account' => 'Elimina Account',
     ],

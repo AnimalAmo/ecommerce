@@ -17,24 +17,26 @@
                     <h1 class="text-2xl font-bold text-[#0D171A]">{{ __('partner.profile.payment_heading') }}</h1>
 
                     <form wire:submit="save" class="mt-8">
-                        <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.account_holder') }} *</flux:label>
-                                <flux:input wire:model="form.accountHolder" class="{{ $fieldClass }}" />
-                            </flux:field>
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.iban') }} *</flux:label>
-                                <flux:input wire:model="form.iban" class="{{ $fieldClass }}" />
-                            </flux:field>
+                        <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-3">
+                            <div class="md:col-span-2">
+                                <flux:field>
+                                    <flux:label class="{{ $labelClass }}">{{ __('partner.profile.account_holder') }} *</flux:label>
+                                    <flux:input wire:model="form.accountHolder" class="{{ $fieldClass }}" />
+                                </flux:field>
+                                <flux:field>
+                                    <flux:label class="{{ $labelClass }}">{{ __('partner.profile.iban') }} *</flux:label>
+                                    <flux:input wire:model="form.iban" class="{{ $fieldClass }}" />
+                                </flux:field>
 
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.sdi') }} *</flux:label>
-                                <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
-                            </flux:field>
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.bic') }} *</flux:label>
-                                <flux:input wire:model="form.bic" class="{{ $fieldClass }}" />
-                            </flux:field>
+                                <flux:field>
+                                    <flux:label class="{{ $labelClass }}">{{ __('partner.profile.sdi') }} *</flux:label>
+                                    <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
+                                </flux:field>
+                                <flux:field>
+                                    <flux:label class="{{ $labelClass }}">{{ __('partner.profile.bic') }} *</flux:label>
+                                    <flux:input wire:model="form.bic" class="{{ $fieldClass }}" />
+                                </flux:field>
+                            </div>
                         </div>
 
                         <div class="mt-10 flex items-center justify-end">
