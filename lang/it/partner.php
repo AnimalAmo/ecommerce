@@ -125,6 +125,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Crea servizio (scelta tipologia)
+    |--------------------------------------------------------------------------
+    */
+    'create_service' => [
+        'title' => 'AnimalAmo — Crea servizio',
+        'heading' => 'Crea un nuovo servizio',
+        'section' => 'Seleziona il servizio che vuoi proporre',
+        'helper' => 'Questo ci aiuta a classificare il tuo prodotto in modo che i clienti possano trovarlo.',
+        'struttura_title' => 'Struttura ricettiva',
+        'struttura_subtitle' => 'Come Hotel, Agriturismo, B&B, altro',
+        'attivita_title' => 'Attività ed Eventi',
+        'attivita_subtitle' => 'Come una gita di un giorno, un ritrovo con i propri animali',
+        'servizi_title' => 'Servizi',
+        'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
+        'smartbox_title' => 'Smartbox',
+        'smartbox_subtitle' => 'Un’esperienza da regalare',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Seleziona un servizio.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Dashboard B2B
     |--------------------------------------------------------------------------
     */

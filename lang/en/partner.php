@@ -125,6 +125,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Create service (type selection)
+    |--------------------------------------------------------------------------
+    */
+    'create_service' => [
+        'title' => 'AnimalAmo — Create service',
+        'heading' => 'Create a new service',
+        'section' => 'Select the service you want to offer',
+        'helper' => 'This helps us classify your product so that customers can find it.',
+        'struttura_title' => 'Accommodation',
+        'struttura_subtitle' => 'Such as Hotel, Farm stay, B&B, and more',
+        'attivita_title' => 'Activities and Events',
+        'attivita_subtitle' => 'Such as a day trip or a meet-up with your pets',
+        'servizi_title' => 'Services',
+        'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
+        'smartbox_title' => 'Smartbox',
+        'smartbox_subtitle' => 'An experience to give as a gift',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Select a service.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | B2B dashboard
     |--------------------------------------------------------------------------
     */

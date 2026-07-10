@@ -28,4 +28,5 @@ return [
     'partner.register' => 'partner-registration',
     'partner.register.step2' => 'partner-registration/services',
     'partner.dashboard' => 'partner/dashboard',
+    'partner.service.create' => 'partner/create-service',
 ];
