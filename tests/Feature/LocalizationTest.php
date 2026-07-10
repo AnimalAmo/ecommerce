@@ -79,6 +79,144 @@ class LocalizationTest extends TestCase
         $this->get('/en/favourites')->assertOk();
     }
 
+    public function test_english_partner_dashboard_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/dashboard');
+        $this->get('/en/partner/dashboard')->assertOk();
+    }
+
+    public function test_english_partner_create_service_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/create-service');
+        $this->get('/en/partner/create-service')->assertOk();
+    }
+
+    public function test_english_partner_structure_type_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/type');
+        $this->get('/en/partner/structure/type')->assertOk();
+    }
+
+    public function test_english_partner_activity_type_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/type');
+        $this->get('/en/partner/activity/type')->assertOk();
+    }
+
+    public function test_english_partner_activity_name_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/name');
+        $this->get('/en/partner/activity/name')->assertOk();
+    }
+
+    public function test_english_partner_activity_location_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/location');
+        $this->get('/en/partner/activity/location')->assertOk();
+    }
+
+    public function test_english_partner_activity_description_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/description');
+        $this->get('/en/partner/activity/description')->assertOk();
+    }
+
+    public function test_english_partner_activity_info_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/general-info');
+        $this->get('/en/partner/activity/general-info')->assertOk();
+    }
+
+    public function test_english_partner_activity_included_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/whats-included');
+        $this->get('/en/partner/activity/whats-included')->assertOk();
+    }
+
+    public function test_english_partner_activity_animal_services_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/animal-services');
+        $this->get('/en/partner/activity/animal-services')->assertOk();
+    }
+
+    public function test_english_partner_activity_cost_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/cost');
+        $this->get('/en/partner/activity/cost')->assertOk();
+    }
+
+    public function test_english_partner_activity_photos_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/photos');
+        $this->get('/en/partner/activity/photos')->assertOk();
+    }
+
+    public function test_english_partner_activity_cancellation_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/cancellation');
+        $this->get('/en/partner/activity/cancellation')->assertOk();
+    }
+
+    public function test_english_partner_hotel_title_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/title');
+        $this->get('/en/partner/structure/hotel/title')->assertOk();
+    }
+
+    public function test_english_partner_hotel_location_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/location');
+        $this->get('/en/partner/structure/hotel/location')->assertOk();
+    }
+
+    public function test_english_partner_hotel_description_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/description');
+        $this->get('/en/partner/structure/hotel/description')->assertOk();
+    }
+
+    public function test_english_partner_hotel_rooms_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/rooms');
+        $this->get('/en/partner/structure/hotel/rooms')->assertOk();
+    }
+
+    public function test_english_partner_hotel_cancellation_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/cancellation');
+        $this->get('/en/partner/structure/hotel/cancellation')->assertOk();
+    }
+
+    public function test_english_partner_hotel_services_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/services');
+        $this->get('/en/partner/structure/hotel/services')->assertOk();
+    }
+
+    public function test_english_partner_hotel_animal_services_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/animal-services');
+        $this->get('/en/partner/structure/hotel/animal-services')->assertOk();
+    }
+
+    public function test_english_partner_hotel_smartbox_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/smartbox');
+        $this->get('/en/partner/structure/hotel/smartbox')->assertOk();
+    }
+
+    public function test_english_partner_hotel_photos_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/photos');
+        $this->get('/en/partner/structure/hotel/photos')->assertOk();
+    }
+
+    public function test_english_partner_hotel_payment_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/payment-method');
+        $this->get('/en/partner/structure/hotel/payment-method')->assertOk();
+    }
+
     public function test_english_slug_with_italian_path_is_not_reachable(): void
     {
         // The Italian slug under the /en prefix must not resolve as 200.

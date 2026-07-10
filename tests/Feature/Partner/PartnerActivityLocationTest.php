@@ -1,0 +1,59 @@
+<?php
+
+namespace Tests\Feature\Partner;
+
+use App\Livewire\Partner\ActivityLocation;
+use App\Models\Structure\StructureDraft;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class PartnerActivityLocationTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_page_renders_the_location_fields(): void
+    {
+        $this->get(route('partner.activity.location'))
+            ->assertOk()
+            ->assertSee(__('partner.activity_location.heading'))
+            ->assertSee(__('partner.activity_location.step'))
+            ->assertSee(__('partner.activity_location.address'))
+            ->assertSee(__('partner.activity_location.meeting_point'))
+            ->assertSee(__('partner.activity_location.next'));
+    }
+
+    public function test_next_requires_the_fields(): void
+    {
+        Livewire::test(ActivityLocation::class)
+            ->call('next')
+            ->assertHasErrors(['address', 'city', 'province', 'zip', 'meetingPoint']);
+    }
+
+    public function test_next_saves_the_location(): void
+    {
+        Livewire::test(ActivityLocation::class)
+            ->set('address', 'Via Lago 5')
+            ->set('city', 'Garda')
+            ->set('province', 'VR')
+            ->set('zip', '37016')
+            ->set('meetingPoint', 'Ingresso del parco')
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.description'));
+
+        $this->assertDatabaseHas('structure_drafts', [
+            'meeting_point' => 'Ingresso del parco',
+            'city' => 'Garda',
+            'current_step' => 3,
+        ]);
+    }
+
+    public function test_it_rehydrates_the_saved_meeting_point(): void
+    {
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 3, 'meeting_point' => 'Piazza centrale']);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(ActivityLocation::class)->assertSet('meetingPoint', 'Piazza centrale');
+    }
+}
