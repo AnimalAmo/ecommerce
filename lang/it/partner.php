@@ -148,6 +148,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — foto (step 10 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_photos' => [
+        'title' => 'AnimalAmo — Foto',
+        'step' => 'Step 10 di 11',
+        'heading' => 'Foto',
+        'section' => 'Carica alcune foto',
+        'helper' => 'Serviranno ad aumentare potenzialmente il tuo tasso di conversione in media del 2,7%, in altre parole, per aumentare le tue prenotazioni e i tuoi guadagni.',
+        'drop' => 'Trascina qui le tue foto',
+        'hint' => 'Devi caricare almeno 4 foto (7 o più consigliate)',
+        'uploading' => 'Caricamento in corso…',
+        'delete' => 'Elimina',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_min' => 'Devi caricare almeno 4 foto.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — smartbox (step 9 di 11)
     |--------------------------------------------------------------------------
     */

@@ -38,4 +38,5 @@ return [
     'partner.structure.hotel.services' => 'partner/structure/hotel/services',
     'partner.structure.hotel.animal-services' => 'partner/structure/hotel/animal-services',
     'partner.structure.hotel.smartbox' => 'partner/structure/hotel/smartbox',
+    'partner.structure.hotel.photos' => 'partner/structure/hotel/photos',
 ];
