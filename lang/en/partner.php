@@ -148,6 +148,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — description (step 4 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_description' => [
+        'title' => 'AnimalAmo — Description',
+        'step' => 'Step 4 of 11',
+        'heading' => 'Description',
+        'section' => 'Introduce your service',
+        'helper' => 'Give the customer a taste of what they will do in 2 or 3 sentences. This will be the first thing customers read after the title and will inspire them to keep going.',
+        'placeholder' => 'Description',
+        'chars' => 'characters',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Enter a description.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — location (step 3 of 11)
     |--------------------------------------------------------------------------
     */
