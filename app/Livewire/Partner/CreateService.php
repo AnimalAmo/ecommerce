@@ -26,12 +26,19 @@ class CreateService extends Component
 
         $this->saveStep(['service_category' => $this->service], 0);
 
-        // Solo il flusso "struttura ricettiva" è implementato (11 step).
         if ($this->service === 'struttura') {
             $this->redirectRoute('partner.structure.type');
+
+            return;
         }
 
-        // TODO: attività/eventi, servizi e smartbox hanno un flusso dedicato non ancora costruito.
+        if ($this->service === 'attivita') {
+            $this->redirectRoute('partner.activity.type');
+
+            return;
+        }
+
+        // TODO: servizi e smartbox hanno un flusso dedicato non ancora costruito.
     }
 
     public function render()

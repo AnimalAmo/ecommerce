@@ -125,6 +125,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tipologia attività/eventi (step 1 di 10 del flusso attività ed eventi)
+    |--------------------------------------------------------------------------
+    */
+    'activity_type' => [
+        'title' => 'AnimalAmo — Attività ed Eventi',
+        'step' => 'Step 1 di 10',
+        'attivita' => 'Attività',
+        'eventi' => 'Eventi',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Seleziona una tipologia.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Crea servizio (scelta tipologia)
     |--------------------------------------------------------------------------
     */

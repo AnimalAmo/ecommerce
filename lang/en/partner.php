@@ -125,6 +125,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity/event type (step 1 of 10 of the activities & events flow)
+    |--------------------------------------------------------------------------
+    */
+    'activity_type' => [
+        'title' => 'AnimalAmo — Activities and Events',
+        'step' => 'Step 1 of 10',
+        'attivita' => 'Activity',
+        'eventi' => 'Event',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Select a type.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Create service (type selection)
     |--------------------------------------------------------------------------
     */
