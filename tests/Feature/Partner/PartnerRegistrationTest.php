@@ -65,28 +65,25 @@ class PartnerRegistrationTest extends TestCase
             ->assertSee(__('partner.register2.submit'));
     }
 
-    public function test_step_2_toggle_selects_and_deselects_a_service(): void
-    {
-        Livewire::test(PartnerRegisterStep2::class)
-            ->call('toggle', 'struttura')
-            ->assertSet('services', ['struttura'])
-            ->call('toggle', 'servizi')
-            ->assertSet('services', ['struttura', 'servizi'])
-            ->call('toggle', 'struttura')
-            ->assertSet('services', ['servizi']);
-    }
-
-    public function test_step_2_requires_at_least_one_service(): void
+    public function test_step_2_requires_a_service(): void
     {
         Livewire::test(PartnerRegisterStep2::class)
             ->call('createAccount')
-            ->assertHasErrors('services');
+            ->assertHasErrors('service');
+    }
+
+    public function test_step_2_rejects_an_unknown_service(): void
+    {
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'qualcosaltro')
+            ->call('createAccount')
+            ->assertHasErrors('service');
     }
 
     public function test_step_2_accepts_a_valid_selection(): void
     {
         Livewire::test(PartnerRegisterStep2::class)
-            ->call('toggle', 'attivita')
+            ->set('service', 'attivita')
             ->call('createAccount')
             ->assertHasNoErrors();
     }

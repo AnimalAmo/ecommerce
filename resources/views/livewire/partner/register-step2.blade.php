@@ -25,26 +25,14 @@
 
                 <h2 class="mt-4 text-lg font-medium text-[#0D171A]">{{ __('partner.register2.section') }}</h2>
 
-                {{-- Righe servizio selezionabili (multi-scelta): cerchio XD r8 — selezionato #68CDEB con check --}}
-                <div class="mt-6">
+                {{-- Scelta tipologia servizio: flux radio group, variant cards, in colonna --}}
+                <flux:radio.group wire:model="service" variant="cards" class="mt-6 flex-col">
                     @foreach ($services as $key => [$titleKey, $subtitleKey])
-                        @php $selected = in_array($key, $this->services, true); @endphp
-                        <flux:button variant="ghost" wire:click="toggle('{{ $key }}')" wire:key="svc-{{ $key }}" class="!h-auto !w-full !justify-start !rounded-none !p-0 !py-[18px] !text-left hover:!bg-transparent [&>span]:flex [&>span]:w-full [&>span]:items-start [&>span]:gap-3">
-                            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $selected ? 'bg-brand-cyan' : 'border border-[#C8C8C8] bg-white' }}">
-                                @if ($selected)
-                                    <flux:icon.check class="h-[10px] w-[10px] text-black" />
-                                @endif
-                            </span>
-                            <span class="flex flex-col gap-1">
-                                <span class="text-[15px] font-semibold text-[#1E2E33]">{{ __($titleKey) }}</span>
-                                <span class="text-sm font-normal text-[#627277]">{{ __($subtitleKey) }}</span>
-                            </span>
-                        </flux:button>
-                        <div class="h-px bg-[#E2EAEB]" aria-hidden="true"></div>
+                        <flux:radio value="{{ $key }}" wire:key="svc-{{ $key }}" :label="__($titleKey)" :description="__($subtitleKey)" />
                     @endforeach
-                </div>
+                </flux:radio.group>
 
-                @error('services')
+                @error('service')
                     <p class="mt-3 text-sm text-red-500">{{ $message }}</p>
                 @enderror
 

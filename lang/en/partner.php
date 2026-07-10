@@ -112,7 +112,7 @@ return [
     */
     'register2' => [
         'step' => 'Step 2 of 2',
-        'section' => 'Select the service you want to offer (you can pick more than one)',
+        'section' => 'Select the service you want to offer',
         'struttura_title' => 'Accommodation',
         'struttura_subtitle' => 'Such as Hotel, Farm stay, B&B, and more',
         'attivita_title' => 'Activities and Events',

@@ -112,7 +112,7 @@ return [
     */
     'register2' => [
         'step' => 'Step 2 di 2',
-        'section' => 'Seleziona il servizio che vorrai proporre (puoi selezionarne più di uno)',
+        'section' => 'Seleziona il servizio che vorrai proporre',
         'struttura_title' => 'Struttura ricettiva',
         'struttura_subtitle' => 'Come Hotel, Agriturismo, B&B, altro',
         'attivita_title' => 'Attività ed Eventi',
