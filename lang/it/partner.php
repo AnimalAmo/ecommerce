@@ -61,6 +61,11 @@ return [
     |--------------------------------------------------------------------------
     */
     'nav_help' => 'Aiuto',
+    'nav_dashboard' => 'Dashboard',
+    'nav_create_service' => 'Crea servizio',
+    'nav_my_services' => 'I miei servizi',
+    'nav_bookings' => 'Prenotazioni',
+    'nav_profile' => 'Profilo',
     'help_contact' => 'Contattaci',
     'help_support' => 'Assistenza',
     'help_faq' => 'Faq',
@@ -116,6 +121,21 @@ return [
         'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
         'submit' => 'Crea un account',
         'error_required' => 'Seleziona almeno un servizio.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard B2B
+    |--------------------------------------------------------------------------
+    */
+    'dashboard' => [
+        'title' => 'AnimalAmo — Dashboard partner',
+        'welcome' => 'Benvenuta :name',
+        'intro' => 'Crea il tuo primo prodotto e condividi esperienze indimenticabili con milioni di viaggiatori.',
+        'cta' => 'Crea il tuo primo servizio',
+        'stat_sold' => 'Esperienze vendute',
+        'stat_cancelled' => 'Esperienze cancellate',
+        'stat_saved' => 'Esperienze salvate',
     ],
 
 ];

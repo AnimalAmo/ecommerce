@@ -27,4 +27,5 @@ return [
     'work-with-us.thanks' => 'work-with-us/thank-you',
     'partner.register' => 'partner-registration',
     'partner.register.step2' => 'partner-registration/services',
+    'partner.dashboard' => 'partner/dashboard',
 ];
