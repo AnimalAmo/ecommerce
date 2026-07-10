@@ -125,6 +125,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity/event — description (step 4 of 10)
+    |--------------------------------------------------------------------------
+    */
+    'activity_description' => [
+        'title' => 'AnimalAmo — Description',
+        'step' => 'Step 4 of 10',
+        'heading' => 'Description',
+        'section' => 'Introduce your activity',
+        'helper' => 'Give the customer a taste of what they will do in 2 or 3 sentences. This will be the first thing customers read after the title and will inspire them to keep going.',
+        'detailed_label' => 'Describe your activity in detail',
+        'placeholder' => 'Description',
+        'chars' => 'characters',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Enter a description.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity/event — location (step 3 of 10)
     |--------------------------------------------------------------------------
     */

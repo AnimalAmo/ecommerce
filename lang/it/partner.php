@@ -125,6 +125,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Attività/eventi — descrizione (step 4 di 10)
+    |--------------------------------------------------------------------------
+    */
+    'activity_description' => [
+        'title' => 'AnimalAmo — Descrizione',
+        'step' => 'Step 4 di 10',
+        'heading' => 'Descrizione',
+        'section' => 'Presenta la tua attività',
+        'helper' => 'Dai al cliente un assaggio di ciò che farà in 2 o 3 frasi. Questa sarà la prima cosa che i clienti leggeranno dopo il titolo e li ispirerà a continuare.',
+        'detailed_label' => 'Descrivi in modo dettagliato la tua attività',
+        'placeholder' => 'Descrizione',
+        'chars' => 'caratteri',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Inserisci una descrizione.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Attività/eventi — luogo (step 3 di 10)
     |--------------------------------------------------------------------------
     */

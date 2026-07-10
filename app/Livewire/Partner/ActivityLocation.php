@@ -46,8 +46,7 @@ class ActivityLocation extends Component
             'zip' => $this->zip,
             'meeting_point' => $this->meetingPoint,
         ], 3);
-
-        // TODO: advance to step 4 of 10 ("attività/eventi - info generali") once it exists.
+        $this->redirectRoute('partner.activity.description');
     }
 
     public function render()

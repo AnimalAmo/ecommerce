@@ -39,7 +39,8 @@ class PartnerActivityLocationTest extends TestCase
             ->set('zip', '37016')
             ->set('meetingPoint', 'Ingresso del parco')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.description'));
 
         $this->assertDatabaseHas('structure_drafts', [
             'meeting_point' => 'Ingresso del parco',

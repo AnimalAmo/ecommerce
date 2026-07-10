@@ -29,6 +29,7 @@ class StructureDraft extends Model
         'license',
         'meeting_point',
         'description',
+        'detailed_description',
         'rooms',
         'checkin_from',
         'checkin_to',
