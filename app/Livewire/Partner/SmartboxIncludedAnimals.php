@@ -31,8 +31,7 @@ class SmartboxIncludedAnimals extends Component
         ]);
 
         $this->saveStep(['animal_services' => $this->services, 'animal_services_other' => $this->other], 9);
-
-        // TODO: advance to step 10 of 12 (foto) del flusso smartbox once it exists.
+        $this->redirectRoute('partner.smartbox.structures');
     }
 
     public function render()

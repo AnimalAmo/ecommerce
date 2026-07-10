@@ -320,6 +320,57 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — add structures (step 10 of 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_structures' => [
+        'title' => 'AnimalAmo — Add structures',
+        'step' => 'Step 10 of 12',
+        'heading' => 'Add structures',
+        'section' => 'Add the structures that will be visible in the smartbox and that users will be able to choose from',
+        'load_more' => 'Load more',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — photos (step 11 of 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_photos' => [
+        'title' => 'AnimalAmo — Smartbox photos',
+        'step' => 'Step 11 of 12',
+        'heading' => 'Photos',
+        'section' => 'Upload some photos',
+        'helper' => 'They will potentially help increase your conversion rate by an average of 2.7%, in other words, to increase your bookings and earnings.',
+        'drop' => 'Drag your photos here',
+        'hint' => 'You must upload at least 4 photos (7 or more recommended)',
+        'uploading' => 'Uploading…',
+        'delete' => 'Delete',
+        'error_min' => 'You must upload at least 4 photos.',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — price / cost (step 12 of 12, final)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_price' => [
+        'title' => 'AnimalAmo — Smartbox cost',
+        'step' => 'Step 12 of 12',
+        'heading' => 'Smartbox cost',
+        'section' => 'Enter the total cost of the smartbox',
+        'field_label' => 'Price',
+        'back' => 'Back',
+        'save' => 'Save',
+        'error_required' => 'Enter the smartbox cost.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Smartbox — what is included (step 8 of 12) — options reuse hotel_services.svc_*
     |--------------------------------------------------------------------------
     */

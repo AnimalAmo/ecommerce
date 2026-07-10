@@ -5,9 +5,9 @@ namespace App\Models\Structure;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Bozza di onboarding di una struttura ricettiva (wizard partner, 11 step).
- * Resta `draft` finché l'utente non completa lo step 11 (metodo di pagamento),
- * così uno stato parziale è sempre salvato se interrompe.
+ * Bozza di onboarding di un servizio partner (wizard multi-step: hotel 11,
+ * attività/eventi 10, smartbox 12). Resta `draft` finché l'utente non completa
+ * l'ultimo step del flusso, così uno stato parziale è sempre salvato se interrompe.
  */
 class StructureDraft extends Model
 {
@@ -36,6 +36,7 @@ class StructureDraft extends Model
         'time_end',
         'price_type',
         'price_per_person',
+        'price',
         'duration_days',
         'rooms',
         'checkin_from',
@@ -55,6 +56,7 @@ class StructureDraft extends Model
         'animal_services_other',
         'smartbox_consent',
         'smartbox_types',
+        'smartbox_structures',
         'photos',
         'account_holder',
         'iban',
@@ -79,6 +81,7 @@ class StructureDraft extends Model
             'rules' => 'array',
             'animal_services' => 'array',
             'smartbox_types' => 'array',
+            'smartbox_structures' => 'array',
             'photos' => 'array',
         ];
     }

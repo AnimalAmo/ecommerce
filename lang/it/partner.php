@@ -320,6 +320,57 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — aggiungi strutture (step 10 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_structures' => [
+        'title' => 'AnimalAmo — Aggiungi strutture',
+        'step' => 'Step 10 di 12',
+        'heading' => 'Aggiungi strutture',
+        'section' => 'Aggiungi le strutture che saranno visibili nella smartbox e tra cui gli utenti potranno scegliere',
+        'load_more' => 'Carica altro',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — foto (step 11 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_photos' => [
+        'title' => 'AnimalAmo — Foto smartbox',
+        'step' => 'Step 11 di 12',
+        'heading' => 'Foto',
+        'section' => 'Carica alcune foto',
+        'helper' => 'Serviranno ad aumentare potenzialmente il tuo tasso di conversione in media del 2,7%, in altre parole, per aumentare le tue prenotazioni e i tuoi guadagni.',
+        'drop' => 'Trascina qui le tue foto',
+        'hint' => 'Devi caricare almeno 4 foto (7 o più consigliate)',
+        'uploading' => 'Caricamento in corso…',
+        'delete' => 'Elimina',
+        'error_min' => 'Devi caricare almeno 4 foto.',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — prezzo / costo (step 12 di 12, finale)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_price' => [
+        'title' => 'AnimalAmo — Costo della smartbox',
+        'step' => 'Step 12 di 12',
+        'heading' => 'Costo della smartbox',
+        'section' => 'Inserire il costo totale della smartbox',
+        'field_label' => 'Prezzo',
+        'back' => 'Indietro',
+        'save' => 'Salva',
+        'error_required' => 'Inserisci il costo della smartbox.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Smartbox — cosa è incluso (step 8 di 12) — opzioni riusano hotel_services.svc_*
     |--------------------------------------------------------------------------
     */

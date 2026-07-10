@@ -36,7 +36,8 @@ class PartnerSmartboxIncludedAnimalsTest extends TestCase
             ->set('services', ['omaggio', 'altro'])
             ->set('other', 'Cuccia in omaggio')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.smartbox.structures'));
 
         $draft = StructureDraft::first();
         $this->assertSame(['omaggio', 'altro'], $draft->animal_services);
