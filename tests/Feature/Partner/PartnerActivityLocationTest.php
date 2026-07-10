@@ -27,17 +27,17 @@ class PartnerActivityLocationTest extends TestCase
     {
         Livewire::test(ActivityLocation::class)
             ->call('next')
-            ->assertHasErrors(['address', 'city', 'province', 'zip', 'meetingPoint']);
+            ->assertHasErrors(['form.address', 'form.city', 'form.province', 'form.zip', 'form.meetingPoint']);
     }
 
     public function test_next_saves_the_location(): void
     {
         Livewire::test(ActivityLocation::class)
-            ->set('address', 'Via Lago 5')
-            ->set('city', 'Garda')
-            ->set('province', 'VR')
-            ->set('zip', '37016')
-            ->set('meetingPoint', 'Ingresso del parco')
+            ->set('form.address', 'Via Lago 5')
+            ->set('form.city', 'Garda')
+            ->set('form.province', 'VR')
+            ->set('form.zip', '37016')
+            ->set('form.meetingPoint', 'Ingresso del parco')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.activity.description'));
@@ -54,6 +54,6 @@ class PartnerActivityLocationTest extends TestCase
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 3, 'meeting_point' => 'Piazza centrale']);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(ActivityLocation::class)->assertSet('meetingPoint', 'Piazza centrale');
+        Livewire::test(ActivityLocation::class)->assertSet('form.meetingPoint', 'Piazza centrale');
     }
 }

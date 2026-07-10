@@ -3,44 +3,24 @@
 namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Livewire\Forms\HotelPaymentForm;
 use Livewire\Component;
 
 class HotelPayment extends Component
 {
     use InteractsWithStructureDraft;
 
-    public string $accountHolder = '';
-
-    public string $iban = '';
-
-    public string $sdi = '';
-
-    public string $bic = '';
+    public HotelPaymentForm $form;
 
     public function mount(): void
     {
-        $draft = $this->draft();
-        $this->accountHolder = $draft->account_holder ?? '';
-        $this->iban = $draft->iban ?? '';
-        $this->sdi = $draft->sdi ?? '';
-        $this->bic = $draft->bic ?? '';
+        $this->form->setFromDraft($this->draft());
     }
 
     public function next(): void
     {
-        $this->validate([
-            'accountHolder' => ['required', 'string', 'max:128'],
-            'iban' => ['required', 'string', 'max:34'],
-            'sdi' => ['required', 'string', 'max:7'],
-            'bic' => ['required', 'string', 'max:11'],
-        ]);
-
-        $this->saveStep([
-            'account_holder' => $this->accountHolder,
-            'iban' => $this->iban,
-            'sdi' => $this->sdi,
-            'bic' => $this->bic,
-        ], 11);
+        $this->form->validate();
+        $this->saveStep($this->form->toDraft(), 11);
 
         // Ultimo step: onboarding struttura completato (stato -> completed).
         $this->completeDraft();

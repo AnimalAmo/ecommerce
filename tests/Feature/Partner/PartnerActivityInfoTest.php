@@ -29,10 +29,10 @@ class PartnerActivityInfoTest extends TestCase
         session(['structure_draft_id' => $draft->id]);
 
         Livewire::test(ActivityInfo::class)
-            ->assertSet('isEvent', false)
+            ->assertSet('form.isEvent', false)
             ->assertDontSee(__('partner.activity_info.time_start'))
-            ->set('dateStart', '2026-08-01')
-            ->set('dateEnd', '2026-08-03')
+            ->set('form.dateStart', '2026-08-01')
+            ->set('form.dateEnd', '2026-08-03')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.activity.included'));
@@ -46,14 +46,14 @@ class PartnerActivityInfoTest extends TestCase
         session(['structure_draft_id' => $draft->id]);
 
         Livewire::test(ActivityInfo::class)
-            ->assertSet('isEvent', true)
+            ->assertSet('form.isEvent', true)
             ->assertSee(__('partner.activity_info.time_start'))
-            ->set('dateStart', '2026-08-01')
-            ->set('dateEnd', '2026-08-01')
+            ->set('form.dateStart', '2026-08-01')
+            ->set('form.dateEnd', '2026-08-01')
             ->call('next')
-            ->assertHasErrors('timeStart')
-            ->set('timeStart', '10:00')
-            ->set('timeEnd', '18:00')
+            ->assertHasErrors('form.timeStart')
+            ->set('form.timeStart', '10:00')
+            ->set('form.timeEnd', '18:00')
             ->call('next')
             ->assertHasNoErrors();
 
@@ -63,9 +63,9 @@ class PartnerActivityInfoTest extends TestCase
     public function test_end_date_must_not_precede_start_date(): void
     {
         Livewire::test(ActivityInfo::class)
-            ->set('dateStart', '2026-08-05')
-            ->set('dateEnd', '2026-08-01')
+            ->set('form.dateStart', '2026-08-05')
+            ->set('form.dateEnd', '2026-08-01')
             ->call('next')
-            ->assertHasErrors('dateEnd');
+            ->assertHasErrors('form.dateEnd');
     }
 }

@@ -22,7 +22,7 @@
     ];
     // Checkbox tondi cyan (come "check b2b" XD) + label SemiBold 15 #555.
     $checkboxWrap = '[--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full [&_[data-flux-label]]:!text-[15px] [&_[data-flux-label]]:!font-semibold [&_[data-flux-label]]:!text-[#555555]';
-    $selectedMeals = array_values(array_intersect(['colazione', 'pranzo', 'cena'], $meals));
+    $selectedMeals = array_values(array_intersect(['colazione', 'pranzo', 'cena'], $form->meals));
     $hasMeals = $selectedMeals !== [];
 @endphp
 
@@ -48,7 +48,7 @@
                     <div>
                         @foreach ($mealOptions as $key => $labelKey)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="meal-{{ $key }}">
-                                <flux:checkbox wire:model.live="meals" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model.live="form.meals" value="{{ $key }}" :label="__($labelKey)" />
                             </div>
                         @endforeach
                     </div>
@@ -63,13 +63,13 @@
                                     <div class="mt-3 grid max-w-[400px] grid-cols-2 gap-4">
                                         <div>
                                             <span class="mb-1 block text-xs font-normal text-[#555555]">{{ __('partner.smartbox_meals.time_from') }}</span>
-                                            <flux:select wire:model="mealTimes.{{ $key }}.from" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
+                                            <flux:select wire:model="form.mealTimes.{{ $key }}.from" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
                                                 @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                             </flux:select>
                                         </div>
                                         <div>
                                             <span class="mb-1 block text-xs font-normal text-[#555555]">{{ __('partner.smartbox_meals.time_to') }}</span>
-                                            <flux:select wire:model="mealTimes.{{ $key }}.to" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
+                                            <flux:select wire:model="form.mealTimes.{{ $key }}.to" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
                                                 @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                             </flux:select>
                                         </div>
@@ -82,7 +82,7 @@
                         <div class="mt-2">
                             @foreach ($diets as $key => $labelKey)
                                 <div class="border-b border-[#E2EAEB] py-3" wire:key="diet-{{ $key }}">
-                                    <flux:checkbox wire:model="dietary" value="{{ $key }}" :label="__($labelKey)" />
+                                    <flux:checkbox wire:model="form.dietary" value="{{ $key }}" :label="__($labelKey)" />
                                 </div>
                             @endforeach
                         </div>

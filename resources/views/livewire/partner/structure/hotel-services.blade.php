@@ -48,7 +48,7 @@
                     <div>
                         @foreach ($servizi as $key => $labelKey)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="svc-{{ $key }}">
-                                <flux:checkbox wire:model="services" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model="form.services" value="{{ $key }}" :label="__($labelKey)" />
                             </div>
                         @endforeach
                     </div>
@@ -58,20 +58,20 @@
                     <div class="mt-2">
                         @foreach ($aggiuntivi as $key => $labelKey)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="add-{{ $key }}">
-                                <flux:checkbox wire:model.live="additional" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model.live="form.additional" value="{{ $key }}" :label="__($labelKey)" />
 
                                 {{-- Pasti (colazione/pranzo/cena): range orario Ora inizio / Ora fine --}}
-                                @if (in_array($key, ['colazione', 'pranzo', 'cena'], true) && in_array($key, $additional, true))
+                                @if (in_array($key, ['colazione', 'pranzo', 'cena'], true) && in_array($key, $form->additional, true))
                                     <div class="mt-3 grid max-w-[400px] grid-cols-2 gap-4">
                                         <div>
                                             <span class="mb-1 block text-xs font-normal text-[#555555]">{{ __('partner.hotel_services.time_from') }}</span>
-                                            <flux:select wire:model="mealTimes.{{ $key }}.from" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
+                                            <flux:select wire:model="form.mealTimes.{{ $key }}.from" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
                                                 @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                             </flux:select>
                                         </div>
                                         <div>
                                             <span class="mb-1 block text-xs font-normal text-[#555555]">{{ __('partner.hotel_services.time_to') }}</span>
-                                            <flux:select wire:model="mealTimes.{{ $key }}.to" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
+                                            <flux:select wire:model="form.mealTimes.{{ $key }}.to" placeholder="--:--" class="[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]">
                                                 @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                             </flux:select>
                                         </div>
@@ -79,8 +79,8 @@
                                 @endif
 
                                 {{-- Altro: descrizione libera --}}
-                                @if ($key === 'altro' && in_array('altro', $additional, true))
-                                    <flux:textarea wire:model="additionalOther" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_services.other_placeholder') }}" class="!mt-3 !rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                @if ($key === 'altro' && in_array('altro', $form->additional, true))
+                                    <flux:textarea wire:model="form.additionalOther" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_services.other_placeholder') }}" class="!mt-3 !rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
                                 @endif
                             </div>
                         @endforeach
@@ -91,7 +91,7 @@
                     <div class="mt-2">
                         @foreach ($regole as $key => $labelKey)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="rule-{{ $key }}">
-                                <flux:checkbox wire:model="rules" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model="form.structureRules" value="{{ $key }}" :label="__($labelKey)" />
                             </div>
                         @endforeach
                     </div>

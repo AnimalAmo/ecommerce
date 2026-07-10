@@ -26,7 +26,7 @@ class PartnerSmartboxMealsTest extends TestCase
     {
         Livewire::test(SmartboxMeals::class)
             ->assertDontSee(__('partner.smartbox_meals.dietary_heading'))
-            ->set('meals', ['colazione'])
+            ->set('form.meals', ['colazione'])
             ->assertSee(__('partner.smartbox_meals.times_heading'))
             ->assertSee(__('partner.smartbox_meals.dietary_heading'));
     }
@@ -34,26 +34,26 @@ class PartnerSmartboxMealsTest extends TestCase
     public function test_selecting_nessuno_clears_the_meals(): void
     {
         Livewire::test(SmartboxMeals::class)
-            ->set('meals', ['colazione', 'cena'])
-            ->set('meals', ['colazione', 'cena', 'nessuno'])
-            ->assertSet('meals', ['nessuno']);
+            ->set('form.meals', ['colazione', 'cena'])
+            ->set('form.meals', ['colazione', 'cena', 'nessuno'])
+            ->assertSet('form.meals', ['nessuno']);
     }
 
     public function test_selecting_a_meal_clears_nessuno(): void
     {
         Livewire::test(SmartboxMeals::class)
-            ->set('meals', ['nessuno'])
-            ->set('meals', ['nessuno', 'pranzo'])
-            ->assertSet('meals', ['pranzo']);
+            ->set('form.meals', ['nessuno'])
+            ->set('form.meals', ['nessuno', 'pranzo'])
+            ->assertSet('form.meals', ['pranzo']);
     }
 
     public function test_next_saves_meals_times_and_dietary(): void
     {
         Livewire::test(SmartboxMeals::class)
-            ->set('meals', ['colazione'])
-            ->set('mealTimes.colazione.from', '08:00')
-            ->set('mealTimes.colazione.to', '10:00')
-            ->set('dietary', ['vegano', 'senza_glutine'])
+            ->set('form.meals', ['colazione'])
+            ->set('form.mealTimes.colazione.from', '08:00')
+            ->set('form.mealTimes.colazione.to', '10:00')
+            ->set('form.dietary', ['vegano', 'senza_glutine'])
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.smartbox.offers'));
@@ -77,7 +77,7 @@ class PartnerSmartboxMealsTest extends TestCase
         session(['structure_draft_id' => $draft->id]);
 
         Livewire::test(SmartboxMeals::class)
-            ->assertSet('meals', ['cena'])
-            ->assertSet('dietary', ['diabetico']);
+            ->assertSet('form.meals', ['cena'])
+            ->assertSet('form.dietary', ['diabetico']);
     }
 }

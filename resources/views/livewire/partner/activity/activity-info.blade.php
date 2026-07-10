@@ -21,31 +21,31 @@
                     <span class="mt-1 shrink-0 text-[15px] font-semibold text-[#C8C8C8]">{{ __('partner.activity_info.step') }}</span>
                 </div>
 
-                <p class="mt-4 text-[15px] font-medium text-black">{{ $isEvent ? __('partner.activity_info.section_event') : __('partner.activity_info.section_activity') }}</p>
+                <p class="mt-4 text-[15px] font-medium text-black">{{ $form->isEvent ? __('partner.activity_info.section_event') : __('partner.activity_info.section_activity') }}</p>
 
                 <form wire:submit="next" class="mt-6">
                     <div class="flex flex-wrap gap-4">
                         {{-- Data inizio / Data fine --}}
                         <flux:field class="w-full sm:w-[176px]">
                             <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.date_start') }}</flux:label>
-                            <flux:input type="date" wire:model="dateStart" class="{{ $inputClass }}" />
+                            <flux:input type="date" wire:model="form.dateStart" class="{{ $inputClass }}" />
                         </flux:field>
                         <flux:field class="w-full sm:w-[176px]">
                             <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.date_end') }}</flux:label>
-                            <flux:input type="date" wire:model="dateEnd" class="{{ $inputClass }}" />
+                            <flux:input type="date" wire:model="form.dateEnd" class="{{ $inputClass }}" />
                         </flux:field>
 
                         {{-- Ora inizio / Ora fine: solo Eventi --}}
-                        @if ($isEvent)
+                        @if ($form->isEvent)
                             <flux:field class="w-full sm:w-[176px]">
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.time_start') }}</flux:label>
-                                <flux:select wire:model="timeStart" placeholder="--:--" class="{{ $selectClass }}">
+                                <flux:select wire:model="form.timeStart" placeholder="--:--" class="{{ $selectClass }}">
                                     @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                 </flux:select>
                             </flux:field>
                             <flux:field class="w-full sm:w-[176px]">
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.time_end') }}</flux:label>
-                                <flux:select wire:model="timeEnd" placeholder="--:--" class="{{ $selectClass }}">
+                                <flux:select wire:model="form.timeEnd" placeholder="--:--" class="{{ $selectClass }}">
                                     @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                 </flux:select>
                             </flux:field>

@@ -26,9 +26,9 @@ class PartnerActivityIncludedTest extends TestCase
     public function test_selections_save_and_advance(): void
     {
         Livewire::test(ActivityIncluded::class)
-            ->set('services', ['wifi', 'piscina'])
-            ->set('additional', ['colazione'])
-            ->set('rules', ['vietato_fumare'])
+            ->set('form.services', ['wifi', 'piscina'])
+            ->set('form.additional', ['colazione'])
+            ->set('form.structureRules', ['vietato_fumare'])
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.activity.animal-services'));
@@ -40,7 +40,7 @@ class PartnerActivityIncludedTest extends TestCase
     {
         Livewire::test(ActivityIncluded::class)
             ->assertDontSee(__('partner.hotel_services.other_placeholder'))
-            ->set('additional', ['altro'])
+            ->set('form.additional', ['altro'])
             ->assertSee(__('partner.hotel_services.other_placeholder'));
     }
 
@@ -49,6 +49,6 @@ class PartnerActivityIncludedTest extends TestCase
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 6, 'services' => ['wifi']]);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(ActivityIncluded::class)->assertSet('services', ['wifi']);
+        Livewire::test(ActivityIncluded::class)->assertSet('form.services', ['wifi']);
     }
 }

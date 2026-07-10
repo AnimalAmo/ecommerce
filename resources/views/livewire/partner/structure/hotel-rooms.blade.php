@@ -26,12 +26,12 @@
 
                 <form wire:submit="next" class="mt-6">
                     {{-- Righe stanza (ripetibili) --}}
-                    @foreach ($rooms as $i => $room)
+                    @foreach ($form->rooms as $i => $room)
                         <div class="mb-5 grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2" wire:key="room-{{ $i }}">
                             {{-- Tipologia Stanze (select) --}}
                             <flux:field>
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.room_type') }} *</flux:label>
-                                <flux:select wire:model="rooms.{{ $i }}.type" placeholder="{{ __('partner.hotel_rooms.room_type') }}" class="{{ $selectClass }}">
+                                <flux:select wire:model="form.rooms.{{ $i }}.type" placeholder="{{ __('partner.hotel_rooms.room_type') }}" class="{{ $selectClass }}">
                                     <flux:select.option value="singola">{{ __('partner.hotel_rooms.type_single') }}</flux:select.option>
                                     <flux:select.option value="doppia">{{ __('partner.hotel_rooms.type_double') }}</flux:select.option>
                                     <flux:select.option value="tripla">{{ __('partner.hotel_rooms.type_triple') }}</flux:select.option>
@@ -51,7 +51,7 @@
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.price') }} *</flux:label>
-                                    <flux:input type="number" min="0" wire:model="rooms.{{ $i }}.price" class="{{ $inputClass }}" />
+                                    <flux:input type="number" min="0" wire:model="form.rooms.{{ $i }}.price" class="{{ $inputClass }}" />
                                 </flux:field>
                             </div>
                         </div>
@@ -67,13 +67,13 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.from') }}</flux:label>
-                                    <flux:select wire:model="checkinFrom" placeholder="--:--" class="{{ $selectClass }}">
+                                    <flux:select wire:model="form.checkinFrom" placeholder="--:--" class="{{ $selectClass }}">
                                         @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                     </flux:select>
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.to') }}</flux:label>
-                                    <flux:select wire:model="checkinTo" placeholder="--:--" class="{{ $selectClass }}">
+                                    <flux:select wire:model="form.checkinTo" placeholder="--:--" class="{{ $selectClass }}">
                                         @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                     </flux:select>
                                 </flux:field>
@@ -84,13 +84,13 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.from') }}</flux:label>
-                                    <flux:select wire:model="checkoutFrom" placeholder="--:--" class="{{ $selectClass }}">
+                                    <flux:select wire:model="form.checkoutFrom" placeholder="--:--" class="{{ $selectClass }}">
                                         @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                     </flux:select>
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.to') }}</flux:label>
-                                    <flux:select wire:model="checkoutTo" placeholder="--:--" class="{{ $selectClass }}">
+                                    <flux:select wire:model="form.checkoutTo" placeholder="--:--" class="{{ $selectClass }}">
                                         @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                     </flux:select>
                                 </flux:field>

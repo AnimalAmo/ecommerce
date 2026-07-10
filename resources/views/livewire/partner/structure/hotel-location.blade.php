@@ -25,27 +25,27 @@
                         {{-- Indirizzo | Città --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_location.address') }} *</flux:label>
-                            <flux:input wire:model="address" class="{{ $fieldClass }}" />
+                            <flux:input wire:model="form.address" class="{{ $fieldClass }}" />
                         </flux:field>
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_location.city') }} *</flux:label>
-                            <flux:input wire:model="city" class="{{ $fieldClass }}" />
+                            <flux:input wire:model="form.city" class="{{ $fieldClass }}" />
                         </flux:field>
 
                         {{-- (Provincia + Cap) | Licenza apertura --}}
                         <div class="grid grid-cols-2 gap-4">
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_location.province') }} *</flux:label>
-                                <flux:input wire:model="province" class="{{ $fieldClass }}" />
+                                <flux:input wire:model="form.province" class="{{ $fieldClass }}" />
                             </flux:field>
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_location.zip') }} *</flux:label>
-                                <flux:input wire:model="zip" inputmode="numeric" class="{{ $fieldClass }}" />
+                                <flux:input wire:model="form.zip" inputmode="numeric" class="{{ $fieldClass }}" />
                             </flux:field>
                         </div>
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_location.license') }} *</flux:label>
-                            <flux:input wire:model="license" class="{{ $fieldClass }}" />
+                            <flux:input wire:model="form.license" class="{{ $fieldClass }}" />
                         </flux:field>
                     </div>
 

@@ -4,68 +4,43 @@ namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
 use App\Livewire\Concerns\ProvidesTimeSlots;
+use App\Livewire\Forms\HotelRoomsForm;
 use Livewire\Component;
 
 class HotelRooms extends Component
 {
     use InteractsWithStructureDraft, ProvidesTimeSlots;
 
-    /** Righe stanza (ripetibili con "Aggiungi stanze"): tipologia, numero, prezzo. */
-    public array $rooms = [
-        ['type' => '', 'count' => 0, 'price' => ''],
-    ];
-
-    public string $checkinFrom = '';
-
-    public string $checkinTo = '';
-
-    public string $checkoutFrom = '';
-
-    public string $checkoutTo = '';
+    public HotelRoomsForm $form;
 
     public function mount(): void
     {
-        $draft = $this->draft();
-        $this->rooms = $draft->rooms ?: [['type' => '', 'count' => 0, 'price' => '']];
-        $this->checkinFrom = $draft->checkin_from ?? '';
-        $this->checkinTo = $draft->checkin_to ?? '';
-        $this->checkoutFrom = $draft->checkout_from ?? '';
-        $this->checkoutTo = $draft->checkout_to ?? '';
+        $this->form->setFromDraft($this->draft());
     }
 
     public function addRoom(): void
     {
-        $this->rooms[] = ['type' => '', 'count' => 0, 'price' => ''];
+        $this->form->rooms[] = ['type' => '', 'count' => 0, 'price' => ''];
     }
 
     public function incrementRoom(int $i): void
     {
-        if (isset($this->rooms[$i])) {
-            $this->rooms[$i]['count']++;
+        if (isset($this->form->rooms[$i])) {
+            $this->form->rooms[$i]['count']++;
         }
     }
 
     public function decrementRoom(int $i): void
     {
-        if (isset($this->rooms[$i]) && $this->rooms[$i]['count'] > 0) {
-            $this->rooms[$i]['count']--;
+        if (isset($this->form->rooms[$i]) && $this->form->rooms[$i]['count'] > 0) {
+            $this->form->rooms[$i]['count']--;
         }
     }
 
     public function next(): void
     {
-        $this->validate([
-            'rooms' => ['required', 'array', 'min:1'],
-            'rooms.*.type' => ['required', 'string'],
-            'rooms.*.count' => ['required', 'integer', 'min:1'],
-            'rooms.*.price' => ['required', 'numeric', 'min:0'],
-            'checkinFrom' => ['required', 'string'],
-            'checkinTo' => ['required', 'string'],
-            'checkoutFrom' => ['required', 'string'],
-            'checkoutTo' => ['required', 'string'],
-        ]);
-
-        $this->saveStep(['rooms' => $this->rooms, 'checkin_from' => $this->checkinFrom, 'checkin_to' => $this->checkinTo, 'checkout_from' => $this->checkoutFrom, 'checkout_to' => $this->checkoutTo], 5);
+        $this->form->validate();
+        $this->saveStep($this->form->toDraft(), 5);
         $this->redirectRoute('partner.structure.hotel.cancellation');
     }
 
