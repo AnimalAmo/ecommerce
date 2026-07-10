@@ -139,7 +139,7 @@ return [
         'empty' => 'You have not created any services yet.',
 
         'detail_title' => 'AnimalAmo — Service detail',
-        'back' => 'Back to My services',
+        'back' => 'Back',
         'not_provided' => 'Not provided',
         'section_type' => 'Structure type',
         'section_name' => 'Name',

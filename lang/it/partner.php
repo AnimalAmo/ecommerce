@@ -139,7 +139,7 @@ return [
         'empty' => 'Non hai ancora creato servizi.',
 
         'detail_title' => 'AnimalAmo — Dettaglio servizio',
-        'back' => 'Torna a I miei servizi',
+        'back' => 'Indietro',
         'not_provided' => 'Non specificato',
         'section_type' => 'Tipologia struttura',
         'section_name' => 'Nome',
