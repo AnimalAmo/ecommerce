@@ -3,11 +3,12 @@
 namespace App\Livewire\Partner\Smartbox;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Livewire\Concerns\ProvidesTimeSlots;
 use Livewire\Component;
 
 class SmartboxMeals extends Component
 {
-    use InteractsWithStructureDraft;
+    use InteractsWithStructureDraft, ProvidesTimeSlots;
 
     /** Pasti offerti: nessuno | colazione | pranzo | cena ("Nessuno" è mutuamente esclusivo). */
     public array $meals = [];
@@ -49,18 +50,6 @@ class SmartboxMeals extends Component
         }
 
         $this->mealsPrev = $this->meals;
-    }
-
-    /** Orari selezionabili (mezz'ora): 00:00 → 23:30. */
-    public function times(): array
-    {
-        $times = [];
-        for ($h = 0; $h < 24; $h++) {
-            $times[] = sprintf('%02d:00', $h);
-            $times[] = sprintf('%02d:30', $h);
-        }
-
-        return $times;
     }
 
     public function next(): void

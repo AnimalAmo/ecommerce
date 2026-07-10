@@ -3,11 +3,12 @@
 namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Livewire\Concerns\ProvidesTimeSlots;
 use Livewire\Component;
 
 class HotelRooms extends Component
 {
-    use InteractsWithStructureDraft;
+    use InteractsWithStructureDraft, ProvidesTimeSlots;
 
     /** Righe stanza (ripetibili con "Aggiungi stanze"): tipologia, numero, prezzo. */
     public array $rooms = [
@@ -49,18 +50,6 @@ class HotelRooms extends Component
         if (isset($this->rooms[$i]) && $this->rooms[$i]['count'] > 0) {
             $this->rooms[$i]['count']--;
         }
-    }
-
-    /** Orari selezionabili (mezz'ora): 00:00 → 23:30. */
-    public function times(): array
-    {
-        $times = [];
-        for ($h = 0; $h < 24; $h++) {
-            $times[] = sprintf('%02d:00', $h);
-            $times[] = sprintf('%02d:30', $h);
-        }
-
-        return $times;
     }
 
     public function next(): void

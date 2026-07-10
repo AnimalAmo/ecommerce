@@ -3,11 +3,12 @@
 namespace App\Livewire\Partner\Activity;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Livewire\Concerns\ProvidesTimeSlots;
 use Livewire\Component;
 
 class ActivityInfo extends Component
 {
-    use InteractsWithStructureDraft;
+    use InteractsWithStructureDraft, ProvidesTimeSlots;
 
     public string $dateStart = '';
 
@@ -29,18 +30,6 @@ class ActivityInfo extends Component
         $this->timeStart = $draft->time_start ?? '';
         $this->timeEnd = $draft->time_end ?? '';
         $this->isEvent = $draft->type === 'eventi';
-    }
-
-    /** Orari selezionabili (mezz'ora): 00:00 → 23:30. */
-    public function times(): array
-    {
-        $times = [];
-        for ($h = 0; $h < 24; $h++) {
-            $times[] = sprintf('%02d:00', $h);
-            $times[] = sprintf('%02d:30', $h);
-        }
-
-        return $times;
     }
 
     public function next(): void
