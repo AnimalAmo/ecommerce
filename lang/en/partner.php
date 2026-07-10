@@ -148,6 +148,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — location (step 3 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_location' => [
+        'title' => 'AnimalAmo — Location',
+        'step' => 'Step 3 of 11',
+        'heading' => 'Location',
+        'section' => 'Add the information that describes your service',
+        'helper' => 'It will help the user better understand what the service is.',
+        'address' => 'Address',
+        'city' => 'City',
+        'province' => 'Province',
+        'zip' => 'Postcode',
+        'license' => 'Opening licence',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — structure name (step 2 of 11)
     |--------------------------------------------------------------------------
     */

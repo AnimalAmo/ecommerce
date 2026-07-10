@@ -148,6 +148,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — luogo (step 3 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_location' => [
+        'title' => 'AnimalAmo — Luogo',
+        'step' => 'Step 3 di 11',
+        'heading' => 'Luogo',
+        'section' => 'Aggiungi le informazioni che descrivono il tuo servizio',
+        'helper' => 'Aiuteranno l’utente a capire meglio che servizio è.',
+        'address' => 'Indirizzo',
+        'city' => 'Città',
+        'province' => 'Provincia',
+        'zip' => 'Cap',
+        'license' => 'Licenza apertura',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — nome struttura (step 2 di 11)
     |--------------------------------------------------------------------------
     */

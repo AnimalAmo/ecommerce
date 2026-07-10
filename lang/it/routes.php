@@ -31,4 +31,5 @@ return [
     'partner.service.create' => 'partner/crea-servizio',
     'partner.structure.type' => 'partner/struttura/tipologia',
     'partner.structure.hotel.title' => 'partner/struttura/hotel/titolo',
+    'partner.structure.hotel.location' => 'partner/struttura/hotel/luogo',
 ];
