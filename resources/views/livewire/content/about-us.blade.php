@@ -46,10 +46,18 @@
 
                 {{-- 4. Blocchi testo (XD: Nunito Bold 28 a y1385 / y1559, paragrafi 18 regular) --}}
                 <h2 class="mt-[47px] text-[28px] font-bold text-black">{{ __('about.block1_heading') }}</h2>
-                <p class="mt-[18px] text-lg text-black">{{ $lorem }}</p>
+                <div class="mt-[18px] space-y-6 text-lg text-black">
+                    @foreach (__('about.block1_body') as $paragraph)
+                        <p>{{ $paragraph }}</p>
+                    @endforeach
+                </div>
 
                 <h2 class="mt-[46px] text-[28px] font-bold text-black">{{ __('about.block2_heading') }}</h2>
-                <p class="mt-[18px] text-lg text-black">{{ $lorem }}</p>
+                <div class="mt-[18px] space-y-6 text-lg text-black">
+                    @foreach (__('about.block2_body') as $paragraph)
+                        <p>{{ $paragraph }}</p>
+                    @endforeach
+                </div>
 
                 {{-- 5. CTA gialla (XD: "Button giallo" 223x39 r20 #EDFF00, bordo #E9FF7D, testo Bold 14 #0D171A) --}}
                 <div class="mt-[50px]">

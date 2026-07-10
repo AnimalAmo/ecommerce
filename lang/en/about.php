@@ -17,6 +17,14 @@ return [
     'events_alt' => 'Pet-friendly events and activities',
     'events_cta' => 'Discover events and activities',
     'block1_heading' => 'Make the most of your trip',
+    'block1_body' => [
+        'Every journey is a memory born from sharing. With AnimalAmo we want to make every experience simple, authentic and truly pet-friendly, letting you live every moment without compromise. From choosing the perfect place to stay to the activities you can enjoy together, you\'ll find everything you need to plan unforgettable adventures with your four-legged friend.',
+        'We carefully select places, experiences and services that share our love for animals, so you can set off with the peace of mind of always feeling welcome.',
+    ],
     'block2_heading' => 'Find the best adventures',
+    'block2_body' => [
+        'Whether you dream of a holiday in the mountains, a day by the lake, a weekend at the sea or an experience immersed in nature, AnimalAmo guides you in the search for the perfect adventure.',
+        'Discover hotels, farm stays, campsites, beaches, trekking, sports activities and experiences designed to be shared with your animal. Explore new places, create unique memories and let yourself be inspired by a community that shares your same passion.',
+    ],
     'explore_cta' => 'Explore all offers',
 ];
