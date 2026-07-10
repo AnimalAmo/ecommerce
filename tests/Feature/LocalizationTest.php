@@ -115,6 +115,30 @@ class LocalizationTest extends TestCase
         $this->get('/en/partner/smartbox/title')->assertOk();
     }
 
+    public function test_english_partner_smartbox_description_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/description');
+        $this->get('/en/partner/smartbox/description')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_duration_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/duration');
+        $this->get('/en/partner/smartbox/duration')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_cancellation_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/cancellation');
+        $this->get('/en/partner/smartbox/cancellation')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_meals_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/meals');
+        $this->get('/en/partner/smartbox/meals')->assertOk();
+    }
+
     public function test_english_partner_activity_name_url_uses_en_prefix_and_translated_slug(): void
     {
         $this->reloadRoutesFor('/en/partner/activity/name');

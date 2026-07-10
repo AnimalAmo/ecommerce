@@ -34,7 +34,8 @@ class PartnerSmartboxNameTest extends TestCase
         Livewire::test(SmartboxName::class)
             ->set('name', 'Weekend di coccole')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.smartbox.description'));
 
         $this->assertDatabaseHas('structure_drafts', ['name' => 'Weekend di coccole', 'current_step' => 2]);
     }

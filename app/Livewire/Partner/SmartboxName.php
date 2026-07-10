@@ -25,8 +25,7 @@ class SmartboxName extends Component
         );
 
         $this->saveStep(['name' => $this->name], 2);
-
-        // TODO: advance to step 3 of 12 of the smartbox creation flow once it exists.
+        $this->redirectRoute('partner.smartbox.description');
     }
 
     public function render()

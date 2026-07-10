@@ -258,6 +258,96 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — descrizione (step 3 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_description' => [
+        'title' => 'AnimalAmo — Descrizione smartbox',
+        'step' => 'Step 3 di 12',
+        'heading' => 'Descrizione',
+        'section' => 'Presenta la tua smartbox',
+        'helper' => 'Dai al cliente un assaggio di ciò che farà in 2 o 3 frasi. Questa sarà la prima cosa che i clienti leggeranno dopo il titolo e li ispirerà a continuare.',
+        'detailed_label' => 'Descrivi in modo dettagliato la smartbox',
+        'placeholder' => 'Descrizione',
+        'chars' => 'caratteri',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Inserisci una descrizione.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — durata (step 4 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_duration' => [
+        'title' => 'AnimalAmo — Durata smartbox',
+        'step' => 'Step 4 di 12',
+        'heading' => 'Durata',
+        'section' => 'Aggiungi le informazioni sulla durata della smartbox',
+        'helper' => 'Quanti giorni dura la smartbox?',
+        'field_label' => 'N. Giorni',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Indica quanti giorni dura la smartbox.',
+        'error_min' => 'La durata deve essere di almeno 1 giorno.',
+        'error_max' => 'La durata non può superare i 365 giorni.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cancellazione (step 5 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_cancellation' => [
+        'title' => 'AnimalAmo — Cancellazione smartbox',
+        'step' => 'Step 5 di 12',
+        'heading' => 'Cancellazione',
+        'section' => 'Quando può l’ospite cancellare la prenotazione gratis?',
+        'helper' => 'Aiuteranno l’utente a scegliere la struttura.',
+        'when' => 'Quando?',
+        'free' => 'Offri la cancellazione gratuita',
+        'pays' => 'L’ospite paga l’importo totale',
+        'arrival' => 'Data di arrivo',
+        'days_30' => '30 giorni',
+        'days_15' => '15 giorni',
+        'days_7' => '7 giorni',
+        'days_1' => '1 giorno',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Scegli quando la cancellazione è gratuita.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cibo / pasti (step 6 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_meals' => [
+        'title' => 'AnimalAmo — Cibo smartbox',
+        'step' => 'Step 6 di 12',
+        'heading' => 'Cibo',
+        'section' => 'Seleziona una o più opzioni',
+        'meal_none' => 'Nessuno',
+        'meal_breakfast' => 'Colazione',
+        'meal_lunch' => 'Pranzo',
+        'meal_dinner' => 'Cena',
+        'times_heading' => 'Inserisci gli orari',
+        'time_from' => 'Ora inizio',
+        'time_to' => 'Ora fine',
+        'dietary_heading' => 'Quali restrizioni dietetiche puoi soddisfare?',
+        'diet_diabetic' => 'Diabetico',
+        'diet_vegan' => 'Vegano',
+        'diet_vegetarian' => 'Vegetariano',
+        'diet_gluten_free' => 'Senza glutine',
+        'diet_egg_free' => 'Senza uova',
+        'diet_lactose_free' => 'Senza lattosio',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Crea una smartbox — tipologia (step 1 di 12)
     |--------------------------------------------------------------------------
     */
