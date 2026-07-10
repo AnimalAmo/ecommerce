@@ -38,7 +38,13 @@ class CreateService extends Component
             return;
         }
 
-        // TODO: servizi e smartbox hanno un flusso dedicato non ancora costruito.
+        if ($this->service === 'smartbox') {
+            $this->redirectRoute('partner.smartbox.type');
+
+            return;
+        }
+
+        // TODO: il flusso "servizi" ha un percorso dedicato non ancora costruito.
     }
 
     public function render()

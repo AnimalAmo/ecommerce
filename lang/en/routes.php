@@ -31,6 +31,7 @@ return [
     'partner.service.create' => 'partner/create-service',
     'partner.structure.type' => 'partner/structure/type',
     'partner.activity.type' => 'partner/activity/type',
+    'partner.smartbox.type' => 'partner/smartbox/type',
     'partner.activity.name' => 'partner/activity/name',
     'partner.activity.location' => 'partner/activity/location',
     'partner.activity.description' => 'partner/activity/description',

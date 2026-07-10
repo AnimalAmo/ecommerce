@@ -241,6 +241,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Crea una smartbox — tipologia (step 1 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_type' => [
+        'title' => 'AnimalAmo — Crea una smartbox',
+        'step' => 'Step 1 di 12',
+        'heading' => 'Crea una smartbox',
+        'soggiorno' => 'Soggiorno',
+        'benessere' => 'Benessere',
+        'avventura' => 'Avventura',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Seleziona una tipologia.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Tipologia attività/eventi (step 1 di 10 del flusso attività ed eventi)
     |--------------------------------------------------------------------------
     */

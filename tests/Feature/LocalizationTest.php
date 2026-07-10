@@ -103,6 +103,12 @@ class LocalizationTest extends TestCase
         $this->get('/en/partner/activity/type')->assertOk();
     }
 
+    public function test_english_partner_smartbox_type_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/type');
+        $this->get('/en/partner/smartbox/type')->assertOk();
+    }
+
     public function test_english_partner_activity_name_url_uses_en_prefix_and_translated_slug(): void
     {
         $this->reloadRoutesFor('/en/partner/activity/name');

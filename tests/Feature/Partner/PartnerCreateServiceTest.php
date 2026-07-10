@@ -61,13 +61,13 @@ class PartnerCreateServiceTest extends TestCase
         $this->assertDatabaseHas('structure_drafts', ['service_category' => 'attivita']);
     }
 
-    public function test_smartbox_saves_the_category_without_advancing(): void
+    public function test_smartbox_saves_the_category_and_advances(): void
     {
         Livewire::test(CreateService::class)
             ->set('service', 'smartbox')
             ->call('next')
             ->assertHasNoErrors()
-            ->assertNoRedirect();
+            ->assertRedirect(route('partner.smartbox.type'));
 
         $this->assertDatabaseHas('structure_drafts', ['service_category' => 'smartbox']);
     }

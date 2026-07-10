@@ -241,6 +241,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Create a smartbox — type (step 1 of 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_type' => [
+        'title' => 'AnimalAmo — Create a smartbox',
+        'step' => 'Step 1 of 12',
+        'heading' => 'Create a smartbox',
+        'soggiorno' => 'Stay',
+        'benessere' => 'Wellness',
+        'avventura' => 'Adventure',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Select a type.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity/event type (step 1 of 10 of the activities & events flow)
     |--------------------------------------------------------------------------
     */
