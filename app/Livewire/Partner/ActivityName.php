@@ -25,8 +25,7 @@ class ActivityName extends Component
         );
 
         $this->saveStep(['name' => $this->name], 2);
-
-        // TODO: advance to step 3 of 10 ("attività/eventi - luogo") once it exists.
+        $this->redirectRoute('partner.activity.location');
     }
 
     public function render()

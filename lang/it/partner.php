@@ -125,6 +125,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Attività/eventi — luogo (step 3 di 10)
+    |--------------------------------------------------------------------------
+    */
+    'activity_location' => [
+        'title' => 'AnimalAmo — Luogo',
+        'step' => 'Step 3 di 10',
+        'heading' => 'Luogo',
+        'section' => 'Aggiungi le informazioni che descrivono la tua attività',
+        'helper' => 'Aiuteranno l’utente a capire meglio che servizio è.',
+        'address' => 'Indirizzo',
+        'city' => 'Città',
+        'province' => 'Provincia',
+        'zip' => 'Cap',
+        'meeting_point' => 'Punto d’incontro',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Attività/eventi — nome (step 2 di 10)
     |--------------------------------------------------------------------------
     */

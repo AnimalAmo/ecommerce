@@ -27,6 +27,7 @@ class StructureDraft extends Model
         'province',
         'zip',
         'license',
+        'meeting_point',
         'description',
         'rooms',
         'checkin_from',

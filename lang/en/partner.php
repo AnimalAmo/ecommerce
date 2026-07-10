@@ -125,6 +125,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity/event — location (step 3 of 10)
+    |--------------------------------------------------------------------------
+    */
+    'activity_location' => [
+        'title' => 'AnimalAmo — Location',
+        'step' => 'Step 3 of 10',
+        'heading' => 'Location',
+        'section' => 'Add the information that describes your activity',
+        'helper' => 'It will help the user better understand what the service is.',
+        'address' => 'Address',
+        'city' => 'City',
+        'province' => 'Province',
+        'zip' => 'Postcode',
+        'meeting_point' => 'Meeting point',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity/event — name (step 2 of 10)
     |--------------------------------------------------------------------------
     */

@@ -18,6 +18,7 @@ use App\Livewire\Content\AboutUs;
 use App\Livewire\Content\Community;
 use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
+use App\Livewire\Partner\ActivityLocation as PartnerActivityLocation;
 use App\Livewire\Partner\ActivityName as PartnerActivityName;
 use App\Livewire\Partner\ActivityType as PartnerActivityType;
 use App\Livewire\Partner\CreateService as PartnerCreateService;
@@ -90,6 +91,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.type'), PartnerStructureType::class)->name('partner.structure.type');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.type'), PartnerActivityType::class)->name('partner.activity.type');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.name'), PartnerActivityName::class)->name('partner.activity.name');
+    Route::get(LaravelLocalization::transRoute('routes.partner.activity.location'), PartnerActivityLocation::class)->name('partner.activity.location');
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.title'), PartnerHotelTitle::class)->name('partner.structure.hotel.title');
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.location'), PartnerHotelLocation::class)->name('partner.structure.hotel.location');
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.description'), PartnerHotelDescription::class)->name('partner.structure.hotel.description');

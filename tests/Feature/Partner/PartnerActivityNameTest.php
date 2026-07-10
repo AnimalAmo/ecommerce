@@ -34,7 +34,8 @@ class PartnerActivityNameTest extends TestCase
         Livewire::test(ActivityName::class)
             ->set('name', 'Passeggiata coi cani')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.location'));
 
         $this->assertDatabaseHas('structure_drafts', ['name' => 'Passeggiata coi cani', 'current_step' => 2]);
     }

@@ -32,6 +32,7 @@ return [
     'partner.structure.type' => 'partner/struttura/tipologia',
     'partner.activity.type' => 'partner/attivita/tipologia',
     'partner.activity.name' => 'partner/attivita/nome',
+    'partner.activity.location' => 'partner/attivita/luogo',
     'partner.structure.hotel.title' => 'partner/struttura/hotel/titolo',
     'partner.structure.hotel.location' => 'partner/struttura/hotel/luogo',
     'partner.structure.hotel.description' => 'partner/struttura/hotel/descrizione',
