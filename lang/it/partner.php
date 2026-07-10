@@ -148,6 +148,40 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — servizi struttura (step 7 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_services' => [
+        'title' => 'AnimalAmo — Servizi struttura',
+        'step' => 'Step 7 di 11',
+        'heading' => 'Informazioni sui servizi della struttura',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi presenti (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'additional_heading' => 'Servizi aggiuntivi presenti',
+        'rules_heading' => 'Regole della struttura',
+        'other_placeholder' => 'Descrivi il servizio',
+        'time_from' => 'Ora inizio',
+        'time_to' => 'Ora fine',
+        'svc_ac' => 'Aria condizionata',
+        'svc_heating' => 'Riscaldamento',
+        'svc_wifi' => 'Wi-fi gratuito',
+        'svc_ev' => 'Stazione di ricarica per veicoli elettrici',
+        'svc_tv' => 'TV',
+        'svc_pool' => 'Piscina',
+        'svc_sauna' => 'Sauna',
+        'add_none' => 'Nessuno',
+        'add_breakfast' => 'Colazione',
+        'add_lunch' => 'Pranzo',
+        'add_dinner' => 'Cena',
+        'add_other' => 'Altro',
+        'rule_no_smoking' => 'Vietato fumare',
+        'rule_no_parties' => 'Vietato fare feste/eventi',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — cancellazione (step 6 di 11)
     |--------------------------------------------------------------------------
     */

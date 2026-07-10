@@ -35,4 +35,5 @@ return [
     'partner.structure.hotel.description' => 'partner/struttura/hotel/descrizione',
     'partner.structure.hotel.rooms' => 'partner/struttura/hotel/stanze',
     'partner.structure.hotel.cancellation' => 'partner/struttura/hotel/cancellazione',
+    'partner.structure.hotel.services' => 'partner/struttura/hotel/servizi',
 ];

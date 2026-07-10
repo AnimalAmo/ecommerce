@@ -148,6 +148,40 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — structure services (step 7 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_services' => [
+        'title' => 'AnimalAmo — Structure services',
+        'step' => 'Step 7 of 11',
+        'heading' => 'Information about the structure services',
+        'section' => 'Add the information to describe the services available (you can select more than one option)',
+        'helper' => 'It will help the user evaluate the structure.',
+        'additional_heading' => 'Additional services available',
+        'rules_heading' => 'Structure rules',
+        'other_placeholder' => 'Describe the service',
+        'time_from' => 'Start time',
+        'time_to' => 'End time',
+        'svc_ac' => 'Air conditioning',
+        'svc_heating' => 'Heating',
+        'svc_wifi' => 'Free Wi-Fi',
+        'svc_ev' => 'Electric vehicle charging station',
+        'svc_tv' => 'TV',
+        'svc_pool' => 'Swimming pool',
+        'svc_sauna' => 'Sauna',
+        'add_none' => 'None',
+        'add_breakfast' => 'Breakfast',
+        'add_lunch' => 'Lunch',
+        'add_dinner' => 'Dinner',
+        'add_other' => 'Other',
+        'rule_no_smoking' => 'No smoking',
+        'rule_no_parties' => 'No parties/events',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — cancellation (step 6 of 11)
     |--------------------------------------------------------------------------
     */
