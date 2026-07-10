@@ -125,6 +125,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity/event — name (step 2 of 10)
+    |--------------------------------------------------------------------------
+    */
+    'activity_name' => [
+        'title' => 'AnimalAmo — Activity name',
+        'step' => 'Step 2 of 10',
+        'heading' => 'Your activity name',
+        'section' => 'What is the name of your activity?',
+        'helper' => 'It will help users find your structure quickly',
+        'field_label' => 'Activity name',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Enter the activity name.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity/event type (step 1 of 10 of the activities & events flow)
     |--------------------------------------------------------------------------
     */
