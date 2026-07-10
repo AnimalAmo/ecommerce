@@ -13,6 +13,8 @@
 
                 @include('partials.partner-profile-sidebar')
 
+                <div class="hidden w-px self-stretch bg-white md:block"></div>
+
                 {{-- Card contenuto --}}
                 <div class="flex-1 rounded-[10px] bg-white p-6">
                     <h1 class="text-2xl font-bold text-[#0D171A]">{{ __('partner.profile.info_heading') }}</h1>
