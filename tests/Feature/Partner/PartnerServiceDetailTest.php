@@ -40,6 +40,24 @@ class PartnerServiceDetailTest extends TestCase
             ->assertSee('Hotel pet-friendly.');
     }
 
+    public function test_option_keys_render_as_localized_labels(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, [
+            'services' => ['wifi', 'piscina'],
+            'rules' => ['vietato_fumare'],
+            'animal_services' => ['area_animali'],
+        ]);
+
+        $this->get(route('partner.services.show', $draft))
+            ->assertOk()
+            ->assertSee(__('partner.hotel_services.svc_wifi'))       // "Wi-fi gratuito", non "wifi"
+            ->assertSee(__('partner.hotel_services.svc_pool'))
+            ->assertSee(__('partner.hotel_services.rule_no_smoking'))
+            ->assertSee(__('partner.hotel_animal_services.opt_area'))
+            ->assertSee(__('partner.structure_type.hotel'));
+    }
+
     public function test_another_users_service_is_forbidden(): void
     {
         $this->actingAsActivePartner();

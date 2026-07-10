@@ -130,6 +130,9 @@ return [
     'services' => [
         'title' => 'AnimalAmo — My services',
         'heading' => 'My services',
+        'tag_struttura' => 'Holiday',
+        'tag_attivita' => 'Events',
+        'tag_smartbox' => 'Smartbox',
         'view_details' => 'View details',
         'delete' => 'Delete service',
         'edit' => 'Edit service',

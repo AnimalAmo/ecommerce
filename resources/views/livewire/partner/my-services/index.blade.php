@@ -14,7 +14,7 @@
                     @forelse ($services as $service)
                         @php
                             $cover = $service->coverPhotoUrl();
-                            $typeTag = ['struttura' => 'Holiday', 'attivita' => 'Eventi', 'smartbox' => 'Smartbox'][$service->family()] ?? '';
+                            $typeTag = __('partner.services.tag_'.$service->family());
                         @endphp
                         <div class="flex flex-col gap-4 rounded-[10px] border border-gray-150 bg-white px-4 py-[14px] sm:flex-row">
                             {{-- Copertina + tag tipologia --}}
