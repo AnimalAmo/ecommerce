@@ -34,10 +34,7 @@
 
                         {{-- (Provincia + Cap) | Punto d'incontro --}}
                         <div class="grid grid-cols-2 gap-4">
-                            <flux:field>
-                                <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.province') }} *</flux:label>
-                                <flux:input wire:model="form.province" class="{{ $fieldClass }}" />
-                            </flux:field>
+                            <x-partner.province-select :provinces="$provinces" model="form.province" :label="__('partner.activity_location.province')" />
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.zip') }} *</flux:label>
                                 <flux:input wire:model="form.zip" inputmode="numeric" class="{{ $fieldClass }}" />

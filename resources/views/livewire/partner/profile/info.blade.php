@@ -57,10 +57,7 @@
                                 <flux:input wire:model="form.address" class="{{ $fieldClass }}" />
                             </flux:field>
                             <div class="grid grid-cols-2 gap-4">
-                                <flux:field>
-                                    <flux:label class="{{ $labelClass }}">{{ __('partner.profile.province') }} *</flux:label>
-                                    <flux:input wire:model="form.province" class="{{ $fieldClass }}" />
-                                </flux:field>
+                                <x-partner.province-select :provinces="$provinces" model="form.province" :label="__('partner.profile.province')" />
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.profile.zip') }} *</flux:label>
                                     <flux:input wire:model="form.zip" inputmode="numeric" class="{{ $fieldClass }}" />

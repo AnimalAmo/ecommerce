@@ -3,13 +3,12 @@
 namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
-use App\Livewire\Concerns\ProvidesTimeSlots;
 use App\Livewire\Forms\HotelRoomsForm;
 use Livewire\Component;
 
 class HotelRooms extends Component
 {
-    use InteractsWithStructureDraft, ProvidesTimeSlots;
+    use InteractsWithStructureDraft;
 
     public HotelRoomsForm $form;
 
@@ -46,7 +45,7 @@ class HotelRooms extends Component
 
     public function render()
     {
-        return view('livewire.partner.structure.hotel-rooms', ['times' => $this->times()])
+        return view('livewire.partner.structure.hotel-rooms')
             ->title(__('partner.hotel_rooms.title'));
     }
 }

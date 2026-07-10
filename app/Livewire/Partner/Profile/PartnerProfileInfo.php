@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Profile;
 
 use App\Livewire\Forms\PartnerProfileForm;
+use App\Models\Region\Province;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -29,7 +30,8 @@ class PartnerProfileInfo extends Component
 
     public function render()
     {
-        return view('livewire.partner.profile.info')
-            ->title(__('partner.profile.info_title'));
+        return view('livewire.partner.profile.info', [
+            'provinces' => Province::orderBy('name')->get(),
+        ])->title(__('partner.profile.info_title'));
     }
 }
