@@ -29,6 +29,8 @@ return [
     'partner.register.step2' => 'iscrizione-partner/servizi',
     'partner.dashboard' => 'partner/dashboard',
     'partner.service.create' => 'partner/crea-servizio',
+    'partner.services' => 'partner/i-miei-servizi',
+    'partner.services.show' => 'partner/i-miei-servizi/{draft}',
     'partner.profile' => 'partner/profilo',
     'partner.profile.payment' => 'partner/profilo/metodo-pagamento',
     'partner.profile.security' => 'partner/profilo/sicurezza',

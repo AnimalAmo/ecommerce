@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -65,6 +66,49 @@ class DemoUserSeeder extends Seeder
             'iban' => 'IT037400000000007382',
             'bic' => 'UNCRITMM',
         ]);
+
+        $this->seedServices($partner);
+    }
+
+    /** Servizi completati del partner demo (card XD "I miei servizi"). */
+    private function seedServices(User $partner): void
+    {
+        $services = [
+            [
+                'service_category' => 'struttura', 'type' => 'hotel', 'name' => 'Hotel Brescia',
+                'address' => 'Via Terme 12', 'city' => 'Darfo Boario Terme', 'province' => 'BS', 'zip' => '25047',
+                'license' => 'LIC-2024-BS-118',
+                'description' => 'Hotel pet-friendly immerso nel verde delle Terme di Boario.',
+                'rooms' => [['type' => 'Doppia', 'count' => 8, 'price' => '90'], ['type' => 'Suite', 'count' => 2, 'price' => '160']],
+                'checkin_from' => '14:00', 'checkin_to' => '20:00', 'checkout_from' => '08:00', 'checkout_to' => '11:00',
+                'cancellation_when' => '7',
+                'services' => ['wifi', 'piscina', 'parcheggio'], 'additional_services' => ['colazione'], 'rules' => ['vietato_fumare'],
+                'animal_services' => ['area_animali', 'servizio_veterinario'], 'animal_services_other' => 'Ciotole e cuccia in camera',
+                'account_holder' => 'Susanna Rossi', 'iban' => 'IT60X0542811101000000123456', 'bic' => 'UNCRITMM', 'sdi' => 'SUBM70N',
+                'current_step' => 11,
+            ],
+            [
+                'service_category' => 'attivita', 'type' => 'attivita', 'name' => 'Puppy Yoga',
+                'city' => 'Milano', 'province' => 'MI', 'meeting_point' => 'Parco Sempione, ingresso Arco della Pace',
+                'description' => 'Sessione di yoga con cuccioli di cane.',
+                'date_start' => '2026-05-30', 'time_start' => '15:30',
+                'current_step' => 10,
+            ],
+            [
+                'service_category' => 'smartbox', 'type' => 'soggiorno', 'name' => 'Weekend di relax in Lombardia',
+                'city' => 'Como', 'province' => 'CO',
+                'description' => 'Un weekend di benessere per te e il tuo animale.',
+                'price' => '199', 'duration_days' => 2,
+                'current_step' => 12,
+            ],
+        ];
+
+        foreach ($services as $data) {
+            StructureDraft::updateOrCreate(
+                ['user_id' => $partner->id, 'name' => $data['name']],
+                array_merge($data, ['user_id' => $partner->id, 'status' => StructureDraft::STATUS_COMPLETED]),
+            );
+        }
     }
 
     /** Le 6 card preferiti (mapping slug → famiglia nel docblock della classe). */

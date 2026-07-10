@@ -124,6 +124,43 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | My services (list + detail + delete popup)
+    |--------------------------------------------------------------------------
+    */
+    'services' => [
+        'title' => 'AnimalAmo — My services',
+        'heading' => 'My services',
+        'view_details' => 'View details',
+        'delete' => 'Delete service',
+        'edit' => 'Edit service',
+        'delete_confirm' => 'Are you sure you want to delete:',
+        'delete_cancel' => 'Cancel',
+        'delete_submit' => 'Delete',
+        'empty' => 'You have not created any services yet.',
+
+        'detail_title' => 'AnimalAmo — Service detail',
+        'back' => 'Back to My services',
+        'not_provided' => 'Not provided',
+        'section_type' => 'Structure type',
+        'section_name' => 'Name',
+        'section_location' => 'Location',
+        'section_description' => 'Description',
+        'section_rooms' => 'Room information',
+        'section_cancellation' => 'Cancellation',
+        'section_services' => 'Services',
+        'section_extra' => 'Additional information',
+        'section_photos' => 'Photos',
+        'section_payment' => 'Payment method',
+        'rooms_count' => 'rooms',
+        'rooms_price' => 'price per night',
+        'checkin' => 'Check-in',
+        'checkout' => 'Check-out',
+        'cancellation_days' => ':days days before',
+        'cancellation_day' => '1 day before',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Partner registration — step 1 (Personal information)
     |--------------------------------------------------------------------------
     */

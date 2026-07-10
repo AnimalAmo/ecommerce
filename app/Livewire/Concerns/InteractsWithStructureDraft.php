@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Structure\StructureDraft;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Condivide la bozza di onboarding struttura tra i vari step del wizard partner.
@@ -29,7 +30,10 @@ trait InteractsWithStructureDraft
             return $draft;
         }
 
+        // Un partner loggato "possiede" i servizi che crea (anche se il wizard è
+        // pubblico): così compaiono nella sua pagina "I miei servizi".
         $draft = StructureDraft::create([
+            'user_id' => Auth::id(),
             'status' => StructureDraft::STATUS_DRAFT,
             'current_step' => 0,
         ]);

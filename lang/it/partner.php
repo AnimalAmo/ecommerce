@@ -124,6 +124,43 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | I miei servizi (lista + dettaglio + popup eliminazione)
+    |--------------------------------------------------------------------------
+    */
+    'services' => [
+        'title' => 'AnimalAmo — I miei servizi',
+        'heading' => 'I miei servizi',
+        'view_details' => 'Vedi dettagli',
+        'delete' => 'Elimina servizio',
+        'edit' => 'Modifica servizio',
+        'delete_confirm' => 'Sei sicuro di voler eliminare:',
+        'delete_cancel' => 'Annulla',
+        'delete_submit' => 'Elimina',
+        'empty' => 'Non hai ancora creato servizi.',
+
+        'detail_title' => 'AnimalAmo — Dettaglio servizio',
+        'back' => 'Torna a I miei servizi',
+        'not_provided' => 'Non specificato',
+        'section_type' => 'Tipologia struttura',
+        'section_name' => 'Nome',
+        'section_location' => 'Luogo',
+        'section_description' => 'Descrizione',
+        'section_rooms' => 'Informazioni sulle stanze',
+        'section_cancellation' => 'Cancellazione',
+        'section_services' => 'Servizi',
+        'section_extra' => 'Informazioni aggiuntive',
+        'section_photos' => 'Foto',
+        'section_payment' => 'Metodo di pagamento',
+        'rooms_count' => 'stanze',
+        'rooms_price' => 'prezzo a notte',
+        'checkin' => 'Check-in',
+        'checkout' => 'Check-out',
+        'cancellation_days' => ':days giorni prima',
+        'cancellation_day' => '1 giorno prima',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Iscrizione B2B — step 1 (Informazioni personali)
     |--------------------------------------------------------------------------
     */
