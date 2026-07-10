@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\HotelRooms;
+use App\Livewire\Partner\Structure\HotelRooms;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -28,9 +28,9 @@ class PartnerHotelRoomsTest extends TestCase
     public function test_add_room_appends_a_row(): void
     {
         Livewire::test(HotelRooms::class)
-            ->assertCount('rooms', 1)
+            ->assertCount('form.rooms', 1)
             ->call('addRoom')
-            ->assertCount('rooms', 2);
+            ->assertCount('form.rooms', 2);
     }
 
     public function test_stepper_increments_and_decrements_without_going_negative(): void
@@ -38,31 +38,31 @@ class PartnerHotelRoomsTest extends TestCase
         Livewire::test(HotelRooms::class)
             ->call('incrementRoom', 0)
             ->call('incrementRoom', 0)
-            ->assertSet('rooms.0.count', 2)
+            ->assertSet('form.rooms.0.count', 2)
             ->call('decrementRoom', 0)
-            ->assertSet('rooms.0.count', 1)
+            ->assertSet('form.rooms.0.count', 1)
             ->call('decrementRoom', 0)
             ->call('decrementRoom', 0)
-            ->assertSet('rooms.0.count', 0);
+            ->assertSet('form.rooms.0.count', 0);
     }
 
     public function test_next_requires_the_fields(): void
     {
         Livewire::test(HotelRooms::class)
             ->call('next')
-            ->assertHasErrors(['rooms.0.type', 'rooms.0.count', 'rooms.0.price', 'checkinFrom', 'checkoutTo']);
+            ->assertHasErrors(['form.rooms.0.type', 'form.rooms.0.count', 'form.rooms.0.price', 'form.checkinFrom', 'form.checkoutTo']);
     }
 
     public function test_next_accepts_valid_data(): void
     {
         Livewire::test(HotelRooms::class)
-            ->set('rooms.0.type', 'doppia')
-            ->set('rooms.0.count', 3)
-            ->set('rooms.0.price', '80')
-            ->set('checkinFrom', '14:00')
-            ->set('checkinTo', '20:00')
-            ->set('checkoutFrom', '08:00')
-            ->set('checkoutTo', '11:00')
+            ->set('form.rooms.0.type', 'doppia')
+            ->set('form.rooms.0.count', 3)
+            ->set('form.rooms.0.price', '80')
+            ->set('form.checkinFrom', '14:00')
+            ->set('form.checkinTo', '20:00')
+            ->set('form.checkoutFrom', '08:00')
+            ->set('form.checkoutTo', '11:00')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.structure.hotel.cancellation'));
@@ -75,6 +75,6 @@ class PartnerHotelRoomsTest extends TestCase
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 5, 'checkin_from' => '15:00']);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(HotelRooms::class)->assertSet('checkinFrom', '15:00');
+        Livewire::test(HotelRooms::class)->assertSet('form.checkinFrom', '15:00');
     }
 }

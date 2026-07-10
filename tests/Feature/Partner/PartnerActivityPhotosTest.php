@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\ActivityPhotos;
+use App\Livewire\Partner\Activity\ActivityPhotos;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

@@ -81,12 +81,14 @@ class LocalizationTest extends TestCase
 
     public function test_english_partner_dashboard_url_uses_en_prefix_and_translated_slug(): void
     {
+        $this->actingAsActivePartner();
         $this->reloadRoutesFor('/en/partner/dashboard');
         $this->get('/en/partner/dashboard')->assertOk();
     }
 
     public function test_english_partner_create_service_url_uses_en_prefix_and_translated_slug(): void
     {
+        $this->actingAsActivePartner();
         $this->reloadRoutesFor('/en/partner/create-service');
         $this->get('/en/partner/create-service')->assertOk();
     }
@@ -101,6 +103,78 @@ class LocalizationTest extends TestCase
     {
         $this->reloadRoutesFor('/en/partner/activity/type');
         $this->get('/en/partner/activity/type')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_type_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/type');
+        $this->get('/en/partner/smartbox/type')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_name_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/title');
+        $this->get('/en/partner/smartbox/title')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_description_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/description');
+        $this->get('/en/partner/smartbox/description')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_duration_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/duration');
+        $this->get('/en/partner/smartbox/duration')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_cancellation_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/cancellation');
+        $this->get('/en/partner/smartbox/cancellation')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_meals_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/meals');
+        $this->get('/en/partner/smartbox/meals')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_offers_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/what-you-will-find');
+        $this->get('/en/partner/smartbox/what-you-will-find')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_included_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/whats-included');
+        $this->get('/en/partner/smartbox/whats-included')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_included_animals_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/whats-included-animals');
+        $this->get('/en/partner/smartbox/whats-included-animals')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_structures_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/add-structures');
+        $this->get('/en/partner/smartbox/add-structures')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_photos_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/photos');
+        $this->get('/en/partner/smartbox/photos')->assertOk();
+    }
+
+    public function test_english_partner_smartbox_price_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/smartbox/price');
+        $this->get('/en/partner/smartbox/price')->assertOk();
     }
 
     public function test_english_partner_activity_name_url_uses_en_prefix_and_translated_slug(): void

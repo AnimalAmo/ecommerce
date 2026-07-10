@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\ActivityType;
+use App\Livewire\Partner\Activity\ActivityType;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -35,7 +35,8 @@ class PartnerActivityTypeTest extends TestCase
         Livewire::test(ActivityType::class)
             ->set('type', 'eventi')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.name'));
 
         $this->assertDatabaseHas('structure_drafts', ['type' => 'eventi', 'current_step' => 1]);
     }

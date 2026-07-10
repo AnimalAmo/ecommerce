@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\HotelLocation;
+use App\Livewire\Partner\Structure\HotelLocation;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -28,25 +28,25 @@ class PartnerHotelLocationTest extends TestCase
     {
         Livewire::test(HotelLocation::class)
             ->call('next')
-            ->assertHasErrors(['address', 'city', 'province', 'zip', 'license']);
+            ->assertHasErrors(['form.address', 'form.city', 'form.province', 'form.zip', 'form.license']);
     }
 
     public function test_next_rejects_a_non_numeric_zip(): void
     {
         Livewire::test(HotelLocation::class)
-            ->set('zip', 'abc')
+            ->set('form.zip', 'abc')
             ->call('next')
-            ->assertHasErrors('zip');
+            ->assertHasErrors('form.zip');
     }
 
     public function test_next_accepts_valid_data(): void
     {
         Livewire::test(HotelLocation::class)
-            ->set('address', 'Via Roma 1')
-            ->set('city', 'Padova')
-            ->set('province', 'PD')
-            ->set('zip', '35100')
-            ->set('license', 'LIC-12345')
+            ->set('form.address', 'Via Roma 1')
+            ->set('form.city', 'Padova')
+            ->set('form.province', 'PD')
+            ->set('form.zip', '35100')
+            ->set('form.license', 'LIC-12345')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.structure.hotel.description'));
@@ -59,6 +59,6 @@ class PartnerHotelLocationTest extends TestCase
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 3, 'city' => 'Verona']);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(HotelLocation::class)->assertSet('city', 'Verona');
+        Livewire::test(HotelLocation::class)->assertSet('form.city', 'Verona');
     }
 }

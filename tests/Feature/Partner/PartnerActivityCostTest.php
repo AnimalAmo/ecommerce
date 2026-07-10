@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\ActivityCost;
+use App\Livewire\Partner\Activity\ActivityCost;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;

@@ -81,6 +81,49 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Profilo partner (info personali / metodo di pagamento / sicurezza)
+    |--------------------------------------------------------------------------
+    */
+    'profile' => [
+        'title' => 'Profilo',
+        'nav_profile' => 'Profilo',
+        'nav_payment' => 'Metodo di pagamento',
+        'nav_security' => 'Sicurezza',
+        'save' => 'Salva',
+        'saved' => 'Modifiche salvate',
+
+        'info_title' => 'AnimalAmo — Informazioni personali',
+        'info_heading' => 'Informazioni personali',
+        'first_name' => 'Nome',
+        'last_name' => 'Cognome',
+        'business_name' => 'Ragione Sociale',
+        'email' => 'Email',
+        'address' => 'Indirizzo',
+        'province' => 'Provincia',
+        'city' => 'Città',
+        'zip' => 'Cap',
+        'vat' => 'Partita IVA',
+        'phone' => 'Cellulare',
+        'tax_code' => 'Codice Fiscale',
+        'pec' => 'PEC',
+        'sdi' => 'SDI',
+
+        'payment_title' => 'AnimalAmo — Metodo di pagamento',
+        'payment_heading' => 'Metodo di pagamento',
+        'account_holder' => 'Titolare Conto',
+        'iban' => 'IBAN',
+        'bic' => 'BIC',
+
+        'security_title' => 'AnimalAmo — Sicurezza',
+        'security_heading' => 'Sicurezza',
+        'password' => 'Password',
+        'reset_password' => 'Reimposta password',
+        'privacy_settings' => 'Impostazioni sulla Privacy',
+        'delete_account' => 'Elimina Account',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Iscrizione B2B — step 1 (Informazioni personali)
     |--------------------------------------------------------------------------
     */
@@ -237,6 +280,235 @@ return [
         'back' => 'Indietro',
         'next' => 'Avanti',
         'error_required' => 'Inserisci il nome dell’attività.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — titolo (step 2 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_name' => [
+        'title' => 'AnimalAmo — Titolo smartbox',
+        'step' => 'Step 2 di 12',
+        'heading' => 'Il titolo della smartbox',
+        'section' => 'Qual’è il titolo della tua smartbox?',
+        'helper' => 'Aiuterà gli utenti a trovare la tua struttura velocemente',
+        'field_label' => 'Titolo smartbox',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Inserisci il titolo della smartbox.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — descrizione (step 3 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_description' => [
+        'title' => 'AnimalAmo — Descrizione smartbox',
+        'step' => 'Step 3 di 12',
+        'heading' => 'Descrizione',
+        'section' => 'Presenta la tua smartbox',
+        'helper' => 'Dai al cliente un assaggio di ciò che farà in 2 o 3 frasi. Questa sarà la prima cosa che i clienti leggeranno dopo il titolo e li ispirerà a continuare.',
+        'detailed_label' => 'Descrivi in modo dettagliato la smartbox',
+        'placeholder' => 'Descrizione',
+        'chars' => 'caratteri',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Inserisci una descrizione.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — durata (step 4 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_duration' => [
+        'title' => 'AnimalAmo — Durata smartbox',
+        'step' => 'Step 4 di 12',
+        'heading' => 'Durata',
+        'section' => 'Aggiungi le informazioni sulla durata della smartbox',
+        'helper' => 'Quanti giorni dura la smartbox?',
+        'field_label' => 'N. Giorni',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Indica quanti giorni dura la smartbox.',
+        'error_min' => 'La durata deve essere di almeno 1 giorno.',
+        'error_max' => 'La durata non può superare i 365 giorni.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cancellazione (step 5 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_cancellation' => [
+        'title' => 'AnimalAmo — Cancellazione smartbox',
+        'step' => 'Step 5 di 12',
+        'heading' => 'Cancellazione',
+        'section' => 'Quando può l’ospite cancellare la prenotazione gratis?',
+        'helper' => 'Aiuteranno l’utente a scegliere la struttura.',
+        'when' => 'Quando?',
+        'free' => 'Offri la cancellazione gratuita',
+        'pays' => 'L’ospite paga l’importo totale',
+        'arrival' => 'Data di arrivo',
+        'days_30' => '30 giorni',
+        'days_15' => '15 giorni',
+        'days_7' => '7 giorni',
+        'days_1' => '1 giorno',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Scegli quando la cancellazione è gratuita.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — aggiungi strutture (step 10 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_structures' => [
+        'title' => 'AnimalAmo — Aggiungi strutture',
+        'step' => 'Step 10 di 12',
+        'heading' => 'Aggiungi strutture',
+        'section' => 'Aggiungi le strutture che saranno visibili nella smartbox e tra cui gli utenti potranno scegliere',
+        'load_more' => 'Carica altro',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — foto (step 11 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_photos' => [
+        'title' => 'AnimalAmo — Foto smartbox',
+        'step' => 'Step 11 di 12',
+        'heading' => 'Foto',
+        'section' => 'Carica alcune foto',
+        'helper' => 'Serviranno ad aumentare potenzialmente il tuo tasso di conversione in media del 2,7%, in altre parole, per aumentare le tue prenotazioni e i tuoi guadagni.',
+        'drop' => 'Trascina qui le tue foto',
+        'hint' => 'Devi caricare almeno 4 foto (7 o più consigliate)',
+        'uploading' => 'Caricamento in corso…',
+        'delete' => 'Elimina',
+        'error_min' => 'Devi caricare almeno 4 foto.',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — prezzo / costo (step 12 di 12, finale)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_price' => [
+        'title' => 'AnimalAmo — Costo della smartbox',
+        'step' => 'Step 12 di 12',
+        'heading' => 'Costo della smartbox',
+        'section' => 'Inserire il costo totale della smartbox',
+        'field_label' => 'Prezzo',
+        'back' => 'Indietro',
+        'save' => 'Salva',
+        'error_required' => 'Inserisci il costo della smartbox.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cosa è incluso (step 8 di 12) — opzioni riusano hotel_services.svc_*
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_included' => [
+        'title' => 'AnimalAmo — Cosa è incluso',
+        'step' => 'Step 8 di 12',
+        'heading' => 'Cosa è incluso?',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi presenti (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cosa è incluso per gli animali (step 9 di 12) — opzioni riusano hotel_animal_services.*
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_included_animals' => [
+        'title' => 'AnimalAmo — Cosa è incluso per gli animali',
+        'step' => 'Step 9 di 12',
+        'heading' => 'Cos’è incluso per gli animali?',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi che offri (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — alloggio / cosa troverai (step 7 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_offers' => [
+        'title' => 'AnimalAmo — Cosa offre la smartbox',
+        'step' => 'Step 7 di 12',
+        'heading' => 'Cosa offre la smartbox',
+        'section' => 'Seleziona le opzioni che saranno presenti nella smartbox',
+        'helper' => 'Aiuteranno l’utente a valutare la tua proposta.',
+        'additional_heading' => 'Servizi aggiuntivi presenti',
+        'amenity_bedroom' => 'Camera da letto',
+        'amenity_bathroom' => 'Bagno',
+        'amenity_kitchen' => 'Cucina',
+        'amenity_balcony' => 'Balcone',
+        'amenity_terrace' => 'Terrazzo',
+        'add_pool' => 'Piscina',
+        'add_spa' => 'Spa',
+        'add_tennis' => 'Campo da tennis',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smartbox — cibo / pasti (step 6 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_meals' => [
+        'title' => 'AnimalAmo — Cibo smartbox',
+        'step' => 'Step 6 di 12',
+        'heading' => 'Cibo',
+        'section' => 'Seleziona una o più opzioni',
+        'meal_none' => 'Nessuno',
+        'meal_breakfast' => 'Colazione',
+        'meal_lunch' => 'Pranzo',
+        'meal_dinner' => 'Cena',
+        'times_heading' => 'Inserisci gli orari',
+        'time_from' => 'Ora inizio',
+        'time_to' => 'Ora fine',
+        'dietary_heading' => 'Quali restrizioni dietetiche puoi soddisfare?',
+        'diet_diabetic' => 'Diabetico',
+        'diet_vegan' => 'Vegano',
+        'diet_vegetarian' => 'Vegetariano',
+        'diet_gluten_free' => 'Senza glutine',
+        'diet_egg_free' => 'Senza uova',
+        'diet_lactose_free' => 'Senza lattosio',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Crea una smartbox — tipologia (step 1 di 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_type' => [
+        'title' => 'AnimalAmo — Crea una smartbox',
+        'step' => 'Step 1 di 12',
+        'heading' => 'Crea una smartbox',
+        'soggiorno' => 'Soggiorno',
+        'benessere' => 'Benessere',
+        'avventura' => 'Avventura',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Seleziona una tipologia.',
     ],
 
     /*

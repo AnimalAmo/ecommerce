@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\HotelSmartbox;
+use App\Livewire\Partner\Structure\HotelSmartbox;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;

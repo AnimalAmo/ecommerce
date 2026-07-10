@@ -5,9 +5,9 @@ namespace App\Models\Structure;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Bozza di onboarding di una struttura ricettiva (wizard partner, 11 step).
- * Resta `draft` finché l'utente non completa lo step 11 (metodo di pagamento),
- * così uno stato parziale è sempre salvato se interrompe.
+ * Bozza di onboarding di un servizio partner (wizard multi-step: hotel 11,
+ * attività/eventi 10, smartbox 12). Resta `draft` finché l'utente non completa
+ * l'ultimo step del flusso, così uno stato parziale è sempre salvato se interrompe.
  */
 class StructureDraft extends Model
 {
@@ -36,6 +36,8 @@ class StructureDraft extends Model
         'time_end',
         'price_type',
         'price_per_person',
+        'price',
+        'duration_days',
         'rooms',
         'checkin_from',
         'checkin_to',
@@ -45,12 +47,16 @@ class StructureDraft extends Model
         'services',
         'additional_services',
         'additional_other',
+        'included_services',
         'meal_times',
+        'meals',
+        'dietary_restrictions',
         'rules',
         'animal_services',
         'animal_services_other',
         'smartbox_consent',
         'smartbox_types',
+        'smartbox_structures',
         'photos',
         'account_holder',
         'iban',
@@ -62,15 +68,20 @@ class StructureDraft extends Model
     {
         return [
             'current_step' => 'integer',
+            'duration_days' => 'integer',
             'date_start' => 'date',
             'date_end' => 'date',
             'rooms' => 'array',
             'meal_times' => 'array',
+            'meals' => 'array',
+            'dietary_restrictions' => 'array',
             'services' => 'array',
             'additional_services' => 'array',
+            'included_services' => 'array',
             'rules' => 'array',
             'animal_services' => 'array',
             'smartbox_types' => 'array',
+            'smartbox_structures' => 'array',
             'photos' => 'array',
         ];
     }

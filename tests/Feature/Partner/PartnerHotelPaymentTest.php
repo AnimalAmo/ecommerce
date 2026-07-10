@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\HotelPayment;
+use App\Livewire\Partner\Structure\HotelPayment;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -28,16 +28,16 @@ class PartnerHotelPaymentTest extends TestCase
     {
         Livewire::test(HotelPayment::class)
             ->call('next')
-            ->assertHasErrors(['accountHolder', 'iban', 'sdi', 'bic']);
+            ->assertHasErrors(['form.accountHolder', 'form.iban', 'form.sdi', 'form.bic']);
     }
 
     public function test_next_saves_and_completes_to_the_dashboard(): void
     {
         Livewire::test(HotelPayment::class)
-            ->set('accountHolder', 'Mario Rossi')
-            ->set('iban', 'IT60X0542811101000000123456')
-            ->set('sdi', 'ABCDEF1')
-            ->set('bic', 'UNCRITMM')
+            ->set('form.accountHolder', 'Mario Rossi')
+            ->set('form.iban', 'IT60X0542811101000000123456')
+            ->set('form.sdi', 'ABCDEF1')
+            ->set('form.bic', 'UNCRITMM')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.dashboard'));
@@ -63,6 +63,6 @@ class PartnerHotelPaymentTest extends TestCase
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 11, 'iban' => 'IT99']);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(HotelPayment::class)->assertSet('iban', 'IT99');
+        Livewire::test(HotelPayment::class)->assertSet('form.iban', 'IT99');
     }
 }

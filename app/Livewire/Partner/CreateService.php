@@ -26,19 +26,17 @@ class CreateService extends Component
 
         $this->saveStep(['service_category' => $this->service], 0);
 
-        if ($this->service === 'struttura') {
-            $this->redirectRoute('partner.structure.type');
+        // Il flusso "servizi" ha un percorso dedicato non ancora costruito (null → nessun redirect).
+        $route = match ($this->service) {
+            'struttura' => 'partner.structure.type',
+            'attivita' => 'partner.activity.type',
+            'smartbox' => 'partner.smartbox.type',
+            default => null,
+        };
 
-            return;
+        if ($route !== null) {
+            $this->redirectRoute($route);
         }
-
-        if ($this->service === 'attivita') {
-            $this->redirectRoute('partner.activity.type');
-
-            return;
-        }
-
-        // TODO: servizi e smartbox hanno un flusso dedicato non ancora costruito.
     }
 
     public function render()

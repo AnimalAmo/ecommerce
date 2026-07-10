@@ -16,12 +16,12 @@
                     <flux:button href="#" class="!mt-8 !h-10 !rounded-full !border-0 !bg-[#232A2C] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('partner.dashboard.cta') }}</flux:button>
 
                     {{-- Scia di zampe decorativa (XD: 5 zampe cyan in diagonale, angolo alto-destra) --}}
-                    <div class="pointer-events-none absolute inset-0 hidden text-brand-cyan sm:block" aria-hidden="true">
-                        <flux:icon.animal class="absolute right-[98px] top-[86px] h-6 w-6" />
-                        <flux:icon.animal class="absolute right-[104px] top-[110px] h-6 w-6" />
-                        <flux:icon.animal class="absolute right-[84px] top-[130px] h-6 w-6" />
-                        <flux:icon.animal class="absolute right-[86px] top-[161px] h-6 w-6" />
-                        <flux:icon.animal class="absolute right-[64px] top-[189px] h-6 w-6" />
+                    <div class="pointer-events-none absolute inset-0 hidden origin-bottom-right rotate-6 text-brand-cyan sm:block" aria-hidden="true">
+                        <flux:icon.animal class="absolute right-[98px] bottom-[111px] h-6 w-6" />
+                        <flux:icon.animal class="absolute right-[104px] bottom-[87px] h-6 w-6" />
+                        <flux:icon.animal class="absolute right-[84px] bottom-[67px] h-6 w-6" />
+                        <flux:icon.animal class="absolute right-[86px] bottom-[36px] h-6 w-6" />
+                        <flux:icon.animal class="absolute right-[64px] bottom-[8px] h-6 w-6" />
                     </div>
                 </div>
 

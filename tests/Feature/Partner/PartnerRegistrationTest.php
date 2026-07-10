@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\PartnerRegisterStep1;
-use App\Livewire\Partner\PartnerRegisterStep2;
+use App\Livewire\Partner\Registration\PartnerRegisterStep1;
+use App\Livewire\Partner\Registration\PartnerRegisterStep2;
 use Livewire\Livewire;
 use Tests\TestCase;
 

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\HotelServices;
+use App\Livewire\Partner\Structure\HotelServices;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -28,10 +28,10 @@ class PartnerHotelServicesTest extends TestCase
     public function test_selections_are_bound_and_next_passes(): void
     {
         Livewire::test(HotelServices::class)
-            ->set('services', ['wifi', 'piscina'])
-            ->set('additional', ['colazione'])
-            ->set('rules', ['vietato_fumare'])
-            ->assertSet('services', ['wifi', 'piscina'])
+            ->set('form.services', ['wifi', 'piscina'])
+            ->set('form.additional', ['colazione'])
+            ->set('form.structureRules', ['vietato_fumare'])
+            ->assertSet('form.services', ['wifi', 'piscina'])
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.structure.hotel.animal-services'));
@@ -48,14 +48,14 @@ class PartnerHotelServicesTest extends TestCase
         ]);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(HotelServices::class)->assertSet('services', ['wifi']);
+        Livewire::test(HotelServices::class)->assertSet('form.services', ['wifi']);
     }
 
     public function test_altro_reveals_the_detail_textarea(): void
     {
         Livewire::test(HotelServices::class)
             ->assertDontSee(__('partner.hotel_services.other_placeholder'))
-            ->set('additional', ['altro'])
+            ->set('form.additional', ['altro'])
             ->assertSee(__('partner.hotel_services.other_placeholder'));
     }
 
@@ -63,11 +63,11 @@ class PartnerHotelServicesTest extends TestCase
     {
         Livewire::test(HotelServices::class)
             ->assertDontSee(__('partner.hotel_services.time_from'))
-            ->set('additional', ['colazione'])
+            ->set('form.additional', ['colazione'])
             ->assertSee(__('partner.hotel_services.time_from'))
             ->assertSee(__('partner.hotel_services.time_to'))
-            ->set('mealTimes.colazione.from', '08:00')
-            ->set('mealTimes.colazione.to', '10:00')
+            ->set('form.mealTimes.colazione.from', '08:00')
+            ->set('form.mealTimes.colazione.to', '10:00')
             ->call('next')
             ->assertHasNoErrors();
     }

@@ -8,7 +8,8 @@ use App\Models\Structure\StructureDraft;
  * Condivide la bozza di onboarding struttura tra i vari step del wizard partner.
  * La bozza è tracciata in sessione (non c'è ancora l'auth partner) e ogni step
  * salva i suoi campi + aggiorna `current_step`, così lo stato parziale sopravvive
- * se l'utente interrompe. `completeDraft()` la chiude allo step 11.
+ * se l'utente interrompe. `completeDraft($finalStep)` la chiude all'ultimo step
+ * del flusso (hotel 11, attività 10, smartbox 12).
  */
 trait InteractsWithStructureDraft
 {
@@ -53,12 +54,12 @@ trait InteractsWithStructureDraft
         return $draft;
     }
 
-    /** Chiude la bozza al termine dello step 11 e libera la sessione. */
-    protected function completeDraft(): void
+    /** Chiude la bozza all'ultimo step del flusso (default 11) e libera la sessione. */
+    protected function completeDraft(int $finalStep = 11): void
     {
         $this->draft()->update([
             'status' => StructureDraft::STATUS_COMPLETED,
-            'current_step' => 11,
+            'current_step' => $finalStep,
         ]);
 
         session()->forget('structure_draft_id');
