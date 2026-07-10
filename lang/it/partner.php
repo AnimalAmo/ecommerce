@@ -85,6 +85,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'profile' => [
+        'title' => 'Profilo',
         'nav_profile' => 'Profilo',
         'nav_payment' => 'Metodo di pagamento',
         'nav_security' => 'Sicurezza',
