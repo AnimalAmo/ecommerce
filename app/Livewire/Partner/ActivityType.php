@@ -27,8 +27,7 @@ class ActivityType extends Component
         );
 
         $this->saveStep(['type' => $this->type], 1);
-
-        // TODO: advance to step 2 of 10 ("tipologia attività/eventi - nome") once it exists.
+        $this->redirectRoute('partner.activity.name');
     }
 
     public function render()
