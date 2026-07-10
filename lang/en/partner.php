@@ -148,6 +148,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — cancellation (step 6 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_cancellation' => [
+        'title' => 'AnimalAmo — Cancellation',
+        'step' => 'Step 6 of 11',
+        'heading' => 'Cancellation',
+        'section' => 'When can the guest cancel the booking for free?',
+        'helper' => 'It will help the user choose the structure.',
+        'when' => 'When?',
+        'free' => 'Offer free cancellation',
+        'pays' => 'The guest pays the full amount',
+        'arrival' => 'Arrival date',
+        'days_30' => '30 days',
+        'days_15' => '15 days',
+        'days_7' => '7 days',
+        'days_1' => '1 day',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Select when free cancellation is possible.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — room information (step 5 of 11)
     |--------------------------------------------------------------------------
     */
