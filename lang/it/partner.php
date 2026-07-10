@@ -148,6 +148,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — smartbox (step 9 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_smartbox' => [
+        'title' => 'AnimalAmo — Smartbox',
+        'step' => 'Step 9 di 11',
+        'heading' => 'Informazioni aggiuntive',
+        'section' => 'Vuoi dare la possibilità alla tua struttura di essere inserita all’interno delle smartbox?',
+        'helper' => 'Chiunque creerà una smartbox potrà inserire la tua struttura nella lista delle strutture. Così gli utenti che acquisteranno la smartbox potranno arrivare nella tua struttura.',
+        'yes' => 'Si',
+        'no' => 'No',
+        'types_heading' => 'Seleziona il servizio che vuoi aderisca alle smartbox',
+        'type_all' => 'Tutta la struttura',
+        'type_overnight' => 'Pernottamento',
+        'type_wellness' => 'Benessere',
+        'type_wellness_desc' => 'Se presente una piscina, spa, etc che possono essere usate anche senza pernottamento',
+        'type_adventure' => 'Avventura',
+        'type_adventure_desc' => 'Se ci sono guide affiliate, degustazioni, etc',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — servizi animali (step 8 di 11)
     |--------------------------------------------------------------------------
     */

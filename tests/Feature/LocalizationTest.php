@@ -139,6 +139,12 @@ class LocalizationTest extends TestCase
         $this->get('/en/partner/structure/hotel/animal-services')->assertOk();
     }
 
+    public function test_english_partner_hotel_smartbox_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/structure/hotel/smartbox');
+        $this->get('/en/partner/structure/hotel/smartbox')->assertOk();
+    }
+
     public function test_english_slug_with_italian_path_is_not_reachable(): void
     {
         // The Italian slug under the /en prefix must not resolve as 200.

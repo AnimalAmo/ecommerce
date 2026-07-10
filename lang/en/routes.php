@@ -37,4 +37,5 @@ return [
     'partner.structure.hotel.cancellation' => 'partner/structure/hotel/cancellation',
     'partner.structure.hotel.services' => 'partner/structure/hotel/services',
     'partner.structure.hotel.animal-services' => 'partner/structure/hotel/animal-services',
+    'partner.structure.hotel.smartbox' => 'partner/structure/hotel/smartbox',
 ];

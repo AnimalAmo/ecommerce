@@ -148,6 +148,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — smartbox (step 9 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_smartbox' => [
+        'title' => 'AnimalAmo — Smartbox',
+        'step' => 'Step 9 of 11',
+        'heading' => 'Additional information',
+        'section' => 'Do you want to give your structure the option to be included in smartboxes?',
+        'helper' => 'Anyone creating a smartbox will be able to add your structure to the list of structures. This way, users who buy the smartbox can come to your structure.',
+        'yes' => 'Yes',
+        'no' => 'No',
+        'types_heading' => 'Select the service you want to join the smartboxes',
+        'type_all' => 'The whole structure',
+        'type_overnight' => 'Overnight stay',
+        'type_wellness' => 'Wellness',
+        'type_wellness_desc' => 'If there is a pool, spa, etc. that can be used even without an overnight stay',
+        'type_adventure' => 'Adventure',
+        'type_adventure_desc' => 'If there are affiliated guides, tastings, etc.',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — animal services (step 8 of 11)
     |--------------------------------------------------------------------------
     */

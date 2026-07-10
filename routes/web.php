@@ -25,6 +25,7 @@ use App\Livewire\Partner\HotelCancellation as PartnerHotelCancellation;
 use App\Livewire\Partner\HotelDescription as PartnerHotelDescription;
 use App\Livewire\Partner\HotelLocation as PartnerHotelLocation;
 use App\Livewire\Partner\HotelRooms as PartnerHotelRooms;
+use App\Livewire\Partner\HotelSmartbox as PartnerHotelSmartbox;
 use App\Livewire\Partner\HotelServices as PartnerHotelServices;
 use App\Livewire\Partner\HotelTitle as PartnerHotelTitle;
 use App\Livewire\Partner\PartnerRegisterStep1;
@@ -90,6 +91,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.cancellation'), PartnerHotelCancellation::class)->name('partner.structure.hotel.cancellation');
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.services'), PartnerHotelServices::class)->name('partner.structure.hotel.services');
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.animal-services'), PartnerHotelAnimalServices::class)->name('partner.structure.hotel.animal-services');
+    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.smartbox'), PartnerHotelSmartbox::class)->name('partner.structure.hotel.smartbox');
 });
 
 // Non-localized routes (no language prefix).
