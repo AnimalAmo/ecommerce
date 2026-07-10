@@ -148,6 +148,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — informazioni stanze (step 5 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_rooms' => [
+        'title' => 'AnimalAmo — Informazioni stanze',
+        'step' => 'Step 5 di 11',
+        'heading' => 'Informazioni sulle stanze',
+        'section' => 'Aggiungi le informazioni che descrivono le stanze che offri',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'room_type' => 'Tipologia Stanze',
+        'room_count' => 'Numero di stanze',
+        'price' => 'Prezzo',
+        'type_single' => 'Singola',
+        'type_double' => 'Doppia',
+        'type_triple' => 'Tripla',
+        'type_suite' => 'Suite',
+        'add_rooms' => 'Aggiungi stanze',
+        'checkin' => 'Check in',
+        'checkout' => 'Check out',
+        'from' => 'Dalle:',
+        'to' => 'Alle:',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Compila le informazioni sulle stanze e gli orari di check-in/out.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — descrizione (step 4 di 11)
     |--------------------------------------------------------------------------
     */

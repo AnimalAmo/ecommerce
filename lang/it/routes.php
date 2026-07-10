@@ -33,4 +33,5 @@ return [
     'partner.structure.hotel.title' => 'partner/struttura/hotel/titolo',
     'partner.structure.hotel.location' => 'partner/struttura/hotel/luogo',
     'partner.structure.hotel.description' => 'partner/struttura/hotel/descrizione',
+    'partner.structure.hotel.rooms' => 'partner/struttura/hotel/stanze',
 ];

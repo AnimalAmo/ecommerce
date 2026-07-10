@@ -148,6 +148,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — room information (step 5 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_rooms' => [
+        'title' => 'AnimalAmo — Room information',
+        'step' => 'Step 5 of 11',
+        'heading' => 'Room information',
+        'section' => 'Add the information that describes the rooms you offer',
+        'helper' => 'It will help the user evaluate the structure.',
+        'room_type' => 'Room type',
+        'room_count' => 'Number of rooms',
+        'price' => 'Price',
+        'type_single' => 'Single',
+        'type_double' => 'Double',
+        'type_triple' => 'Triple',
+        'type_suite' => 'Suite',
+        'add_rooms' => 'Add rooms',
+        'checkin' => 'Check in',
+        'checkout' => 'Check out',
+        'from' => 'From:',
+        'to' => 'To:',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Fill in the room information and the check-in/out times.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — description (step 4 of 11)
     |--------------------------------------------------------------------------
     */
