@@ -55,4 +55,49 @@ return [
     'thanks_line_2' => 'We will get back to you as soon as possible.',
     'back_home' => 'Back to Home',
 
+    /*
+    |--------------------------------------------------------------------------
+    | B2B chrome (partner-area header + footer)
+    |--------------------------------------------------------------------------
+    */
+    'nav_help' => 'Help',
+    'help_contact' => 'Contact us',
+    'help_support' => 'Support',
+    'help_faq' => 'Faq',
+
+    'footer_company' => 'Company',
+    'footer_about' => 'About Animal_Amo',
+    'footer_website' => 'Website',
+    'footer_help' => 'Help & Support',
+    'footer_security' => 'Security',
+    'footer_privacy' => 'Privacy Policy',
+    'footer_cookie' => 'Cookie Policy',
+    'footer_terms' => 'Terms and Conditions',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Partner registration — step 1 (Personal information)
+    |--------------------------------------------------------------------------
+    */
+    'register' => [
+        'title' => 'AnimalAmo — Partner registration',
+        'heading' => 'Join us as a partner',
+        'step' => 'Step 1 of 2',
+        'section_personal' => 'Personal information',
+        'first_name' => 'First name',
+        'last_name' => 'Last name',
+        'business_name' => 'Company name',
+        'email' => 'Email',
+        'address' => 'Address',
+        'province' => 'Province',
+        'zip' => 'Postcode',
+        'phone' => 'Mobile',
+        'vat' => 'VAT number',
+        'tax_code' => 'Tax code',
+        'pec' => 'PEC',
+        'sdi' => 'SDI',
+        'back' => 'Back',
+        'next' => 'Continue',
+    ],
+
 ];

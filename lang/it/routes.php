@@ -25,4 +25,5 @@ return [
     'news.detail' => 'news/{article}',
     'work-with-us' => 'lavora-con-noi',
     'work-with-us.thanks' => 'lavora-con-noi/grazie',
+    'partner.register' => 'iscrizione-partner',
 ];

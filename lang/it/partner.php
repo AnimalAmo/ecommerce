@@ -55,4 +55,49 @@ return [
     'thanks_line_2' => 'Ti risponderemo il prima possibile.',
     'back_home' => 'Torna alla Home',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Chrome B2B (header + footer dell'area partner)
+    |--------------------------------------------------------------------------
+    */
+    'nav_help' => 'Aiuto',
+    'help_contact' => 'Contattaci',
+    'help_support' => 'Assistenza',
+    'help_faq' => 'Faq',
+
+    'footer_company' => 'Azienda',
+    'footer_about' => 'Informazioni su Animal_Amo',
+    'footer_website' => 'Sito web',
+    'footer_help' => 'Help & Support',
+    'footer_security' => 'Sicurezza',
+    'footer_privacy' => 'Privacy Policy',
+    'footer_cookie' => 'Cookie Policy',
+    'footer_terms' => 'Termini e Condizioni',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Iscrizione B2B — step 1 (Informazioni personali)
+    |--------------------------------------------------------------------------
+    */
+    'register' => [
+        'title' => 'AnimalAmo — Iscrizione partner',
+        'heading' => 'Unisciti a noi come partner',
+        'step' => 'Step 1 di 2',
+        'section_personal' => 'Informazioni personali',
+        'first_name' => 'Nome',
+        'last_name' => 'Cognome',
+        'business_name' => 'Ragione Sociale',
+        'email' => 'Email',
+        'address' => 'Indirizzo',
+        'province' => 'Provincia',
+        'zip' => 'Cap',
+        'phone' => 'Cellulare',
+        'vat' => 'Partita IVA',
+        'tax_code' => 'Codice Fiscale',
+        'pec' => 'PEC',
+        'sdi' => 'SDI',
+        'back' => 'Indietro',
+        'next' => 'Prosegui',
+    ],
+
 ];
