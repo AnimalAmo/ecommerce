@@ -2,9 +2,9 @@
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
     $types = [
-        'hotel' => ['icon' => 'bed', 'label' => 'partner.structure_type.hotel'],
-        'bb' => ['icon' => 'coffee', 'label' => 'partner.structure_type.bb'],
-        'agriturismo' => ['icon' => 'home', 'label' => 'partner.structure_type.agriturismo'],
+        'hotel' => ['icon' => 'structure-hotel', 'label' => 'partner.structure_type.hotel'],
+        'bb' => ['icon' => 'structure-bb', 'label' => 'partner.structure_type.bb'],
+        'agriturismo' => ['icon' => 'structure-farmhouse', 'label' => 'partner.structure_type.agriturismo'],
     ];
 @endphp
 
@@ -27,7 +27,7 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.create_service.helper') }}</p>
 
                 {{-- Tipologie struttura: flux radio cards con icona in alto + label, selezione cyan --}}
-                <flux:radio.group wire:model="type" variant="cards" class="mt-8 [--color-accent:#6CD1EF] [&_[data-flux-radio-cards]]:justify-center [&_[data-flux-radio-cards]]:py-8 [&_[data-flux-radio-cards]>div]:!flex-col [&_[data-flux-radio-cards]>div]:items-center [&_[data-flux-radio-cards]>div]:gap-3 [&_[data-flux-radio-cards]>div]:text-center [&_[data-flux-radio-cards]_svg]:!size-9 [&_[data-flux-radio-cards]_svg]:!text-[#2B2B2B] [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33]">
+                <flux:radio.group wire:model="type" variant="cards" class="mt-8 [--color-accent:#6CD1EF] [&_[data-flux-radio-cards]]:justify-center [&_[data-flux-radio-cards]]:py-8 [&_[data-flux-radio-cards]>div]:!flex-col [&_[data-flux-radio-cards]>div]:items-center [&_[data-flux-radio-cards]>div]:gap-3 [&_[data-flux-radio-cards]>div]:text-center [&_[data-flux-radio-cards]_svg]:!size-[92px] [&_[data-flux-radio-cards]_svg]:!text-[#2B2B2B] [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33]">
                     @foreach ($types as $key => $t)
                         <flux:radio value="{{ $key }}" wire:key="type-{{ $key }}" :icon="$t['icon']" :label="__($t['label'])" :indicator="false" />
                     @endforeach
