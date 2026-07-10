@@ -3,7 +3,7 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\CreateService;
-use App\Livewire\Partner\SmartboxType;
+use App\Livewire\Partner\Smartbox\SmartboxType;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
