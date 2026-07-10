@@ -37,6 +37,7 @@ return [
     'partner.smartbox.duration' => 'partner/smartbox/duration',
     'partner.smartbox.cancellation' => 'partner/smartbox/cancellation',
     'partner.smartbox.meals' => 'partner/smartbox/meals',
+    'partner.smartbox.offers' => 'partner/smartbox/what-you-will-find',
     'partner.activity.name' => 'partner/activity/name',
     'partner.activity.location' => 'partner/activity/location',
     'partner.activity.description' => 'partner/activity/description',

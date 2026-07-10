@@ -320,6 +320,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — accommodation / what you will find (step 7 of 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_offers' => [
+        'title' => 'AnimalAmo — What the smartbox offers',
+        'step' => 'Step 7 of 12',
+        'heading' => 'What the smartbox offers',
+        'section' => 'Select the options that will be present in the smartbox',
+        'helper' => 'They will help the user assess your proposal.',
+        'additional_heading' => 'Additional services available',
+        'amenity_bedroom' => 'Bedroom',
+        'amenity_bathroom' => 'Bathroom',
+        'amenity_kitchen' => 'Kitchen',
+        'amenity_balcony' => 'Balcony',
+        'amenity_terrace' => 'Terrace',
+        'add_pool' => 'Pool',
+        'add_spa' => 'Spa',
+        'add_tennis' => 'Tennis court',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Smartbox — food / meals (step 6 of 12)
     |--------------------------------------------------------------------------
     */

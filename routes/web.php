@@ -45,6 +45,7 @@ use App\Livewire\Partner\SmartboxCancellation as PartnerSmartboxCancellation;
 use App\Livewire\Partner\SmartboxDescription as PartnerSmartboxDescription;
 use App\Livewire\Partner\SmartboxDuration as PartnerSmartboxDuration;
 use App\Livewire\Partner\SmartboxMeals as PartnerSmartboxMeals;
+use App\Livewire\Partner\SmartboxOffers as PartnerSmartboxOffers;
 use App\Livewire\Partner\SmartboxName as PartnerSmartboxName;
 use App\Livewire\Partner\SmartboxType as PartnerSmartboxType;
 use App\Livewire\Partner\PartnerRegisterStep2;
@@ -109,6 +110,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.duration'), PartnerSmartboxDuration::class)->name('partner.smartbox.duration');
     Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.cancellation'), PartnerSmartboxCancellation::class)->name('partner.smartbox.cancellation');
     Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.meals'), PartnerSmartboxMeals::class)->name('partner.smartbox.meals');
+    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.offers'), PartnerSmartboxOffers::class)->name('partner.smartbox.offers');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.name'), PartnerActivityName::class)->name('partner.activity.name');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.location'), PartnerActivityLocation::class)->name('partner.activity.location');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.description'), PartnerActivityDescription::class)->name('partner.activity.description');

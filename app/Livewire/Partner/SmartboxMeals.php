@@ -79,8 +79,7 @@ class SmartboxMeals extends Component
             'meal_times' => $this->mealTimes,
             'dietary_restrictions' => $this->dietary,
         ], 6);
-
-        // TODO: advance to step 7 of 12 (prezzo) del flusso smartbox once it exists.
+        $this->redirectRoute('partner.smartbox.offers');
     }
 
     public function render()

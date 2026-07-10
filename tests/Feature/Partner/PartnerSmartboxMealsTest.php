@@ -55,7 +55,8 @@ class PartnerSmartboxMealsTest extends TestCase
             ->set('mealTimes.colazione.to', '10:00')
             ->set('dietary', ['vegano', 'senza_glutine'])
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.smartbox.offers'));
 
         $draft = StructureDraft::first();
         $this->assertSame(['colazione'], $draft->meals);
