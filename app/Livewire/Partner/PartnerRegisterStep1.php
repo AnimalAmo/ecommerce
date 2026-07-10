@@ -13,8 +13,8 @@ class PartnerRegisterStep1 extends Component
     {
         $this->form->validate();
 
-        // TODO: persist step-1 data and advance to "Iscrizione B2B - step 2"
-        // once that page and the partner backend exist.
+        // TODO: persist step-1 data once the partner backend exists.
+        $this->redirectRoute('partner.register.step2');
     }
 
     public function render()

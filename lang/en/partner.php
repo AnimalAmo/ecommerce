@@ -100,4 +100,22 @@ return [
         'next' => 'Continue',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Partner registration — step 2 (service type selection)
+    |--------------------------------------------------------------------------
+    */
+    'register2' => [
+        'step' => 'Step 2 of 2',
+        'section' => 'Select the service you want to offer (you can pick more than one)',
+        'struttura_title' => 'Accommodation',
+        'struttura_subtitle' => 'Such as Hotel, Farm stay, B&B, and more',
+        'attivita_title' => 'Activities and Events',
+        'attivita_subtitle' => 'Such as a day trip or a meet-up with your pets',
+        'servizi_title' => 'Services',
+        'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
+        'submit' => 'Create an account',
+        'error_required' => 'Select at least one service.',
+    ],
+
 ];

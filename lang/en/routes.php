@@ -26,4 +26,5 @@ return [
     'work-with-us' => 'work-with-us',
     'work-with-us.thanks' => 'work-with-us/thank-you',
     'partner.register' => 'partner-registration',
+    'partner.register.step2' => 'partner-registration/services',
 ];

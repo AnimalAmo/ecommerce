@@ -100,4 +100,22 @@ return [
         'next' => 'Prosegui',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Iscrizione B2B — step 2 (scelta tipologia servizio)
+    |--------------------------------------------------------------------------
+    */
+    'register2' => [
+        'step' => 'Step 2 di 2',
+        'section' => 'Seleziona il servizio che vorrai proporre (puoi selezionarne più di uno)',
+        'struttura_title' => 'Struttura ricettiva',
+        'struttura_subtitle' => 'Come Hotel, Agriturismo, B&B, altro',
+        'attivita_title' => 'Attività ed Eventi',
+        'attivita_subtitle' => 'Come una gita di un giorno, un ritrovo con i propri animali',
+        'servizi_title' => 'Servizi',
+        'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
+        'submit' => 'Crea un account',
+        'error_required' => 'Seleziona almeno un servizio.',
+    ],
+
 ];
