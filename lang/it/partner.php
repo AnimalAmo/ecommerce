@@ -81,6 +81,49 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Profilo partner (info personali / metodo di pagamento / sicurezza)
+    |--------------------------------------------------------------------------
+    */
+    'profile' => [
+        'nav_profile' => 'Profilo',
+        'nav_payment' => 'Metodo di pagamento',
+        'nav_security' => 'Sicurezza',
+        'save' => 'Salva',
+        'saved' => 'Modifiche salvate',
+
+        'info_title' => 'AnimalAmo — Informazioni personali',
+        'info_heading' => 'Informazioni personali',
+        'first_name' => 'Nome',
+        'last_name' => 'Cognome',
+        'business_name' => 'Ragione Sociale',
+        'email' => 'Email',
+        'address' => 'Indirizzo',
+        'province' => 'Provincia',
+        'city' => 'Città',
+        'zip' => 'Cap',
+        'vat' => 'Partita IVA',
+        'phone' => 'Cellulare',
+        'tax_code' => 'Codice Fiscale',
+        'pec' => 'PEC',
+        'sdi' => 'SDI',
+
+        'payment_title' => 'AnimalAmo — Metodo di pagamento',
+        'payment_heading' => 'Metodo di pagamento',
+        'account_holder' => 'Titolare Conto',
+        'iban' => 'IBAN',
+        'bic' => 'BIC',
+
+        'security_title' => 'AnimalAmo — Sicurezza',
+        'security_heading' => 'Sicurezza',
+        'current_password' => 'Password attuale',
+        'new_password' => 'Nuova password',
+        'confirm_password' => 'Conferma password',
+        'privacy_settings' => 'Impostazioni sulla Privacy',
+        'delete_account' => 'Elimina Account',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Iscrizione B2B — step 1 (Informazioni personali)
     |--------------------------------------------------------------------------
     */

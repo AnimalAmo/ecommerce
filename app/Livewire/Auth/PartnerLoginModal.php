@@ -18,7 +18,7 @@ class PartnerLoginModal extends Component
         // Ruolo verificato prima di aprire la sessione (attemptWhen): un client già
         // loggato che sbaglia modale non perde la sua sessione, e il messaggio resta
         // quello delle credenziali errate (non riveliamo che l'account esiste).
-        $this->form->authenticate(fn ($user): bool => $user->hasRole('partner'));
+        $this->form->authenticate(fn ($user): bool => $user->hasRole('partner') && $user->is_active);
 
         $this->finishAuthentication('partner-login');
     }

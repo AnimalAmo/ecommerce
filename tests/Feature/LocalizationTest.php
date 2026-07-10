@@ -81,12 +81,14 @@ class LocalizationTest extends TestCase
 
     public function test_english_partner_dashboard_url_uses_en_prefix_and_translated_slug(): void
     {
+        $this->actingAsActivePartner();
         $this->reloadRoutesFor('/en/partner/dashboard');
         $this->get('/en/partner/dashboard')->assertOk();
     }
 
     public function test_english_partner_create_service_url_uses_en_prefix_and_translated_slug(): void
     {
+        $this->actingAsActivePartner();
         $this->reloadRoutesFor('/en/partner/create-service');
         $this->get('/en/partner/create-service')->assertOk();
     }

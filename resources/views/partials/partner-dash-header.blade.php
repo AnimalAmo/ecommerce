@@ -9,7 +9,7 @@
             <a href="{{ route('partner.service.create') }}" class="{{ request()->routeIs('partner.service.create', 'partner.structure.*', 'partner.activity.*', 'partner.smartbox.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold' }}">{{ __('partner.nav_create_service') }}</a>
             <a href="#" class="font-normal text-black hover:font-bold">{{ __('partner.nav_my_services') }}</a>
             <a href="#" class="font-normal text-black hover:font-bold">{{ __('partner.nav_bookings') }}</a>
-            <a href="#" class="font-normal text-black hover:font-bold">{{ __('partner.nav_profile') }}</a>
+            <a href="{{ route('partner.profile') }}" class="{{ request()->routeIs('partner.profile', 'partner.profile.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold' }}">{{ __('partner.nav_profile') }}</a>
         </nav>
         <flux:dropdown position="bottom" align="end" class="shrink-0">
             <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="font-sans !text-[15px] !font-normal !text-ink">{{ __('partner.nav_help') }}</flux:button>

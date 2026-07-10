@@ -13,6 +13,8 @@ class PartnerCreateServiceTest extends TestCase
 
     public function test_page_renders_the_four_service_types(): void
     {
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.service.create'))
             ->assertOk()
             ->assertSee(__('partner.create_service.heading'))

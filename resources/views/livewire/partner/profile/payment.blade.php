@@ -1,0 +1,50 @@
+{{-- Profilo partner – Metodo di pagamento (XD "Profilo – metodo di pagamento") --}}
+@php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
+@php $fieldClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]'; @endphp
+@php $labelClass = '!text-xs !font-normal !text-[#555555]'; @endphp
+
+<div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
+
+    @include('partials.partner-dash-header')
+
+    <main class="flex-1 pt-10 pb-20">
+        <div class="{{ $px }}">
+            <div class="flex flex-col gap-8 md:flex-row">
+
+                @include('partials.partner-profile-sidebar')
+
+                <div class="flex-1 rounded-[10px] border border-gray-150 bg-white px-8 py-8">
+                    <h1 class="text-2xl font-bold text-[#0D171A]">{{ __('partner.profile.payment_heading') }}</h1>
+
+                    <form wire:submit="save" class="mt-8">
+                        <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
+                            <flux:field>
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.account_holder') }} *</flux:label>
+                                <flux:input wire:model="form.accountHolder" class="{{ $fieldClass }}" />
+                            </flux:field>
+                            <flux:field>
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.iban') }} *</flux:label>
+                                <flux:input wire:model="form.iban" class="{{ $fieldClass }}" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.sdi') }} *</flux:label>
+                                <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
+                            </flux:field>
+                            <flux:field>
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.bic') }} *</flux:label>
+                                <flux:input wire:model="form.bic" class="{{ $fieldClass }}" />
+                            </flux:field>
+                        </div>
+
+                        <div class="mt-10 flex items-center justify-end">
+                            <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-10 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.profile.save') }}</flux:button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    @include('partials.partner-footer')
+</div>

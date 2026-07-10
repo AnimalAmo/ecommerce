@@ -42,11 +42,29 @@ class DemoUserSeeder extends Seeder
         $this->seedFavorites($giulia);
 
         $partner = User::updateOrCreate(['email' => 'partner@animalamo.test'], [
-            'first_name' => 'Partner',
-            'last_name' => 'Demo',
+            'first_name' => 'Susanna',
+            'last_name' => 'Rossi',
+            'phone' => '349 8798828',
             'password' => 'password',
+            'is_active' => true,
         ]);
         $partner->syncRoles(['partner']);
+
+        // Dati fiscali + pagamento dal mock XD "Profilo - info personali/metodo di pagamento".
+        $partner->partnerProfile()->updateOrCreate([], [
+            'business_name' => 'Hotel Rosovino Milano',
+            'vat' => '86334519757',
+            'tax_code' => 'SSNNRSS98A39T582I',
+            'pec' => 'susanna.rossi@pec.it',
+            'sdi' => 'SUBM70N',
+            'address' => 'Via C. Pacini, 19',
+            'city' => 'Milano',
+            'province' => 'MI',
+            'zip' => '20131',
+            'account_holder' => 'Susanna Rossi',
+            'iban' => 'IT037400000000007382',
+            'bic' => 'UNCRITMM',
+        ]);
     }
 
     /** Le 6 card preferiti (mapping slug → famiglia nel docblock della classe). */

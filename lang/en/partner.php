@@ -81,6 +81,49 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Partner profile (personal info / payment method / security)
+    |--------------------------------------------------------------------------
+    */
+    'profile' => [
+        'nav_profile' => 'Profile',
+        'nav_payment' => 'Payment method',
+        'nav_security' => 'Security',
+        'save' => 'Save',
+        'saved' => 'Changes saved',
+
+        'info_title' => 'AnimalAmo — Personal information',
+        'info_heading' => 'Personal information',
+        'first_name' => 'First name',
+        'last_name' => 'Last name',
+        'business_name' => 'Business name',
+        'email' => 'Email',
+        'address' => 'Address',
+        'province' => 'Province',
+        'city' => 'City',
+        'zip' => 'Postcode',
+        'vat' => 'VAT number',
+        'phone' => 'Mobile',
+        'tax_code' => 'Tax code',
+        'pec' => 'PEC',
+        'sdi' => 'SDI',
+
+        'payment_title' => 'AnimalAmo — Payment method',
+        'payment_heading' => 'Payment method',
+        'account_holder' => 'Account holder',
+        'iban' => 'IBAN',
+        'bic' => 'BIC',
+
+        'security_title' => 'AnimalAmo — Security',
+        'security_heading' => 'Security',
+        'current_password' => 'Current password',
+        'new_password' => 'New password',
+        'confirm_password' => 'Confirm password',
+        'privacy_settings' => 'Privacy settings',
+        'delete_account' => 'Delete account',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Partner registration — step 1 (Personal information)
     |--------------------------------------------------------------------------
     */
