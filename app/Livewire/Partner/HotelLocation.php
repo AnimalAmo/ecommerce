@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class HotelLocation extends Component
 {
+    use InteractsWithStructureDraft;
+
     public string $address = '';
 
     public string $city = '';
@@ -15,6 +18,15 @@ class HotelLocation extends Component
     public string $zip = '';
 
     public string $license = '';
+
+    public function mount(): void
+    {
+        $this->address = $this->draft()->address ?? '';
+        $this->city = $this->draft()->city ?? '';
+        $this->province = $this->draft()->province ?? '';
+        $this->zip = $this->draft()->zip ?? '';
+        $this->license = $this->draft()->license ?? '';
+    }
 
     public function next(): void
     {
@@ -26,7 +38,8 @@ class HotelLocation extends Component
             'license' => ['required', 'string', 'max:64'],
         ]);
 
-        // TODO: advance to step 4 of 11 of the structure creation flow.
+        $this->saveStep(['address' => $this->address, 'city' => $this->city, 'province' => $this->province, 'zip' => $this->zip, 'license' => $this->license], 3);
+        $this->redirectRoute('partner.structure.hotel.description');
     }
 
     public function render()

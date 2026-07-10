@@ -3,11 +3,14 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\CreateService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerCreateServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_page_renders_the_four_service_types(): void
     {
         $this->get(route('partner.service.create'))
@@ -36,11 +39,25 @@ class PartnerCreateServiceTest extends TestCase
             ->assertHasErrors('service');
     }
 
-    public function test_next_accepts_smartbox(): void
+    public function test_struttura_saves_the_category_and_advances(): void
+    {
+        Livewire::test(CreateService::class)
+            ->set('service', 'struttura')
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.type'));
+
+        $this->assertDatabaseHas('structure_drafts', ['service_category' => 'struttura']);
+    }
+
+    public function test_smartbox_saves_the_category_without_advancing(): void
     {
         Livewire::test(CreateService::class)
             ->set('service', 'smartbox')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertNoRedirect();
+
+        $this->assertDatabaseHas('structure_drafts', ['service_category' => 'smartbox']);
     }
 }

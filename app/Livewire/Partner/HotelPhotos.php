@@ -2,15 +2,25 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class HotelPhotos extends Component
 {
-    use WithFileUploads;
+    use InteractsWithStructureDraft, WithFileUploads;
 
-    /** Foto caricate (upload temporanei Livewire). */
+    /** Nuove foto in upload (temporanee Livewire). */
     public array $photos = [];
+
+    /** Percorsi delle foto già salvate nella bozza. */
+    public array $saved = [];
+
+    public function mount(): void
+    {
+        $this->saved = $this->draft()->photos ?? [];
+    }
 
     public function updatedPhotos(): void
     {
@@ -25,14 +35,33 @@ class HotelPhotos extends Component
         }
     }
 
+    public function removeSaved(int $index): void
+    {
+        if (isset($this->saved[$index])) {
+            Storage::disk('public')->delete($this->saved[$index]);
+            unset($this->saved[$index]);
+            $this->saved = array_values($this->saved);
+            $this->draft()->update(['photos' => $this->saved]);
+        }
+    }
+
     public function next(): void
     {
-        $this->validate(
-            ['photos' => ['array', 'min:4']],
-            ['photos.min' => __('partner.hotel_photos.error_min')],
-        );
+        if (count($this->saved) + count($this->photos) < 4) {
+            $this->addError('photos', __('partner.hotel_photos.error_min'));
 
-        // TODO: advance to step 11 of 11 of the structure creation flow.
+            return;
+        }
+
+        $this->validate(['photos.*' => ['image', 'max:8192']]);
+
+        $paths = $this->saved;
+        foreach ($this->photos as $photo) {
+            $paths[] = $photo->store('structure-photos', 'public');
+        }
+
+        $this->saveStep(['photos' => $paths], 10);
+        $this->redirectRoute('partner.structure.hotel.payment');
     }
 
     public function render()

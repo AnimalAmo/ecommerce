@@ -2,12 +2,20 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class HotelTitle extends Component
 {
+    use InteractsWithStructureDraft;
+
     /** Nome della struttura ricettiva (hotel). */
     public string $name = '';
+
+    public function mount(): void
+    {
+        $this->name = $this->draft()->name ?? '';
+    }
 
     public function next(): void
     {
@@ -16,7 +24,8 @@ class HotelTitle extends Component
             ['name.required' => __('partner.hotel_title.error_required')],
         );
 
-        // TODO: advance to step 3 of 11 of the structure creation flow.
+        $this->saveStep(['name' => $this->name], 2);
+        $this->redirectRoute('partner.structure.hotel.location');
     }
 
     public function render()

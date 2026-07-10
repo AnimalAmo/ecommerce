@@ -3,11 +3,15 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\HotelRooms;
+use App\Models\Structure\StructureDraft;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerHotelRoomsTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_page_renders_the_room_fields(): void
     {
         $this->get(route('partner.structure.hotel.rooms'))
@@ -60,6 +64,17 @@ class PartnerHotelRoomsTest extends TestCase
             ->set('checkoutFrom', '08:00')
             ->set('checkoutTo', '11:00')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.hotel.cancellation'));
+
+        $this->assertDatabaseHas('structure_drafts', ['checkin_from' => '14:00', 'current_step' => 5]);
+    }
+
+    public function test_it_rehydrates_the_saved_checkin_from(): void
+    {
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 5, 'checkin_from' => '15:00']);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(HotelRooms::class)->assertSet('checkinFrom', '15:00');
     }
 }

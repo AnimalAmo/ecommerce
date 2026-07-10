@@ -2,12 +2,20 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class StructureType extends Component
 {
+    use InteractsWithStructureDraft;
+
     /** Tipologia struttura ricettiva scelta: hotel | bb | agriturismo. */
     public string $type = '';
+
+    public function mount(): void
+    {
+        $this->type = $this->draft()->type ?? '';
+    }
 
     public function next(): void
     {
@@ -16,7 +24,8 @@ class StructureType extends Component
             ['type.required' => __('partner.structure_type.error_required'), 'type.in' => __('partner.structure_type.error_required')],
         );
 
-        // TODO: advance to step 2 of 11 of the structure creation flow.
+        $this->saveStep(['type' => $this->type], 1);
+        $this->redirectRoute('partner.structure.hotel.title');
     }
 
     public function render()

@@ -2,12 +2,20 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class CreateService extends Component
 {
+    use InteractsWithStructureDraft;
+
     /** Tipo di servizio scelto (radio, scelta singola). */
     public string $service = '';
+
+    public function mount(): void
+    {
+        $this->service = $this->draft()->service_category ?? '';
+    }
 
     public function next(): void
     {
@@ -16,7 +24,14 @@ class CreateService extends Component
             ['service.required' => __('partner.create_service.error_required'), 'service.in' => __('partner.create_service.error_required')],
         );
 
-        // TODO: advance to the service-type-specific creation flow once it exists.
+        $this->saveStep(['service_category' => $this->service], 0);
+
+        // Solo il flusso "struttura ricettiva" è implementato (11 step).
+        if ($this->service === 'struttura') {
+            $this->redirectRoute('partner.structure.type');
+        }
+
+        // TODO: attività/eventi, servizi e smartbox hanno un flusso dedicato non ancora costruito.
     }
 
     public function render()

@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class HotelRooms extends Component
 {
+    use InteractsWithStructureDraft;
+
     /** Righe stanza (ripetibili con "Aggiungi stanze"): tipologia, numero, prezzo. */
     public array $rooms = [
         ['type' => '', 'count' => 0, 'price' => ''],
@@ -18,6 +21,16 @@ class HotelRooms extends Component
     public string $checkoutFrom = '';
 
     public string $checkoutTo = '';
+
+    public function mount(): void
+    {
+        $draft = $this->draft();
+        $this->rooms = $draft->rooms ?: [['type' => '', 'count' => 0, 'price' => '']];
+        $this->checkinFrom = $draft->checkin_from ?? '';
+        $this->checkinTo = $draft->checkin_to ?? '';
+        $this->checkoutFrom = $draft->checkout_from ?? '';
+        $this->checkoutTo = $draft->checkout_to ?? '';
+    }
 
     public function addRoom(): void
     {
@@ -63,7 +76,8 @@ class HotelRooms extends Component
             'checkoutTo' => ['required', 'string'],
         ]);
 
-        // TODO: advance to step 6 of 11 of the structure creation flow.
+        $this->saveStep(['rooms' => $this->rooms, 'checkin_from' => $this->checkinFrom, 'checkin_to' => $this->checkinTo, 'checkout_from' => $this->checkoutFrom, 'checkout_to' => $this->checkoutTo], 5);
+        $this->redirectRoute('partner.structure.hotel.cancellation');
     }
 
     public function render()

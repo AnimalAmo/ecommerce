@@ -2,12 +2,20 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class HotelDescription extends Component
 {
+    use InteractsWithStructureDraft;
+
     /** Descrizione della struttura (max 200 caratteri). */
     public string $description = '';
+
+    public function mount(): void
+    {
+        $this->description = $this->draft()->description ?? '';
+    }
 
     public function next(): void
     {
@@ -16,7 +24,8 @@ class HotelDescription extends Component
             ['description.required' => __('partner.hotel_description.error_required')],
         );
 
-        // TODO: advance to step 5 of 11 of the structure creation flow.
+        $this->saveStep(['description' => $this->description], 4);
+        $this->redirectRoute('partner.structure.hotel.rooms');
     }
 
     public function render()

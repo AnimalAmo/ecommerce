@@ -45,8 +45,21 @@
                     @enderror
 
                     {{-- Griglia foto caricate (XD "caricate": card 165x129, r4, bordo #E2EAEB + "Elimina" rosso) --}}
-                    @if (count($photos))
+                    @if (count($saved) || count($photos))
                         <div class="mt-6 flex flex-wrap gap-[15px]">
+                            {{-- Foto già salvate nella bozza --}}
+                            @foreach ($saved as $i => $path)
+                                <div class="w-[165px]" wire:key="saved-{{ $i }}">
+                                    <div class="h-[110px] w-[165px] overflow-hidden rounded-[4px] border border-[#E2EAEB] bg-[#F4F4F4]">
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($path) }}" alt="" class="h-full w-full object-cover">
+                                    </div>
+                                    <flux:button type="button" variant="ghost" wire:click="removeSaved({{ $i }})" class="!mt-1 !h-auto !px-0 !text-[13px] !font-medium !text-[#F85933] hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:gap-1">
+                                        <flux:icon.x-mark class="h-4 w-4" />
+                                        {{ __('partner.hotel_photos.delete') }}
+                                    </flux:button>
+                                </div>
+                            @endforeach
+                            {{-- Nuove foto in upload --}}
                             @foreach ($photos as $i => $photo)
                                 <div class="w-[165px]" wire:key="photo-{{ $i }}">
                                     <div class="h-[110px] w-[165px] overflow-hidden rounded-[4px] border border-[#E2EAEB] bg-[#F4F4F4]">

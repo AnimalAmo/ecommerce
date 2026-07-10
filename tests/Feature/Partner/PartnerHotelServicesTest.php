@@ -3,11 +3,15 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\HotelServices;
+use App\Models\Structure\StructureDraft;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerHotelServicesTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_page_renders_the_three_sections(): void
     {
         $this->get(route('partner.structure.hotel.services'))
@@ -29,7 +33,22 @@ class PartnerHotelServicesTest extends TestCase
             ->set('rules', ['vietato_fumare'])
             ->assertSet('services', ['wifi', 'piscina'])
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.hotel.animal-services'));
+
+        $this->assertDatabaseHas('structure_drafts', ['current_step' => 7]);
+    }
+
+    public function test_it_rehydrates_the_saved_services(): void
+    {
+        $draft = StructureDraft::create([
+            'status' => 'draft',
+            'current_step' => 7,
+            'services' => ['wifi'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(HotelServices::class)->assertSet('services', ['wifi']);
     }
 
     public function test_altro_reveals_the_detail_textarea(): void

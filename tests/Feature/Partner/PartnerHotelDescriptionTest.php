@@ -3,11 +3,15 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\HotelDescription;
+use App\Models\Structure\StructureDraft;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerHotelDescriptionTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_page_renders_the_description_field(): void
     {
         $this->get(route('partner.structure.hotel.description'))
@@ -39,6 +43,20 @@ class PartnerHotelDescriptionTest extends TestCase
         Livewire::test(HotelDescription::class)
             ->set('description', 'Un accogliente hotel pet-friendly nel cuore della città.')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.hotel.rooms'));
+
+        $this->assertDatabaseHas('structure_drafts', [
+            'description' => 'Un accogliente hotel pet-friendly nel cuore della città.',
+            'current_step' => 4,
+        ]);
+    }
+
+    public function test_it_rehydrates_the_saved_description(): void
+    {
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 4, 'description' => 'Bella struttura']);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(HotelDescription::class)->assertSet('description', 'Bella struttura');
     }
 }

@@ -3,11 +3,15 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\HotelAnimalServices;
+use App\Models\Structure\StructureDraft;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerHotelAnimalServicesTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_page_renders_the_options(): void
     {
         $this->get(route('partner.structure.hotel.animal-services'))
@@ -26,7 +30,10 @@ class PartnerHotelAnimalServicesTest extends TestCase
             ->set('services', ['omaggio', 'area_animali'])
             ->assertSet('services', ['omaggio', 'area_animali'])
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.hotel.smartbox'));
+
+        $this->assertDatabaseHas('structure_drafts', ['current_step' => 8]);
     }
 
     public function test_altro_reveals_the_detail_textarea(): void
@@ -35,5 +42,13 @@ class PartnerHotelAnimalServicesTest extends TestCase
             ->assertDontSee(__('partner.hotel_animal_services.other_placeholder'))
             ->set('services', ['altro'])
             ->assertSee(__('partner.hotel_animal_services.other_placeholder'));
+    }
+
+    public function test_it_rehydrates_the_saved_services(): void
+    {
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 8, 'animal_services' => ['omaggio']]);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(HotelAnimalServices::class)->assertSet('services', ['omaggio']);
     }
 }

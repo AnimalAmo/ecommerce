@@ -3,11 +3,15 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\HotelSmartbox;
+use App\Models\Structure\StructureDraft;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerHotelSmartboxTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_page_renders_the_consent_and_types(): void
     {
         $this->get(route('partner.structure.hotel.smartbox'))
@@ -43,6 +47,17 @@ class PartnerHotelSmartboxTest extends TestCase
             ->set('consent', 'si')
             ->set('types', ['tutta', 'benessere'])
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.hotel.photos'));
+
+        $this->assertDatabaseHas('structure_drafts', ['smartbox_consent' => 'si', 'current_step' => 9]);
+    }
+
+    public function test_it_rehydrates_the_saved_consent(): void
+    {
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 9, 'smartbox_consent' => 'no']);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(HotelSmartbox::class)->assertSet('consent', 'no');
     }
 }

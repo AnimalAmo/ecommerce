@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Partner;
 
+use App\Livewire\Concerns\InteractsWithStructureDraft;
 use Livewire\Component;
 
 class HotelServices extends Component
 {
+    use InteractsWithStructureDraft;
+
     /** Servizi struttura selezionati (multi-scelta). */
     public array $services = [];
 
@@ -24,6 +27,16 @@ class HotelServices extends Component
 
     /** Regole della struttura (multi-scelta). */
     public array $rules = [];
+
+    public function mount(): void
+    {
+        $draft = $this->draft();
+        $this->services = $draft->services ?? [];
+        $this->additional = $draft->additional_services ?? [];
+        $this->additionalOther = $draft->additional_other ?? '';
+        $this->mealTimes = $draft->meal_times ?: $this->mealTimes;
+        $this->rules = $draft->rules ?? [];
+    }
 
     /** Orari selezionabili (mezz'ora): 00:00 → 23:30. */
     public function times(): array
@@ -51,7 +64,14 @@ class HotelServices extends Component
             'rules.*' => ['string'],
         ]);
 
-        // TODO: advance to step 8 of 11 of the structure creation flow.
+        $this->saveStep([
+            'services' => $this->services,
+            'additional_services' => $this->additional,
+            'additional_other' => $this->additionalOther,
+            'meal_times' => $this->mealTimes,
+            'rules' => $this->rules,
+        ], 7);
+        $this->redirectRoute('partner.structure.hotel.animal-services');
     }
 
     public function render()
