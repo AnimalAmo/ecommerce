@@ -19,46 +19,68 @@ class PartnerSmartboxDescriptionTest extends TestCase
             ->assertSee(__('partner.smartbox_description.heading'))
             ->assertSee(__('partner.smartbox_description.step'))
             ->assertSee(__('partner.smartbox_description.section'))
-            ->assertSee(__('partner.smartbox_description.detailed_label'));
+            ->assertSee(__('partner.smartbox_description.detailed_label'))
+            ->assertSee(__('partner.locale_it'))
+            ->assertSee(__('partner.locale_en'));
     }
 
-    public function test_next_requires_both_descriptions(): void
+    public function test_next_requires_both_italian_descriptions(): void
     {
         Livewire::test(SmartboxDescription::class)
-            ->set('description', '')
-            ->set('detailedDescription', '')
+            ->set('description.en', 'Only English')
+            ->set('detailedDescription.en', 'Only English detailed')
             ->call('next')
-            ->assertHasErrors(['description', 'detailedDescription']);
+            ->assertHasErrors(['description.it', 'detailedDescription.it']);
     }
 
-    public function test_next_saves_both_descriptions_and_advances(): void
+    public function test_next_saves_the_translations_and_advances(): void
     {
         Livewire::test(SmartboxDescription::class)
-            ->set('description', 'Un weekend di coccole per te e il tuo cane.')
-            ->set('detailedDescription', 'Due notti in una struttura pet-friendly con colazione.')
+            ->set('description.it', 'Un weekend di coccole per te e il tuo cane.')
+            ->set('description.en', 'A pampering weekend for you and your dog.')
+            ->set('detailedDescription.it', 'Due notti in una struttura pet-friendly con colazione.')
+            ->set('detailedDescription.en', 'Two nights in a pet-friendly property with breakfast.')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.smartbox.duration'));
 
-        $this->assertDatabaseHas('structure_drafts', [
-            'description' => 'Un weekend di coccole per te e il tuo cane.',
-            'detailed_description' => 'Due notti in una struttura pet-friendly con colazione.',
-            'current_step' => 3,
-        ]);
+        $draft = StructureDraft::first();
+        $this->assertSame('Un weekend di coccole per te e il tuo cane.', $draft->getTranslation('description', 'it'));
+        $this->assertSame('A pampering weekend for you and your dog.', $draft->getTranslation('description', 'en'));
+        $this->assertSame('Due notti in una struttura pet-friendly con colazione.', $draft->getTranslation('detailed_description', 'it'));
+        $this->assertSame('Two nights in a pet-friendly property with breakfast.', $draft->getTranslation('detailed_description', 'en'));
+        $this->assertSame(3, $draft->current_step);
     }
 
-    public function test_it_rehydrates_the_saved_descriptions(): void
+    public function test_english_is_optional_and_falls_back_to_italian(): void
+    {
+        Livewire::test(SmartboxDescription::class)
+            ->set('description.it', 'Un weekend di coccole per te e il tuo cane.')
+            ->set('detailedDescription.it', 'Due notti in una struttura pet-friendly con colazione.')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft = StructureDraft::first();
+        // Nessuna traduzione EN salvata: fallback sull'italiano.
+        $this->assertSame('Un weekend di coccole per te e il tuo cane.', $draft->getTranslation('description', 'en'));
+        $this->assertSame(['it' => 'Un weekend di coccole per te e il tuo cane.'], $draft->getTranslations('description'));
+        $this->assertSame(['it' => 'Due notti in una struttura pet-friendly con colazione.'], $draft->getTranslations('detailed_description'));
+    }
+
+    public function test_it_rehydrates_the_saved_translations(): void
     {
         $draft = StructureDraft::create([
             'status' => 'draft',
             'current_step' => 3,
-            'description' => 'Breve',
-            'detailed_description' => 'Dettagliata',
+            'description' => ['it' => 'Breve', 'en' => 'Short'],
+            'detailed_description' => ['it' => 'Dettagliata', 'en' => 'Detailed'],
         ]);
         session(['structure_draft_id' => $draft->id]);
 
         Livewire::test(SmartboxDescription::class)
-            ->assertSet('description', 'Breve')
-            ->assertSet('detailedDescription', 'Dettagliata');
+            ->assertSet('description.it', 'Breve')
+            ->assertSet('description.en', 'Short')
+            ->assertSet('detailedDescription.it', 'Dettagliata')
+            ->assertSet('detailedDescription.en', 'Detailed');
     }
 }

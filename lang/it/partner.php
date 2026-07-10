@@ -60,6 +60,8 @@ return [
     | Chrome B2B (header + footer dell'area partner)
     |--------------------------------------------------------------------------
     */
+    'locale_it' => 'IT',
+    'locale_en' => 'EN',
     'nav_help' => 'Aiuto',
     'nav_dashboard' => 'Dashboard',
     'nav_create_service' => 'Crea servizio',

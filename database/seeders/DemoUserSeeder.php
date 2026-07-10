@@ -104,8 +104,9 @@ class DemoUserSeeder extends Seeder
         ];
 
         foreach ($services as $data) {
+            // Match su user+categoria (name è una colonna JSON translatable, non confrontabile).
             StructureDraft::updateOrCreate(
-                ['user_id' => $partner->id, 'name' => $data['name']],
+                ['user_id' => $partner->id, 'service_category' => $data['service_category']],
                 array_merge($data, ['user_id' => $partner->id, 'status' => StructureDraft::STATUS_COMPLETED]),
             );
         }

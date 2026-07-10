@@ -78,9 +78,18 @@
                                     </div>
                                 @endif
 
-                                {{-- Altro: descrizione libera --}}
+                                {{-- Altro: descrizione libera (localizzata it/en) --}}
                                 @if ($key === 'altro' && in_array('altro', $form->additional, true))
-                                    <flux:textarea wire:model="form.additionalOther" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_services.other_placeholder') }}" class="!mt-3 !rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                    <div class="mt-3">
+                                        <x-partner.locale-tabs>
+                                            <x-slot:it>
+                                                <flux:textarea wire:model="form.additionalOther.it" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_services.other_placeholder') }}" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                            </x-slot:it>
+                                            <x-slot:en>
+                                                <flux:textarea wire:model="form.additionalOther.en" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_services.other_placeholder') }} (EN)" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                            </x-slot:en>
+                                        </x-partner.locale-tabs>
+                                    </div>
                                 @endif
                             </div>
                         @endforeach

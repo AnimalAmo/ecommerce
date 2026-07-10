@@ -20,24 +20,49 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.smartbox_description.helper') }}</p>
 
                 <form wire:submit="next" class="mt-6">
-                    {{-- Descrizione breve (752x84, max 200) --}}
-                    <div x-data="{ len: @js(mb_strlen($description)) }">
-                        <flux:textarea wire:model="description" maxlength="200" rows="3" x-on:input="len = $event.target.value.length" placeholder="{{ __('partner.smartbox_description.placeholder') }}" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
-                        <p class="mt-2 text-right text-[13px] text-[#959595]"><span x-text="200 - len">200</span> {{ __('partner.smartbox_description.chars') }}</p>
-                    </div>
-                    @error('description')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
+                    {{-- Descrizioni localizzate it/en (breve 752x84 + dettagliata 752x188, max 200) --}}
+                    <x-partner.locale-tabs>
+                        <x-slot:it>
+                            {{-- Descrizione breve (752x84, max 200) --}}
+                            <div x-data="{ len: @js(mb_strlen($description['it'])) }">
+                                <flux:textarea wire:model="description.it" maxlength="200" rows="3" x-on:input="len = $event.target.value.length" placeholder="{{ __('partner.smartbox_description.placeholder') }}" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                <p class="mt-2 text-right text-[13px] text-[#959595]"><span x-text="200 - len">200</span> {{ __('partner.smartbox_description.chars') }}</p>
+                            </div>
+                            @error('description.it')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
 
-                    {{-- Descrizione dettagliata (752x188, max 200) --}}
-                    <p class="mt-4 text-[15px] font-medium text-[#959595]">{{ __('partner.smartbox_description.detailed_label') }}</p>
-                    <div class="mt-3" x-data="{ len: @js(mb_strlen($detailedDescription)) }">
-                        <flux:textarea wire:model="detailedDescription" maxlength="200" rows="6" x-on:input="len = $event.target.value.length" placeholder="{{ __('partner.smartbox_description.placeholder') }}" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
-                        <p class="mt-2 text-right text-[13px] text-[#959595]"><span x-text="200 - len">200</span> {{ __('partner.smartbox_description.chars') }}</p>
-                    </div>
-                    @error('detailedDescription')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
+                            {{-- Descrizione dettagliata (752x188, max 200) --}}
+                            <p class="mt-4 text-[15px] font-medium text-[#959595]">{{ __('partner.smartbox_description.detailed_label') }}</p>
+                            <div class="mt-3" x-data="{ len: @js(mb_strlen($detailedDescription['it'])) }">
+                                <flux:textarea wire:model="detailedDescription.it" maxlength="200" rows="6" x-on:input="len = $event.target.value.length" placeholder="{{ __('partner.smartbox_description.placeholder') }}" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                <p class="mt-2 text-right text-[13px] text-[#959595]"><span x-text="200 - len">200</span> {{ __('partner.smartbox_description.chars') }}</p>
+                            </div>
+                            @error('detailedDescription.it')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </x-slot:it>
+                        <x-slot:en>
+                            {{-- Descrizione breve (752x84, max 200) --}}
+                            <div x-data="{ len: @js(mb_strlen($description['en'])) }">
+                                <flux:textarea wire:model="description.en" maxlength="200" rows="3" x-on:input="len = $event.target.value.length" placeholder="{{ __('partner.smartbox_description.placeholder') }} (EN)" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                <p class="mt-2 text-right text-[13px] text-[#959595]"><span x-text="200 - len">200</span> {{ __('partner.smartbox_description.chars') }}</p>
+                            </div>
+                            @error('description.en')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+
+                            {{-- Descrizione dettagliata (752x188, max 200) --}}
+                            <p class="mt-4 text-[15px] font-medium text-[#959595]">{{ __('partner.smartbox_description.detailed_label') }} (EN)</p>
+                            <div class="mt-3" x-data="{ len: @js(mb_strlen($detailedDescription['en'])) }">
+                                <flux:textarea wire:model="detailedDescription.en" maxlength="200" rows="6" x-on:input="len = $event.target.value.length" placeholder="{{ __('partner.smartbox_description.placeholder') }} (EN)" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                <p class="mt-2 text-right text-[13px] text-[#959595]"><span x-text="200 - len">200</span> {{ __('partner.smartbox_description.chars') }}</p>
+                            </div>
+                            @error('detailedDescription.en')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </x-slot:en>
+                    </x-partner.locale-tabs>
 
                     {{-- Azioni: Indietro (a titolo) + Avanti (pill scuro) --}}
                     <div class="mt-6 flex items-center justify-end gap-6">

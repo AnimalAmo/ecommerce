@@ -19,6 +19,8 @@ class PartnerActivityDescriptionTest extends TestCase
             ->assertSee(__('partner.activity_description.heading'))
             ->assertSee(__('partner.activity_description.step'))
             ->assertSee(__('partner.activity_description.section'))
+            ->assertSee(__('partner.locale_it'))
+            ->assertSee(__('partner.locale_en'))
             ->assertSee(__('partner.activity_description.chars'))
             ->assertSee(__('partner.activity_description.next'));
     }
@@ -31,12 +33,16 @@ class PartnerActivityDescriptionTest extends TestCase
         Livewire::test(ActivityDescription::class)
             ->assertSet('isActivity', false)
             ->assertDontSee(__('partner.activity_description.detailed_label'))
-            ->set('description', 'Un evento cinofilo imperdibile.')
+            ->set('description.it', 'Un evento cinofilo imperdibile.')
+            ->set('description.en', 'An unmissable dog event.')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.activity.info'));
 
-        $this->assertDatabaseHas('structure_drafts', ['description' => 'Un evento cinofilo imperdibile.', 'current_step' => 4]);
+        $draft->refresh();
+        $this->assertSame('Un evento cinofilo imperdibile.', $draft->getTranslation('description', 'it'));
+        $this->assertSame('An unmissable dog event.', $draft->getTranslation('description', 'en'));
+        $this->assertSame(4, $draft->current_step);
     }
 
     public function test_activity_also_requires_the_detailed_description(): void
@@ -47,21 +53,38 @@ class PartnerActivityDescriptionTest extends TestCase
         Livewire::test(ActivityDescription::class)
             ->assertSet('isActivity', true)
             ->assertSee(__('partner.activity_description.detailed_label'))
-            ->set('description', 'Passeggiata guidata.')
+            ->set('description.it', 'Passeggiata guidata.')
             ->call('next')
-            ->assertHasErrors('detailedDescription')
-            ->set('detailedDescription', 'Percorso di 3 ore tra i boschi con soste.')
+            ->assertHasErrors('detailedDescription.it')
+            ->set('detailedDescription.it', 'Percorso di 3 ore tra i boschi con soste.')
             ->call('next')
             ->assertHasNoErrors();
 
-        $this->assertDatabaseHas('structure_drafts', ['detailed_description' => 'Percorso di 3 ore tra i boschi con soste.']);
+        $draft->refresh();
+        $this->assertSame('Percorso di 3 ore tra i boschi con soste.', $draft->getTranslation('detailed_description', 'it'));
+    }
+
+    public function test_english_is_optional_and_falls_back_to_italian(): void
+    {
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 4, 'type' => 'eventi']);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(ActivityDescription::class)
+            ->set('description.it', 'Un evento cinofilo imperdibile.')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+        // Nessuna traduzione EN salvata: fallback sull'italiano.
+        $this->assertSame('Un evento cinofilo imperdibile.', $draft->getTranslation('description', 'en'));
+        $this->assertSame(['it' => 'Un evento cinofilo imperdibile.'], $draft->getTranslations('description'));
     }
 
     public function test_rejects_a_description_over_200_chars(): void
     {
         Livewire::test(ActivityDescription::class)
-            ->set('description', str_repeat('a', 201))
+            ->set('description.it', str_repeat('a', 201))
             ->call('next')
-            ->assertHasErrors('description');
+            ->assertHasErrors('description.it');
     }
 }
