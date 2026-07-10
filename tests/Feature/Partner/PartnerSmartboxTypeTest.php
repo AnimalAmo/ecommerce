@@ -46,7 +46,8 @@ class PartnerSmartboxTypeTest extends TestCase
         Livewire::test(SmartboxType::class)
             ->set('type', 'benessere')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.smartbox.name'));
 
         $this->assertDatabaseHas('structure_drafts', ['type' => 'benessere', 'current_step' => 1]);
     }

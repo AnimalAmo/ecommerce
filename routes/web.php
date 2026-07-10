@@ -41,6 +41,7 @@ use App\Livewire\Partner\HotelSmartbox as PartnerHotelSmartbox;
 use App\Livewire\Partner\HotelServices as PartnerHotelServices;
 use App\Livewire\Partner\HotelTitle as PartnerHotelTitle;
 use App\Livewire\Partner\PartnerRegisterStep1;
+use App\Livewire\Partner\SmartboxName as PartnerSmartboxName;
 use App\Livewire\Partner\SmartboxType as PartnerSmartboxType;
 use App\Livewire\Partner\PartnerRegisterStep2;
 use App\Livewire\Partner\StructureType as PartnerStructureType;
@@ -99,6 +100,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.type'), PartnerStructureType::class)->name('partner.structure.type');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.type'), PartnerActivityType::class)->name('partner.activity.type');
     Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.type'), PartnerSmartboxType::class)->name('partner.smartbox.type');
+    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.name'), PartnerSmartboxName::class)->name('partner.smartbox.name');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.name'), PartnerActivityName::class)->name('partner.activity.name');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.location'), PartnerActivityLocation::class)->name('partner.activity.location');
     Route::get(LaravelLocalization::transRoute('routes.partner.activity.description'), PartnerActivityDescription::class)->name('partner.activity.description');

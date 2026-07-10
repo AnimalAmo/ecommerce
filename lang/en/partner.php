@@ -241,6 +241,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Smartbox — title (step 2 of 12)
+    |--------------------------------------------------------------------------
+    */
+    'smartbox_name' => [
+        'title' => 'AnimalAmo — Smartbox title',
+        'step' => 'Step 2 of 12',
+        'heading' => 'The smartbox title',
+        'section' => 'What is the title of your smartbox?',
+        'helper' => 'It will help users find your structure quickly',
+        'field_label' => 'Smartbox title',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Enter the smartbox title.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Create a smartbox — type (step 1 of 12)
     |--------------------------------------------------------------------------
     */

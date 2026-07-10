@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Livewire\Partner;
+
+use App\Livewire\Concerns\InteractsWithStructureDraft;
+use Livewire\Component;
+
+class SmartboxName extends Component
+{
+    use InteractsWithStructureDraft;
+
+    /** Titolo della smartbox. */
+    public string $name = '';
+
+    public function mount(): void
+    {
+        $this->name = $this->draft()->name ?? '';
+    }
+
+    public function next(): void
+    {
+        $this->validate(
+            ['name' => ['required', 'string', 'max:128']],
+            ['name.required' => __('partner.smartbox_name.error_required')],
+        );
+
+        $this->saveStep(['name' => $this->name], 2);
+
+        // TODO: advance to step 3 of 12 of the smartbox creation flow once it exists.
+    }
+
+    public function render()
+    {
+        return view('livewire.partner.smartbox-name')
+            ->title(__('partner.smartbox_name.title'));
+    }
+}

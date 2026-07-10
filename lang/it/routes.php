@@ -32,6 +32,7 @@ return [
     'partner.structure.type' => 'partner/struttura/tipologia',
     'partner.activity.type' => 'partner/attivita/tipologia',
     'partner.smartbox.type' => 'partner/smartbox/tipologia',
+    'partner.smartbox.name' => 'partner/smartbox/titolo',
     'partner.activity.name' => 'partner/attivita/nome',
     'partner.activity.location' => 'partner/attivita/luogo',
     'partner.activity.description' => 'partner/attivita/descrizione',
