@@ -4,7 +4,7 @@
     $linkActive = 'bg-[#2B2B2B] font-bold text-white';
     $linkIdle = 'font-normal text-[#0D171A] hover:bg-[#2B2B2B] hover:text-white';
 @endphp
-<nav class="w-full shrink-0 md:w-[260px]">
+<nav class="w-full shrink-0 py-6 md:w-[260px]">
     <h2 class="mb-6 text-2xl font-bold text-[#0D171A]">{{ __('partner.profile.title') }}</h2>
 
     <ul class="flex flex-col gap-1">
