@@ -125,6 +125,47 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Attività/eventi — steps 6-10 (le liste riusano le stringhe di hotel_*)
+    |--------------------------------------------------------------------------
+    */
+    'activity_included' => [
+        'title' => 'AnimalAmo — Cosa è incluso',
+        'step' => 'Step 6 di 10',
+        'heading' => 'Cosa è incluso?',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi presenti (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+    ],
+    'activity_animal_services' => [
+        'title' => 'AnimalAmo — Servizi animali',
+        'step' => 'Step 7 di 10',
+        'heading' => 'Cos’è incluso per gli animali?',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi che offri (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+    ],
+    'activity_cost' => [
+        'title' => 'AnimalAmo — Costo',
+        'step' => 'Step 8 di 10',
+        'heading' => 'Costo dell’attività',
+        'section' => 'Seleziona un’opzione',
+        'opt_paid' => 'A pagamento',
+        'opt_free' => 'Gratuito',
+        'price_label' => 'Costo a persona',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Seleziona un’opzione di costo.',
+    ],
+    'activity_photos' => [
+        'title' => 'AnimalAmo — Foto',
+        'step' => 'Step 9 di 10',
+    ],
+    'activity_cancellation' => [
+        'title' => 'AnimalAmo — Cancellazione',
+        'step' => 'Step 10 di 10',
+        'save' => 'Salva',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Attività/eventi — informazioni generali (step 5 di 10)
     |--------------------------------------------------------------------------
     */

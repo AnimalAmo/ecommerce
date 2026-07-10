@@ -127,6 +127,36 @@ class LocalizationTest extends TestCase
         $this->get('/en/partner/activity/general-info')->assertOk();
     }
 
+    public function test_english_partner_activity_included_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/whats-included');
+        $this->get('/en/partner/activity/whats-included')->assertOk();
+    }
+
+    public function test_english_partner_activity_animal_services_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/animal-services');
+        $this->get('/en/partner/activity/animal-services')->assertOk();
+    }
+
+    public function test_english_partner_activity_cost_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/cost');
+        $this->get('/en/partner/activity/cost')->assertOk();
+    }
+
+    public function test_english_partner_activity_photos_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/photos');
+        $this->get('/en/partner/activity/photos')->assertOk();
+    }
+
+    public function test_english_partner_activity_cancellation_url_uses_en_prefix_and_translated_slug(): void
+    {
+        $this->reloadRoutesFor('/en/partner/activity/cancellation');
+        $this->get('/en/partner/activity/cancellation')->assertOk();
+    }
+
     public function test_english_partner_hotel_title_url_uses_en_prefix_and_translated_slug(): void
     {
         $this->reloadRoutesFor('/en/partner/structure/hotel/title');

@@ -63,8 +63,7 @@ class ActivityInfo extends Component
         }
 
         $this->saveStep($attributes, 5);
-
-        // TODO: advance to step 6 of 10 ("attività/eventi - costo") once it exists.
+        $this->redirectRoute('partner.activity.included');
     }
 
     public function render()

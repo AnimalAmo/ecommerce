@@ -125,6 +125,47 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity/event — steps 6-10 (lists reuse the hotel_* strings)
+    |--------------------------------------------------------------------------
+    */
+    'activity_included' => [
+        'title' => 'AnimalAmo — What is included',
+        'step' => 'Step 6 of 10',
+        'heading' => 'What is included?',
+        'section' => 'Add the information to describe the services available (you can select more than one option)',
+        'helper' => 'It will help the user evaluate the structure.',
+    ],
+    'activity_animal_services' => [
+        'title' => 'AnimalAmo — Animal services',
+        'step' => 'Step 7 of 10',
+        'heading' => 'What is included for the animals?',
+        'section' => 'Add the information to describe the services you offer (you can select more than one option)',
+        'helper' => 'It will help the user evaluate the structure.',
+    ],
+    'activity_cost' => [
+        'title' => 'AnimalAmo — Cost',
+        'step' => 'Step 8 of 10',
+        'heading' => 'Activity cost',
+        'section' => 'Select an option',
+        'opt_paid' => 'Paid',
+        'opt_free' => 'Free',
+        'price_label' => 'Cost per person',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Select a cost option.',
+    ],
+    'activity_photos' => [
+        'title' => 'AnimalAmo — Photos',
+        'step' => 'Step 9 of 10',
+    ],
+    'activity_cancellation' => [
+        'title' => 'AnimalAmo — Cancellation',
+        'step' => 'Step 10 of 10',
+        'save' => 'Save',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity/event — general information (step 5 of 10)
     |--------------------------------------------------------------------------
     */

@@ -34,6 +34,8 @@ class StructureDraft extends Model
         'date_end',
         'time_start',
         'time_end',
+        'price_type',
+        'price_per_person',
         'rooms',
         'checkin_from',
         'checkin_to',

@@ -34,7 +34,8 @@ class PartnerActivityInfoTest extends TestCase
             ->set('dateStart', '2026-08-01')
             ->set('dateEnd', '2026-08-03')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.included'));
 
         $this->assertDatabaseHas('structure_drafts', ['current_step' => 5]);
     }
