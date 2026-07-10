@@ -20,6 +20,7 @@ use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
 use App\Livewire\Partner\CreateService as PartnerCreateService;
 use App\Livewire\Partner\Dashboard as PartnerDashboard;
+use App\Livewire\Partner\HotelTitle as PartnerHotelTitle;
 use App\Livewire\Partner\PartnerRegisterStep1;
 use App\Livewire\Partner\PartnerRegisterStep2;
 use App\Livewire\Partner\StructureType as PartnerStructureType;
@@ -76,6 +77,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.partner.dashboard'), PartnerDashboard::class)->name('partner.dashboard');
     Route::get(LaravelLocalization::transRoute('routes.partner.service.create'), PartnerCreateService::class)->name('partner.service.create');
     Route::get(LaravelLocalization::transRoute('routes.partner.structure.type'), PartnerStructureType::class)->name('partner.structure.type');
+    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.title'), PartnerHotelTitle::class)->name('partner.structure.hotel.title');
 });
 
 // Non-localized routes (no language prefix).

@@ -148,6 +148,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — structure name (step 2 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_title' => [
+        'title' => 'AnimalAmo — Structure name',
+        'step' => 'Step 2 of 11',
+        'heading' => 'Your structure name',
+        'section' => 'What is the name of your structure?',
+        'helper' => 'It will help users find your structure quickly',
+        'field_label' => 'Structure name',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Enter the structure name.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Structure type (step 1 of 11 of the accommodation flow)
     |--------------------------------------------------------------------------
     */

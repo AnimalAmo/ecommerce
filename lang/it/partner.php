@@ -148,6 +148,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — nome struttura (step 2 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_title' => [
+        'title' => 'AnimalAmo — Nome struttura',
+        'step' => 'Step 2 di 11',
+        'heading' => 'Il nome della tua struttura',
+        'section' => 'Qual’è il nome della tua struttura?',
+        'helper' => 'Aiuterà gli utenti a trovare la tua struttura velocemente',
+        'field_label' => 'Nome struttura',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Inserisci il nome della struttura.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Tipologia struttura (step 1 di 11 del flusso struttura ricettiva)
     |--------------------------------------------------------------------------
     */
