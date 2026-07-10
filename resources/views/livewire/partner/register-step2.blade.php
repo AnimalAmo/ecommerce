@@ -26,7 +26,7 @@
                 <h2 class="mt-4 text-lg font-medium text-[#0D171A]">{{ __('partner.register2.section') }}</h2>
 
                 {{-- Scelta tipologia servizio: flux radio group, variant cards, in colonna --}}
-                <flux:radio.group wire:model="service" variant="cards" class="mt-6 flex-col">
+                <flux:radio.group wire:model="service" variant="cards" class="mt-6 flex-col [&_[data-flux-radio-cards]]:flex-row-reverse [&_[data-flux-radio-cards]]:justify-end [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33] [&_[data-flux-subheading]]:!text-sm [&_[data-flux-subheading]]:!text-[#627277]">
                     @foreach ($services as $key => [$titleKey, $subtitleKey])
                         <flux:radio value="{{ $key }}" wire:key="svc-{{ $key }}" :label="__($titleKey)" :description="__($subtitleKey)" />
                     @endforeach
