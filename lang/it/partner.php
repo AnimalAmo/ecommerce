@@ -148,6 +148,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tipologia struttura (step 1 di 11 del flusso struttura ricettiva)
+    |--------------------------------------------------------------------------
+    */
+    'structure_type' => [
+        'title' => 'AnimalAmo — Tipologia struttura',
+        'step' => 'Step 1 di 11',
+        'hotel' => 'Hotel',
+        'bb' => 'B&B',
+        'agriturismo' => 'Agriturismo',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+        'error_required' => 'Seleziona una tipologia di struttura.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Dashboard B2B
     |--------------------------------------------------------------------------
     */

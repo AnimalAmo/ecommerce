@@ -148,6 +148,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Structure type (step 1 of 11 of the accommodation flow)
+    |--------------------------------------------------------------------------
+    */
+    'structure_type' => [
+        'title' => 'AnimalAmo — Structure type',
+        'step' => 'Step 1 of 11',
+        'hotel' => 'Hotel',
+        'bb' => 'B&B',
+        'agriturismo' => 'Farm stay',
+        'back' => 'Back',
+        'next' => 'Next',
+        'error_required' => 'Select a structure type.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | B2B dashboard
     |--------------------------------------------------------------------------
     */

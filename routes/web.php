@@ -22,6 +22,7 @@ use App\Livewire\Partner\CreateService as PartnerCreateService;
 use App\Livewire\Partner\Dashboard as PartnerDashboard;
 use App\Livewire\Partner\PartnerRegisterStep1;
 use App\Livewire\Partner\PartnerRegisterStep2;
+use App\Livewire\Partner\StructureType as PartnerStructureType;
 use App\Livewire\Partner\WorkWithUs;
 use App\Livewire\Partner\WorkWithUsThanks;
 use App\Livewire\Profile\Profile;
@@ -74,6 +75,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.partner.register.step2'), PartnerRegisterStep2::class)->name('partner.register.step2');
     Route::get(LaravelLocalization::transRoute('routes.partner.dashboard'), PartnerDashboard::class)->name('partner.dashboard');
     Route::get(LaravelLocalization::transRoute('routes.partner.service.create'), PartnerCreateService::class)->name('partner.service.create');
+    Route::get(LaravelLocalization::transRoute('routes.partner.structure.type'), PartnerStructureType::class)->name('partner.structure.type');
 });
 
 // Non-localized routes (no language prefix).
