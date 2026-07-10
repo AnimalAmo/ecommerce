@@ -11,13 +11,30 @@
             <a href="#" class="font-normal text-black hover:font-bold">{{ __('partner.nav_bookings') }}</a>
             <a href="{{ route('partner.profile') }}" class="{{ request()->routeIs('partner.profile', 'partner.profile.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold' }}">{{ __('partner.nav_profile') }}</a>
         </nav>
-        <flux:dropdown position="bottom" align="end" class="shrink-0">
-            <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="font-sans !text-[15px] !font-normal !text-ink">{{ __('partner.nav_help') }}</flux:button>
-            <flux:menu>
-                <flux:menu.item href="#">{{ __('partner.help_contact') }}</flux:menu.item>
-                <flux:menu.item href="#">{{ __('partner.help_support') }}</flux:menu.item>
-                <flux:menu.item href="#">{{ __('partner.help_faq') }}</flux:menu.item>
-            </flux:menu>
-        </flux:dropdown>
+        <div class="flex shrink-0 items-center gap-2">
+            <flux:dropdown position="bottom" align="end">
+                <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="font-sans !text-[15px] !font-normal !text-ink">{{ __('partner.nav_help') }}</flux:button>
+                <flux:menu>
+                    <flux:menu.item href="#">{{ __('partner.help_contact') }}</flux:menu.item>
+                    <flux:menu.item href="#">{{ __('partner.help_support') }}</flux:menu.item>
+                    <flux:menu.item href="#">{{ __('partner.help_faq') }}</flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+
+            {{-- Menu account partner: profilo + logout --}}
+            <flux:dropdown position="bottom" align="end">
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('partner.nav_profile') }}" class="!rounded-full !text-ink hover:!text-brand-cyan">
+                    <flux:icon.profile class="size-5" />
+                </flux:button>
+                <flux:menu>
+                    <flux:menu.item href="{{ route('partner.profile') }}">{{ __('partner.nav_profile') }}</flux:menu.item>
+                    <flux:menu.separator />
+                    <form method="POST" action="{{ route('logout') }}" class="w-full">
+                        @csrf
+                        <flux:menu.item as="button" type="submit" class="w-full">{{ __('nav.logout') }}</flux:menu.item>
+                    </form>
+                </flux:menu>
+            </flux:dropdown>
+        </div>
     </div>
 </header>

@@ -20,7 +20,7 @@
 
                     <form wire:submit="save" class="mt-8">
                         <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-3">
-                            <div class="md:col-span-2">
+                            <div class="md:col-span-2 md:grid-cols-2 grid-cols-1 grid gap-x-4 gap-y-5 ">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.profile.account_holder') }} *</flux:label>
                                     <flux:input wire:model="form.accountHolder" class="{{ $fieldClass }}" />
@@ -38,11 +38,11 @@
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.profile.bic') }} *</flux:label>
                                     <flux:input wire:model="form.bic" class="{{ $fieldClass }}" />
                                 </flux:field>
-                            </div>
-                        </div>
 
-                        <div class="mt-10 flex items-center justify-end">
-                            <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-10 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.profile.save') }}</flux:button>
+                                <div class="flex justify-end md:col-span-2">
+                                    <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-10 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.profile.save') }}</flux:button>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
