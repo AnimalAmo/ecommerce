@@ -33,7 +33,8 @@ class PartnerActivityDescriptionTest extends TestCase
             ->assertDontSee(__('partner.activity_description.detailed_label'))
             ->set('description', 'Un evento cinofilo imperdibile.')
             ->call('next')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.info'));
 
         $this->assertDatabaseHas('structure_drafts', ['description' => 'Un evento cinofilo imperdibile.', 'current_step' => 4]);
     }

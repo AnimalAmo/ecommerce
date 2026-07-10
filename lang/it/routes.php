@@ -34,6 +34,7 @@ return [
     'partner.activity.name' => 'partner/attivita/nome',
     'partner.activity.location' => 'partner/attivita/luogo',
     'partner.activity.description' => 'partner/attivita/descrizione',
+    'partner.activity.info' => 'partner/attivita/informazioni-generali',
     'partner.structure.hotel.title' => 'partner/struttura/hotel/titolo',
     'partner.structure.hotel.location' => 'partner/struttura/hotel/luogo',
     'partner.structure.hotel.description' => 'partner/struttura/hotel/descrizione',

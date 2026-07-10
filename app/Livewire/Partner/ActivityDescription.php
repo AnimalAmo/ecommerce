@@ -44,8 +44,7 @@ class ActivityDescription extends Component
         }
 
         $this->saveStep($attributes, 4);
-
-        // TODO: advance to step 5 of 10 ("attività/eventi - info generali") once it exists.
+        $this->redirectRoute('partner.activity.info');
     }
 
     public function render()

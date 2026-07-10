@@ -125,6 +125,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Activity/event — general information (step 5 of 10)
+    |--------------------------------------------------------------------------
+    */
+    'activity_info' => [
+        'title' => 'AnimalAmo — General information',
+        'step' => 'Step 5 of 10',
+        'heading' => 'General information',
+        'section_activity' => 'Add the information about your activity',
+        'section_event' => 'Add the information about your event',
+        'date_start' => 'Start date',
+        'date_end' => 'End date',
+        'time_start' => 'Start time',
+        'time_end' => 'End time',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity/event — description (step 4 of 10)
     |--------------------------------------------------------------------------
     */

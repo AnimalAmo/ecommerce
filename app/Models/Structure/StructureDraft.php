@@ -30,6 +30,10 @@ class StructureDraft extends Model
         'meeting_point',
         'description',
         'detailed_description',
+        'date_start',
+        'date_end',
+        'time_start',
+        'time_end',
         'rooms',
         'checkin_from',
         'checkin_to',
@@ -56,6 +60,8 @@ class StructureDraft extends Model
     {
         return [
             'current_step' => 'integer',
+            'date_start' => 'date',
+            'date_end' => 'date',
             'rooms' => 'array',
             'meal_times' => 'array',
             'services' => 'array',
