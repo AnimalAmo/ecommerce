@@ -148,6 +148,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — payment method (step 11 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_payment' => [
+        'title' => 'AnimalAmo — Payment method',
+        'step' => 'Step 11 of 11',
+        'heading' => 'Payment method',
+        'section' => 'This information will allow you to receive payments',
+        'account_holder' => 'Account holder',
+        'iban' => 'IBAN',
+        'sdi' => 'SDI',
+        'bic' => 'BIC',
+        'later' => 'Enter later',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — photos (step 10 of 11)
     |--------------------------------------------------------------------------
     */

@@ -39,4 +39,5 @@ return [
     'partner.structure.hotel.animal-services' => 'partner/structure/hotel/animal-services',
     'partner.structure.hotel.smartbox' => 'partner/structure/hotel/smartbox',
     'partner.structure.hotel.photos' => 'partner/structure/hotel/photos',
+    'partner.structure.hotel.payment' => 'partner/structure/hotel/payment-method',
 ];
