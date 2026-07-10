@@ -148,6 +148,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — servizi animali (step 8 di 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_animal_services' => [
+        'title' => 'AnimalAmo — Servizi animali',
+        'step' => 'Step 8 di 11',
+        'heading' => 'Servizi dedicati agli animali',
+        'section' => 'Aggiungi le informazioni per descrivere i servizi che offri (puoi selezionare più di un’opzione)',
+        'helper' => 'Aiuteranno l’utente a valutare la struttura.',
+        'opt_none' => 'Nessuno',
+        'opt_welcome' => 'Omaggio di benvenuto',
+        'opt_welcome_desc' => 'Un regalo di omaggio per l’animale',
+        'opt_petsitting' => 'Pet sitting',
+        'opt_petsitting_desc' => 'Servizio di pet sitting',
+        'opt_vet' => 'Servizio Veterinario',
+        'opt_vet_desc' => 'Servizio interno alla struttura o nelle vicinanze',
+        'opt_area' => 'Area Animali',
+        'opt_area_desc' => 'Un’area dedicata agli animali',
+        'opt_other' => 'Altro',
+        'other_placeholder' => 'Descrivi il servizio',
+        'back' => 'Indietro',
+        'next' => 'Avanti',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — servizi struttura (step 7 di 11)
     |--------------------------------------------------------------------------
     */

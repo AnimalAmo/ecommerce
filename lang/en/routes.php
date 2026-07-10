@@ -36,4 +36,5 @@ return [
     'partner.structure.hotel.rooms' => 'partner/structure/hotel/rooms',
     'partner.structure.hotel.cancellation' => 'partner/structure/hotel/cancellation',
     'partner.structure.hotel.services' => 'partner/structure/hotel/services',
+    'partner.structure.hotel.animal-services' => 'partner/structure/hotel/animal-services',
 ];

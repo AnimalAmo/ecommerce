@@ -148,6 +148,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hotel — animal services (step 8 of 11)
+    |--------------------------------------------------------------------------
+    */
+    'hotel_animal_services' => [
+        'title' => 'AnimalAmo — Animal services',
+        'step' => 'Step 8 of 11',
+        'heading' => 'Services dedicated to animals',
+        'section' => 'Add the information to describe the services you offer (you can select more than one option)',
+        'helper' => 'It will help the user evaluate the structure.',
+        'opt_none' => 'None',
+        'opt_welcome' => 'Welcome gift',
+        'opt_welcome_desc' => 'A welcome gift for the animal',
+        'opt_petsitting' => 'Pet sitting',
+        'opt_petsitting_desc' => 'Pet sitting service',
+        'opt_vet' => 'Veterinary service',
+        'opt_vet_desc' => 'Service inside the structure or nearby',
+        'opt_area' => 'Animal area',
+        'opt_area_desc' => 'An area dedicated to animals',
+        'opt_other' => 'Other',
+        'other_placeholder' => 'Describe the service',
+        'back' => 'Back',
+        'next' => 'Next',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Hotel — structure services (step 7 of 11)
     |--------------------------------------------------------------------------
     */
