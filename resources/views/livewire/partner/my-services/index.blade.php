@@ -46,7 +46,7 @@
                                         </p>
                                     </div>
                                     <div class="flex shrink-0 items-center gap-2">
-                                        <flux:button variant="ghost" size="sm" square href="#" aria-label="{{ __('partner.services.edit') }}" class="!rounded-full !bg-[#FFF2E6] !text-[#FF9F3E] hover:!bg-[#FF9F3E] hover:!text-white">
+                                        <flux:button variant="ghost" size="sm" square wire:click="edit({{ $service->id }})" aria-label="{{ __('partner.services.edit') }}" class="!rounded-full !bg-[#FFF2E6] !text-[#FF9F3E] hover:!bg-[#FF9F3E] hover:!text-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
                                             <flux:icon.pencil class="h-5 w-5" />
                                         </flux:button>
                                         <flux:button variant="ghost" size="sm" square wire:click="$dispatch('delete-service', { id: {{ $service->id }} })" aria-label="{{ __('partner.services.delete') }}" class="!rounded-full !bg-[#FDEBE8] !text-[#F85933] hover:!bg-[#F85933] hover:!text-white">
