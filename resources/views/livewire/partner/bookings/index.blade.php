@@ -14,7 +14,7 @@
                     {{-- Tab famiglie (attiva: cyan + underline, accent Flux ricolorato sul cyan XD) --}}
                     <flux:tabs wire:model.live="tab" class="mt-[18px] !gap-10 !border-b-0 [--color-accent:#68CDEB] [--color-accent-content:#68CDEB]">
                         @foreach (\App\Livewire\Partner\Bookings\PartnerBookings::TABS as $family)
-                            <flux:tab name="{{ $family }}" class="!h-auto !px-0 !pb-1.5 !text-[15px] !font-semibold {{ $tab === $family ? '' : '!text-[#555555] hover:!text-ink' }}">
+                            <flux:tab name="{{ $family }}" class="!h-auto !px-0 !pt-0 !pb-[5px] !text-[15px] !leading-none !font-semibold [&_*]:!leading-none {{ $tab === $family ? '' : '!text-[#555555] hover:!text-ink' }}">
                                 {{ __('partner.bookings.tab_'.$family) }}
                             </flux:tab>
                         @endforeach
@@ -29,7 +29,7 @@
                     {{-- Un panel per famiglia, ognuno con la sua tabella --}}
                     @foreach ($panels as $family => $panel)
                         <flux:tab.panel name="{{ $family }}" class="!p-0">
-                            <flux:table class="mt-[60px] [&_th]:!px-0 [&_th]:!pr-4 [&_th]:!text-[15px] [&_th]:!font-semibold [&_th]:!text-[#959595] [&_td]:!px-0 [&_td]:!pr-4 [&_td]:!py-[19px] [&_td]:!text-[15px] [&_td]:!text-[#0D171A] [&_thead]:!border-b [&_thead]:!border-[#E2EAEB] [&_tbody_tr]:!border-b [&_tbody_tr]:!border-[#E2EAEB]">
+                            <flux:table class="mt-7 [&_th]:!px-0 [&_th]:!pr-4 [&_th]:!text-[15px] [&_th]:!font-semibold [&_th]:!text-[#959595] [&_td]:!px-0 [&_td]:!pr-4 [&_td]:!py-[19px] [&_td]:!text-[15px] [&_td]:!text-[#0D171A] [&_thead]:!border-b [&_thead]:!border-[#E2EAEB] [&_tbody_tr]:!border-b [&_tbody_tr]:!border-[#E2EAEB]">
                                 <flux:table.columns>
                                     @foreach ($panel['columns'] as $key => $label)
                                         {{-- Label Data/Validità centrata; Prezzo e N. Persone centrate anche nei valori --}}
