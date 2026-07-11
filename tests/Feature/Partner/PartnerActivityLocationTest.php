@@ -27,7 +27,7 @@ class PartnerActivityLocationTest extends TestCase
     {
         Livewire::test(ActivityLocation::class)
             ->call('next')
-            ->assertHasErrors(['form.address', 'form.city', 'form.province', 'form.zip', 'form.meetingPoint']);
+            ->assertHasErrors(['form.address', 'form.city', 'form.province', 'form.zip', 'form.meetingPoint.it']);
     }
 
     public function test_next_saves_the_location(): void
@@ -37,23 +37,46 @@ class PartnerActivityLocationTest extends TestCase
             ->set('form.city', 'Garda')
             ->set('form.province', 'VR')
             ->set('form.zip', '37016')
-            ->set('form.meetingPoint', 'Ingresso del parco')
+            ->set('form.meetingPoint.it', 'Ingresso del parco')
+            ->set('form.meetingPoint.en', 'Park entrance')
             ->call('next')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.activity.description'));
 
         $this->assertDatabaseHas('structure_drafts', [
-            'meeting_point' => 'Ingresso del parco',
             'city' => 'Garda',
             'current_step' => 3,
         ]);
+
+        $draft = StructureDraft::first();
+        $this->assertSame('Ingresso del parco', $draft->getTranslation('meeting_point', 'it'));
+        $this->assertSame('Park entrance', $draft->getTranslation('meeting_point', 'en'));
+    }
+
+    public function test_the_english_meeting_point_is_optional(): void
+    {
+        Livewire::test(ActivityLocation::class)
+            ->set('form.address', 'Via Lago 5')
+            ->set('form.city', 'Garda')
+            ->set('form.province', 'VR')
+            ->set('form.zip', '37016')
+            ->set('form.meetingPoint.it', 'Ingresso del parco')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft = StructureDraft::first();
+        // Nessuna traduzione EN salvata: fallback sull'italiano.
+        $this->assertSame('Ingresso del parco', $draft->getTranslation('meeting_point', 'en'));
+        $this->assertSame(['it' => 'Ingresso del parco'], $draft->getTranslations('meeting_point'));
     }
 
     public function test_it_rehydrates_the_saved_meeting_point(): void
     {
-        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 3, 'meeting_point' => 'Piazza centrale']);
+        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 3, 'meeting_point' => ['it' => 'Piazza centrale', 'en' => 'Main square']]);
         session(['structure_draft_id' => $draft->id]);
 
-        Livewire::test(ActivityLocation::class)->assertSet('form.meetingPoint', 'Piazza centrale');
+        Livewire::test(ActivityLocation::class)
+            ->assertSet('form.meetingPoint.it', 'Piazza centrale')
+            ->assertSet('form.meetingPoint.en', 'Main square');
     }
 }

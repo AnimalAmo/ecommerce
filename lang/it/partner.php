@@ -60,6 +60,8 @@ return [
     | Chrome B2B (header + footer dell'area partner)
     |--------------------------------------------------------------------------
     */
+    'locale_it' => 'IT',
+    'locale_en' => 'EN',
     'nav_help' => 'Aiuto',
     'nav_dashboard' => 'Dashboard',
     'nav_create_service' => 'Crea servizio',
@@ -120,6 +122,101 @@ return [
         'reset_password' => 'Reimposta password',
         'privacy_settings' => 'Impostazioni sulla Privacy',
         'delete_account' => 'Elimina Account',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prenotazioni (area riservata)
+    |--------------------------------------------------------------------------
+    */
+    'bookings' => [
+        'title' => 'AnimalAmo — Prenotazioni',
+        'heading' => 'Prenotazioni',
+        'tab_strutture' => 'Strutture',
+        'tab_eventi' => 'Eventi',
+        'tab_attivita' => 'Attività',
+        'tab_smartbox' => 'Smartbox',
+        'search_placeholder' => 'Cerca',
+        'date_placeholder' => 'Seleziona data',
+        'col_id' => 'ID prenotazione',
+        'col_first_name' => 'Nome',
+        'col_last_name' => 'Cognome',
+        'col_email' => 'Email',
+        'col_structure' => 'Struttura',
+        'col_event' => 'Evento',
+        'col_activity' => 'Attività',
+        'col_smartbox' => 'Nome Smartbox',
+        'col_date' => 'Data',
+        'col_time' => 'Ora',
+        'col_validity' => 'Validità',
+        'col_price' => 'Prezzo',
+        'col_people' => 'N. Persone',
+        'view' => 'Vedi prenotazione',
+        'print' => 'Stampa prenotazione',
+        'actions' => 'Azioni',
+        'empty' => 'Nessuna prenotazione trovata.',
+        'detail_title' => 'AnimalAmo — Dettaglio prenotazione',
+        'detail_back' => 'Indietro',
+        'detail_print' => 'Stampa',
+        'detail_customer' => 'Info cliente',
+        'detail_booking' => 'Info prenotazione',
+        'detail_first_name' => 'Nome:',
+        'detail_last_name' => 'Cognome:',
+        'detail_email' => 'Email:',
+        'detail_phone' => 'Cellulare:',
+        'detail_id' => 'ID di prenotazione:',
+        'detail_payment_method' => 'Metodo di pagamento:',
+        'detail_booking_date' => 'Data prenotazione:',
+        'detail_time' => 'Orario:',
+        'detail_language' => 'Lingua:',
+        'detail_structure' => 'Struttura:',
+        'detail_validity' => 'Validità:',
+        'detail_price' => 'Prezzo:',
+        'detail_people' => 'N. Persone:',
+        'detail_duration' => 'Durata:',
+        'duration_nights' => '{1} 1 notte|[2,*] :count notti',
+        'duration_days' => '{1} 1 giorno|[2,*] :count giorni',
+        'duration_hours' => '{1} 1 ora|[2,*] :count ore',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | I miei servizi (lista + dettaglio + popup eliminazione)
+    |--------------------------------------------------------------------------
+    */
+    'services' => [
+        'title' => 'AnimalAmo — I miei servizi',
+        'heading' => 'I miei servizi',
+        'tag_struttura' => 'Holiday',
+        'tag_attivita' => 'Eventi',
+        'tag_smartbox' => 'Smartbox',
+        'view_details' => 'Vedi dettagli',
+        'delete' => 'Elimina servizio',
+        'edit' => 'Modifica servizio',
+        'delete_confirm' => 'Sei sicuro di voler eliminare:',
+        'delete_cancel' => 'Annulla',
+        'delete_submit' => 'Elimina',
+        'empty' => 'Non hai ancora creato servizi.',
+
+        'detail_title' => 'AnimalAmo — Dettaglio servizio',
+        'back' => 'Indietro',
+        'not_provided' => 'Non specificato',
+        'section_type' => 'Tipologia struttura',
+        'section_name' => 'Nome',
+        'section_location' => 'Luogo',
+        'section_description' => 'Descrizione',
+        'section_rooms' => 'Informazioni sulle stanze',
+        'section_cancellation' => 'Cancellazione',
+        'section_services' => 'Servizi',
+        'section_extra' => 'Informazioni aggiuntive',
+        'section_photos' => 'Foto',
+        'section_payment' => 'Metodo di pagamento',
+        'rooms_count' => 'stanze',
+        'rooms_price' => 'prezzo a notte',
+        'checkin' => 'Check-in',
+        'checkout' => 'Check-out',
+        'cancellation_days' => ':days giorni prima',
+        'cancellation_day' => '1 giorno prima',
     ],
 
     /*

@@ -20,8 +20,8 @@ class HotelServicesForm extends Form
     /** Servizi aggiuntivi presenti (multi-scelta). */
     public array $additional = [];
 
-    /** Dettaglio per "Altro" servizio aggiuntivo. */
-    public string $additionalOther = '';
+    /** Dettaglio per "Altro" servizio aggiuntivo (localizzato it/en). */
+    public array $additionalOther = ['it' => '', 'en' => ''];
 
     /** Orari (inizio/fine) per i pasti: colazione | pranzo | cena. */
     public array $mealTimes = [
@@ -40,7 +40,8 @@ class HotelServicesForm extends Form
             'services.*' => ['string'],
             'additional' => ['array'],
             'additional.*' => ['string'],
-            'additionalOther' => ['nullable', 'string', 'max:200'],
+            'additionalOther.it' => ['nullable', 'string', 'max:200'],
+            'additionalOther.en' => ['nullable', 'string', 'max:200'],
             'mealTimes.*.from' => ['nullable', 'string'],
             'mealTimes.*.to' => ['nullable', 'string'],
             'structureRules' => ['array'],
@@ -52,7 +53,7 @@ class HotelServicesForm extends Form
     {
         $this->services = $draft->services ?? [];
         $this->additional = $draft->additional_services ?? [];
-        $this->additionalOther = $draft->additional_other ?? '';
+        $this->additionalOther = array_merge(['it' => '', 'en' => ''], $draft->getTranslations('additional_other'));
         $this->mealTimes = $draft->meal_times ?: $this->mealTimes;
         $this->structureRules = $draft->rules ?? [];
     }
@@ -63,7 +64,7 @@ class HotelServicesForm extends Form
         return [
             'services' => $this->services,
             'additional_services' => $this->additional,
-            'additional_other' => $this->additionalOther,
+            'additional_other' => array_filter($this->additionalOther, fn ($value) => filled($value)),
             'meal_times' => $this->mealTimes,
             'rules' => $this->structureRules,
         ];

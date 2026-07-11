@@ -20,11 +20,21 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.hotel_title.helper') }}</p>
 
                 <form wire:submit="next" class="mt-6">
-                    {{-- Campo unico a tutta larghezza (XD: 752x40, r3, bordo #C8C8C8) --}}
-                    <flux:field>
-                        <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_title.field_label') }}</flux:label>
-                        <flux:input wire:model="name" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
-                    </flux:field>
+                    {{-- Campo unico a tutta larghezza (XD: 752x40, r3, bordo #C8C8C8), localizzato it/en --}}
+                    <x-partner.locale-tabs>
+                        <x-slot:it>
+                            <flux:field>
+                                <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_title.field_label') }}</flux:label>
+                                <flux:input wire:model="name.it" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                            </flux:field>
+                        </x-slot:it>
+                        <x-slot:en>
+                            <flux:field>
+                                <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_title.field_label') }} (EN)</flux:label>
+                                <flux:input wire:model="name.en" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                            </flux:field>
+                        </x-slot:en>
+                    </x-partner.locale-tabs>
 
                     {{-- Azioni: Indietro (a tipologia struttura) + Avanti (pill scuro) --}}
                     <div class="mt-8 flex items-center justify-end gap-6">

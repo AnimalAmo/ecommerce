@@ -67,15 +67,11 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.from') }}</flux:label>
-                                    <flux:select wire:model="form.checkinFrom" placeholder="--:--" class="{{ $selectClass }}">
-                                        @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
-                                    </flux:select>
+                                    <flux:time-picker wire:model="form.checkinFrom" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.to') }}</flux:label>
-                                    <flux:select wire:model="form.checkinTo" placeholder="--:--" class="{{ $selectClass }}">
-                                        @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
-                                    </flux:select>
+                                    <flux:time-picker wire:model="form.checkinTo" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                             </div>
                         </div>
@@ -84,15 +80,11 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.from') }}</flux:label>
-                                    <flux:select wire:model="form.checkoutFrom" placeholder="--:--" class="{{ $selectClass }}">
-                                        @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
-                                    </flux:select>
+                                    <flux:time-picker wire:model="form.checkoutFrom" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.to') }}</flux:label>
-                                    <flux:select wire:model="form.checkoutTo" placeholder="--:--" class="{{ $selectClass }}">
-                                        @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
-                                    </flux:select>
+                                    <flux:time-picker wire:model="form.checkoutTo" type="input" placeholder="--:--" class="[&_ui-time-picker-trigger>div]:!h-10 [&_ui-time-picker-trigger>div]:!rounded-[3px] [&_ui-time-picker-trigger>div]:!border-[#C8C8C8]" />
                                 </flux:field>
                             </div>
                         </div>

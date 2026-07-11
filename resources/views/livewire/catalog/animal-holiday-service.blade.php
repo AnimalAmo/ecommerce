@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, titolo, azioni, CTA galleria --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/'.$service->hero_img.'.jpg') }}" alt="{{ $service->name }}" class="absolute inset-0 h-full w-full object-cover object-[center_35%]">
+            <img src="{{ $service->heroImageUrl() }}" alt="{{ $service->name }}" class="absolute inset-0 h-full w-full object-cover object-[center_35%]">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -24,7 +24,12 @@
                     </p>
                     <p class="mt-1.5 flex items-center gap-2 text-[13px] font-semibold text-white">
                         <flux:icon.star class="h-[15px] w-4 shrink-0" />
-                        {{ __('format.stars', ['rating' => \App\Support\Format::rating($service->rating)]) }}
+                        {{-- Servizio partner appena pubblicato: nessuna recensione, stato "Nuovo" --}}
+                        @if ($service->rating !== null)
+                            {{ __('format.stars', ['rating' => \App\Support\Format::rating($service->rating)]) }}
+                        @else
+                            {{ __('holiday.new') }}
+                        @endif
                     </p>
                 </div>
 
@@ -84,18 +89,20 @@
                         </div>
                     </section>
 
-                    {{-- 4. Dove siamo --}}
-                    <section class="mt-8">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
-                        <div class="relative mt-5 overflow-hidden rounded-[4px]">
-                            {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                            <img src="{{ asset('img/xd/'.$service->map_img.'.jpg') }}" alt="{{ __('holiday.map_alt', ['name' => $service->name]) }}" class="h-[389px] w-full object-cover">
-                            <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
-                                <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                                {{ $service->name }}
-                            </span>
-                        </div>
-                    </section>
+                    {{-- 4. Dove siamo (nascosta senza mappa: i servizi partner non hanno map_img) --}}
+                    @if ($service->mapImageUrl())
+                        <section class="mt-8">
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
+                            <div class="relative mt-5 overflow-hidden rounded-[4px]">
+                                {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
+                                <img src="{{ $service->mapImageUrl() }}" alt="{{ __('holiday.map_alt', ['name' => $service->name]) }}" class="h-[389px] w-full object-cover">
+                                <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
+                                    <flux:icon.pin class="h-[15px] w-3 shrink-0" />
+                                    {{ $service->name }}
+                                </span>
+                            </div>
+                        </section>
+                    @endif
 
                     {{-- 5. Domande frequenti (accordion; prima riga aperta come da XD) --}}
                     <section class="mt-14" x-data="{ open: 0 }">
@@ -116,17 +123,22 @@
                     {{-- 6. Recensioni dei clienti --}}
                     <section class="mt-14">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.reviews') }}</h2>
-                        <p class="mt-2 flex items-center gap-2.5">
-                            <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($service->rating) }}</span>
-                            <span class="flex items-center gap-[3px]">
-                                @foreach (range(1, (int) floor($service->rating)) as $i)
-                                    <flux:icon.star-fill wire:key="sum-star-{{ $i }}" class="h-4 w-[17px]" />
-                                @endforeach
-                                @if ($service->rating > floor($service->rating))
-                                    <flux:icon.star-mid class="h-4 w-[17px]" />
-                                @endif
-                            </span>
-                        </p>
+                        @if ($service->rating !== null)
+                            <p class="mt-2 flex items-center gap-2.5">
+                                <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($service->rating) }}</span>
+                                <span class="flex items-center gap-[3px]">
+                                    @foreach (range(1, (int) floor($service->rating)) as $i)
+                                        <flux:icon.star-fill wire:key="sum-star-{{ $i }}" class="h-4 w-[17px]" />
+                                    @endforeach
+                                    @if ($service->rating > floor($service->rating))
+                                        <flux:icon.star-mid class="h-4 w-[17px]" />
+                                    @endif
+                                </span>
+                            </p>
+                        @else
+                            {{-- Servizio partner senza recensioni: stato "Nuovo" al posto delle stelle --}}
+                            <p class="mt-2 text-lg font-semibold leading-[22px] text-brand-cyan">{{ __('holiday.new') }}</p>
+                        @endif
                         <p class="mt-1.5 flex items-baseline gap-3">
                             <span class="text-lg font-semibold text-black">{{ $reviewsCount }}</span>
                             <span class="text-[15px] text-black">{{ __('holiday.reviews_count_label') }}</span>
@@ -289,7 +301,7 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$service->hero_img.'.jpg') }}" alt="{{ $service->name }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $service->heroImageUrl() }}" alt="{{ $service->name }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $service->name }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">

@@ -44,6 +44,20 @@ class PartnerActivityAnimalServicesTest extends TestCase
             ->assertSee(__('partner.hotel_animal_services.other_placeholder'));
     }
 
+    public function test_other_english_is_optional(): void
+    {
+        Livewire::test(ActivityAnimalServices::class)
+            ->set('services', ['altro'])
+            ->set('other.it', 'Toelettatura in loco')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft = StructureDraft::first();
+        // Nessuna traduzione EN salvata: fallback sull'italiano.
+        $this->assertSame('Toelettatura in loco', $draft->getTranslation('animal_services_other', 'it'));
+        $this->assertSame(['it' => 'Toelettatura in loco'], $draft->getTranslations('animal_services_other'));
+    }
+
     public function test_it_rehydrates_the_saved_services(): void
     {
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 7, 'animal_services' => ['omaggio']]);

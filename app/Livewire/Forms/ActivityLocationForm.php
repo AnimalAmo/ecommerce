@@ -18,7 +18,8 @@ class ActivityLocationForm extends Form
 
     public string $zip = '';
 
-    public string $meetingPoint = '';
+    /** Punto d'incontro, localizzato: it obbligatorio, en opzionale. */
+    public array $meetingPoint = ['it' => '', 'en' => ''];
 
     public function rules(): array
     {
@@ -27,7 +28,8 @@ class ActivityLocationForm extends Form
             'city' => ['required', 'string', 'max:64'],
             'province' => ['required', 'string', 'max:64'],
             'zip' => ['required', 'digits:5'],
-            'meetingPoint' => ['required', 'string', 'max:128'],
+            'meetingPoint.it' => ['required', 'string', 'max:128'],
+            'meetingPoint.en' => ['nullable', 'string', 'max:128'],
         ];
     }
 
@@ -37,7 +39,7 @@ class ActivityLocationForm extends Form
         $this->city = $draft->city ?? '';
         $this->province = $draft->province ?? '';
         $this->zip = $draft->zip ?? '';
-        $this->meetingPoint = $draft->meeting_point ?? '';
+        $this->meetingPoint = array_merge(['it' => '', 'en' => ''], $draft->getTranslations('meeting_point'));
     }
 
     /** Attributi nel formato colonne della bozza (snake_case). */
@@ -48,7 +50,8 @@ class ActivityLocationForm extends Form
             'city' => $this->city,
             'province' => $this->province,
             'zip' => $this->zip,
-            'meeting_point' => $this->meetingPoint,
+            // Le traduzioni vuote non vengono salvate: su EN scatta il fallback IT.
+            'meeting_point' => array_filter($this->meetingPoint, fn ($value) => filled($value)),
         ];
     }
 }

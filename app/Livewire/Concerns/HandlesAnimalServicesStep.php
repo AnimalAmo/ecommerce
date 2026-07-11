@@ -13,14 +13,14 @@ trait HandlesAnimalServicesStep
     /** Servizi dedicati agli animali selezionati (multi-scelta). */
     public array $services = [];
 
-    /** Dettaglio per "Altro". */
-    public string $other = '';
+    /** Dettaglio per "Altro", localizzato it/en. */
+    public array $other = ['it' => '', 'en' => ''];
 
     public function mountHandlesAnimalServicesStep(): void
     {
         $draft = $this->draft();
         $this->services = $draft->animal_services ?? [];
-        $this->other = $draft->animal_services_other ?? '';
+        $this->other = array_merge(['it' => '', 'en' => ''], $draft->getTranslations('animal_services_other'));
     }
 
     public function next(): void
@@ -28,11 +28,12 @@ trait HandlesAnimalServicesStep
         $this->validate([
             'services' => ['array'],
             'services.*' => ['string'],
-            'other' => ['nullable', 'string', 'max:200'],
+            'other.it' => ['nullable', 'string', 'max:200'],
+            'other.en' => ['nullable', 'string', 'max:200'],
         ]);
 
         $this->saveStep(
-            ['animal_services' => $this->services, 'animal_services_other' => $this->other],
+            ['animal_services' => $this->services, 'animal_services_other' => array_filter($this->other, fn ($value) => filled($value))],
             $this->animalServicesStep(),
         );
         $this->redirectRoute($this->animalServicesNextRoute());

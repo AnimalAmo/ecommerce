@@ -82,10 +82,13 @@
                                     <div class="min-w-0 flex-1 pt-[30px]">
                                         <h2 class="truncate text-xl font-semibold leading-[27px] text-black">{{ $item['title'] }}</h2>
                                         <div class="mt-[14px] space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
-                                            <div class="flex items-center gap-2">
-                                                <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
-                                                <span class="truncate">{{ $item['location'] }}</span>
-                                            </div>
+                                            {{-- Vuota per le smartbox partner (nessuna audience): riga nascosta --}}
+                                            @if ($item['location'] !== '')
+                                                <div class="flex items-center gap-2">
+                                                    <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
+                                                    <span class="truncate">{{ $item['location'] }}</span>
+                                                </div>
+                                            @endif
                                             @if ($item['dates'] !== null)
                                                 <div class="flex items-center gap-2">
                                                     <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />

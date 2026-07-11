@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RegionSeeder::class,
+            ProvinceSeeder::class, // dopo le regioni: assegna region_id
+
             AmenitySeeder::class,
             StructureSeeder::class,
             StructureClosureSeeder::class,

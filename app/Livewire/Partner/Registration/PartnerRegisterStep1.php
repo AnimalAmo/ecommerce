@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Registration;
 
 use App\Livewire\Forms\PartnerRegistrationForm;
+use App\Models\Region\Province;
 use Livewire\Component;
 
 class PartnerRegisterStep1 extends Component
@@ -19,7 +20,8 @@ class PartnerRegisterStep1 extends Component
 
     public function render()
     {
-        return view('livewire.partner.registration.register-step1')
-            ->title(__('partner.register.title'));
+        return view('livewire.partner.registration.register-step1', [
+            'provinces' => Province::orderBy('name')->get(),
+        ])->title(__('partner.register.title'));
     }
 }

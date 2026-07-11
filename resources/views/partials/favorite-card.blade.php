@@ -2,7 +2,8 @@
      Contratto: $item (array card), $wireKey, $heartActive/$bagActive (bool stato bottoni),
      $heartAction/$bagAction (stringhe wire:click, es. "removeFavorite(1)"). --}}
 <article wire:key="{{ $wireKey }}" class="relative flex h-[170px] w-full rounded-[3px] border border-[#E9E9E9] bg-white p-[6px]">
-    <img src="{{ asset('img/xd/' . $item['photo']) }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
+    {{-- $item['photo'] è un URL già risolto (HasCatalogImages: stem XD o upload partner) --}}
+    <img src="{{ $item['photo'] }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
 
     {{-- Chip tag sovrapposta alla foto in alto a sinistra (testo SEMPRE bianco, anche sui colori chiari come in XD);
          label e colore dalla tassonomia ProductType ($item['type'] = value dell'enum) --}}
@@ -32,11 +33,13 @@
             <span class="truncate text-[11px] font-bold leading-none">{{ $item['metaText'] }}</span>
         </div>
 
-        {{-- Riga località --}}
-        <div class="mt-[9px] flex items-center gap-[6px] text-[#555555]">
-            <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
-            <span class="truncate text-[11px] font-semibold leading-none">{{ $item['location'] }}</span>
-        </div>
+        {{-- Riga località (vuota per le smartbox partner senza audience: nascosta) --}}
+        @if (filled($item['location']))
+            <div class="mt-[9px] flex items-center gap-[6px] text-[#555555]">
+                <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
+                <span class="truncate text-[11px] font-semibold leading-none">{{ $item['location'] }}</span>
+            </div>
+        @endif
 
         {{-- Cluster prezzo + borsa + cuore in basso a destra.
              I due gialli sono VOLUTAMENTE diversi da XD: cuore attivo sempre brand-yellow #EDFF00,

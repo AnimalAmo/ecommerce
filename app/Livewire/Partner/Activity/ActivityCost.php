@@ -26,7 +26,8 @@ class ActivityCost extends Component
     {
         $rules = ['costType' => ['required', 'in:pagamento,gratuito']];
         if ($this->costType === 'pagamento') {
-            $rules['pricePerPerson'] = ['required', 'numeric', 'min:0'];
+            // decimal:0,2 + max: il publisher converte in cents (unsignedInteger).
+            $rules['pricePerPerson'] = ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:1000000'];
         }
 
         $this->validate($rules, [

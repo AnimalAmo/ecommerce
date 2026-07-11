@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, titolo, azioni, CTA galleria --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/'.$structure->hero_img.'.jpg') }}" alt="{{ $structure->name }}" class="absolute inset-0 h-full w-full object-cover object-[center_35%]">
+            <img src="{{ $structure->heroImageUrl() }}" alt="{{ $structure->name }}" class="absolute inset-0 h-full w-full object-cover object-[center_35%]">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -24,7 +24,12 @@
                     </p>
                     <p class="mt-1.5 flex items-center gap-2 text-[13px] font-semibold text-white">
                         <flux:icon.star class="h-[15px] w-4 shrink-0" />
-                        {{ __('format.stars', ['rating' => \App\Support\Format::rating($structure->rating)]) }}
+                        {{-- Struttura partner appena pubblicata: nessuna recensione, stato "Nuovo" --}}
+                        @if ($structure->rating !== null)
+                            {{ __('format.stars', ['rating' => \App\Support\Format::rating($structure->rating)]) }}
+                        @else
+                            {{ __('holiday.new') }}
+                        @endif
                     </p>
                 </div>
 
@@ -63,11 +68,13 @@
                         @include('partials.general-info', ['rows' => $structure->general_info])
                     </section>
 
-                    {{-- 3. Cosa troverai --}}
-                    <section class="mt-10">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.what_you_find') }}</h2>
-                        @include('partials.feature-cards', ['features' => $structure->features])
-                    </section>
+                    {{-- 3. Cosa troverai (assente per le strutture partner: nessuna fonte wizard, v2) --}}
+                    @if (filled($structure->features))
+                        <section class="mt-10">
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.what_you_find') }}</h2>
+                            @include('partials.feature-cards', ['features' => $structure->features])
+                        </section>
+                    @endif
 
                     {{-- 4. Servizi Hotel / Servizi Animali --}}
                     <section class="mt-8 flex flex-wrap gap-3">
@@ -103,18 +110,20 @@
                         </div>
                     </section>
 
-                    {{-- 5. Dove siamo --}}
-                    <section class="mt-8">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
-                        <div class="relative mt-5 overflow-hidden rounded-[4px]">
-                            {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                            <img src="{{ asset('img/xd/'.$structure->map_img.'.jpg') }}" alt="{{ __('holiday.map_alt', ['name' => $structure->name]) }}" class="h-[389px] w-full object-cover">
-                            <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
-                                <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                                {{ $structure->name }}
-                            </span>
-                        </div>
-                    </section>
+                    {{-- 5. Dove siamo (nascosta senza mappa: le strutture partner non hanno map_img) --}}
+                    @if ($structure->mapImageUrl())
+                        <section class="mt-8">
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
+                            <div class="relative mt-5 overflow-hidden rounded-[4px]">
+                                {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
+                                <img src="{{ $structure->mapImageUrl() }}" alt="{{ __('holiday.map_alt', ['name' => $structure->name]) }}" class="h-[389px] w-full object-cover">
+                                <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
+                                    <flux:icon.pin class="h-[15px] w-3 shrink-0" />
+                                    {{ $structure->name }}
+                                </span>
+                            </div>
+                        </section>
+                    @endif
 
                     {{-- 6. Domande frequenti (accordion; prima riga aperta come da XD) --}}
                     <section class="mt-14" x-data="{ open: 0 }">
@@ -135,17 +144,22 @@
                     {{-- 7. Recensioni dei clienti --}}
                     <section class="mt-14">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.reviews') }}</h2>
-                        <p class="mt-2 flex items-center gap-2.5">
-                            <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($structure->rating) }}</span>
-                            <span class="flex items-center gap-[3px]">
-                                @foreach (range(1, (int) floor($structure->rating)) as $i)
-                                    <flux:icon.star-fill wire:key="sum-star-{{ $i }}" class="h-4 w-[17px]" />
-                                @endforeach
-                                @if ($structure->rating > floor($structure->rating))
-                                    <flux:icon.star-mid class="h-4 w-[17px]" />
-                                @endif
-                            </span>
-                        </p>
+                        @if ($structure->rating !== null)
+                            <p class="mt-2 flex items-center gap-2.5">
+                                <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($structure->rating) }}</span>
+                                <span class="flex items-center gap-[3px]">
+                                    @foreach (range(1, (int) floor($structure->rating)) as $i)
+                                        <flux:icon.star-fill wire:key="sum-star-{{ $i }}" class="h-4 w-[17px]" />
+                                    @endforeach
+                                    @if ($structure->rating > floor($structure->rating))
+                                        <flux:icon.star-mid class="h-4 w-[17px]" />
+                                    @endif
+                                </span>
+                            </p>
+                        @else
+                            {{-- Struttura partner senza recensioni: stato "Nuovo" al posto delle stelle --}}
+                            <p class="mt-2 text-lg font-semibold leading-[22px] text-brand-cyan">{{ __('holiday.new') }}</p>
+                        @endif
                         <p class="mt-1.5 flex items-baseline gap-3">
                             <span class="text-lg font-semibold text-black">{{ $reviewsCount }}</span>
                             <span class="text-[15px] text-black">{{ __('holiday.reviews_count_label') }}</span>
@@ -288,7 +302,7 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$structure->hero_img.'.jpg') }}" alt="{{ $structure->name }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $structure->heroImageUrl() }}" alt="{{ $structure->name }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $structure->name }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">

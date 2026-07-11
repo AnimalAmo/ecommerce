@@ -68,7 +68,7 @@
                     @foreach ($events as $event)
                         <article wire:key="event-{{ $event->id }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                             <div class="relative overflow-hidden rounded-t-[3px]">
-                                <img src="{{ asset('img/xd/'.$event->img.'.jpg') }}" alt="{{ $event->title }}" class="aspect-[354/246] w-full object-cover transition duration-500 group-hover:scale-105">
+                                <img src="{{ $event->imageUrl() }}" alt="{{ $event->title }}" class="aspect-[354/246] w-full object-cover transition duration-500 group-hover:scale-105">
                                 {{-- Badge sempre 'Evento' come da XD, anche sulle attività --}}
                                 <span class="absolute left-[18px] top-[20px] inline-flex h-[27px] items-center rounded-[3px] bg-brand-purple-soft px-[10px] text-sm font-medium text-white">{{ \App\Enums\ProductType::Event->label() }}</span>
                             </div>

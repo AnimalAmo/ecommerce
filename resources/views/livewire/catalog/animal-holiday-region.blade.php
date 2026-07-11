@@ -59,7 +59,7 @@
                 @foreach ($results as $result)
                     <article wire:key="res-{{ $result->id }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                         <div class="relative m-2 overflow-hidden rounded-t-[3px]">
-                            <img src="{{ asset('img/xd/'.$result->img.'.jpg') }}" alt="{{ $result->name }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ $result->imageUrl() }}" alt="{{ $result->name }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
                             {{-- Badge verbatim XD ('Hotel'/'Servizi'), colore dalla tassonomia ProductType --}}
                             <span class="absolute left-[10px] top-[15px] inline-flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $result->type->color() }}">{{ $result->type === \App\Enums\ProductType::Structure ? __('catalog.badge_hotel') : __('catalog.badge_services') }}</span>
                         </div>
@@ -70,7 +70,8 @@
                             </p>
                             <p class="mt-1.5 flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
                                 <flux:icon.star class="h-[15px] w-4 shrink-0" />
-                                {{ \App\Support\Format::rating($result->rating) }}
+                                {{-- Strutture partner senza recensioni: stato "Nuovo" --}}
+                                {{ $result->rating !== null ? \App\Support\Format::rating($result->rating) : __('holiday.new') }}
                             </p>
                             <h3 class="mt-2.5 text-[20px] font-semibold leading-[25px] text-black">{{ $result->name }}</h3>
                             <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">{{ __('holiday.from_price_label') }} <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">{{ \App\Support\Format::money($result->price_from_cents) }}</span></p>

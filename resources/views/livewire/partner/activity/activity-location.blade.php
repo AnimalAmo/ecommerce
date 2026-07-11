@@ -34,19 +34,26 @@
 
                         {{-- (Provincia + Cap) | Punto d'incontro --}}
                         <div class="grid grid-cols-2 gap-4">
-                            <flux:field>
-                                <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.province') }} *</flux:label>
-                                <flux:input wire:model="form.province" class="{{ $fieldClass }}" />
-                            </flux:field>
+                            <x-partner.province-select :provinces="$provinces" model="form.province" :label="__('partner.activity_location.province')" />
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.zip') }} *</flux:label>
                                 <flux:input wire:model="form.zip" inputmode="numeric" class="{{ $fieldClass }}" />
                             </flux:field>
                         </div>
-                        <flux:field>
-                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} *</flux:label>
-                            <flux:input wire:model="form.meetingPoint" class="{{ $fieldClass }}" />
-                        </flux:field>
+                        <x-partner.locale-tabs>
+                            <x-slot:it>
+                                <flux:field>
+                                    <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} *</flux:label>
+                                    <flux:input wire:model="form.meetingPoint.it" class="{{ $fieldClass }}" />
+                                </flux:field>
+                            </x-slot:it>
+                            <x-slot:en>
+                                <flux:field>
+                                    <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} (EN)</flux:label>
+                                    <flux:input wire:model="form.meetingPoint.en" class="{{ $fieldClass }}" />
+                                </flux:field>
+                            </x-slot:en>
+                        </x-partner.locale-tabs>
                     </div>
 
                     {{-- Azioni: Indietro (a nome) + Avanti (pill scuro) --}}

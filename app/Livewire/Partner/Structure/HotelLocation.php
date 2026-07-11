@@ -4,6 +4,7 @@ namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
 use App\Livewire\Forms\HotelLocationForm;
+use App\Models\Region\Province;
 use Livewire\Component;
 
 class HotelLocation extends Component
@@ -26,7 +27,8 @@ class HotelLocation extends Component
 
     public function render()
     {
-        return view('livewire.partner.structure.hotel-location')
-            ->title(__('partner.hotel_location.title'));
+        return view('livewire.partner.structure.hotel-location', [
+            'provinces' => Province::orderBy('name')->get(),
+        ])->title(__('partner.hotel_location.title'));
     }
 }

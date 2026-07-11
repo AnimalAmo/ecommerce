@@ -143,17 +143,18 @@ class FavoriteService
             $product instanceof Structure => [
                 'title' => $product->name,
                 'location' => $product->location,
-                // Stessa riga rating della griglia regione (colonna rating).
+                // Stessa riga rating della griglia regione (colonna rating);
+                // strutture partner senza recensioni: stato "Nuovo".
                 'metaType' => 'rating',
-                'metaText' => Format::rating($product->rating),
+                'metaText' => $product->rating !== null ? Format::rating($product->rating) : __('holiday.new'),
                 'price' => Format::money($product->price_from_cents),
             ],
             // SmartboxPackage: niente località né data — la riga pin mostra
-            // l'audience (come la sua card listing) e la riga durata la validità
+            // l'audience (null per i box partner) e la riga durata la validità
             // del cofanetto (analogo più vicino, via Format::validity).
             default => [
                 'title' => $product->title,
-                'location' => $product->audience,
+                'location' => $product->audience ?? '',
                 'metaType' => 'durata',
                 'metaText' => mb_strtoupper(__('format.valid_for', ['validity' => Format::validity($product->validity_months)])),
                 'price' => Format::money($product->price_from_cents),
@@ -169,8 +170,8 @@ class FavoriteService
             'favoritable_id' => $favorite->favoritable_id,
             // Eventi gratuiti / "Partecipa" non sono acquistabili: niente bottone borsa.
             'can_add_to_cart' => ! ($product instanceof Event && $product->hasJoinCta()),
-            // Stessa foto della card listing del prodotto (colonna img, asset img/xd/).
-            'photo' => $product->img.'.jpg',
+            // Stessa foto della card listing del prodotto (URL risolto da HasCatalogImages).
+            'photo' => $product->imageUrl(),
         ];
     }
 

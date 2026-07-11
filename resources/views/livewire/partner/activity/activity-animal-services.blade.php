@@ -37,7 +37,17 @@
                             <flux:checkbox wire:model.live="services" value="{{ $key }}" :label="__($opt['label'])" :description="isset($opt['desc']) ? __($opt['desc']) : null" />
 
                             @if ($key === 'altro' && in_array('altro', $services, true))
-                                <flux:textarea wire:model="other" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_animal_services.other_placeholder') }}" class="!mt-3 !rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                {{-- Dettaglio "Altro" localizzato it/en --}}
+                                <div class="mt-3">
+                                    <x-partner.locale-tabs>
+                                        <x-slot:it>
+                                            <flux:textarea wire:model="other.it" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_animal_services.other_placeholder') }}" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                        </x-slot:it>
+                                        <x-slot:en>
+                                            <flux:textarea wire:model="other.en" rows="3" maxlength="200" placeholder="{{ __('partner.hotel_animal_services.other_placeholder') }} (EN)" class="!rounded-[3px] !border-[#C8C8C8] placeholder:!text-[#959595]" />
+                                        </x-slot:en>
+                                    </x-partner.locale-tabs>
+                                </div>
                             @endif
                         </div>
                     @endforeach

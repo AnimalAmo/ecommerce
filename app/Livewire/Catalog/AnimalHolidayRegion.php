@@ -57,7 +57,9 @@ class AnimalHolidayRegion extends Component
             'results' => Structure::query()
                 ->when(! $showAll, function ($query) use ($term): void {
                     $like = '%'.addcslashes($term, '\%_').'%';
-                    $query->where(fn ($sub) => $sub->whereLike('name', $like)->orWhereLike('location', $like));
+                    // name è JSON translatable: LIKE sul path del locale corrente,
+                    // non sulla colonna raw (matcherebbe chiavi locale e testo cross-lingua).
+                    $query->where(fn ($sub) => $sub->whereLike('name->'.app()->getLocale(), $like)->orWhereLike('location', $like));
                 })
                 ->orderBy('position')
                 ->get(),

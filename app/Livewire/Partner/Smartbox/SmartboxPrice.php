@@ -19,8 +19,13 @@ class SmartboxPrice extends Component
 
     public function save(): void
     {
+        // Numeric (virgola normalizzata sotto): il publisher converte in cents,
+        // una stringa libera tipo '215 €' romperebbe il pricing B2C. decimal:0,2
+        // respinge anche l'ambiguo '1.500' (migliaia all'italiana ≠ 1.50 €).
+        $this->price = str_replace(',', '.', trim($this->price));
+
         $this->validate(
-            ['price' => ['required', 'string', 'max:32']],
+            ['price' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:1000000']],
             ['price.required' => __('partner.smartbox_price.error_required')],
         );
 

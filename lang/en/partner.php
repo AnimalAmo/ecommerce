@@ -60,6 +60,8 @@ return [
     | B2B chrome (partner-area header + footer)
     |--------------------------------------------------------------------------
     */
+    'locale_it' => 'IT',
+    'locale_en' => 'EN',
     'nav_help' => 'Help',
     'nav_dashboard' => 'Dashboard',
     'nav_create_service' => 'Create service',
@@ -120,6 +122,101 @@ return [
         'reset_password' => 'Reset password',
         'privacy_settings' => 'Privacy settings',
         'delete_account' => 'Delete account',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bookings (reserved area)
+    |--------------------------------------------------------------------------
+    */
+    'bookings' => [
+        'title' => 'AnimalAmo — Bookings',
+        'heading' => 'Bookings',
+        'tab_strutture' => 'Structures',
+        'tab_eventi' => 'Events',
+        'tab_attivita' => 'Activities',
+        'tab_smartbox' => 'Smartbox',
+        'search_placeholder' => 'Search',
+        'date_placeholder' => 'Select date',
+        'col_id' => 'Booking ID',
+        'col_first_name' => 'First name',
+        'col_last_name' => 'Last name',
+        'col_email' => 'Email',
+        'col_structure' => 'Structure',
+        'col_event' => 'Event',
+        'col_activity' => 'Activity',
+        'col_smartbox' => 'Smartbox name',
+        'col_date' => 'Date',
+        'col_time' => 'Time',
+        'col_validity' => 'Validity',
+        'col_price' => 'Price',
+        'col_people' => 'No. of people',
+        'view' => 'View booking',
+        'print' => 'Print booking',
+        'actions' => 'Actions',
+        'empty' => 'No bookings found.',
+        'detail_title' => 'AnimalAmo — Booking detail',
+        'detail_back' => 'Back',
+        'detail_print' => 'Print',
+        'detail_customer' => 'Customer info',
+        'detail_booking' => 'Booking info',
+        'detail_first_name' => 'First name:',
+        'detail_last_name' => 'Last name:',
+        'detail_email' => 'Email:',
+        'detail_phone' => 'Phone:',
+        'detail_id' => 'Booking ID:',
+        'detail_payment_method' => 'Payment method:',
+        'detail_booking_date' => 'Booking date:',
+        'detail_time' => 'Time:',
+        'detail_language' => 'Language:',
+        'detail_structure' => 'Structure:',
+        'detail_validity' => 'Validity:',
+        'detail_price' => 'Price:',
+        'detail_people' => 'No. of people:',
+        'detail_duration' => 'Duration:',
+        'duration_nights' => '{1} 1 night|[2,*] :count nights',
+        'duration_days' => '{1} 1 day|[2,*] :count days',
+        'duration_hours' => '{1} 1 hour|[2,*] :count hours',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | My services (list + detail + delete popup)
+    |--------------------------------------------------------------------------
+    */
+    'services' => [
+        'title' => 'AnimalAmo — My services',
+        'heading' => 'My services',
+        'tag_struttura' => 'Holiday',
+        'tag_attivita' => 'Events',
+        'tag_smartbox' => 'Smartbox',
+        'view_details' => 'View details',
+        'delete' => 'Delete service',
+        'edit' => 'Edit service',
+        'delete_confirm' => 'Are you sure you want to delete:',
+        'delete_cancel' => 'Cancel',
+        'delete_submit' => 'Delete',
+        'empty' => 'You have not created any services yet.',
+
+        'detail_title' => 'AnimalAmo — Service detail',
+        'back' => 'Back',
+        'not_provided' => 'Not provided',
+        'section_type' => 'Structure type',
+        'section_name' => 'Name',
+        'section_location' => 'Location',
+        'section_description' => 'Description',
+        'section_rooms' => 'Room information',
+        'section_cancellation' => 'Cancellation',
+        'section_services' => 'Services',
+        'section_extra' => 'Additional information',
+        'section_photos' => 'Photos',
+        'section_payment' => 'Payment method',
+        'rooms_count' => 'rooms',
+        'rooms_price' => 'price per night',
+        'checkin' => 'Check-in',
+        'checkout' => 'Check-out',
+        'cancellation_days' => ':days days before',
+        'cancellation_day' => '1 day before',
     ],
 
     /*

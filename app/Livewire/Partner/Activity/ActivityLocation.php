@@ -4,6 +4,7 @@ namespace App\Livewire\Partner\Activity;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
 use App\Livewire\Forms\ActivityLocationForm;
+use App\Models\Region\Province;
 use Livewire\Component;
 
 class ActivityLocation extends Component
@@ -26,7 +27,8 @@ class ActivityLocation extends Component
 
     public function render()
     {
-        return view('livewire.partner.activity.activity-location')
-            ->title(__('partner.activity_location.title'));
+        return view('livewire.partner.activity.activity-location', [
+            'provinces' => Province::orderBy('name')->get(),
+        ])->title(__('partner.activity_location.title'));
     }
 }

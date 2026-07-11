@@ -4,11 +4,14 @@ namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Registration\PartnerRegisterStep1;
 use App\Livewire\Partner\Registration\PartnerRegisterStep2;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PartnerRegistrationTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_step_1_page_renders(): void
     {
         $this->get(route('partner.register'))

@@ -102,7 +102,8 @@ class Events extends Component
         $term = '%'.addcslashes(trim($this->where), '\%_').'%';
 
         return $query->where(function (Builder $sub) use ($term): void {
-            $sub->whereLike('title', $term)
+            // title è JSON translatable: LIKE sul path del locale corrente.
+            $sub->whereLike('title->'.app()->getLocale(), $term)
                 ->orWhereLike('location', $term)
                 ->orWhereHas('venue', fn (Builder $venue) => $venue->whereLike('name', $term));
         });
