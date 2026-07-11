@@ -31,20 +31,32 @@ class PartnerBookingsTest extends TestCase
             ->assertSee('215€');
     }
 
-    public function test_tabs_swap_the_family_columns(): void
+    public function test_every_family_panel_renders_its_own_table(): void
     {
         $this->actingAsActivePartner();
 
+        // I 4 flux:tab.panel sono tutti nel DOM (Flux mostra quello attivo):
+        // ogni famiglia porta la sua tabella con le sue righe.
         Livewire::test(PartnerBookings::class)
-            ->set('tab', 'eventi')
-            ->assertSee(__('partner.bookings.col_event'))
-            ->assertSee(__('partner.bookings.col_time'))
+            ->assertSee('Hotel Brescia')
             ->assertSee('Puppy Yoga')
-            ->assertDontSee(__('partner.bookings.col_price'))
-            ->set('tab', 'smartbox')
-            ->assertSee(__('partner.bookings.col_validity'))
+            ->assertSee('Vacanza di relax in montagna')
             ->assertSee('Weekend di relax in Lombardia')
-            ->assertDontSee(__('partner.bookings.col_people'));
+            ->assertSee(__('partner.bookings.col_validity'))
+            ->assertSee(__('partner.bookings.col_time'));
+    }
+
+    public function test_family_columns_follow_the_mockup(): void
+    {
+        $component = new PartnerBookings;
+
+        // Eventi: Ora e niente Prezzo; smartbox: Validità e niente Data/N. Persone.
+        $this->assertArrayHasKey('time', $component->columnsFor('eventi'));
+        $this->assertArrayNotHasKey('price', $component->columnsFor('eventi'));
+        $this->assertSame('col_validity', $component->columnsFor('smartbox')['date']);
+        $this->assertArrayNotHasKey('people', $component->columnsFor('smartbox'));
+        $this->assertSame('col_structure', $component->columnsFor('strutture')['title']);
+        $this->assertSame('col_activity', $component->columnsFor('attivita')['title']);
     }
 
     public function test_an_unknown_tab_falls_back_to_the_first_one(): void

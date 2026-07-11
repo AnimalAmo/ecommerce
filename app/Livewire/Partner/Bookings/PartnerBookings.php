@@ -7,11 +7,12 @@ use Livewire\Component;
 
 /**
  * Prenotazioni partner (XD "Prenotazioni strutture/eventi/attività/smartbox"):
- * un'unica pagina con 4 tab per famiglia, colonne dedicate, ricerca live e
- * filtro data. Righe DEMO fedeli al mockup (come le stat della Dashboard):
- * il checkout B2C oggi non genera prenotazioni sui servizi partner — quando
- * accadrà la fonte diventerà OrderItem sui prodotti con user_id del partner
- * (colonne introdotte dalla pipeline di pubblicazione).
+ * un'unica pagina con 4 flux:tab.panel per famiglia (tabella con colonne
+ * dedicate), ricerca live e filtro data condivisi. Righe DEMO fedeli al
+ * mockup (come le stat della Dashboard): il checkout B2C oggi non genera
+ * prenotazioni sui servizi partner — quando accadrà la fonte diventerà
+ * OrderItem sui prodotti con user_id del partner (colonne introdotte dalla
+ * pipeline di pubblicazione).
  */
 class PartnerBookings extends Component
 {
@@ -34,20 +35,26 @@ class PartnerBookings extends Component
 
     public function render()
     {
-        return view('livewire.partner.bookings.index', [
-            'bookings' => $this->filteredRows(),
-            'columns' => $this->columns(),
-        ])->title(__('partner.bookings.title'));
+        $panels = [];
+        foreach (self::TABS as $family) {
+            $panels[$family] = [
+                'columns' => $this->columnsFor($family),
+                'rows' => $this->filteredRowsFor($family),
+            ];
+        }
+
+        return view('livewire.partner.bookings.index', ['panels' => $panels])
+            ->title(__('partner.bookings.title'));
     }
 
     /**
-     * Colonne della tab corrente: chiave riga => chiave lang. Le famiglie
+     * Colonne della famiglia: chiave riga => chiave lang. Le famiglie
      * differiscono come nel mockup (eventi: Ora e niente Prezzo; smartbox:
      * Validità e niente Data/N. Persone).
      *
      * @return array<string, string>
      */
-    private function columns(): array
+    public function columnsFor(string $family): array
     {
         $common = [
             'id' => 'col_id',
@@ -56,7 +63,7 @@ class PartnerBookings extends Component
             'email' => 'col_email',
         ];
 
-        return $common + match ($this->tab) {
+        return $common + match ($family) {
             'eventi' => ['title' => 'col_event', 'date' => 'col_date', 'time' => 'col_time', 'people' => 'col_people'],
             'attivita' => ['title' => 'col_activity', 'date' => 'col_date', 'price' => 'col_price', 'people' => 'col_people'],
             'smartbox' => ['title' => 'col_smartbox', 'date' => 'col_validity', 'price' => 'col_price'],
@@ -65,11 +72,11 @@ class PartnerBookings extends Component
     }
 
     /** @return list<array<string, mixed>> */
-    private function filteredRows(): array
+    private function filteredRowsFor(string $family): array
     {
         $term = mb_strtolower(trim($this->search));
 
-        $rows = array_filter($this->demoRows(), function (array $row) use ($term): bool {
+        $rows = array_filter($this->demoRowsFor($family), function (array $row) use ($term): bool {
             if ($term !== '' && ! str_contains(mb_strtolower(implode(' ', [
                 $row['id'], $row['first_name'], $row['last_name'], $row['email'], $row['title'],
             ])), $term)) {
@@ -89,11 +96,11 @@ class PartnerBookings extends Component
     }
 
     /**
-     * Righe demo della tab corrente, ripetute come nella griglia del mockup.
+     * Righe demo della famiglia, ripetute come nella griglia del mockup.
      *
      * @return list<array<string, mixed>>
      */
-    private function demoRows(): array
+    private function demoRowsFor(string $family): array
     {
         $base = [
             'id' => 'BD94KEU9E',
@@ -104,7 +111,7 @@ class PartnerBookings extends Component
             'people' => 2,
         ];
 
-        [$row, $count] = match ($this->tab) {
+        [$row, $count] = match ($family) {
             'eventi' => [array_merge($base, [
                 'title' => 'Puppy Yoga',
                 'date' => '20/02/24',
