@@ -261,6 +261,7 @@ return [
         'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
         'submit' => 'Create an account',
         'error_required' => 'Select at least one service.',
+        'error_email_taken' => 'An account with this email already exists: log in from the partner reserved area.',
     ],
 
     /*
@@ -905,6 +906,21 @@ return [
         'stat_sold' => 'Experiences sold',
         'stat_cancelled' => 'Experiences cancelled',
         'stat_saved' => 'Experiences saved',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application invitation email ("Work with us")
+    |--------------------------------------------------------------------------
+    */
+    'invitation_mail' => [
+        'subject' => 'AnimalAmo — Complete your partner registration',
+        'heading' => 'Hi :name!',
+        'intro' => 'Thank you for applying with :business to become an AnimalAmo partner.',
+        'cta_hint' => 'Complete your registration from the button below: it only takes two steps.',
+        'cta' => 'Complete registration',
+        'outro' => 'If you did not send this request, feel free to ignore this email.',
+        'signature' => 'See you soon,',
     ],
 
 ];

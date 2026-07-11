@@ -26,17 +26,15 @@ class CreateService extends Component
 
         $this->saveStep(['service_category' => $this->service], 0);
 
-        // Il flusso "servizi" ha un percorso dedicato non ancora costruito (null → nessun redirect).
+        // "Servizi" percorre gli stessi step della struttura ricettiva (scelta
+        // cliente): il draft mantiene service_category='servizi' salvata sopra.
         $route = match ($this->service) {
-            'struttura' => 'partner.structure.type',
             'attivita' => 'partner.activity.type',
             'smartbox' => 'partner.smartbox.type',
-            default => null,
+            default => 'partner.structure.type',
         };
 
-        if ($route !== null) {
-            $this->redirectRoute($route);
-        }
+        $this->redirectRoute($route);
     }
 
     public function render()

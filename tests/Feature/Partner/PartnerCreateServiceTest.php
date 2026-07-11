@@ -73,4 +73,16 @@ class PartnerCreateServiceTest extends TestCase
 
         $this->assertDatabaseHas('structure_drafts', ['service_category' => 'smartbox']);
     }
+
+    public function test_servizi_saves_the_category_and_reuses_the_structure_flow(): void
+    {
+        // Scelta cliente: "servizi" percorre gli stessi step della struttura ricettiva.
+        Livewire::test(CreateService::class)
+            ->set('service', 'servizi')
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.structure.type'));
+
+        $this->assertDatabaseHas('structure_drafts', ['service_category' => 'servizi']);
+    }
 }
