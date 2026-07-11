@@ -59,4 +59,44 @@ class PartnerMyServicesTest extends TestCase
     {
         $this->get(route('partner.services'))->assertRedirect(route('home'));
     }
+
+    public function test_edit_loads_the_draft_and_returns_to_the_structure_flow(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, ['type' => 'hotel']);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('edit', $draft->id)
+            ->assertRedirect(route('partner.structure.type'));
+
+        $this->assertSame($draft->id, session('structure_draft_id'));
+    }
+
+    public function test_edit_routes_each_family_to_its_own_flow(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $activity = $this->service($partner->id, ['service_category' => 'attivita', 'type' => 'attivita', 'current_step' => 10]);
+        $smartbox = $this->service($partner->id, ['service_category' => 'smartbox', 'type' => 'soggiorno', 'current_step' => 12]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('edit', $activity->id)
+            ->assertRedirect(route('partner.activity.type'));
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('edit', $smartbox->id)
+            ->assertRedirect(route('partner.smartbox.type'));
+    }
+
+    public function test_edit_ignores_services_of_other_partners(): void
+    {
+        $this->actingAsActivePartner();
+        $other = User::factory()->create();
+        $foreign = $this->service($other->id);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('edit', $foreign->id)
+            ->assertNoRedirect();
+
+        $this->assertNull(session('structure_draft_id'));
+    }
 }
