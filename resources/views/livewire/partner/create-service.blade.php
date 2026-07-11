@@ -23,7 +23,7 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.create_service.helper') }}</p>
 
                 {{-- Scelta tipologia servizio: flux radio group, variant cards, in colonna --}}
-                <flux:radio.group wire:model="service" variant="cards" class="mt-6 flex-col [&_[data-flux-radio-cards]]:flex-row-reverse [&_[data-flux-radio-cards]]:justify-end [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33] [&_[data-flux-subheading]]:!text-sm [&_[data-flux-subheading]]:!text-[#627277]">
+                <flux:radio.group wire:model="service" variant="cards" class="radio-check mt-6 flex-col [--color-accent:#68CDEB] [&_[data-flux-radio-cards]]:flex-row-reverse [&_[data-flux-radio-cards]]:justify-end [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33] [&_[data-flux-subheading]]:!text-sm [&_[data-flux-subheading]]:!text-[#627277]">
                     @foreach ($services as $key => [$titleKey, $subtitleKey])
                         <flux:radio value="{{ $key }}" wire:key="svc-{{ $key }}" :label="__($titleKey)" :description="__($subtitleKey)" />
                     @endforeach

@@ -1,2 +1,5 @@
 User-agent: *
-Disallow:
+Disallow: /partner/
+Disallow: /en/partner/
+Disallow: /iscrizione-partner
+Disallow: /en/partner-registration

@@ -73,3 +73,16 @@ select[data-flux-control],
 textarea[data-flux-control] {
     border-radius: 3px;
 }
+
+/* Radio cards partner (crea servizio / iscrizione step 2): indicatore
+   selezionato con sfondo cyan #68CDEB e icona check al posto del pallino. */
+.radio-check ui-radio[data-checked] [data-flux-radio-indicator] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+    background-size: 10px 10px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.radio-check [data-flux-radio-indicator] > div {
+    display: none;
+}

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureActivePartner;
+use App\Http\Middleware\NoIndexPartnerPages;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->preventRequestForgery(except: [
             'webhooks/*',
         ]);
+
+        // L'area partner (route partner.*) non va indicizzata dai motori.
+        $middleware->appendToGroup('web', NoIndexPartnerPages::class);
 
         $middleware->alias([
             'partner' => EnsureActivePartner::class,
