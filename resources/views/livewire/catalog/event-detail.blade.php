@@ -9,7 +9,7 @@
         {{-- 1. Hero foto full-bleed: scrim a sinistra, Indietro, azioni, CTA galleria, tile data --}}
         <section class="relative h-[524px] w-full overflow-hidden">
             {{-- Foto per evento (XD: scatto festa per il gratuito, stock brunch per il pagamento) --}}
-            <img src="{{ asset('img/xd/'.$event->hero_img.'.jpg') }}" alt="{{ $event->title }}" class="absolute inset-0 h-full w-full object-cover">
+            <img src="{{ $event->heroImageUrl() }}" alt="{{ $event->title }}" class="absolute inset-0 h-full w-full object-cover">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -35,21 +35,25 @@
                     {{ __('events.view_all_photos') }}
                 </flux:button>
 
-                {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"), derivata da starts_at --}}
-                <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
-                    <div class="h-6 w-full bg-brand-purple-soft" aria-hidden="true"></div>
-                    <p class="flex h-[65px] items-center justify-center text-[20px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
-                </div>
+                {{-- Tile data: fascia lavanda + giorno (XD "Rettangolo 644/645"), derivata da starts_at (assente sugli eventi partner senza data) --}}
+                @if ($event->starts_at)
+                    <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
+                        <div class="h-6 w-full bg-brand-purple-soft" aria-hidden="true"></div>
+                        <p class="flex h-[65px] items-center justify-center text-[20px] font-semibold text-brand-purple-soft">{{ \App\Support\Format::dateTile($event->starts_at) }}</p>
+                    </div>
+                @endif
             </div>
         </section>
 
         <div class="{{ $px }} pb-[120px] pt-10">
             {{-- 2. Testata: orario, titolo, prezzo --}}
-            <p class="flex items-center gap-2 text-[15px] font-medium leading-[21px] text-brand-purple-soft">
-                {{-- Icona nera come il pin/marker (il testo orario resta viola). --}}
-                <flux:icon.time class="h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
-                {{ \App\Support\Format::eventTimeFull($event->starts_at) }}
-            </p>
+            @if ($event->starts_at)
+                <p class="flex items-center gap-2 text-[15px] font-medium leading-[21px] text-brand-purple-soft">
+                    {{-- Icona nera come il pin/marker (il testo orario resta viola). --}}
+                    <flux:icon.time class="h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                    {{ \App\Support\Format::eventTimeFull($event->starts_at) }}
+                </p>
+            @endif
             <h1 class="mt-[9px] text-[25px] font-bold leading-[30px] text-black">{{ $event->title }}</h1>
             @if ($isFree)
                 {{-- "Gratis" in corsivo peso normale (XD Nunito-Italic 25px) al posto della riga prezzo Light --}}
@@ -111,17 +115,20 @@
                     <section class="mt-10">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
-                            <li class="flex items-start gap-4">
-                                <flux:icon.time class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
-                                <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ \App\Support\Format::eventTimeRange($event->starts_at, $event->ends_at) }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
-                                </div>
-                            </li>
+                            @if ($event->starts_at && $event->ends_at)
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.time class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ \App\Support\Format::eventTimeRange($event->starts_at, $event->ends_at) }}</p>
+                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
+                                    </div>
+                                </li>
+                            @endif
                             <li class="flex items-start gap-4">
                                 <flux:icon.pin class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
                                 <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $event->venue->address }}</p>
+                                    {{-- venue_id nullable: guard sugli eventi senza venue --}}
+                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $event->venue?->address ?? $event->location }}</p>
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->venue_note }}</p>
                                 </div>
                             </li>
@@ -150,20 +157,22 @@
                     </section>
                 </div>
 
-                {{-- 5. Colonna destra: card mappa con pill località --}}
-                <aside class="w-full shrink-0 lg:w-[718px]">
-                    <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-5">
-                        <div class="relative overflow-hidden rounded-[4px]">
-                            {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                            <img src="{{ asset('img/xd/'.$event->venue->map_img.'.jpg') }}" alt="Mappa della zona — {{ $event->venue->name }}" class="h-[576px] w-full object-cover">
-                            {{-- TODO: apertura mappa (nessuna interazione definita nell'XD) --}}
-                            <flux:button class="!absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
-                                <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                                {{ $event->venue->name }}
-                            </flux:button>
+                {{-- 5. Colonna destra: card mappa con pill località (nascosta senza venue/mappa: eventi partner) --}}
+                @if ($event->venue?->map_img)
+                    <aside class="w-full shrink-0 lg:w-[718px]">
+                        <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-5">
+                            <div class="relative overflow-hidden rounded-[4px]">
+                                {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
+                                <img src="{{ asset('img/xd/'.$event->venue->map_img.'.jpg') }}" alt="Mappa della zona — {{ $event->venue->name }}" class="h-[576px] w-full object-cover">
+                                {{-- TODO: apertura mappa (nessuna interazione definita nell'XD) --}}
+                                <flux:button class="!absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
+                                    <flux:icon.pin class="h-[15px] w-3 shrink-0" />
+                                    {{ $event->venue->name }}
+                                </flux:button>
+                            </div>
                         </div>
-                    </div>
-                </aside>
+                    </aside>
+                @endif
             </div>
             @else
             {{-- Contenuto tab Discussione (XD: "Evento - Dettaglio - discussione") --}}
@@ -247,14 +256,16 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$event->hero_img.'.jpg') }}" alt="{{ $event->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $event->heroImageUrl() }}" alt="{{ $event->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $event->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
-                                <li class="flex items-center gap-[5px]">
-                                    <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
-                                    {{ \App\Support\Format::dateShort($event->starts_at) }}
-                                </li>
+                                @if ($event->starts_at)
+                                    <li class="flex items-center gap-[5px]">
+                                        <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
+                                        {{ \App\Support\Format::dateShort($event->starts_at) }}
+                                    </li>
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -284,14 +295,16 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$event->hero_img.'.jpg') }}" alt="{{ $event->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $event->heroImageUrl() }}" alt="{{ $event->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $event->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
-                                <li class="flex items-center gap-[5px]">
-                                    <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
-                                    {{ \App\Support\Format::dateShort($event->starts_at) }}
-                                </li>
+                                @if ($event->starts_at)
+                                    <li class="flex items-center gap-[5px]">
+                                        <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
+                                        {{ \App\Support\Format::dateShort($event->starts_at) }}
+                                    </li>
+                                @endif
                             </ul>
                         </div>
                     </div>

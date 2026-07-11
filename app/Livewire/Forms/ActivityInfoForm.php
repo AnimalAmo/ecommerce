@@ -31,8 +31,10 @@ class ActivityInfoForm extends Form
         ];
 
         if ($this->isEvent) {
-            $rules['timeStart'] = ['required', 'string'];
-            $rules['timeEnd'] = ['required', 'string'];
+            // H:i: il publisher compone i datetime con explode(':') — il select
+            // offre solo slot validi ma la property è client-settable.
+            $rules['timeStart'] = ['required', 'date_format:H:i'];
+            $rules['timeEnd'] = ['required', 'date_format:H:i'];
         }
 
         return $rules;

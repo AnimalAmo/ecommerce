@@ -88,9 +88,9 @@ final class CartItemData extends Data
             priceCents: $priceCents,
             options: $options,
             title: $purchasable instanceof Structure ? $purchasable->name : $purchasable->title,
-            // La smartbox non ha località: la riga pin mostra l'audience (come la card preferiti).
-            location: $purchasable instanceof SmartboxPackage ? $purchasable->audience : $purchasable->location,
-            photoUrl: asset('img/xd/'.$purchasable->img.'.jpg'),
+            // La smartbox non ha località: la riga pin mostra l'audience (null per i box partner).
+            location: ($purchasable instanceof SmartboxPackage ? $purchasable->audience : $purchasable->location) ?? '',
+            photoUrl: $purchasable->imageUrl() ?? '',
             productType: $purchasable->type->value,
             dates: self::dates($family, $options, $purchasable),
             serviceSlot: $family === 'service'

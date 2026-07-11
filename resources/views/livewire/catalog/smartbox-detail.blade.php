@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, titolo, azioni, CTA galleria --}}
         <section class="relative h-[590px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/'.$box->hero_img.'.jpg') }}" alt="{{ $box->title }}" class="absolute inset-0 h-full w-full object-cover object-[center_68%]">
+            <img src="{{ $box->heroImageUrl() }}" alt="{{ $box->title }}" class="absolute inset-0 h-full w-full object-cover object-[center_68%]">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -18,10 +18,13 @@
                         {{ __('smartbox.back') }}
                     </a>
                     <h1 class="mt-7 text-[25px] font-bold leading-[30px] text-brand-yellow">{{ $box->title }}</h1>
-                    <p class="mt-2.5 flex items-center gap-2 text-[13px] font-semibold text-white">
-                        <flux:icon.profile class="h-[14px] w-[14px] shrink-0" />
-                        {{ $box->audience }} - {{ $box->audience_people }} {{ __('smartbox.people') }}
-                    </p>
+                    {{-- I cofanetti partner non hanno audience (nessun input wizard, v2) --}}
+                    @if ($box->audience)
+                        <p class="mt-2.5 flex items-center gap-2 text-[13px] font-semibold text-white">
+                            <flux:icon.profile class="h-[14px] w-[14px] shrink-0" />
+                            {{ $box->audience }} - {{ $box->audience_people }} {{ __('smartbox.people') }}
+                        </p>
+                    @endif
                 </div>
 
                 {{-- Condividi + Preferiti (toggle: cerchio brand-yellow quando attivo) --}}
@@ -59,11 +62,13 @@
                         @include('partials.general-info', ['rows' => $box->general_info])
                     </section>
 
-                    {{-- 3. Cosa troverai --}}
-                    <section class="mt-10">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.what_you_find') }}</h2>
-                        @include('partials.feature-cards', ['features' => $box->features])
-                    </section>
+                    {{-- 3. Cosa troverai (assente per i cofanetti partner: nessuna fonte wizard, v2) --}}
+                    @if (filled($box->features))
+                        <section class="mt-10">
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.what_you_find') }}</h2>
+                            @include('partials.feature-cards', ['features' => $box->features])
+                        </section>
+                    @endif
 
                     {{-- 4. Il tuo weekend --}}
                     <section class="mt-10">
@@ -195,7 +200,7 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$box->hero_img.'.jpg') }}" alt="{{ $box->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $box->heroImageUrl() }}" alt="{{ $box->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $box->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">

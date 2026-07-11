@@ -26,16 +26,19 @@
                 @foreach ($boxes as $box)
                     <article wire:key="box-{{ $box->id }}" class="group relative flex min-h-[391px] flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                         <div class="relative m-2 overflow-hidden rounded-t-[3px]">
-                            <img src="{{ asset('img/xd/'.$box->img.'.jpg') }}" alt="{{ $box->title }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ $box->imageUrl() }}" alt="{{ $box->title }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
                             {{-- Chip tag: label e colore dalla tassonomia ProductType (Soggiorno/Benessere/Avventura) --}}
                             <span class="absolute left-[10px] top-[10px] inline-flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $box->type->color() }}">{{ $box->type->label() }}</span>
                         </div>
                         <div class="flex flex-1 flex-col px-[18px] pt-2 pb-[14px]">
                             <h3 class="text-[20px] font-semibold leading-[25px] text-black">{{ $box->title }}</h3>
-                            <p class="mt-[14px] flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
-                                <flux:icon.profile class="h-[14px] w-[14px] shrink-0" />
-                                {{ $box->audience }}
-                            </p>
+                            {{-- I cofanetti partner non hanno audience (nessun input wizard, v2) --}}
+                            @if ($box->audience)
+                                <p class="mt-[14px] flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
+                                    <flux:icon.profile class="h-[14px] w-[14px] shrink-0" />
+                                    {{ $box->audience }}
+                                </p>
+                            @endif
                             <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">{{ __('smartbox.from_price_label') }} <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">{{ \App\Support\Format::money($box->price_from_cents) }}</span></p>
                         </div>
                         <a href="{{ route('smartbox.detail', $box->slug) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $box->title }}"></a>

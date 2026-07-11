@@ -4,21 +4,26 @@ namespace App\Models\Structure;
 
 use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
+use App\Models\Concerns\HasCatalogImages;
 use App\Models\Concerns\HasFaqs;
 use App\Models\Concerns\HasReviews;
-use App\Models\Region\Region;
+use App\Models\Structure\Concerns\StructureHasRelationships;
 use Database\Factories\Structure\StructureFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Translatable\HasTranslations;
 
 class Structure extends Model
 {
     /** @use HasFactory<StructureFactory> */
-    use HasAmenities, HasFactory, HasFaqs, HasReviews;
+    use HasAmenities, HasCatalogImages, HasFactory, HasFaqs, HasReviews, HasTranslations, StructureHasRelationships;
+
+    /** SOLO colonne stringa — mai le json (general_info/features): spatie tratterebbe l'array come mappa di locale. */
+    public array $translatable = ['name', 'description'];
 
     protected $fillable = [
+        'user_id',
+        'structure_draft_id',
         'region_id',
         'type',
         'name',
@@ -35,6 +40,7 @@ class Structure extends Model
         'general_info',
         'features',
         'position',
+        'cancellation_policy_days',
     ];
 
     protected function casts(): array
@@ -42,6 +48,7 @@ class Structure extends Model
         return [
             'type' => ProductType::class,
             'rating' => 'float',
+            'cancellation_policy_days' => 'integer',
             // Cast espliciti sui cents: il pricing (step 3) fa aritmetica, non solo display.
             'price_cents' => 'integer',
             'price_from_cents' => 'integer',
@@ -49,16 +56,5 @@ class Structure extends Model
             'general_info' => 'array',
             'features' => 'array',
         ];
-    }
-
-    public function region(): BelongsTo
-    {
-        return $this->belongsTo(Region::class);
-    }
-
-    /** Giorni di chiusura (calendario disponibilità, step 3). */
-    public function closures(): HasMany
-    {
-        return $this->hasMany(StructureClosure::class);
     }
 }

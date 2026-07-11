@@ -38,10 +38,22 @@ class PartnerSmartboxPriceTest extends TestCase
             ->assertRedirect(route('partner.dashboard'));
 
         $draft = StructureDraft::first();
-        $this->assertSame('149,90', $draft->price);
+        // La virgola italiana viene normalizzata prima della validazione numeric.
+        $this->assertSame('149.90', $draft->price);
         $this->assertSame('completed', $draft->status);
         $this->assertSame(12, $draft->current_step);
         $this->assertNull(session('structure_draft_id'));
+    }
+
+    public function test_save_rejects_a_non_numeric_price(): void
+    {
+        // '215 €' passava con la vecchia regola string ma rompeva il pricing B2C.
+        Livewire::test(SmartboxPrice::class)
+            ->set('price', '215 €')
+            ->call('save')
+            ->assertHasErrors('price');
+
+        $this->assertNull(StructureDraft::first()?->price);
     }
 
     public function test_it_rehydrates_the_saved_price(): void

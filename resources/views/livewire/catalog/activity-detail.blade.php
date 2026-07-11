@@ -8,7 +8,7 @@
     <main class="flex-1">
         {{-- 1. Hero foto full-bleed: scrim a sinistra, Indietro, azioni, CTA galleria, tile durata --}}
         <section class="relative h-[524px] w-full overflow-hidden">
-            <img src="{{ asset('img/xd/'.$activity->hero_img.'.jpg') }}" alt="{{ $activity->title }}" class="absolute inset-0 h-full w-full object-cover">
+            <img src="{{ $activity->heroImageUrl() }}" alt="{{ $activity->title }}" class="absolute inset-0 h-full w-full object-cover">
             <div class="absolute inset-y-0 left-0 w-[53%] bg-gradient-to-r from-black/60 to-transparent" aria-hidden="true"></div>
 
             <div class="{{ $px }} relative h-full">
@@ -100,14 +100,17 @@
                                     <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue_note }}</p>
                                 </div>
                             </li>
-                            <li class="flex items-start gap-4">
-                                {{-- XD: coppia di figure "noun-user" — resa con l'icona team --}}
-                                <flux:icon.team class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
-                                <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('events.meeting_point', ['name' => $activity->venue->name, 'location' => $activity->location]) }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue->address }}</p>
-                                </div>
-                            </li>
+                            {{-- venue_id nullable: guard sulle attività senza venue --}}
+                            @if ($activity->venue)
+                                <li class="flex items-start gap-4">
+                                    {{-- XD: coppia di figure "noun-user" — resa con l'icona team --}}
+                                    <flux:icon.team class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('events.meeting_point', ['name' => $activity->venue->name, 'location' => $activity->location]) }}</p>
+                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue->address }}</p>
+                                    </div>
+                                </li>
+                            @endif
                         </ul>
                     </section>
 
@@ -258,8 +261,8 @@
                 </aside>
             </div>
 
-            @if ($tab === 'informazioni')
-            {{-- 7. Dove siamo: banda mappa a tutta larghezza con pill località (XD "Gruppo di maschere 7" 1638x389 + "Raggruppa 842") --}}
+            @if ($tab === 'informazioni' && $activity->venue?->map_img)
+            {{-- 7. Dove siamo: banda mappa a tutta larghezza con pill località (XD "Gruppo di maschere 7" 1638x389 + "Raggruppa 842") — nascosta senza venue/mappa (attività partner) --}}
             <section wire:key="dove-siamo" class="mt-[57px]">
                 <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('events.where_we_are') }}</h2>
                 <div class="relative mt-4 h-[389px] w-full overflow-hidden rounded-[4px]">
@@ -272,7 +275,7 @@
                     </flux:button>
                 </div>
             </section>
-            @else
+            @elseif ($tab !== 'informazioni')
             {{-- 8. Domande frequenti a tutta larghezza sotto entrambe le colonne (XD "Raggruppa 3017" + "Linea 43") --}}
             <section wire:key="faq" class="mt-[60px] border-t border-[#DEDEDE]">
                 <div class="pl-[79px] pr-[71px] pt-10">
@@ -319,7 +322,7 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$activity->hero_img.'.jpg') }}" alt="{{ $activity->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $activity->heroImageUrl() }}" alt="{{ $activity->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $activity->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
@@ -355,7 +358,7 @@
                     </flux:button>
 
                     <div class="mt-3 flex items-start gap-2.5">
-                        <img src="{{ asset('img/xd/'.$activity->hero_img.'.jpg') }}" alt="{{ $activity->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
+                        <img src="{{ $activity->heroImageUrl() }}" alt="{{ $activity->title }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $activity->title }}</p>
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">

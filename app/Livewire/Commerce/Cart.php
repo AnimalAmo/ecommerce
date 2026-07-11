@@ -366,13 +366,14 @@ class Cart extends Component
                 'title' => $product->name,
                 'location' => $product->location,
                 'metaType' => 'rating',
-                'metaText' => Format::rating($product->rating),
+                // Strutture partner senza recensioni: stato "Nuovo" al posto del voto.
+                'metaText' => $product->rating !== null ? Format::rating($product->rating) : __('holiday.new'),
                 'price' => Format::money($product->price_from_cents),
             ],
-            // SmartboxPackage: la riga pin mostra l'audience, la riga durata la validità.
+            // SmartboxPackage: la riga pin mostra l'audience (null per i box partner), la riga durata la validità.
             default => [
                 'title' => $product->title,
-                'location' => $product->audience,
+                'location' => $product->audience ?? '',
                 'metaType' => 'durata',
                 'metaText' => mb_strtoupper(__('format.valid_for', ['validity' => Format::validity($product->validity_months)])),
                 'price' => Format::money($product->price_from_cents),
@@ -382,7 +383,7 @@ class Cart extends Component
         return $card + [
             'id' => $alias.'-'.$product->getKey(),
             'type' => $product->type->value,
-            'photo' => $product->img.'.jpg',
+            'photo' => $product->imageUrl(),
         ];
     }
 

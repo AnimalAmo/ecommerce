@@ -30,7 +30,9 @@ class HotelRoomsForm extends Form
             'rooms' => ['required', 'array', 'min:1'],
             'rooms.*.type' => ['required', 'string'],
             'rooms.*.count' => ['required', 'integer', 'min:1'],
-            'rooms.*.price' => ['required', 'numeric', 'min:0'],
+            // decimal:0,2 + max: il publisher converte in cents (unsignedInteger),
+            // '1.500' ambiguo e importi a 9+ cifre overflowerebbero la colonna.
+            'rooms.*.price' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:1000000'],
             'checkinFrom' => ['required', 'string'],
             'checkinTo' => ['required', 'string'],
             'checkoutFrom' => ['required', 'string'],

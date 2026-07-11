@@ -3,7 +3,9 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Structure\StructureDraft;
+use App\Services\Partner\Publishing\DraftPublisher;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Condivide la bozza di onboarding struttura tra i vari step del wizard partner.
@@ -58,13 +60,26 @@ trait InteractsWithStructureDraft
         return $draft;
     }
 
-    /** Chiude la bozza all'ultimo step del flusso (default 11) e libera la sessione. */
+    /**
+     * Chiude la bozza all'ultimo step del flusso (default 11), la pubblica sul
+     * catalogo B2C e libera la sessione. MVP: pubblicazione automatica — la
+     * moderazione superadmin prevista dalla spec arriverà come gate a monte
+     * (vedi DraftPublisher).
+     */
     protected function completeDraft(int $finalStep = 11): void
     {
-        $this->draft()->update([
-            'status' => StructureDraft::STATUS_COMPLETED,
-            'current_step' => $finalStep,
-        ]);
+        $draft = $this->draft();
+
+        // Transazione: se la pubblicazione fallisce, lo status torna draft e il
+        // partner può riprovare (niente bozze "completed" mai arrivate a catalogo).
+        DB::transaction(function () use ($draft, $finalStep): void {
+            $draft->update([
+                'status' => StructureDraft::STATUS_COMPLETED,
+                'current_step' => $finalStep,
+            ]);
+
+            app(DraftPublisher::class)->publish($draft->fresh());
+        });
 
         session()->forget('structure_draft_id');
     }

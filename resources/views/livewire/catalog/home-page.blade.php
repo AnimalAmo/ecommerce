@@ -88,7 +88,7 @@
                 @foreach ($events as $event)
                     <div wire:key="ev-{{ $event->id }}" class="group flex h-full flex-col rounded-[3px] border border-[#E9E9E9] bg-white p-2">
                         <div class="relative overflow-hidden">
-                            <img src="{{ asset('img/xd/'.$event->img.'.jpg') }}" alt="{{ $event->title }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ $event->imageUrl() }}" alt="{{ $event->title }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
                         </div>
                         <div class="flex flex-1 flex-col p-2 pt-3">
                             <p class="flex items-center gap-1.5 text-[13px] text-brand-purple-soft">

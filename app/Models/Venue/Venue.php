@@ -12,6 +12,7 @@ class Venue extends Model
     use HasFactory;
 
     protected $fillable = [
+        'structure_draft_id',
         'name',
         'address',
         'map_img',

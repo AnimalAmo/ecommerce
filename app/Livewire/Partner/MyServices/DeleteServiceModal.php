@@ -3,8 +3,10 @@
 namespace App\Livewire\Partner\MyServices;
 
 use App\Models\Structure\StructureDraft;
+use App\Services\Partner\Publishing\DraftPublisher;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -41,12 +43,18 @@ class DeleteServiceModal extends Component
 
     public function delete(): void
     {
-        if ($this->serviceId !== null) {
-            // Vincolato all'utente: nessuno può eliminare i servizi altrui.
-            StructureDraft::query()
-                ->where('user_id', Auth::id())
-                ->whereKey($this->serviceId)
-                ->delete();
+        // Vincolato all'utente: nessuno può eliminare i servizi altrui.
+        $draft = $this->serviceId !== null
+            ? StructureDraft::query()->where('user_id', Auth::id())->find($this->serviceId)
+            : null;
+
+        if ($draft !== null) {
+            // Senza unpublish la riga catalogo resterebbe live per sempre
+            // (FK nullOnDelete: il delete del draft la orfanerebbe soltanto).
+            DB::transaction(function () use ($draft): void {
+                app(DraftPublisher::class)->unpublish($draft);
+                $draft->delete();
+            });
         }
 
         Flux::modal('delete-service')->close();

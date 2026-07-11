@@ -64,4 +64,7 @@ return [
     'added_to_cart' => 'Aggiunto al carrello',
     'close' => 'Chiudi',
     'go_to_cart' => 'Vai al carrello',
+
+    // Strutture partner senza recensioni (rating null)
+    'new' => 'Nuovo',
 ];

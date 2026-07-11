@@ -64,4 +64,7 @@ return [
     'added_to_cart' => 'Added to cart',
     'close' => 'Close',
     'go_to_cart' => 'Go to cart',
+
+    // Partner structures without reviews yet (null rating)
+    'new' => 'New',
 ];
