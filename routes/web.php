@@ -28,6 +28,7 @@ use App\Livewire\Partner\Activity\ActivityLocation as PartnerActivityLocation;
 use App\Livewire\Partner\Activity\ActivityName as PartnerActivityName;
 use App\Livewire\Partner\Activity\ActivityPhotos as PartnerActivityPhotos;
 use App\Livewire\Partner\Activity\ActivityType as PartnerActivityType;
+use App\Livewire\Partner\Bookings\PartnerBookingDetail;
 use App\Livewire\Partner\Bookings\PartnerBookings;
 use App\Livewire\Partner\CreateService as PartnerCreateService;
 use App\Livewire\Partner\Dashboard as PartnerDashboard;
@@ -119,6 +120,7 @@ Route::group([
         Route::get(LaravelLocalization::transRoute('routes.partner.service.create'), PartnerCreateService::class)->name('partner.service.create');
         Route::get(LaravelLocalization::transRoute('routes.partner.services'), PartnerMyServices::class)->name('partner.services');
         Route::get(LaravelLocalization::transRoute('routes.partner.bookings'), PartnerBookings::class)->name('partner.bookings');
+        Route::get(LaravelLocalization::transRoute('routes.partner.bookings.show'), PartnerBookingDetail::class)->name('partner.bookings.show');
         Route::get(LaravelLocalization::transRoute('routes.partner.services.show'), PartnerServiceDetail::class)->name('partner.services.show');
         Route::get(LaravelLocalization::transRoute('routes.partner.profile'), PartnerProfileInfo::class)->name('partner.profile');
         Route::get(LaravelLocalization::transRoute('routes.partner.profile.payment'), PartnerProfilePayment::class)->name('partner.profile.payment');

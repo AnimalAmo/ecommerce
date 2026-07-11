@@ -32,6 +32,7 @@ return [
     'partner.services' => 'partner/i-miei-servizi',
     'partner.services.show' => 'partner/i-miei-servizi/{draft}',
     'partner.bookings' => 'partner/prenotazioni',
+    'partner.bookings.show' => 'partner/prenotazioni/{booking}',
     'partner.profile' => 'partner/profilo',
     'partner.profile.payment' => 'partner/profilo/metodo-pagamento',
     'partner.profile.security' => 'partner/profilo/sicurezza',

@@ -8,7 +8,7 @@
             <a href="{{ route('partner.dashboard') }}" class="{{ request()->routeIs('partner.dashboard') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_dashboard') }}</a>
             <a href="{{ route('partner.service.create') }}" class="{{ request()->routeIs('partner.service.create', 'partner.structure.*', 'partner.activity.*', 'partner.smartbox.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_create_service') }}</a>
             <a href="{{ route('partner.services') }}" class="{{ request()->routeIs('partner.services', 'partner.services.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_my_services') }}</a>
-            <a href="{{ route('partner.bookings') }}" class="{{ request()->routeIs('partner.bookings') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_bookings') }}</a>
+            <a href="{{ route('partner.bookings') }}" class="{{ request()->routeIs('partner.bookings', 'partner.bookings.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_bookings') }}</a>
             <a href="{{ route('partner.profile') }}" class="{{ request()->routeIs('partner.profile', 'partner.profile.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_profile') }}</a>
         </nav>
         <div class="flex shrink-0 items-center gap-2">

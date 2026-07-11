@@ -32,6 +32,7 @@ return [
     'partner.services' => 'partner/my-services',
     'partner.services.show' => 'partner/my-services/{draft}',
     'partner.bookings' => 'partner/bookings',
+    'partner.bookings.show' => 'partner/bookings/{booking}',
     'partner.profile' => 'partner/profile',
     'partner.profile.payment' => 'partner/profile/payment-method',
     'partner.profile.security' => 'partner/profile/security',

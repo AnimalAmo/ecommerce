@@ -31,7 +31,8 @@
                 <flux:table class="mt-[60px] [&_th]:!px-0 [&_th]:!pr-4 [&_th]:!text-[15px] [&_th]:!font-semibold [&_th]:!text-[#959595] [&_td]:!px-0 [&_td]:!pr-4 [&_td]:!py-[19px] [&_td]:!text-[15px] [&_td]:!text-[#0D171A] [&_thead]:!border-b [&_thead]:!border-[#E2EAEB] [&_tbody_tr]:!border-b [&_tbody_tr]:!border-[#E2EAEB]">
                     <flux:table.columns>
                         @foreach ($columns as $key => $label)
-                            <flux:table.column>{{ __('partner.bookings.'.$label) }}</flux:table.column>
+                            {{-- Label Data/Validità centrata; Prezzo e N. Persone centrate anche nei valori --}}
+                            <flux:table.column :align="in_array($key, ['date', 'price', 'people'], true) ? 'center' : 'start'">{{ __('partner.bookings.'.$label) }}</flux:table.column>
                         @endforeach
                         <flux:table.column><span class="sr-only">{{ __('partner.bookings.actions') }}</span></flux:table.column>
                     </flux:table.columns>
@@ -40,12 +41,11 @@
                         @forelse ($bookings as $index => $row)
                             <flux:table.row wire:key="booking-{{ $tab }}-{{ $index }}">
                                 @foreach ($columns as $key => $label)
-                                    <flux:table.cell>{{ $row[$key] }}</flux:table.cell>
+                                    <flux:table.cell :align="in_array($key, ['price', 'people'], true) ? 'center' : 'start'">{{ $row[$key] }}</flux:table.cell>
                                 @endforeach
                                 <flux:table.cell>
                                     <div class="flex items-center justify-end gap-3">
-                                        {{-- TODO: dettaglio prenotazione (artboard "Dettaglio prenotazione …", pagina non ancora costruita) --}}
-                                        <flux:button variant="ghost" size="sm" square href="#" aria-label="{{ __('partner.bookings.view') }}" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border-0 !bg-[#FFF8E5] !text-[#FFCB3E] !shadow-none hover:!bg-[#FFCB3E] hover:!text-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+                                        <flux:button variant="ghost" size="sm" square href="{{ route('partner.bookings.show', $row['id']) }}" aria-label="{{ __('partner.bookings.view') }}" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border-0 !bg-[#FFF8E5] !text-[#FFCB3E] !shadow-none hover:!bg-[#FFCB3E] hover:!text-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
                                             <flux:icon.eye class="!h-[14px] !w-[14px]" />
                                         </flux:button>
                                         {{-- TODO: stampa prenotazione (nessuna interazione definita nell'XD) --}}
