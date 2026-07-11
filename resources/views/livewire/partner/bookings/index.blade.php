@@ -39,14 +39,14 @@
                                 </flux:table.columns>
 
                                 <flux:table.rows>
-                                    @forelse ($panel['rows'] as $index => $row)
-                                        <flux:table.row wire:key="booking-{{ $family }}-{{ $index }}">
+                                    @forelse ($panel['rows'] as $row)
+                                        <flux:table.row wire:key="booking-{{ $family }}-{{ $row['key'] }}">
                                             @foreach ($panel['columns'] as $key => $label)
                                                 <flux:table.cell :align="in_array($key, ['price', 'people'], true) ? 'center' : 'start'">{{ $row[$key] }}</flux:table.cell>
                                             @endforeach
                                             <flux:table.cell>
                                                 <div class="flex items-center justify-end gap-3">
-                                                    <flux:button variant="ghost" size="sm" square href="{{ route('partner.bookings.show', $row['id']) }}" aria-label="{{ __('partner.bookings.view') }}" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border-0 !bg-[#FFF8E5] !text-[#FFCB3E] !shadow-none hover:!bg-[#FFCB3E] hover:!text-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+                                                    <flux:button variant="ghost" size="sm" square href="{{ route('partner.bookings.show', $row['key']) }}" aria-label="{{ __('partner.bookings.view') }}" class="!h-[26px] !w-[26px] !min-w-0 !rounded-full !border-0 !bg-[#FFF8E5] !text-[#FFCB3E] !shadow-none hover:!bg-[#FFCB3E] hover:!text-white [&>span]:flex [&>span]:items-center [&>span]:justify-center">
                                                         <flux:icon.eye class="!h-[14px] !w-[14px]" />
                                                     </flux:button>
                                                     {{-- TODO: stampa prenotazione (nessuna interazione definita nell'XD) --}}

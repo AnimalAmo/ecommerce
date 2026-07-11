@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\OrderItem\OrderItem;
+use App\Models\Structure\Structure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Routing\RouteCollection;
@@ -120,9 +122,15 @@ class LocalizationTest extends TestCase
 
     public function test_english_partner_booking_detail_url_uses_en_prefix_and_translated_slug(): void
     {
-        $this->actingAsActivePartner();
-        $this->reloadRoutesFor('/en/partner/bookings/BD94KEU9E');
-        $this->get('/en/partner/bookings/BD94KEU9E')->assertOk();
+        $partner = $this->actingAsActivePartner();
+        $structure = Structure::factory()->create(['user_id' => $partner->id]);
+        $item = OrderItem::factory()->create([
+            'purchasable_type' => 'structure',
+            'purchasable_id' => $structure->id,
+        ]);
+
+        $this->reloadRoutesFor('/en/partner/bookings/'.$item->id);
+        $this->get('/en/partner/bookings/'.$item->id)->assertOk();
     }
 
     public function test_english_partner_smartbox_name_url_uses_en_prefix_and_translated_slug(): void

@@ -1,4 +1,4 @@
-{{-- Dettaglio prenotazione strutture (XD "Dettaglio prenotazione strutture") --}}
+{{-- Dettaglio prenotazione (XD "Dettaglio prenotazione strutture/eventi/attività/smartbox") --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -21,23 +21,25 @@
                     </flux:button>
                 </div>
 
-                {{-- Titolo + info cliente a sx, foto struttura a dx --}}
+                {{-- Titolo + info cliente a sx, foto del servizio a dx --}}
                 <div class="mt-6 flex flex-col gap-8 sm:flex-row sm:justify-between">
                     <div class="min-w-0 flex-1">
-                        <h1 class="text-[25px] font-bold leading-[30px] text-[#0D171A]">{{ $info['right']['detail_structure'] }}</h1>
+                        <h1 class="text-[25px] font-bold leading-[30px] text-[#0D171A]">{{ $title }}</h1>
 
                         <h2 class="mt-[13px] text-lg font-semibold text-[#0D171A]">{{ __('partner.bookings.detail_customer') }}</h2>
                         <dl class="mt-4 space-y-[13px]">
-                            @foreach (['detail_first_name' => $customer['first_name'], 'detail_last_name' => $customer['last_name'], 'detail_email' => $customer['email'], 'detail_phone' => $customer['phone']] as $label => $value)
+                            @foreach ($customer as $label => $value)
                                 <div class="flex items-baseline gap-4 pl-4">
                                     <dt class="w-[195px] shrink-0 text-[15px] font-semibold text-[#627277]">{{ __('partner.bookings.'.$label) }}</dt>
-                                    <dd class="text-[15px] font-medium text-[#0D171A]">{{ $value }}</dd>
+                                    <dd class="text-[15px] font-medium text-[#0D171A]">{{ $value ?? '—' }}</dd>
                                 </div>
                             @endforeach
                         </dl>
                     </div>
 
-                    <img src="{{ asset('img/booking-detail-hotel.jpg') }}" alt="{{ $info['right']['detail_structure'] }}" class="h-[184px] w-[277px] shrink-0 rounded-[4px] object-cover">
+                    @if ($photo)
+                        <img src="{{ $photo }}" alt="{{ $title }}" class="h-[184px] w-[277px] shrink-0 rounded-[4px] object-cover">
+                    @endif
                 </div>
 
                 <div class="mt-6 border-t border-[#E2EAEB]" aria-hidden="true"></div>
@@ -46,7 +48,7 @@
                 <h2 class="mt-[35px] text-lg font-semibold text-[#0D171A]">{{ __('partner.bookings.detail_booking') }}</h2>
                 <div class="mt-4 grid grid-cols-1 gap-x-10 gap-y-[13px] sm:grid-cols-2">
                     <dl class="space-y-[13px]">
-                        @foreach ($info['left'] as $label => $value)
+                        @foreach ($left as $label => $value)
                             <div class="flex items-baseline gap-4 pl-4">
                                 <dt class="w-[195px] shrink-0 text-[15px] font-semibold text-[#627277]">{{ __('partner.bookings.'.$label) }}</dt>
                                 <dd class="text-[15px] font-medium text-[#0D171A]">{{ $value }}</dd>
@@ -54,7 +56,7 @@
                         @endforeach
                     </dl>
                     <dl class="space-y-[13px]">
-                        @foreach ($info['right'] as $label => $value)
+                        @foreach ($right as $label => $value)
                             <div class="flex items-baseline gap-4 pl-4">
                                 <dt class="w-[125px] shrink-0 text-[15px] font-semibold text-[#627277]">{{ __('partner.bookings.'.$label) }}</dt>
                                 <dd class="text-[15px] font-medium text-[#0D171A]">{{ $value }}</dd>

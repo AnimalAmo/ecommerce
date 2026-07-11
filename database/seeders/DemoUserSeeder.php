@@ -68,6 +68,19 @@ class DemoUserSeeder extends Seeder
         ]);
 
         $this->seedServices($partner);
+        $this->assignCatalogOwnership($partner);
+    }
+
+    /**
+     * Assegna al partner demo i prodotti mock omonimi dei suoi servizi: le
+     * righe ordine di Giulia su questi prodotti diventano le prenotazioni che
+     * il partner vede in "Prenotazioni" (query su purchasable.user_id).
+     */
+    private function assignCatalogOwnership(User $partner): void
+    {
+        Structure::whereIn('slug', ['hotel-brescia', 'hotel-mantova-residence'])->update(['user_id' => $partner->id]);
+        Event::whereIn('slug', ['weekend-escursioni', 'puppy-yoga-milano', 'puppy-yoga', 'vacanza-montagna'])->update(['user_id' => $partner->id]);
+        SmartboxPackage::whereIn('slug', ['piemonte', 'relax-lombardia-2'])->update(['user_id' => $partner->id]);
     }
 
     /** Servizi completati del partner demo (card XD "I miei servizi"). */

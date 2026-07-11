@@ -41,6 +41,33 @@ class DemoOrderSeeder extends Seeder
         $this->seedUpcomingOrder($giulia);
         $this->seedGiftOrder($giulia);
         $this->seedPastOrders($giulia);
+        $this->seedActivityOrder($giulia);
+    }
+
+    /** Ordine su un'attività: popola la tab "Attività" delle Prenotazioni partner. */
+    private function seedActivityOrder(User $giulia): void
+    {
+        $activity = Event::where('slug', 'vacanza-montagna')->firstOrFail();
+
+        $this->createOrder($giulia, CarbonImmutable::parse('2024-02-12 11:20'), false, [
+            [
+                'purchasable_type' => 'event',
+                'purchasable_id' => $activity->id,
+                'title' => $activity->title,
+                'photo_url' => asset('img/xd/'.$activity->img.'.jpg'),
+                'product_type' => $activity->type,
+                'location' => $activity->location,
+                'price_cents' => $activity->price_cents ?? 21500,
+                'is_gift' => false,
+                'options' => [
+                    'animals' => ['cane' => 1],
+                    'guests' => ['adulti' => 2, 'bambini' => 0, 'ragazzi' => 0],
+                ],
+                // Range del mock Prenotazioni (20/02/24 - 25/02/2024).
+                'booked_from' => CarbonImmutable::parse('2024-02-20 17:00'),
+                'booked_until' => CarbonImmutable::parse('2024-02-25 19:00'),
+            ],
+        ]);
     }
 
     /** Ordine "in programma" del mock: 3 articoli, totale 476,00 €. */

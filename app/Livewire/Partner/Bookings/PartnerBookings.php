@@ -2,21 +2,36 @@
 
 namespace App\Livewire\Partner\Bookings;
 
+use App\Enums\ProductType;
+use App\Models\Event\Event;
+use App\Models\OrderItem\OrderItem;
+use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Structure;
+use App\Services\Pricing\BookingPricingService;
+use App\Support\Format;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 /**
  * Prenotazioni partner (XD "Prenotazioni strutture/eventi/attività/smartbox"):
- * un'unica pagina con 4 flux:tab.panel per famiglia (tabella con colonne
- * dedicate), ricerca live e filtro data condivisi. Righe DEMO fedeli al
- * mockup (come le stat della Dashboard): il checkout B2C oggi non genera
- * prenotazioni sui servizi partner — quando accadrà la fonte diventerà
- * OrderItem sui prodotti con user_id del partner (colonne introdotte dalla
+ * un'unica pagina con 4 flux:tab.panel per famiglia, ricerca live e filtro
+ * data condivisi. Fonte: le righe ordine (OrderItem, snapshot B2C) i cui
+ * prodotti a catalogo appartengono al partner (user_id scritto dalla
  * pipeline di pubblicazione).
  */
 class PartnerBookings extends Component
 {
     public const TABS = ['strutture', 'eventi', 'attivita', 'smartbox'];
+
+    /** product_type (snapshot riga ordine) di ogni famiglia-tab. */
+    private const TAB_TYPES = [
+        'strutture' => [ProductType::Structure, ProductType::Service],
+        'eventi' => [ProductType::Event],
+        'attivita' => [ProductType::Activity],
+        'smartbox' => [ProductType::Stay, ProductType::Wellness, ProductType::Adventure],
+    ];
 
     public string $tab = 'strutture';
 
@@ -39,7 +54,7 @@ class PartnerBookings extends Component
         foreach (self::TABS as $family) {
             $panels[$family] = [
                 'columns' => $this->columnsFor($family),
-                'rows' => $this->filteredRowsFor($family),
+                'rows' => $this->rowsFor($family),
             ];
         }
 
@@ -71,75 +86,98 @@ class PartnerBookings extends Component
         };
     }
 
-    /** @return list<array<string, mixed>> */
-    private function filteredRowsFor(string $family): array
-    {
-        $term = mb_strtolower(trim($this->search));
-
-        $rows = array_filter($this->demoRowsFor($family), function (array $row) use ($term): bool {
-            if ($term !== '' && ! str_contains(mb_strtolower(implode(' ', [
-                $row['id'], $row['first_name'], $row['last_name'], $row['email'], $row['title'],
-            ])), $term)) {
-                return false;
-            }
-
-            if ($this->date !== null && $this->date !== '') {
-                $day = Carbon::parse($this->date);
-
-                return $day->betweenIncluded(Carbon::parse($row['date_from']), Carbon::parse($row['date_to']));
-            }
-
-            return true;
-        });
-
-        return array_values($rows);
-    }
-
     /**
-     * Righe demo della famiglia, ripetute come nella griglia del mockup.
+     * Prenotazioni della famiglia: righe ordine dei prodotti del partner,
+     * più recenti prima, filtrate da ricerca e data.
      *
      * @return list<array<string, mixed>>
      */
-    private function demoRowsFor(string $family): array
+    private function rowsFor(string $family): array
     {
-        $base = [
-            'id' => 'BD94KEU9E',
-            'first_name' => 'Giulia',
-            'last_name' => 'Rossi',
-            'email' => 'giulia.rossi@gmail.com',
-            'time' => null,
-            'people' => 2,
+        $rows = $this->itemsFor($family)
+            ->map(fn (OrderItem $item): array => $this->row($item, $family))
+            ->filter(fn (array $row): bool => $this->passesFilters($row))
+            ->values()
+            ->all();
+
+        return $rows;
+    }
+
+    private function itemsFor(string $family)
+    {
+        $types = array_map(fn (ProductType $type): string => $type->value, self::TAB_TYPES[$family]);
+
+        return OrderItem::query()
+            ->whereIn('product_type', $types)
+            ->whereHasMorph(
+                'purchasable',
+                [Structure::class, Event::class, SmartboxPackage::class],
+                fn (Builder $query) => $query->where('user_id', Auth::id()),
+            )
+            ->with('order')
+            ->latest()
+            ->get();
+    }
+
+    /** @return array<string, mixed> */
+    private function row(OrderItem $item, string $family): array
+    {
+        $order = $item->order;
+
+        return [
+            'key' => $item->id,
+            'id' => $order->order_number,
+            'first_name' => $order->first_name,
+            'last_name' => $order->last_name,
+            'email' => $order->email,
+            'title' => $item->title,
+            'date' => $this->dateLabel($item, $family),
+            'time' => $family === 'eventi' ? $item->booked_from?->format('H:i') : null,
+            'price' => Format::money($item->price_cents),
+            'people' => BookingPricingService::persons($item->options ?? []),
+            'date_from' => $item->booked_from?->toDateString(),
+            'date_to' => $item->booked_until?->toDateString(),
         ];
+    }
 
-        [$row, $count] = match ($family) {
-            'eventi' => [array_merge($base, [
-                'title' => 'Puppy Yoga',
-                'date' => '20/02/24',
-                'date_from' => '2024-02-20', 'date_to' => '2024-02-20',
-                'time' => '13:30',
-                'price' => null,
-            ]), 3],
-            'attivita' => [array_merge($base, [
-                'title' => 'Vacanza di relax in montagna',
-                'date' => '20/02/24 - 25/02/2024',
-                'date_from' => '2024-02-20', 'date_to' => '2024-02-25',
-                'price' => '215€',
-            ]), 7],
-            'smartbox' => [array_merge($base, [
-                'title' => 'Weekend di relax in Lombardia',
-                'date' => '20/02/24 - 20/02/2025',
-                'date_from' => '2024-02-20', 'date_to' => '2025-02-20',
-                'price' => '215€',
-                'people' => null,
-            ]), 4],
-            default => [array_merge($base, [
-                'title' => 'Hotel Brescia',
-                'date' => '20/02/24 - 25/02/2024',
-                'date_from' => '2024-02-20', 'date_to' => '2024-02-25',
-                'price' => '215€',
-            ]), 7],
-        };
+    /** Eventi: giorno singolo; altrove range check-in/check-out o validità. */
+    private function dateLabel(OrderItem $item, string $family): ?string
+    {
+        if ($item->booked_from === null) {
+            return null;
+        }
 
-        return array_fill(0, $count, $row);
+        if ($family === 'eventi' || $item->booked_until === null || $item->booked_from->isSameDay($item->booked_until)) {
+            return Format::dateShort($item->booked_from);
+        }
+
+        return Format::dateRange($item->booked_from, $item->booked_until);
+    }
+
+    /** @param array<string, mixed> $row */
+    private function passesFilters(array $row): bool
+    {
+        $term = mb_strtolower(trim($this->search));
+
+        if ($term !== '' && ! str_contains(mb_strtolower(implode(' ', [
+            $row['id'], $row['first_name'], $row['last_name'], $row['email'], $row['title'],
+        ])), $term)) {
+            return false;
+        }
+
+        if ($this->date !== null && $this->date !== '') {
+            if ($row['date_from'] === null) {
+                return false;
+            }
+
+            $day = Carbon::parse($this->date);
+
+            return $day->betweenIncluded(
+                Carbon::parse($row['date_from']),
+                Carbon::parse($row['date_to'] ?? $row['date_from']),
+            );
+        }
+
+        return true;
     }
 }

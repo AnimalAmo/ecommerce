@@ -170,9 +170,13 @@ return [
         'detail_time' => 'Orario:',
         'detail_language' => 'Lingua:',
         'detail_structure' => 'Struttura:',
+        'detail_validity' => 'Validità:',
         'detail_price' => 'Prezzo:',
         'detail_people' => 'N. Persone:',
         'detail_duration' => 'Durata:',
+        'duration_nights' => '{1} 1 notte|[2,*] :count notti',
+        'duration_days' => '{1} 1 giorno|[2,*] :count giorni',
+        'duration_hours' => '{1} 1 ora|[2,*] :count ore',
     ],
 
     /*
