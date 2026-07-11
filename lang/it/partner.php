@@ -126,6 +126,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Prenotazioni (area riservata)
+    |--------------------------------------------------------------------------
+    */
+    'bookings' => [
+        'title' => 'AnimalAmo — Prenotazioni',
+        'heading' => 'Prenotazioni',
+        'tab_strutture' => 'Strutture',
+        'tab_eventi' => 'Eventi',
+        'tab_attivita' => 'Attività',
+        'tab_smartbox' => 'Smartbox',
+        'search_placeholder' => 'Cerca',
+        'date_placeholder' => 'Seleziona data',
+        'col_id' => 'ID prenotazione',
+        'col_first_name' => 'Nome',
+        'col_last_name' => 'Cognome',
+        'col_email' => 'Email',
+        'col_structure' => 'Struttura',
+        'col_event' => 'Evento',
+        'col_activity' => 'Attività',
+        'col_smartbox' => 'Nome Smartbox',
+        'col_date' => 'Data',
+        'col_time' => 'Ora',
+        'col_validity' => 'Validità',
+        'col_price' => 'Prezzo',
+        'col_people' => 'N. Persone',
+        'view' => 'Vedi prenotazione',
+        'print' => 'Stampa prenotazione',
+        'actions' => 'Azioni',
+        'empty' => 'Nessuna prenotazione trovata.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | I miei servizi (lista + dettaglio + popup eliminazione)
     |--------------------------------------------------------------------------
     */

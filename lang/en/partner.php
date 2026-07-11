@@ -126,6 +126,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bookings (reserved area)
+    |--------------------------------------------------------------------------
+    */
+    'bookings' => [
+        'title' => 'AnimalAmo — Bookings',
+        'heading' => 'Bookings',
+        'tab_strutture' => 'Structures',
+        'tab_eventi' => 'Events',
+        'tab_attivita' => 'Activities',
+        'tab_smartbox' => 'Smartbox',
+        'search_placeholder' => 'Search',
+        'date_placeholder' => 'Select date',
+        'col_id' => 'Booking ID',
+        'col_first_name' => 'First name',
+        'col_last_name' => 'Last name',
+        'col_email' => 'Email',
+        'col_structure' => 'Structure',
+        'col_event' => 'Event',
+        'col_activity' => 'Activity',
+        'col_smartbox' => 'Smartbox name',
+        'col_date' => 'Date',
+        'col_time' => 'Time',
+        'col_validity' => 'Validity',
+        'col_price' => 'Price',
+        'col_people' => 'No. of people',
+        'view' => 'View booking',
+        'print' => 'Print booking',
+        'actions' => 'Actions',
+        'empty' => 'No bookings found.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | My services (list + detail + delete popup)
     |--------------------------------------------------------------------------
     */
