@@ -20,7 +20,6 @@ class PaymentGatewayFactory
     {
         $gateway = match ($method->gatewayCode()) {
             'stripe' => StripeGateway::class,
-            'paypal' => PaypalGateway::class,
             default => throw new InvalidArgumentException(
                 "Unsupported gateway code [{$method->gatewayCode()}].",
             ),

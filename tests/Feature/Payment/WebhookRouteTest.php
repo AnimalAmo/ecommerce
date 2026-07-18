@@ -65,12 +65,10 @@ class WebhookRouteTest extends TestCase
 
     public function test_no_route_is_registered_for_a_disabled_gateway(): void
     {
-        PaymentGateway::query()->create(['code' => 'stripe', 'name' => 'Stripe', 'is_enabled' => true, 'sort_order' => 0]);
-        PaymentGateway::query()->create(['code' => 'paypal', 'name' => 'PayPal', 'is_enabled' => false, 'sort_order' => 1]);
+        PaymentGateway::query()->create(['code' => 'stripe', 'name' => 'Stripe', 'is_enabled' => false, 'sort_order' => 0]);
         $this->registerWebhookRoutes();
 
-        $this->postJson('/webhooks/paypal', [])->assertNotFound();
-        $this->postJson('/webhooks/stripe', [])->assertStatus(400);
+        $this->postJson('/webhooks/stripe', [])->assertNotFound();
     }
 
     public function test_webhooks_are_exempt_from_csrf_validation(): void

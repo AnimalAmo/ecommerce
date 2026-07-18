@@ -15,7 +15,7 @@ interface PaymentGatewayInterface
     /**
      * Crea (o aggiorna, via $context) la sessione di pagamento lato gateway.
      *
-     * @return array{client_secret?: string, payment_intent_id?: string, paypal_order_id?: string}
+     * @return array{client_secret: string, payment_intent_id: string}
      */
     public function initPaymentSession(int $amountCents, PaymentMethod $method, array $context = []): array;
 

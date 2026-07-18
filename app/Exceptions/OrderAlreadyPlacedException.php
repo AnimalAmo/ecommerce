@@ -8,8 +8,8 @@ use RuntimeException;
 /**
  * Il capture (provider + gateway_session_id) ha GIÀ generato un OrderPayment:
  * esito IDEMPOTENTE — l'incasso appartiene all'ordine esistente, quindi il
- * chiamante NON deve stornare né creare un secondo ordine (replay del callback
- * via devtools o del return URL Klarna).
+ * chiamante NON deve stornare né creare un secondo ordine (replay del
+ * callback via devtools).
  */
 class OrderAlreadyPlacedException extends RuntimeException
 {

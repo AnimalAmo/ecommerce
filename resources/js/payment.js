@@ -1,8 +1,8 @@
 /**
  * Checkout payments — Alpine components (scope window, come richiede x-data).
- * Publishable key / client id arrivano dal blade via config('payment.*'),
- * MAI da VITE_*. Gli SDK Stripe/PayPal sono caricati dinamicamente al primo
- * mount; il copy utente arriva dal blade (lang/it), qui nessuna stringa UI.
+ * La publishable key arriva dal blade via config('payment.*'), MAI da
+ * VITE_*. Stripe.js è caricato dinamicamente al primo mount; il copy utente
+ * arriva dal blade (lang/it), qui nessuna stringa UI.
  */
 
 // Il Payment Element vive in un iframe: il font va dichiarato esplicitamente.
@@ -57,23 +57,6 @@ function loadStripeJs() {
     return stripeJsPromise;
 }
 
-let paypalSdkPromise = null;
-
-function loadPaypalSdk(clientId) {
-    if (window.paypal) return Promise.resolve(window.paypal);
-    if (paypalSdkPromise) return paypalSdkPromise;
-
-    paypalSdkPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=EUR&intent=capture`;
-        script.onload = () => resolve(window.paypal);
-        script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
-        document.head.appendChild(script);
-    });
-
-    return paypalSdkPromise;
-}
-
 function createStripeElements(StripeFactory, publishableKey, clientSecret) {
     const stripe = StripeFactory(publishableKey);
     const elements = stripe.elements({
@@ -86,10 +69,11 @@ function createStripeElements(StripeFactory, publishableKey, clientSecret) {
     return { stripe, elements };
 }
 
-// Conferma condivisa Payment/Express Checkout Element: redirect solo se il
-// metodo lo impone (Klarna → return_url); a successo il server riverifica il
-// PaymentIntent (handlePaymentCallback → captureFromCheckout), mai fidarsi
-// dell'esito client-side da solo.
+// Conferma condivisa Payment/Express Checkout Element: return_url è
+// richiesto da confirmPayment ma i metodi attivi (carta, wallet) confermano
+// senza redirect; a successo il server riverifica il PaymentIntent
+// (handlePaymentCallback → captureFromCheckout), mai fidarsi dell'esito
+// client-side da solo.
 async function confirmStripePayment(component, options) {
     // Timestamp per il watchdog di "Paga ora": una conferma è partita davvero.
     window.__paymentConfirmAt = Date.now();
@@ -112,7 +96,7 @@ async function confirmStripePayment(component, options) {
     }
 }
 
-// ─── Payment Element (card, klarna) ─────────────────────────────────────────
+// ─── Payment Element (card) ─────────────────────────────────────────────────
 // options: { method, returnUrl, incompleteMessage }
 window.stripePayment = (clientSecret, publishableKey, options = {}) => ({
     stripe: null,
@@ -186,34 +170,6 @@ window.stripeExpressCheckout = (clientSecret, publishableKey, options = {}) => (
         });
 
         element.on('confirm', () => confirmStripePayment(this, options));
-    },
-});
-
-// ─── PayPal Buttons (SDK classico + Orders API v2) ──────────────────────────
-// options: { errorMessage }
-window.paypalButtons = (paypalOrderId, clientId, options = {}) => ({
-    async init() {
-        try {
-            const paypal = await loadPaypalSdk(clientId);
-
-            await paypal.Buttons({
-                fundingSource: paypal.FUNDING.PAYPAL,
-                // L'ordine PayPal è già stato creato server-side in initPaymentSession.
-                createOrder: () => paypalOrderId,
-                onApprove: (data) => {
-                    this.$wire.handlePaymentCallback({ paypal_order_id: data.orderID });
-                },
-                onError: (error) => {
-                    console.error('[PayPal] error', error);
-                    this.$wire.onPaymentFailed(options.errorMessage || '');
-                },
-                style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
-            }).render(this.$refs.element);
-        } catch (error) {
-            console.error('[PayPal] init failed', error);
-            // Stato al server (paymentUnavailable): box cortese al posto dei bottoni mai renderizzati.
-            this.$wire.reportPaymentInitFailed();
-        }
     },
 });
 

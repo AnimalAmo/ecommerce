@@ -6,15 +6,19 @@ use App\Contracts\Payment\PaymentGatewayInterface;
 use App\Data\Checkout\CheckoutCaptureResult;
 use App\Enums\PaymentMethod;
 use App\Models\OrderPayment\OrderPayment;
+use RuntimeException;
 
 /**
  * Gateway fittizio per i test del checkout: nessuna rete, esito capture
  * configurabile, chiamate registrate (init/capture/refund) per le assert.
- * Va bindato nel container al posto di StripeGateway/PaypalGateway.
+ * Va bindato nel container al posto di StripeGateway.
  */
 class FakePaymentGateway implements PaymentGatewayInterface
 {
     public bool $captureSucceeds = true;
+
+    /** Simula un errore API all'init: sessione nulla, checkout in paymentUnavailable. */
+    public bool $initThrows = false;
 
     /** Simula l'"incassato ma non valido" (importo/valuta cambiati): failure con fundsCaptured. */
     public bool $captureAmountMismatch = false;
@@ -39,11 +43,13 @@ class FakePaymentGateway implements PaymentGatewayInterface
             'context' => $context,
         ];
 
-        // Entrambe le shape: il componente legge le chiavi del proprio gateway.
+        if ($this->initThrows) {
+            throw new RuntimeException('init failed');
+        }
+
         return [
             'client_secret' => 'cs_fake_secret',
             'payment_intent_id' => 'pi_fake_1',
-            'paypal_order_id' => 'pp_fake_1',
         ];
     }
 

@@ -7,19 +7,14 @@ use Illuminate\Database\Seeder;
 
 class PaymentGatewaySeeder extends Seeder
 {
-    /** Gateway del checkout: stripe (card/wallet/klarna) e paypal (SDK classico). Idempotente. */
+    /** Gateway del checkout: solo stripe (card + wallet ECE). Idempotente; rimuove l'eventuale riga paypal legacy. */
     public function run(): void
     {
-        $gateways = [
+        PaymentGateway::updateOrCreate(
+            ['code' => 'stripe'],
             ['code' => 'stripe', 'name' => 'Stripe', 'is_enabled' => true, 'sort_order' => 0],
-            ['code' => 'paypal', 'name' => 'PayPal', 'is_enabled' => true, 'sort_order' => 1],
-        ];
+        );
 
-        foreach ($gateways as $gateway) {
-            PaymentGateway::updateOrCreate(
-                ['code' => $gateway['code']],
-                $gateway,
-            );
-        }
+        PaymentGateway::query()->where('code', 'paypal')->delete();
     }
 }

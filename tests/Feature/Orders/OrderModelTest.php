@@ -130,12 +130,15 @@ class OrderModelTest extends TestCase
         $this->seed(PaymentGatewaySeeder::class);
         $this->seed(PaymentGatewaySeeder::class);
 
-        $this->assertSame(2, PaymentGateway::count());
+        $this->assertSame(1, PaymentGateway::count());
+        $this->assertSame(['stripe'], PaymentGateway::enabled()->ordered()->pluck('code')->all());
 
-        $codes = PaymentGateway::enabled()->ordered()->pluck('code');
-        $this->assertSame(['stripe', 'paypal'], $codes->all());
+        // Il seeder rimuove anche l'eventuale riga paypal legacy.
+        PaymentGateway::query()->create(['code' => 'paypal', 'name' => 'PayPal', 'is_enabled' => true, 'sort_order' => 1]);
+        $this->seed(PaymentGatewaySeeder::class);
+        $this->assertSame(['stripe'], PaymentGateway::pluck('code')->all());
 
         PaymentGateway::where('code', 'stripe')->update(['is_enabled' => false]);
-        $this->assertSame(['paypal'], PaymentGateway::enabled()->ordered()->pluck('code')->all());
+        $this->assertSame([], PaymentGateway::enabled()->ordered()->pluck('code')->all());
     }
 }

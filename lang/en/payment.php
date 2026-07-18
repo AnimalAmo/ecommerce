@@ -19,7 +19,5 @@ return [
         'apple_pay' => 'Apple Pay',
         'card' => 'Credit or debit card',
         'google_pay' => 'Google Pay',
-        'klarna' => 'Klarna',
-        'paypal' => 'PayPal',
     ],
 ];

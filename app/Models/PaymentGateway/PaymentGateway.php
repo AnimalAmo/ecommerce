@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Registro gateway ('stripe', 'paypal'): pilota le righe metodo visibili al
+ * Registro gateway ('stripe'): pilota le righe metodo visibili al
  * checkout e la registrazione delle rotte webhook. Seed: PaymentGatewaySeeder.
  */
 class PaymentGateway extends Model

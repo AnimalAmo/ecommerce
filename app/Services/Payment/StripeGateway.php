@@ -10,14 +10,13 @@ use App\Exceptions\PaymentConfigurationException;
 use App\Models\OrderPayment\OrderPayment;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 use Stripe\StripeObject;
 use Stripe\Webhook;
 
 /**
- * Gateway Stripe (carta, Apple/Google Pay via ECE, Klarna). Capture-first:
+ * Gateway Stripe (carta, Apple/Google Pay via ECE). Capture-first:
  * il PaymentIntent nasce al checkout senza ordine, il JS lo conferma e
  * captureFromCheckout RIVERIFICA server-side (mai fidarsi del client).
  * Il client è iniettato dal PaymentServiceProvider (testabile).
@@ -41,10 +40,6 @@ class StripeGateway implements PaymentGatewayInterface
     public function initPaymentSession(int $amountCents, PaymentMethod $method, array $context = []): array
     {
         $types = $method->stripePaymentMethodTypes();
-
-        if ($types === null) {
-            throw new InvalidArgumentException("Payment method [{$method->value}] is not handled by Stripe.");
-        }
 
         $intent = isset($context['payment_intent_id'])
             ? $this->client->paymentIntents->update($context['payment_intent_id'], [
@@ -203,8 +198,8 @@ class StripeGateway implements PaymentGatewayInterface
             ->first();
 
         if (! $payment) {
-            // PI ignoto: es. Klarna pagato ma il cliente non è mai tornato
-            // (limite capture-first) — refund manuale da dashboard.
+            // PI mai registrato lato app (limite capture-first): refund
+            // manuale da dashboard.
             Log::warning('Stripe webhook: PaymentIntent sconosciuto', [
                 'payment_intent_id' => $intent->id,
             ]);

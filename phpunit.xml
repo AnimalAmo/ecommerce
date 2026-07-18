@@ -36,8 +36,5 @@
         <env name="STRIPE_KEY" value=""/>
         <env name="STRIPE_SECRET" value=""/>
         <env name="STRIPE_WEBHOOK_SECRET" value=""/>
-        <env name="PAYPAL_CLIENT_ID" value=""/>
-        <env name="PAYPAL_SECRET" value=""/>
-        <env name="PAYPAL_WEBHOOK_ID" value=""/>
     </php>
 </phpunit>
