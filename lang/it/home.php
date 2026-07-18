@@ -21,7 +21,7 @@ return [
 
     // Sezione Eventi
     'events_title' => 'Eventi pet friendly',
-    'events_subtitle' => 'Esperienze, gite e attività da vivere insieme al tuo amico a quattro zampe.',
+    'events_subtitle' => 'Scopri esperienze uniche da vivere insieme al tuo amico a quattro zampe',
     'events_cta' => 'Scopri gli eventi',
     'join' => 'Partecipa',
     'from_price_label' => 'A partire da',
@@ -29,19 +29,19 @@ return [
     // Sezione Smartbox
     'smartbox_kicker' => 'Smartbox',
     'smartbox_title' => 'Regala un\'esperienza, non un oggetto',
-    'smartbox_subtitle' => 'Le Smartbox Animal Amo racchiudono esperienze uniche dedicate agli amanti degli animali: soggiorni, attività e avventure da vivere insieme. Il regalo perfetto per chi ama condividere ogni momento con il proprio compagno.',
+    'smartbox_subtitle' => 'Sorprendi chi ami con esperienze da condividere con il proprio animale',
     'smartbox_cta' => 'Trova il regalo giusto',
 
     // Sezione Animal Times (ex News)
     'news_kicker' => 'Animal Times',
     'news_title' => 'Resta sempre aggiornato',
-    'news_subtitle' => 'Guide, consigli e notizie sul mondo degli animali: viaggi, salute, documenti, alimentazione e tanto altro. Tutte le informazioni che ti servono, raccolte in un unico spazio.',
+    'news_subtitle' => 'Guide, esperienze e consigli per una vita migliore insieme al tuo pet',
     'news_read_more' => 'Continua a leggere...',
 
     // Sezione Animal Network (ex Community)
     'community_kicker' => 'Animal Network',
     'community_title' => 'Una community che condivide la tua passione',
-    'community_subtitle' => 'Confrontati con altri amanti degli animali, racconta le tue esperienze, chiedi consigli e scopri nuove avventure. Animal Amo è una community nata per crescere insieme.',
+    'community_subtitle' => 'Incontra, condividi e vivi la tua passione per gli animali',
     'community_cta' => 'Scopri la community',
     'community_replies' => '6 Risposte',
     'community_quote' => '"Qualcuno ha consigli per un primo viaggio in treno con un cane di taglia media? Vorrei che fosse un\'esperienza tranquilla per entrambi 🐾"',
