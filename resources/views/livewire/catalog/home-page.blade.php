@@ -18,7 +18,8 @@
                 <p class="mt-4 text-sm leading-relaxed text-white/70 max-lg:text-[15px] max-lg:text-white">{{ __('home.hero_text') }}</p>
 
                 {{-- Search bar stile XD: pill bianco (border #F4F4F4, radius 100px) con input + pulsante dentro --}}
-                <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2">
+                {{-- Mobile: la pill è solo un trigger, la ricerca vive nel modal "Filtri cerca" (XD app) --}}
+                <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2 max-lg:hidden">
                     <flux:field class="flex flex-1 items-center gap-3 px-4 py-2">
                         <flux:label class="sr-only">{{ __('home.search_where') }}</flux:label>
                         <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
@@ -42,6 +43,19 @@
                         <flux:icon.search class="h-5 w-5" />
                     </flux:button>
                 </form>
+
+                {{-- Pill mobile: apre il modal filtri (XD app "Filtri cerca - click su 'destinazione'") --}}
+                <flux:modal.trigger name="mobile-search">
+                    <flux:button class="mt-8 !flex !h-auto !w-full !items-center !justify-between !gap-2 !whitespace-normal !rounded-[100px] !border-[#F4F4F4] !bg-white !p-2 !font-normal !shadow-none lg:!hidden">
+                        <span class="flex min-w-0 flex-1 items-center gap-3 px-4 py-2">
+                            <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
+                            <span class="truncate text-sm font-normal {{ $where !== '' ? 'text-ink' : 'text-gray-400' }}">{{ $where !== '' ? $where : __('home.search_where') }}</span>
+                        </span>
+                        <span class="flex h-12 w-12 shrink-0 grow-0 items-center justify-center rounded-full bg-brand-cyan text-white">
+                            <flux:icon.search class="h-5 w-5" />
+                        </span>
+                    </flux:button>
+                </flux:modal.trigger>
             </div>
 
             {{-- "Scopri di più" solo mobile (XD app: link bianco centrato in fondo all'hero) --}}
@@ -51,6 +65,60 @@
             </a>
         </div>
     </section>
+
+    {{-- ============ MODAL FILTRI CERCA (solo mobile, XD app "Filtri cerca - click su 'destinazione'") ============ --}}
+    <flux:modal name="mobile-search" :closable="false" class="w-full !m-0 !max-w-full !min-h-dvh !max-h-none !rounded-none bg-white !px-4 !py-6 lg:hidden">
+        <div class="flex justify-end">
+            <flux:modal.close>
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.menu_close') }}" class="!rounded-full !text-ink">
+                    <flux:icon.close class="h-4 w-4" />
+                </flux:button>
+            </flux:modal.close>
+        </div>
+
+        <h2 class="mt-2 text-xl font-medium text-[#0D171A]">{{ __('home.search_title') }}</h2>
+
+        <form wire:submit="search" class="mt-5 flex flex-col gap-3">
+            {{-- Destinazione: input reale (XD: riga 343x56 r28, bordo #E2EAEB, icona cyan, label 15px #555555) --}}
+            <label class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
+                <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
+                <flux:input wire:model="where" type="text" placeholder="{{ __('home.search_destination') }}" class="!flex-1 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-[#555555]" />
+                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+            </label>
+
+            {{-- Quando: riga collassabile col calendario range condiviso --}}
+            <div x-data="{ open: false }">
+                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !h-14 !w-full !items-center !rounded-full !border !border-[#E2EAEB] !bg-white !px-5 hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!gap-3">
+                    <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
+                    <span class="flex-1 truncate text-left text-[15px] font-normal {{ $editCheckIn ? 'text-ink' : 'text-[#555555]' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : __('home.search_when') }}</span>
+                    <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A] transition" x-bind:class="open && 'rotate-180'" />
+                </flux:button>
+                <div x-show="open" x-transition.opacity style="display: none" class="mt-3 rounded-[4px] border border-[#DEDEDE] bg-white p-[10px]">
+                    @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                </div>
+            </div>
+
+            {{-- Tipologia / Ospiti / Animali: righe da mockup, filtri collegati negli step successivi --}}
+            <div class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
+                <flux:icon.spa class="h-5 w-5 shrink-0 text-brand-cyan" />
+                <span class="flex-1 text-[15px] text-[#555555]">{{ __('home.search_type') }}</span>
+                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+            </div>
+            <div class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
+                <flux:icon.team class="h-5 w-5 shrink-0 text-brand-cyan" />
+                <span class="flex-1 text-[15px] text-[#555555]">{{ __('home.search_guests') }}</span>
+                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+            </div>
+            <div class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
+                <flux:icon.animal class="h-5 w-5 shrink-0 text-brand-cyan" />
+                <span class="flex-1 text-[15px] text-[#555555]">{{ __('home.search_animals') }}</span>
+                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+            </div>
+
+            {{-- Button azzurro XD: 343x39, r19, #6CD1EF, testo 15 semibold bianco --}}
+            <flux:button type="submit" class="mt-3 !h-[39px] !w-full !rounded-full !bg-brand-cyan !text-[15px] !font-semibold !text-white hover:!bg-brand-cyan-soft">{{ __('home.search_cta') }}</flux:button>
+        </form>
+    </flux:modal>
 
     {{-- ============ ANIMAL HOLIDAY ============ --}}
     <section id="holiday" class="{{ $px }} scroll-mt-20 py-20 max-lg:py-10">

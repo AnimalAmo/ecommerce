@@ -44,10 +44,13 @@
             @endguest
 
             <div class="flex items-center gap-3">
-                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.favorites') }}" href="{{ route('preferiti') }}" class="!rounded-full !text-ink hover:!text-brand-magenta">
+                {{-- Preferiti e carrello: solo desktop, su mobile vivono nella tabbar --}}
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.favorites') }}" href="{{ route('preferiti') }}" class="!rounded-full !text-ink hover:!text-brand-magenta max-lg:!hidden">
                     <flux:icon.heart class="h-5 w-5" />
                 </flux:button>
-                <livewire:commerce.cart-badge />
+                <div class="max-lg:hidden">
+                    <livewire:commerce.cart-badge />
+                </div>
 
                 @auth
                     <flux:dropdown>

@@ -11,6 +11,11 @@ return [
     'search_where' => 'Where',
     'search_when' => 'When',
     'search_cta' => 'Search',
+    'search_title' => 'Where do you want to go?',
+    'search_destination' => 'Destination',
+    'search_type' => 'Type',
+    'search_guests' => 'Add guests',
+    'search_animals' => 'Animals',
 
     // Animal Holiday section
     'holiday_kicker' => 'Holiday',

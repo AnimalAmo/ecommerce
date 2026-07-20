@@ -11,6 +11,11 @@ return [
     'search_where' => 'Dove',
     'search_when' => 'Quando',
     'search_cta' => 'Cerca',
+    'search_title' => 'Dove vuoi andare?',
+    'search_destination' => 'Destinazione',
+    'search_type' => 'Tipologia',
+    'search_guests' => 'Aggiungi ospiti',
+    'search_animals' => 'Animali',
 
     // Sezione Animal Holiday
     'holiday_kicker' => 'Holiday',
