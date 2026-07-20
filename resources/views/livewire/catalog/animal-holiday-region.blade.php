@@ -129,8 +129,10 @@
         // Card tipologia XD: 156x100, r3, bordo 0.5 #C8C8C8; selezionata bg #EBF9FD
         $filterCard = '!flex !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8] !p-3 !shadow-none [&>span]:!flex [&>span]:!h-full [&>span]:!w-full [&>span]:!flex-col [&>span]:!items-start [&>span]:!justify-between';
         // Doppio slider prezzo: input sovrapposti, solo i pallini (24px, bianchi, bordo #E9E9E9) ricevono il tocco
-        $rangeInput = '!absolute !inset-0 !h-6 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-6 [&_input]:!w-full [&_input]:!appearance-none [&_input]:!bg-transparent [&_input]:!pointer-events-none [&_input::-webkit-slider-thumb]:pointer-events-auto [&_input::-webkit-slider-thumb]:h-6 [&_input::-webkit-slider-thumb]:w-6 [&_input::-webkit-slider-thumb]:appearance-none [&_input::-webkit-slider-thumb]:rounded-full [&_input::-webkit-slider-thumb]:border [&_input::-webkit-slider-thumb]:border-[#E9E9E9] [&_input::-webkit-slider-thumb]:bg-white [&_input::-webkit-slider-thumb]:shadow-[0_1px_3px_#00000029] [&_input::-moz-range-thumb]:pointer-events-auto [&_input::-moz-range-thumb]:h-6 [&_input::-moz-range-thumb]:w-6 [&_input::-moz-range-thumb]:appearance-none [&_input::-moz-range-thumb]:rounded-full [&_input::-moz-range-thumb]:border [&_input::-moz-range-thumb]:border-[#E9E9E9] [&_input::-moz-range-thumb]:bg-white [&_input::-moz-range-thumb]:shadow-[0_1px_3px_#00000029]';
-        $priceBox = 'flex h-[50px] w-[130px] flex-col justify-center rounded-[3px] border border-[#C8C8C8] px-3';
+        $rangeInput = '!absolute !inset-0 !h-6 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-6 [&_input]:!appearance-none [&_input]:!bg-transparent [&_input]:!border-0 [&_input]:!rounded-none [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:!outline-none [&_input]:!pointer-events-none [&_input::-webkit-slider-thumb]:pointer-events-auto [&_input::-webkit-slider-thumb]:h-6 [&_input::-webkit-slider-thumb]:w-6 [&_input::-webkit-slider-thumb]:appearance-none [&_input::-webkit-slider-thumb]:rounded-full [&_input::-webkit-slider-thumb]:border [&_input::-webkit-slider-thumb]:border-[#E9E9E9] [&_input::-webkit-slider-thumb]:bg-white [&_input::-moz-range-thumb]:pointer-events-auto [&_input::-moz-range-thumb]:h-6 [&_input::-moz-range-thumb]:w-6 [&_input::-moz-range-thumb]:appearance-none [&_input::-moz-range-thumb]:rounded-full [&_input::-moz-range-thumb]:border [&_input::-moz-range-thumb]:border-[#E9E9E9] [&_input::-moz-range-thumb]:bg-white';
+        $priceBox = 'flex h-[50px] w-[112px] flex-col justify-center rounded-[3px] border border-[#C8C8C8] px-3';
+        // "9 €" compatto come nel mock: larghezza dinamica via Alpine (x-bind:style sul wrapper), niente chrome né spinner
+        $priceInput = '!w-auto !h-5 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-5 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!leading-5 [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:[-moz-appearance:textfield] [&_input::-webkit-inner-spin-button]:appearance-none [&_input::-webkit-outer-spin-button]:appearance-none';
         $checkbox = '[--color-accent:var(--color-brand-cyan)] [--color-accent-foreground:#fff] [&_[data-flux-checkbox-indicator]]:size-5 [&_[data-flux-checkbox-indicator]]:rounded-full [&_[data-flux-checkbox-indicator]]:border-brand-cyan';
     @endphp
     {{-- min+max h-dvh: pannello a tutto schermo che scrolla al suo interno (contenuto XD fino a 1353px) --}}
@@ -168,7 +170,8 @@
                         <div class="w-[7px]" x-bind:class="barOn(i) ? 'bg-brand-cyan' : 'bg-[#EBF9FD]'" x-bind:style="`height:${bar}px`"></div>
                     </template>
                 </div>
-                <div class="relative h-6">
+                {{-- -mt-3: i pallini stanno centrati SULLA baseline dell'istogramma (XD y256≈fondo barre) --}}
+                <div class="relative -mt-3 h-6">
                     <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#EBF9FD]"></div>
                     <div class="absolute top-1/2 h-px -translate-y-1/2 bg-brand-cyan" x-bind:style="`left:${pct(Math.min(lo, hi))}%; right:${100 - pct(Math.max(lo, hi))}%`"></div>
                     <flux:label class="sr-only" for="filter-price-lo">{{ __('catalog.filter_price_min') }}</flux:label>
@@ -182,14 +185,14 @@
                     <label class="{{ $priceBox }}">
                         <span class="text-[11px] font-light text-[#555555]">{{ __('catalog.filter_price_min') }}</span>
                         <span class="flex items-center gap-1 text-sm text-[#0D171A]">
-                            <flux:input type="number" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="lo" x-on:change="push" class="!w-14 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0" />
+                            <flux:input type="number" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="lo" x-bind:style="`width:${String(lo).length * 9 + 4}px`" x-on:change="push" class="{{ $priceInput }}" />
                             €
                         </span>
                     </label>
                     <label class="{{ $priceBox }}">
                         <span class="text-[11px] font-light text-[#555555]">{{ __('catalog.filter_price_max') }}</span>
                         <span class="flex items-center gap-1 text-sm text-[#0D171A]">
-                            <flux:input type="number" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="hi" x-on:change="push" class="!w-14 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0" />
+                            <flux:input type="number" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="hi" x-bind:style="`width:${String(hi).length * 9 + 4}px`" x-on:change="push" class="{{ $priceInput }}" />
                             €
                         </span>
                     </label>
