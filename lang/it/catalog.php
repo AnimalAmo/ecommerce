@@ -31,6 +31,13 @@ return [
         'benessere' => 'Benessere Smartbox',
         'avventura' => 'Avventura Smartbox',
     ],
+    // Chip compatte delle tipologie Smartbox nei risultati (XD app "Cerca - risultati - click 'filtri' – 2")
+    'smartbox_chips' => [
+        'soggiorno' => 'Soggiorno',
+        'benessere' => 'Benessere',
+        'avventura' => 'Avventura',
+    ],
+    'buy' => 'Acquista',
     'people_title' => 'Numero di persone',
     'people_groups' => [
         'coppia' => 'Coppia',

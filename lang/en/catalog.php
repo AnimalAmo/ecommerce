@@ -31,6 +31,13 @@ return [
         'benessere' => 'Wellness Smartbox',
         'avventura' => 'Adventure Smartbox',
     ],
+    // Compact Smartbox type chips in the results (XD app "Cerca - risultati - click 'filtri' – 2")
+    'smartbox_chips' => [
+        'soggiorno' => 'Stay',
+        'benessere' => 'Wellness',
+        'avventura' => 'Adventure',
+    ],
+    'buy' => 'Buy',
     'people_title' => 'Number of people',
     'people_groups' => [
         'coppia' => 'Couple',
