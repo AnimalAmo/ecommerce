@@ -52,6 +52,7 @@ return [
         'newsletter' => 'Subscribe to the newsletter',
         'privacy_consent' => 'I consent to the use of my personal data to receive exclusive promotions.',
         'continue' => 'Continue',
+        'create_profile' => 'Create profile',
     ],
 
 ];
