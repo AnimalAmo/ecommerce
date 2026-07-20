@@ -4,18 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-AnimalAmo ecommerce — pet-friendly travel/booking marketplace (B2C web app). Laravel 13 + Livewire 4 + Flux 2 + Tailwind CSS 4 + Vite 8. UI copy is Italian. The functional spec lives in the `animalamo-spec` skill; the homepage design spec is in `docs/specs/`.
+AnimalAmo ecommerce — pet-friendly travel/booking marketplace (B2C web app + B2B partner area). Laravel 13 + Livewire 4 + Flux 2 (Pro) + Tailwind CSS 4 + Vite 8. UI copy is Italian; routes are localized (mcamara/laravel-localization). The functional spec lives in the `animalamo-spec` skill; homepage design spec in `docs/specs/`.
+
+## Non-negotiable rules
+
+- **Flux over native elements**: never write a native `<button>` — always `flux:button` (or `flux:modal.trigger` / `flux:link as="button"`). Same for `flux:input`, `flux:badge`, `flux:separator`, … where a Flux equivalent exists; plain `<a>` is fine for pure text/nav links.
+- **Design tokens, not raw hex**, when a token exists (see Architecture).
+- **Services over fat components**: business logic lives in `app/Services/<Domain>Service.php`; Livewire components stay thin adapters (UI state + wiring).
+- **Internal links use `route()`** — mcamara auto-prefixes the locale; hardcoded `href="/..."` silently drops it.
+- **Commits**: Conventional Commits, English, no Co-Authored-By/AI-attribution trailers. Don't push unless asked.
+- **`npm run build` before any deploy** — new Tailwind classes don't exist in old builds.
+- **Never remove `@source` for flux-pro in `resources/css/app.css`** — without it Pro components render unstyled.
+- **Tests run ONLY inside the VM** — host PHP is 8.2, app needs ≥8.3 (see Commands).
 
 ## Commands
 
 ```bash
 composer dev          # full dev stack: artisan serve + queue + pail logs + vite (concurrently)
 npm run dev           # vite only (hot reload; usually enough when serving through the VM)
-npm run build         # production assets — REQUIRED before deploy, new Tailwind classes don't exist in old builds
-composer test         # config:clear + php artisan test (PHPUnit 12)
-php artisan test --filter=SomeTest   # single test
-vendor/bin/pint       # code style (Laravel Pint)
+npm run build         # production assets
+vendor/bin/pint       # code style (Laravel Pint) — fine on the host
 composer setup        # first-time install (env, key, migrate, npm, build)
+
+# Tests — inside the Homestead VM only:
+ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test'
+#   single test: append --filter=SomeTest
 ```
 
 ### Local serving (this machine)
@@ -24,18 +37,24 @@ The app is served by a Homestead-style VM: `http://animalamo.test` → `192.168.
 
 ## Architecture
 
-- **Pages/modals are class-based Livewire components** in `app/Livewire/`, grouped into domain subnamespaces: `Catalog/` (home, holiday, events, smartbox + details), `Commerce/` (Cart, CartBadge, Checkout, Favorites), `Profile/` (profile + orders + security), `Auth/` (the three login/register modals), `Content/` (News, Community, AboutUs), `Partner/` (B2B onboarding — hub `Dashboard`/`CreateService` at the root, plus flow subnamespaces `Registration/`, `Structure/`, `Activity/`, `Smartbox/` each holding that wizard's steps). Each class has an explicit `render()` returning a view under the mirrored `resources/views/livewire/<group>/*.blade.php`. Routed in `routes/web.php` via `Route::get('/uri', ClassName::class)`. Tag-mounted components use the namespaced name (`<livewire:auth.auth-modal>`, `<livewire:commerce.cart-badge>`). Shared bits live in `app/Livewire/Concerns/` and Form objects in `app/Livewire/Forms/`. (The `pages::` single-file-component scheme from earlier notes is NOT used here.)
+- **Pages/modals are class-based Livewire components** in `app/Livewire/`, grouped into domain subnamespaces: `Catalog/` (home, holiday, events, smartbox + details), `Commerce/` (Cart, CartBadge, Checkout, Favorites), `Profile/`, `Auth/` (the three login/register modals), `Content/` (News, Community, AboutUs), `Partner/` (B2B — hub `Dashboard`/`CreateService` at the root, plus wizard subnamespaces `Registration/`, `Structure/`, `Activity/`, `Smartbox/`). Each class has an explicit `render()` returning a view under the mirrored `resources/views/livewire/<group>/*.blade.php`. Routed in `routes/web.php` via `Route::get(LaravelLocalization::transRoute('routes.…'), ClassName::class)`. Tag-mounted components use the namespaced name (`<livewire:auth.auth-modal>`). Shared traits in `app/Livewire/Concerns/`, Form objects in `app/Livewire/Forms/`.
+- **Payments**: Stripe only (card + Apple Pay + Google Pay). PayPal and Klarna were removed on client request (Jul 2026) — do not reintroduce.
 - **Layout**: `resources/views/layouts/app.blade.php` (`$title`, `$slot`, `@livewireStyles`/`@fluxAppearance` in head).
-- **Design tokens**: Tailwind 4 CSS-first config in `resources/css/app.css` under `@theme` — extracted from the Adobe XD file "Agg.Ecommerce AnimalAmo_22-02-24.xd" (artboard "Homepage – 4"). Use the tokens, not raw hex, when one exists: `brand-yellow` #EDFF00 (primary CTA), `brand-cyan` #6CD1EF, `brand-magenta` #FF3EA5, `brand-purple-soft` #C59FFD, `ink` #071825, `gray-150` #E9E9E9, `gray-100` #F4F4F4. Font: Nunito (loaded via bunny fonts in `vite.config.js`), weights 400/600/700/800.
-- **Page container**: centered max-width, not full-width — pages define `@php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp` and apply `{{ $px }}` to each section's inner wrapper (same scheme as the matsuri-nerd storefront). Full-bleed bands (hero photo, eventi band) stay edge-to-edge with `$px` on their content only. The XD canvas is 1920px with 140px margins; the 1600px cap replaces that for wide desktops.
-- **Custom Flux icons**: `resources/views/flux/icon/*.blade.php` (`<flux:icon.pin>`, `<flux:icon.check-1>`, …), hand-converted from the XD-exported SVGs in `storage/Icone/`. Many still carry hardcoded `fill="#..."` on paths, which overrides `currentColor` and makes Tailwind text-color classes silently useless — strip the path-level fill when an icon must be tinted via class (already done for `pin`).
-- **Design assets**: source photos from XD live in `storage/Immagini/` (committed); optimize before use into `public/img/` (`convert <src> -strip -interlace Plane -quality 82 public/img/<name>.jpg`). `design/` holds the PNG-per-artboard reference workflow (gitignored PNGs, see `design/README.md`).
+- **Design tokens**: Tailwind 4 CSS-first config in `resources/css/app.css` under `@theme`: `brand-yellow` #EDFF00 (primary CTA), `brand-cyan` #6CD1EF, `brand-magenta` #FF3EA5, `brand-purple-soft` #C59FFD, `ink` #071825, `gray-150` #E9E9E9, `gray-100` #F4F4F4. Font: Nunito (bunny fonts via `vite.config.js`), weights 400/600/700/800.
+- **Page container**: centered max-width, not full-width — pages define `@php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp` and apply `{{ $px }}` to each section's inner wrapper. Full-bleed bands keep `$px` on their content only. (XD canvas is 1920px with 140px margins; 1600px cap replaces that.)
+- **Custom Flux icons**: `resources/views/flux/icon/*.blade.php` (`<flux:icon.pin>`, …). Strip hardcoded `fill="#..."` from paths or Tailwind text-color classes are silently useless.
 - **Flux styling pattern**: brand overrides on Flux components use `!`-important utilities (e.g. `!rounded-full !bg-brand-yellow !text-ink`).
-- **flux:button + wire:click gotcha**: when a `flux:button` has `wire:click`, Flux wraps the slot in a `display:block` `<span>` (for the loading-spinner swap), which stacks an icon above the label. Icon+text buttons with `wire:click` need `[&>span]:flex [&>span]:items-center [&>span]:gap-2` on the button.
-- **Flux over native elements**: never write a native `<button>` — always `flux:button` (or `flux:modal.trigger`/`flux:link as="button"`), styled via `!`-utilities. Same preference for other elements where a Flux equivalent exists (`flux:input`, `flux:badge`, `flux:separator`, …); plain `<a>` is fine for pure text/nav links.
 
-## Conventions
+## Flux gotchas
 
-- **Services over fat components**: business logic (queries + presentation, toggles, multi-step flows) lives in `app/Services/<Domain>Service.php`; Livewire components stay thin adapters (UI state + wiring). First example: `FavoriteService`. Validation messages live in `lang/it/validation.php` (custom/attributes), not per-class `messages()` overrides unless lang can't express the string.
-- Commit messages: Conventional Commits, English, no Co-Authored-By/AI-attribution trailers.
-- Recurring XD spec details arrive as raw CSS snippets (border/radius/padding in px) — translate literally into arbitrary-value Tailwind classes (`rounded-[3px]`, `border-[#E9E9E9]`) unless a token matches exactly.
+- `flux:button` with `wire:click` wraps the slot in a `display:block` `<span>` (spinner swap) that stacks icon above label → add `[&>span]:flex [&>span]:items-center [&>span]:gap-2`.
+- `flux:tabs` must ALWAYS sit inside `flux:tab.group`.
+- More traps (screenshots, selectors, custom elements) in the `verify-in-browser` skill.
+
+## Project skills (.claude/skills/)
+
+- `animalamo-spec` — functional spec knowledge base (modules, rebrand map, color roles, integrations).
+- `xd-to-page` — implementing a page/section from the Adobe XD mockups (extraction script, tokens, photos, fidelity check).
+- `verify-in-browser` — visual verification with Playwright MCP on Flux pages (known traps).
+- `pre-commit-check` — canonical pre-commit sequence (pint → VM tests → build → commit format).
+- `b2b-wizard-flow` — adding/changing partner wizard steps and draft→B2C publishing.
