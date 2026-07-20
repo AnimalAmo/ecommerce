@@ -44,17 +44,19 @@
                     <flux:icon.search class="h-5 w-5" />
                 </flux:button>
             </form>
-            {{-- Bottone Filtri, solo mobile (XD app: icona a destra della barra; pannello "Filtri 2" TODO) --}}
-            <flux:button variant="ghost" square aria-label="{{ __('holiday.filter_your_search') }}" class="mt-5 !h-11 !w-11 shrink-0 !rounded-full !text-ink lg:!hidden">
-                <flux:icon.filter class="h-6 w-6" />
-            </flux:button>
+            {{-- Bottone Filtri, solo mobile (XD app: icona a destra della barra; apre il modal "Filtri 2") --}}
+            <flux:modal.trigger name="mobile-filters">
+                <flux:button variant="ghost" square aria-label="{{ __('holiday.filter_your_search') }}" class="mt-5 !h-11 !w-11 shrink-0 !rounded-full !text-ink lg:!hidden">
+                    <flux:icon.filter class="h-6 w-6" />
+                </flux:button>
+            </flux:modal.trigger>
             </div>
 
             {{-- Chip tipologie attive, solo mobile (XD app: pill #EBF9FD testo #4FB8D8 con X) --}}
             <div class="mt-4 flex items-center gap-1.5 lg:hidden">
                 @foreach ($activeTypes as $activeType)
                     <flux:button wire:key="chip-{{ $activeType }}" wire:click="removeType('{{ $activeType }}')" class="!flex !h-[31px] !items-center !rounded-full !border !border-[#C8C8C8] !bg-[#EBF9FD] !px-4 !text-sm !font-normal !text-[#4FB8D8] !shadow-none [&>span]:!flex [&>span]:!items-center [&>span]:!gap-2">
-                        {{ $activeType === 'hotel' ? __('catalog.badge_hotel') : __('catalog.badge_services') }}
+                        {{ $activeType === 'hotel' ? __('catalog.badge_hotel') : __('catalog.filter_types.'.$activeType) }}
                         <flux:icon.close class="h-2.5 w-2.5" />
                     </flux:button>
                 @endforeach
@@ -121,6 +123,144 @@
             </nav>
         </div>
     </main>
+
+    {{-- ============ MODAL FILTRI 2 (solo mobile, XD app "Filtri 2 ricerca") ============ --}}
+    @php
+        // Card tipologia XD: 156x100, r3, bordo 0.5 #C8C8C8; selezionata bg #EBF9FD
+        $filterCard = '!flex !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8] !p-3 !shadow-none [&>span]:!flex [&>span]:!h-full [&>span]:!w-full [&>span]:!flex-col [&>span]:!items-start [&>span]:!justify-between';
+        // Doppio slider prezzo: input sovrapposti, solo i pallini (24px, bianchi, bordo #E9E9E9) ricevono il tocco
+        $rangeInput = '!absolute !inset-0 !h-6 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-6 [&_input]:!w-full [&_input]:!appearance-none [&_input]:!bg-transparent [&_input]:!pointer-events-none [&_input::-webkit-slider-thumb]:pointer-events-auto [&_input::-webkit-slider-thumb]:h-6 [&_input::-webkit-slider-thumb]:w-6 [&_input::-webkit-slider-thumb]:appearance-none [&_input::-webkit-slider-thumb]:rounded-full [&_input::-webkit-slider-thumb]:border [&_input::-webkit-slider-thumb]:border-[#E9E9E9] [&_input::-webkit-slider-thumb]:bg-white [&_input::-webkit-slider-thumb]:shadow-[0_1px_3px_#00000029] [&_input::-moz-range-thumb]:pointer-events-auto [&_input::-moz-range-thumb]:h-6 [&_input::-moz-range-thumb]:w-6 [&_input::-moz-range-thumb]:appearance-none [&_input::-moz-range-thumb]:rounded-full [&_input::-moz-range-thumb]:border [&_input::-moz-range-thumb]:border-[#E9E9E9] [&_input::-moz-range-thumb]:bg-white [&_input::-moz-range-thumb]:shadow-[0_1px_3px_#00000029]';
+        $priceBox = 'flex h-[50px] w-[130px] flex-col justify-center rounded-[3px] border border-[#C8C8C8] px-3';
+        $checkbox = '[--color-accent:var(--color-brand-cyan)] [--color-accent-foreground:#fff] [&_[data-flux-checkbox-indicator]]:size-5 [&_[data-flux-checkbox-indicator]]:rounded-full [&_[data-flux-checkbox-indicator]]:border-brand-cyan';
+    @endphp
+    {{-- min+max h-dvh: pannello a tutto schermo che scrolla al suo interno (contenuto XD fino a 1353px) --}}
+    <flux:modal name="mobile-filters" :closable="false" class="w-full !m-0 !max-w-full !min-h-dvh !max-h-dvh !overflow-y-auto !rounded-none bg-white !px-6 !py-6 lg:hidden">
+        <div class="relative flex items-center justify-center py-1">
+            <h2 class="text-lg font-semibold text-[#0D171A]">{{ __('catalog.filters_title') }}</h2>
+            <div class="absolute right-0 top-1/2 -translate-y-1/2">
+                <flux:modal.close>
+                    <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.menu_close') }}" class="!rounded-full !text-[#555555]">
+                        <flux:icon.close class="h-4 w-4" />
+                    </flux:button>
+                </flux:modal.close>
+            </div>
+        </div>
+
+        {{-- Fascia di prezzo (XD: istogramma cyan/#EBF9FD + doppio cursore + box Minimo/Massimo) --}}
+        <div class="mt-4 border-t border-[#E9E9E9] pt-7">
+            <h3 class="text-lg font-semibold text-[#0D171A]">{{ __('holiday.filter_price') }}</h3>
+
+            <div x-data="{
+                    floor: {{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }},
+                    ceil: {{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }},
+                    lo: {{ $priceMin }}, hi: {{ $priceMax }},
+                    bars: [7, 12, 22, 33, 62, 47, 80, 70, 55, 42, 67, 55, 42, 34, 24, 14, 11, 7],
+                    pct(v) { return (v - this.floor) / (this.ceil - this.floor) * 100 },
+                    barOn(i) { const c = (i + 0.5) / this.bars.length * 100; return c >= this.pct(Math.min(this.lo, this.hi)) && c <= this.pct(Math.max(this.lo, this.hi)) },
+                    {{-- assegnazione diretta = deferred; $set forza il roundtrip (porta con sé anche priceMin) --}}
+                    push() { $wire.priceMin = Math.min(this.lo, this.hi); $wire.$set('priceMax', Math.max(this.lo, this.hi)) },
+                 }"
+                 x-effect="lo = $wire.priceMin; hi = $wire.priceMax"
+                 class="mt-6">
+                {{-- Istogramma decorativo (altezze dal mock): barre nella fascia in cyan, fuori #EBF9FD --}}
+                <div class="flex h-20 items-end justify-center gap-[3px]" aria-hidden="true">
+                    <template x-for="(bar, i) in bars" :key="i">
+                        <div class="w-[7px]" x-bind:class="barOn(i) ? 'bg-brand-cyan' : 'bg-[#EBF9FD]'" x-bind:style="`height:${bar}px`"></div>
+                    </template>
+                </div>
+                <div class="relative h-6">
+                    <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[#EBF9FD]"></div>
+                    <div class="absolute top-1/2 h-px -translate-y-1/2 bg-brand-cyan" x-bind:style="`left:${pct(Math.min(lo, hi))}%; right:${100 - pct(Math.max(lo, hi))}%`"></div>
+                    <flux:label class="sr-only" for="filter-price-lo">{{ __('catalog.filter_price_min') }}</flux:label>
+                    <flux:input id="filter-price-lo" type="range" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="lo" x-on:change="push" class="{{ $rangeInput }}" />
+                    <flux:label class="sr-only" for="filter-price-hi">{{ __('catalog.filter_price_max') }}</flux:label>
+                    <flux:input id="filter-price-hi" type="range" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="hi" x-on:change="push" class="{{ $rangeInput }}" />
+                </div>
+
+                {{-- Box Minimo/Massimo (XD: 112x50, r3, bordo #C8C8C8, label 11 light, valore 14 + €) --}}
+                <div class="mt-5 flex items-center justify-between gap-4">
+                    <label class="{{ $priceBox }}">
+                        <span class="text-[11px] font-light text-[#555555]">{{ __('catalog.filter_price_min') }}</span>
+                        <span class="flex items-center gap-1 text-sm text-[#0D171A]">
+                            <flux:input type="number" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="lo" x-on:change="push" class="!w-14 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0" />
+                            €
+                        </span>
+                    </label>
+                    <label class="{{ $priceBox }}">
+                        <span class="text-[11px] font-light text-[#555555]">{{ __('catalog.filter_price_max') }}</span>
+                        <span class="flex items-center gap-1 text-sm text-[#0D171A]">
+                            <flux:input type="number" min="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN }}" max="{{ \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX }}" x-model.number="hi" x-on:change="push" class="!w-14 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0" />
+                            €
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        {{-- Tipologia (XD: griglia 2 colonne, card icona+label; selezionata bg #EBF9FD e testo cyan) --}}
+        <div class="mt-7 border-t border-[#E9E9E9] pt-7">
+            <h3 class="text-lg font-semibold text-[#0D171A]">{{ __('holiday.filter_type') }}</h3>
+            <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
+                <flux:button wire:click="toggleType('hotel')" class="{{ $filterCard }} {{ in_array('hotel', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                    <flux:icon.structure-bb class="h-8 w-8 text-[#2B2B2B]" />
+                    <span class="text-[15px] font-medium {{ in_array('hotel', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.hotel') }}</span>
+                </flux:button>
+                <flux:button wire:click="toggleType('servizi')" class="{{ $filterCard }} {{ in_array('servizi', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                    <flux:icon.animal class="h-8 w-8 text-[#2B2B2B]" />
+                    <span class="text-[15px] font-medium {{ in_array('servizi', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.servizi') }}</span>
+                </flux:button>
+                <flux:button wire:click="toggleType('attivita')" class="{{ $filterCard }} {{ in_array('attivita', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                    <flux:icon.activity-balloons class="h-8 w-8 text-[#2B2B2B]" />
+                    <span class="text-[15px] font-medium {{ in_array('attivita', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.attivita') }}</span>
+                </flux:button>
+                <flux:button wire:click="toggleType('eventi')" class="{{ $filterCard }} {{ in_array('eventi', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                    <flux:icon.activity-navigation class="h-8 w-8 text-[#2B2B2B]" />
+                    <span class="text-[15px] font-medium {{ in_array('eventi', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.eventi') }}</span>
+                </flux:button>
+                <flux:button wire:click="toggleType('smartbox')" class="{{ $filterCard }} {{ in_array('smartbox', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                    <flux:icon.gift class="h-8 w-8 text-[#2B2B2B]" />
+                    <span class="text-[15px] font-medium {{ in_array('smartbox', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.smartbox') }}</span>
+                </flux:button>
+            </div>
+        </div>
+
+        {{-- Sezioni Smartbox (XD "Filtri 2 ricerca - click su 'soggiorno'": compaiono con Smartbox attivo) --}}
+        @if (in_array('smartbox', $activeTypes, true))
+            <div class="mt-7 border-t border-[#E9E9E9] pt-7">
+                <h3 class="text-lg font-semibold text-[#0D171A]">{{ __('catalog.smartbox_type_title') }}</h3>
+                <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
+                    <flux:button wire:click="toggleSmartboxType('soggiorno')" class="{{ $filterCard }} {{ in_array('soggiorno', $smartboxTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                        <flux:icon.structure-bb class="h-8 w-8 text-[#2B2B2B]" />
+                        <span class="text-left text-sm font-normal text-[#959595]">{{ __('catalog.smartbox_types.soggiorno') }}</span>
+                    </flux:button>
+                    <flux:button wire:click="toggleSmartboxType('benessere')" class="{{ $filterCard }} {{ in_array('benessere', $smartboxTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                        <flux:icon.smartbox-wellness class="h-8 w-8 text-[#2B2B2B]" />
+                        <span class="text-left text-sm font-normal text-[#959595]">{{ __('catalog.smartbox_types.benessere') }}</span>
+                    </flux:button>
+                    <flux:button wire:click="toggleSmartboxType('avventura')" class="{{ $filterCard }} {{ in_array('avventura', $smartboxTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
+                        <flux:icon.smartbox-adventure class="h-8 w-8 text-[#2B2B2B]" />
+                        <span class="text-left text-sm font-normal text-[#959595]">{{ __('catalog.smartbox_types.avventura') }}</span>
+                    </flux:button>
+                </div>
+            </div>
+
+            <div class="mt-7">
+                <h3 class="text-lg font-semibold text-[#0D171A]">{{ __('catalog.people_title') }}</h3>
+                <flux:checkbox.group wire:model.live="peopleGroups" class="mt-4 flex flex-col gap-4">
+                    @foreach (['coppia', 'famiglia', 'gruppo'] as $group)
+                        <label wire:key="people-{{ $group }}" class="flex items-center gap-3">
+                            <flux:checkbox value="{{ $group }}" class="{{ $checkbox }}" />
+                            <span class="text-[15px] font-medium text-[#0D171A]">{{ __('catalog.people_groups.'.$group) }}</span>
+                        </label>
+                    @endforeach
+                </flux:checkbox.group>
+            </div>
+        @endif
+
+        <flux:modal.close>
+            <flux:button class="mx-auto mt-10 !flex !h-[39px] !rounded-full !bg-[#0D171A] !px-8 !text-sm !font-bold !text-white hover:!bg-black">{{ __('catalog.show_results', ['count' => $results->count()]) }}</flux:button>
+        </flux:modal.close>
+    </flux:modal>
 
     @include('partials.site-footer')
 </div>

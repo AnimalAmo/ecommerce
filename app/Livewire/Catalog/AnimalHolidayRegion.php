@@ -28,12 +28,35 @@ class AnimalHolidayRegion extends Component
 
     public string $animals = '';
 
+    /** Tipologie del modal "Filtri 2" (XD app), nell'ordine della griglia. */
+    public const FILTER_TYPES = ['hotel', 'servizi', 'attivita', 'eventi', 'smartbox'];
+
+    /** Tipologie Smartbox (XD app "Filtri 2 ricerca - click su 'soggiorno'"). */
+    public const SMARTBOX_TYPES = ['soggiorno', 'benessere', 'avventura'];
+
+    /** Estremi della fascia di prezzo (XD: '9 €' – '451 €'). */
+    public const PRICE_MIN = 9;
+
+    public const PRICE_MAX = 451;
+
     /**
      * Chip filtro attive su mobile (XD app "Cerca - risultati"): 'hotel' = strutture,
-     * 'servizi' = servizi. Entrambe attive = nessun filtro; la X rimuove una tipologia,
-     * rimuovere anche l'ultima ripristina entrambe (reset).
+     * 'servizi' = servizi (le altre tipologie del modal non filtrano questo catalogo).
+     * Entrambe attive = nessun filtro; la X rimuove una tipologia, rimuovere
+     * anche l'ultima ripristina entrambe (reset).
      */
     public array $activeTypes = ['hotel', 'servizi'];
+
+    /** Fascia di prezzo dal modal Filtri (€); filtra solo se diversa dai default. */
+    public int $priceMin = self::PRICE_MIN;
+
+    public int $priceMax = self::PRICE_MAX;
+
+    /** Tipologie Smartbox selezionate nel modal (solo UI: il catalogo regione non ha smartbox). */
+    public array $smartboxTypes = [];
+
+    /** Checkbox "Numero di persone" del modal (solo UI, come sopra). */
+    public array $peopleGroups = [];
 
     /** X su una chip tipologia (mobile). */
     public function removeType(string $type): void
@@ -42,6 +65,63 @@ class AnimalHolidayRegion extends Component
 
         if ($this->activeTypes === []) {
             $this->activeTypes = ['hotel', 'servizi'];
+        }
+    }
+
+    /** Card tipologia nel modal Filtri: toggle multi-selezione. */
+    public function toggleType(string $type): void
+    {
+        if (! in_array($type, self::FILTER_TYPES, true)) {
+            return;
+        }
+
+        if (in_array($type, $this->activeTypes, true)) {
+            $this->removeType($type);
+
+            return;
+        }
+
+        $this->activeTypes[] = $type;
+
+        if ($type !== 'smartbox') {
+            return;
+        }
+
+        // Deselezionando Smartbox spariscono anche le sue sotto-sezioni: reset alla riapertura.
+        $this->smartboxTypes = [];
+        $this->peopleGroups = [];
+    }
+
+    /** Card "Tipologia Smartbox" nel modal: toggle multi-selezione. */
+    public function toggleSmartboxType(string $type): void
+    {
+        if (! in_array($type, self::SMARTBOX_TYPES, true)) {
+            return;
+        }
+
+        $this->smartboxTypes = in_array($type, $this->smartboxTypes, true)
+            ? array_values(array_diff($this->smartboxTypes, [$type]))
+            : [...$this->smartboxTypes, $type];
+    }
+
+    public function updatedPriceMin(): void
+    {
+        $this->normalizePriceRange();
+    }
+
+    public function updatedPriceMax(): void
+    {
+        $this->normalizePriceRange();
+    }
+
+    /** Mantiene la fascia dentro gli estremi XD e min ≤ max (slider e input liberi). */
+    private function normalizePriceRange(): void
+    {
+        $this->priceMin = max(self::PRICE_MIN, min($this->priceMin, self::PRICE_MAX));
+        $this->priceMax = max(self::PRICE_MIN, min($this->priceMax, self::PRICE_MAX));
+
+        if ($this->priceMin > $this->priceMax) {
+            [$this->priceMin, $this->priceMax] = [$this->priceMax, $this->priceMin];
         }
     }
 
@@ -71,22 +151,32 @@ class AnimalHolidayRegion extends Component
         // se l'utente cambia il testo, filtriamo per nome OR location (LIKE %dove%, case-insensitive).
         $showAll = $term === '' || mb_strtolower($term) === mb_strtolower($this->regionName);
 
+        // Delle tipologie del modal solo hotel/servizi mappano su questo catalogo:
+        // con una sola delle due attiva filtriamo per ProductType, altrimenti tutto.
+        $productTypes = array_values(array_intersect($this->activeTypes, ['hotel', 'servizi']));
+
+        $results = Structure::query()
+            ->when(! $showAll, function ($query) use ($term): void {
+                $like = '%'.addcslashes($term, '\%_').'%';
+                // name è JSON translatable: LIKE sul path del locale corrente,
+                // non sulla colonna raw (matcherebbe chiavi locale e testo cross-lingua).
+                $query->where(fn ($sub) => $sub->whereLike('name->'.app()->getLocale(), $like)->orWhereLike('location', $like));
+            })
+            ->when(count($productTypes) === 1, fn ($query) => $query->where(
+                'type',
+                $productTypes[0] === 'hotel' ? ProductType::Structure : ProductType::Service,
+            ))
+            // Fascia di prezzo: attiva solo se l'utente si è mosso dai default XD
+            // (i seed hanno anche prezzi a 0 che ai default resterebbero esclusi).
+            ->when(
+                $this->priceMin !== self::PRICE_MIN || $this->priceMax !== self::PRICE_MAX,
+                fn ($query) => $query->whereBetween('price_from_cents', [$this->priceMin * 100, $this->priceMax * 100]),
+            )
+            ->orderBy('position')
+            ->get();
+
         return view('livewire.catalog.animal-holiday-region', [
-            'results' => Structure::query()
-                ->when(! $showAll, function ($query) use ($term): void {
-                    $like = '%'.addcslashes($term, '\%_').'%';
-                    // name è JSON translatable: LIKE sul path del locale corrente,
-                    // non sulla colonna raw (matcherebbe chiavi locale e testo cross-lingua).
-                    $query->where(fn ($sub) => $sub->whereLike('name->'.app()->getLocale(), $like)->orWhereLike('location', $like));
-                })
-                // Chip mobile: con una sola tipologia attiva filtriamo per ProductType
-                // (hotel = Structure, servizi = Service); entrambe attive = tutto.
-                ->when(count($this->activeTypes) === 1, fn ($query) => $query->where(
-                    'type',
-                    $this->activeTypes[0] === 'hotel' ? ProductType::Structure : ProductType::Service,
-                ))
-                ->orderBy('position')
-                ->get(),
+            'results' => $results,
         ])->title('AnimalAmo — '.__('catalog.region_title', ['region' => $this->regionName]));
     }
 }
