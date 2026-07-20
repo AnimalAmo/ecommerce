@@ -65,3 +65,4 @@ Nodi: `transform.tx/.ty` = offset dal parent (accumula per l'assoluto); `style.f
 | Coordinate dump usate come CSS | sono design coords a 1920px — mappa proporzioni |
 | Aprire lo script sul path `.xd` esterno | il file vero è quello doppio-annidato `X.xd/X.xd` (per l'App è un file zip, per gli altri una directory — lo script legge entrambi) |
 | Gruppo vuoto nel `dump` (es. campi input) | è un `syncRef` non risolto: la definizione sta in `resources/graphics/graphicContent.agc` sotto `resources.meta.ux.symbols[]` — cerca l'`id` del syncRef lì dentro |
+| Fidarsi del `fill` sulle icone-linea (es. X delle chip con fill arancio #FF9F3E) | i path aperti tipo `ion-close-outline` rendono solo lo `stroke`: il fill è un residuo invisibile in XD — usa il colore di stroke |
