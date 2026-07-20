@@ -23,11 +23,20 @@ return [
     'language' => 'Lingua',
     'currency' => 'Valuta',
     'login_register' => 'Accedi / Registrati',
+    'menu_open' => 'Apri menu',
+    'menu_close' => 'Chiudi menu',
     'favorites' => 'Preferiti',
     'profile' => 'Profilo',
     'my_profile' => 'Il mio profilo',
     'my_orders' => 'I miei ordini',
     'logout' => 'Esci',
+
+    // Tabbar mobile (XD app)
+    'tabbar' => [
+        'explore' => 'Esplora',
+        'community' => 'Community',
+        'cart' => 'Carrello',
+    ],
 
     // Footer completo
     'footer' => [
