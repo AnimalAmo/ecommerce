@@ -1,10 +1,13 @@
 {{-- Modale registrazione a step (XD: "Pop-Up - Registrati - primo/secondo/terzo/quarto step") --}}
-<flux:modal name="register" :closable="false" class="w-full !max-w-[537px] !rounded-none bg-white !px-8 !py-6 backdrop:!bg-black/30">
+<flux:modal name="register" :closable="false" class="w-full !max-w-[537px] !rounded-none bg-white !px-8 !py-6 backdrop:!bg-black/30 max-lg:!m-0 max-lg:!min-h-dvh max-lg:!max-h-none max-lg:!max-w-full max-lg:!px-4">
     <div class="flex">
         <flux:button variant="ghost" size="xs" wire:click="back" icon="arrow-back" icon:class="!size-3.5" class="!gap-1.5 !px-0 !text-[13px] !font-normal !text-gray-400 hover:!bg-transparent hover:!text-ink">{{ __('auth-modal.back') }}</flux:button>
     </div>
 
-    <flux:heading level="2" class="mt-8 text-center !text-lg !font-semibold !text-[#0D171A]">
+    {{-- Logo centrato, solo mobile (XD app "Registrazione") --}}
+    <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="mx-auto mt-10 w-[108px] lg:hidden">
+
+    <flux:heading level="2" class="mt-8 text-center !text-lg !font-semibold !text-[#0D171A] max-lg:hidden">
         @switch($step)
             @case(3) {{ __('auth-modal.register.address') }} @break
             @case(4) {{ __('auth-modal.register.pet') }} @break
@@ -13,13 +16,13 @@
     </flux:heading>
 
     {{-- Indicatore step: 4 segmenti 60x6, gap 24 (Flux non ha un componente steps) --}}
-    <div class="mt-5 flex justify-center gap-6">
+    <div class="mt-5 flex justify-center gap-6 max-lg:mt-9 max-lg:gap-[11px]">
         @for ($i = 1; $i <= 4; $i++)
-            <div class="h-1.5 w-[60px] {{ $i <= $step ? 'bg-brand-cyan' : 'bg-gray-200' }}"></div>
+            <div class="h-1.5 w-[60px] max-lg:h-[3px] max-lg:w-[29px] {{ $i <= $step ? 'bg-brand-cyan' : 'bg-gray-200 max-lg:bg-[#DEDEDE]' }}"></div>
         @endfor
     </div>
 
-    <form wire:submit="next" class="mt-6">
+    <form wire:submit="next" class="mt-6 max-lg:mt-8">
         @if ($step === 1)
             <div class="space-y-4">
                 <flux:field>
@@ -102,7 +105,7 @@
         @endif
 
         <div class="mt-8 flex justify-center">
-            <flux:button type="submit" class="!rounded-full !bg-brand-cyan !px-8 !text-[15px] !font-bold !text-white hover:!bg-[#4FB9DB]">{{ __('auth-modal.register.continue') }}</flux:button>
+            <flux:button type="submit" class="!rounded-full !bg-brand-cyan !px-8 !text-[15px] !font-bold !text-white hover:!bg-[#4FB9DB] max-lg:w-full">{{ __('auth-modal.register.continue') }}</flux:button>
         </div>
     </form>
 </flux:modal>
