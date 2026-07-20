@@ -79,22 +79,39 @@
         <h2 class="mt-2 text-xl font-medium text-[#0D171A]">{{ __('home.search_title') }}</h2>
 
         <form wire:submit="search" class="mt-5 flex flex-col gap-3">
-            {{-- Destinazione: input reale (XD: riga 343x56 r28, bordo #E2EAEB, icona cyan, label 15px #555555) --}}
-            <label class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
-                <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
-                <flux:input wire:model="where" type="text" placeholder="{{ __('home.search_destination') }}" class="!flex-1 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-[#555555]" />
-                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
-            </label>
+            {{-- Destinazione (XD "click su 'lombardia'"): la riga si espande dentro la stessa pill
+                 con divider #F2F2F2 e lista suggerimenti (nomi regione, live sul testo digitato) --}}
+            <div x-data="{ open: false }" x-on:click.outside="open = false" class="rounded-[28px] border border-[#E2EAEB] bg-white">
+                <label class="flex h-14 items-center gap-3 px-5">
+                    <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
+                    <flux:input wire:model.live.debounce.300ms="where" x-on:focus="open = true" type="text" placeholder="{{ __('home.search_destination') }}" class="!flex-1 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-[15px] [&_input]:!font-medium [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:!font-normal [&_input]:placeholder:text-[#555555]" />
+                    <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A] transition" x-bind:class="open && 'rotate-180'" />
+                </label>
+                <div x-show="open && $wire.where.length > 0" x-transition.opacity style="display: none" class="mx-2 border-t border-[#F2F2F2] px-3 pb-3 pt-2">
+                    @forelse ($destinations as $destination)
+                        <flux:button variant="ghost" wire:key="dest-{{ $destination }}" wire:click="selectDestination('{{ addslashes($destination) }}')" x-on:click="open = false" class="!flex !h-11 !w-full !justify-start !rounded-none !px-1 !text-[15px] !font-normal !text-black hover:!bg-gray-100">{{ $destination }}</flux:button>
+                    @empty
+                        <p class="px-1 py-2.5 text-[15px] text-[#959595]">{{ __('holiday.no_location') }}</p>
+                    @endforelse
+                </div>
+            </div>
 
-            {{-- Quando: riga collassabile col calendario range condiviso --}}
-            <div x-data="{ open: false }">
-                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !h-14 !w-full !items-center !rounded-full !border !border-[#E2EAEB] !bg-white !px-5 hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!gap-3">
+            {{-- Quando (XD "click su 'calendario'"): calendario range dentro la stessa pill,
+                 variante app (mese cyan, selezione quadrata cyan, banda range #EBF9FD) --}}
+            <div x-data="{ open: false }" class="rounded-[28px] border border-[#E2EAEB] bg-white">
+                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !h-14 !w-full !items-center !rounded-[28px] !px-5 hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!gap-3">
                     <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
-                    <span class="flex-1 truncate text-left text-[15px] font-normal {{ $editCheckIn ? 'text-ink' : 'text-[#555555]' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : __('home.search_when') }}</span>
+                    <span class="flex-1 truncate text-left text-[15px] {{ $editCheckIn ? 'font-medium text-[#0D171A]' : 'font-normal text-[#555555]' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : __('home.search_when') }}</span>
                     <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A] transition" x-bind:class="open && 'rotate-180'" />
                 </flux:button>
-                <div x-show="open" x-transition.opacity style="display: none" class="mt-3 rounded-[4px] border border-[#DEDEDE] bg-white p-[10px]">
-                    @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                <div x-show="open" x-transition.opacity style="display: none" class="mx-2 border-t border-[#F2F2F2] px-2 pb-4">
+                    @include('partials.booking.calendar', [
+                        'calendar' => $calendar,
+                        'calendarLabel' => $calendarLabel,
+                        'appStyle' => true,
+                        'rangeStart' => $editCheckIn ? \DateTimeImmutable::createFromFormat('!d/m/Y', $editCheckIn)->format('Y-m-d') : null,
+                        'rangeEnd' => $editCheckOut ? \DateTimeImmutable::createFromFormat('!d/m/Y', $editCheckOut)->format('Y-m-d') : null,
+                    ])
                 </div>
             </div>
 

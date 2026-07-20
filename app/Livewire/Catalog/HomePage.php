@@ -23,6 +23,12 @@ class HomePage extends Component
         ['img' => 'event-cavallo', 'date' => '5 Ottobre 2025', 'title' => 'Viaggiare in montagna con il cane', 'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
     ];
 
+    /** Tap su un suggerimento del pannello Destinazione (modal filtri mobile). */
+    public function selectDestination(string $name): void
+    {
+        $this->where = $name;
+    }
+
     public function search()
     {
         // Submit hero: redirect alla listing Animal Holiday con Dove + le date del datepicker.
@@ -39,6 +45,13 @@ class HomePage extends Component
     {
         return view('livewire.catalog.home-page', [
             'regions' => Region::whereNotNull('home_position')->orderBy('home_position')->get(),
+            // Suggerimenti del pannello Destinazione (modal filtri mobile): stesso set
+            // filtrabile della listing holiday (LIKE sul nome regione), max 6 voci come da XD.
+            'destinations' => Region::query()
+                ->when(trim($this->where) !== '', fn ($query) => $query->whereLike('name', '%'.addcslashes(trim($this->where), '\%_').'%'))
+                ->orderBy('position')
+                ->limit(6)
+                ->pluck('name'),
             'events' => Event::whereNotNull('home_position')->orderBy('home_position')->get(),
             // Datepicker "Quando" nella hero: calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),
