@@ -63,4 +63,5 @@ Nodi: `transform.tx/.ty` = offset dal parent (accumula per l'assoluto); `style.f
 | Colori a occhio dallo screenshot | `palette` + `dump` danno gli hex esatti |
 | Aspettarsi PNG per-artboard dentro l'.xd | c'è solo `preview.png` di UN artboard; il layout viene dal JSON |
 | Coordinate dump usate come CSS | sono design coords a 1920px — mappa proporzioni |
-| Aprire lo script sul path `.xd` esterno | il file vero è quello doppio-annidato `X.xd/X.xd` |
+| Aprire lo script sul path `.xd` esterno | il file vero è quello doppio-annidato `X.xd/X.xd` (per l'App è un file zip, per gli altri una directory — lo script legge entrambi) |
+| Gruppo vuoto nel `dump` (es. campi input) | è un `syncRef` non risolto: la definizione sta in `resources/graphics/graphicContent.agc` sotto `resources.meta.ux.symbols[]` — cerca l'`id` del syncRef lì dentro |
