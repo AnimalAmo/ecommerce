@@ -16,6 +16,13 @@ return [
     'search_type' => 'Type',
     'search_guests' => 'Add guests',
     'search_animals' => 'Animals',
+    'search_types' => [
+        'hotel' => 'Hotels & services',
+        'eventi' => 'Events & activities',
+        'smartbox' => 'Smartbox',
+    ],
+    'search_guests_count' => ':count person|:count people',
+    'search_animals_count' => ':count animal|:count animals',
 
     // Animal Holiday section
     'holiday_kicker' => 'Holiday',

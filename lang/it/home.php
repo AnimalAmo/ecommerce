@@ -16,6 +16,13 @@ return [
     'search_type' => 'Tipologia',
     'search_guests' => 'Aggiungi ospiti',
     'search_animals' => 'Animali',
+    'search_types' => [
+        'hotel' => 'Hotel e servizi',
+        'eventi' => 'Eventi e attività',
+        'smartbox' => 'Smartbox',
+    ],
+    'search_guests_count' => ':count persona|:count persone',
+    'search_animals_count' => ':count animale|:count animali',
 
     // Sezione Animal Holiday
     'holiday_kicker' => 'Holiday',

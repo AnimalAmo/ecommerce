@@ -21,6 +21,7 @@ return [
     'from_price_label' => 'From',
 
     // Pagination
+    'load_more' => 'Load more',
     'pagination' => 'Pagination',
     'prev_page' => 'Previous page',
     'next_page' => 'Next page',

@@ -21,6 +21,7 @@ return [
     'from_price_label' => 'A partire da',
 
     // Paginazione
+    'load_more' => 'Carica altro',
     'pagination' => 'Paginazione',
     'prev_page' => 'Pagina precedente',
     'next_page' => 'Pagina successiva',

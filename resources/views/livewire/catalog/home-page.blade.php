@@ -115,21 +115,44 @@
                 </div>
             </div>
 
-            {{-- Tipologia / Ospiti / Animali: righe da mockup, filtri collegati negli step successivi --}}
-            <div class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
-                <flux:icon.spa class="h-5 w-5 shrink-0 text-brand-cyan" />
-                <span class="flex-1 text-[15px] text-[#555555]">{{ __('home.search_type') }}</span>
-                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+            {{-- Tipologia (XD "click su 'tipologia'"): lista a scelta singola dentro la pill --}}
+            <div x-data="{ open: false }" class="rounded-[28px] border border-[#E2EAEB] bg-white">
+                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !h-14 !w-full !items-center !rounded-[28px] !px-5 hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!gap-3">
+                    <flux:icon.spa class="h-5 w-5 shrink-0 text-brand-cyan" />
+                    <span class="flex-1 truncate text-left text-[15px] {{ $type !== '' ? 'font-medium text-[#0D171A]' : 'font-normal text-[#555555]' }}">{{ $type !== '' ? __('home.search_types.'.$type) : __('home.search_type') }}</span>
+                    <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A] transition" x-bind:class="open && 'rotate-180'" />
+                </flux:button>
+                <div x-show="open" x-transition.opacity style="display: none" class="mx-2 border-t border-[#F2F2F2] px-3 pb-3 pt-2">
+                    @foreach (\App\Livewire\Catalog\HomePage::SEARCH_TYPES as $searchType)
+                        <flux:button variant="ghost" wire:key="type-{{ $searchType }}" wire:click="selectType('{{ $searchType }}')" x-on:click="open = false" class="!flex !h-11 !w-full !justify-start !rounded-none !px-1 !text-[15px] !font-normal !text-black hover:!bg-gray-100">{{ __('home.search_types.'.$searchType) }}</flux:button>
+                    @endforeach
+                </div>
             </div>
-            <div class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
-                <flux:icon.team class="h-5 w-5 shrink-0 text-brand-cyan" />
-                <span class="flex-1 text-[15px] text-[#555555]">{{ __('home.search_guests') }}</span>
-                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+
+            {{-- Aggiungi ospiti (XD "click su 'aggiungi ospiti'"): stepper condivisi dentro la pill --}}
+            <div x-data="{ open: false }" class="rounded-[28px] border border-[#E2EAEB] bg-white">
+                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !h-14 !w-full !items-center !rounded-[28px] !px-5 hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!gap-3">
+                    <flux:icon.team class="h-5 w-5 shrink-0 text-brand-cyan" />
+                    @php $guestsTotal = array_sum($editGuests); @endphp
+                    <span class="flex-1 truncate text-left text-[15px] {{ $guestsTotal > 1 ? 'font-medium text-[#0D171A]' : 'font-normal text-[#555555]' }}">{{ $guestsTotal > 1 ? trans_choice('home.search_guests_count', $guestsTotal) : __('home.search_guests') }}</span>
+                    <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A] transition" x-bind:class="open && 'rotate-180'" />
+                </flux:button>
+                <div x-show="open" x-transition.opacity style="display: none" class="mx-2 border-t border-[#F2F2F2] px-3 pb-2 pt-1">
+                    @include('partials.booking.guest-steppers', ['guests' => $editGuests, 'guestsAtMax' => $this->guestsAtMax()])
+                </div>
             </div>
-            <div class="flex h-14 items-center gap-3 rounded-full border border-[#E2EAEB] bg-white px-5">
-                <flux:icon.animal class="h-5 w-5 shrink-0 text-brand-cyan" />
-                <span class="flex-1 text-[15px] text-[#555555]">{{ __('home.search_animals') }}</span>
-                <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A]" />
+
+            {{-- Animali (XD "click su 'animali' – 1"): stepper cani/gatti dentro la pill --}}
+            <div x-data="{ open: false }" class="rounded-[28px] border border-[#E2EAEB] bg-white">
+                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !h-14 !w-full !items-center !rounded-[28px] !px-5 hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!gap-3">
+                    <flux:icon.animal class="h-5 w-5 shrink-0 text-brand-cyan" />
+                    @php $animalsTotal = array_sum($editAnimals); @endphp
+                    <span class="flex-1 truncate text-left text-[15px] {{ $animalsTotal > 0 ? 'font-medium text-[#0D171A]' : 'font-normal text-[#555555]' }}">{{ $animalsTotal > 0 ? trans_choice('home.search_animals_count', $animalsTotal) : __('home.search_animals') }}</span>
+                    <flux:icon.chevron-down class="h-4 w-4 shrink-0 text-[#0D171A] transition" x-bind:class="open && 'rotate-180'" />
+                </flux:button>
+                <div x-show="open" x-transition.opacity style="display: none" class="mx-2 border-t border-[#F2F2F2] px-3 pb-2 pt-1">
+                    @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $this->animalsAtMax()])
+                </div>
             </div>
 
             {{-- Button azzurro XD: 343x39, r19, #6CD1EF, testo 15 semibold bianco --}}

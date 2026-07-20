@@ -16,6 +16,18 @@ class HomePage extends Component
 
     public string $where = '';
 
+    /** Tipologia scelta nel modal filtri mobile ('' = nessuna → default Hotel e servizi). */
+    public string $type = '';
+
+    /** Tipologie del pannello (XD app: Hotel e servizi / Eventi e attività / Smartbox). */
+    public const SEARCH_TYPES = ['hotel', 'eventi', 'smartbox'];
+
+    /** Il pannello Animali del modal mostra cani e gatti (XD app). */
+    public function mount(): void
+    {
+        $this->editAnimals = ['cane' => 0, 'gatto' => 0];
+    }
+
     // News ancora mock: il backend news arriva con lo step 5 della roadmap.
     public array $news = [
         ['img' => 'news-trenitalia', 'date' => '20 Ottobre 2023', 'title' => 'Novità Trenitalia trasporto animali', 'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
@@ -29,16 +41,33 @@ class HomePage extends Component
         $this->where = $name;
     }
 
+    /** Tap su una voce del pannello Tipologia (modal filtri mobile). */
+    public function selectType(string $type): void
+    {
+        if (in_array($type, self::SEARCH_TYPES, true)) {
+            $this->type = $type;
+        }
+    }
+
     public function search()
     {
-        // Submit hero: redirect alla listing Animal Holiday con Dove + le date del datepicker.
-        // AnimalHoliday legge ?dove e filtra le regioni; checkin/checkout viaggiano per lo
-        // step disponibilità (step 6) — qui la home non filtra nulla in loco.
-        return $this->redirectRoute('holiday', array_filter([
+        // Submit hero: redirect alla listing con Dove + le date del datepicker.
+        // La Tipologia del modal mobile decide la destinazione: Eventi e attività →
+        // listing eventi (legge ?dove), Smartbox → listing smartbox (nessun filtro
+        // in query), default → Animal Holiday (legge ?dove e filtra le regioni).
+        // Checkin/checkout viaggiano per lo step disponibilità (step 6); ospiti e
+        // animali del modal restano UI-only finché le listing non li consumano.
+        $params = array_filter([
             'dove' => trim($this->where),
             'checkin' => $this->editCheckIn,
             'checkout' => $this->editCheckOut,
-        ], fn ($value): bool => $value !== null && $value !== ''), navigate: true);
+        ], fn ($value): bool => $value !== null && $value !== '');
+
+        return match ($this->type) {
+            'eventi' => $this->redirectRoute('eventi', array_intersect_key($params, ['dove' => true]), navigate: true),
+            'smartbox' => $this->redirectRoute('smartbox', navigate: true),
+            default => $this->redirectRoute('holiday', $params, navigate: true),
+        };
     }
 
     public function render()

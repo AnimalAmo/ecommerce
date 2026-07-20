@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\ProductType;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
@@ -26,6 +27,23 @@ class AnimalHolidayRegion extends Component
     public string $guests = '';
 
     public string $animals = '';
+
+    /**
+     * Chip filtro attive su mobile (XD app "Cerca - risultati"): 'hotel' = strutture,
+     * 'servizi' = servizi. Entrambe attive = nessun filtro; la X rimuove una tipologia,
+     * rimuovere anche l'ultima ripristina entrambe (reset).
+     */
+    public array $activeTypes = ['hotel', 'servizi'];
+
+    /** X su una chip tipologia (mobile). */
+    public function removeType(string $type): void
+    {
+        $this->activeTypes = array_values(array_diff($this->activeTypes, [$type]));
+
+        if ($this->activeTypes === []) {
+            $this->activeTypes = ['hotel', 'servizi'];
+        }
+    }
 
     public function mount(string $region): void
     {
@@ -61,6 +79,12 @@ class AnimalHolidayRegion extends Component
                     // non sulla colonna raw (matcherebbe chiavi locale e testo cross-lingua).
                     $query->where(fn ($sub) => $sub->whereLike('name->'.app()->getLocale(), $like)->orWhereLike('location', $like));
                 })
+                // Chip mobile: con una sola tipologia attiva filtriamo per ProductType
+                // (hotel = Structure, servizi = Service); entrambe attive = tutto.
+                ->when(count($this->activeTypes) === 1, fn ($query) => $query->where(
+                    'type',
+                    $this->activeTypes[0] === 'hotel' ? ProductType::Structure : ProductType::Service,
+                ))
                 ->orderBy('position')
                 ->get(),
         ])->title('AnimalAmo — '.__('catalog.region_title', ['region' => $this->regionName]));
