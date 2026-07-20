@@ -44,6 +44,8 @@ return [
     // Reviews
     'reviews' => 'Customer reviews',
     'reviews_count_label' => 'Reviews',
+    // Rating row under the photo, mobile only (XD app "Dettaglio struttura")
+    'rating_with_reviews' => ':rating (:count reviews)',
     'reviewed_by' => 'Reviewed by',
     'load_more_reviews' => 'Load more reviews',
 

@@ -149,6 +149,9 @@ class AnimalHolidayRegion extends Component
         // non filtrano ancora (step 6 disponibilità).
     }
 
+    /** Card mostrate sotto "Risultati simili alla tua ricerca:" quando i filtri non danno risultati (XD app "Nessun risultato"). */
+    private const SIMILAR_LIMIT = 5;
+
     public function render()
     {
         $term = trim($this->where);
@@ -182,8 +185,15 @@ class AnimalHolidayRegion extends Component
             ->orderBy('position')
             ->get();
 
+        // "Nessun risultato trovato": l'XD app non lascia la pagina vuota ma propone card
+        // simili, cioè lo stesso catalogo senza i filtri (tipologia e prezzo) che l'hanno svuotato.
+        $similar = $results->isEmpty()
+            ? Structure::query()->orderBy('position')->limit(self::SIMILAR_LIMIT)->get()
+            : $results;
+
         return view('livewire.catalog.animal-holiday-region', [
             'results' => $results,
+            'similar' => $similar,
         ])->title('AnimalAmo — '.__('catalog.region_title', ['region' => $this->regionName]));
     }
 }

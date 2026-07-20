@@ -9,6 +9,11 @@ return [
     'badge_hotel' => 'Hotel',
     'badge_services' => 'Servizi',
 
+    // Stato vuoto della griglia (XD app "Nessun risultato")
+    'no_results_title' => 'Nessun risultato trovato',
+    'no_results_hint' => 'Prova a modificare i filtri per trovare altri risultati.',
+    'similar_results_title' => 'Risultati simili alla tua ricerca:',
+
     // Modal "Filtri 2" mobile (XD app "Filtri 2 ricerca")
     'filters_title' => 'Filtri',
     'filter_price_min' => 'Minimo',

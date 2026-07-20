@@ -22,7 +22,8 @@
             @endswitch
             <div>
                 <p class="text-[15px] font-medium text-[#0D171A]">{{ $row['title'] }}</p>
-                <p class="mt-1 max-w-[613px] text-[15px] text-[#555555]">@foreach ($row['lines'] as $line){{ $line }}@if (! $loop->last)<br>@endif
+                {{-- Mobile (XD app): dettaglio 14px #959595 --}}
+                <p class="mt-1 max-w-[613px] text-[15px] text-[#555555] max-lg:text-sm max-lg:text-[#959595]">@foreach ($row['lines'] as $line){{ $line }}@if (! $loop->last)<br>@endif
 @endforeach</p>
             </div>
         </li>

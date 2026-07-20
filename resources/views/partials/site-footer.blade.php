@@ -48,5 +48,8 @@
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.manage_cookies') }}</a>
     </div>
 
-    @include('partials.mobile-tabbar')
+    {{-- Le schede di dettaglio sostituiscono la tabbar con la propria barra CTA (XD app): $hideMobileTabbar --}}
+    @unless ($hideMobileTabbar ?? false)
+        @include('partials.mobile-tabbar')
+    @endunless
 </footer>

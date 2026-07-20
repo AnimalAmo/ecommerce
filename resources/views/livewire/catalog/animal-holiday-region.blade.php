@@ -82,9 +82,22 @@
                 </flux:button>
             </div>
 
+            {{-- Nessun risultato (XD app "Nessun risultato"): al posto della griglia vuota
+                 compare l'avviso e, sotto, le card proposte come alternativa. --}}
+            @if ($results->isEmpty())
+                <div class="mt-6 border-y border-[#E9E9E9] py-6 text-center">
+                    <p class="flex items-center justify-center gap-2 text-[15px] font-semibold text-[#EA2E68]">
+                        <flux:icon.exclamation-circle class="h-5 w-5 shrink-0" />
+                        {{ __('catalog.no_results_title') }}
+                    </p>
+                    <p class="mt-2 text-[15px] text-[#555555]">{{ __('catalog.no_results_hint') }}</p>
+                </div>
+                <p class="mt-6 text-[15px] font-semibold text-[#0D171A]">{{ __('catalog.similar_results_title') }}</p>
+            @endif
+
             {{-- Griglia risultati (XD: simbolo "Box hotel", 4 colonne × 3 righe) --}}
             <div class="mt-10 grid grid-cols-4 gap-x-[27px] gap-y-4 max-lg:mt-5 max-lg:grid-cols-1 max-lg:gap-y-6">
-                @foreach ($results as $result)
+                @foreach ($results->isEmpty() ? $similar : $results as $result)
                     <article wire:key="res-{{ $result->id }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                         <div class="relative m-2 overflow-hidden rounded-t-[3px]">
                             <img src="{{ $result->imageUrl() }}" alt="{{ $result->name }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
