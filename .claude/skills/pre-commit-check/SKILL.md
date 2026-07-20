@@ -23,13 +23,9 @@ ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce &
 
 Test singolo: aggiungi `--filter=NomeTest`. Suite completa attesa verde (~620 test). Un test rosso = si sistema prima di committare, non si committa "con nota".
 
-## 3. Asset (solo se toccati blade/css/js con classi Tailwind nuove)
+## 3. Asset — NON buildare in locale
 
-```bash
-npm run build
-```
-
-Le classi Tailwind nuove non esistono nei build vecchi: senza build, in produzione lo stile sparisce silenziosamente. In dev con `npm run dev` attivo non serve, ma serve prima di un deploy.
+In locale gira `npm run dev` (vite hot reload): **non lanciare `npm run build` prima del commit** — richiesta esplicita (20 Lug 2026). Il build serve SOLO in fase di deploy (le classi Tailwind nuove non esistono nei build vecchi: senza build, in produzione lo stile sparisce silenziosamente).
 
 ## 4. Commit
 
