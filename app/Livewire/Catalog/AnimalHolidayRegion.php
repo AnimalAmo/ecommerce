@@ -58,6 +58,13 @@ class AnimalHolidayRegion extends Component
     /** Checkbox "Numero di persone" del modal (solo UI, come sopra). */
     public array $peopleGroups = [];
 
+    /** X sulla chip fascia di prezzo (mobile): torna ai default = filtro spento. */
+    public function resetPrice(): void
+    {
+        $this->priceMin = self::PRICE_MIN;
+        $this->priceMax = self::PRICE_MAX;
+    }
+
     /** X su una chip tipologia (mobile). */
     public function removeType(string $type): void
     {

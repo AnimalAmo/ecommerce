@@ -54,6 +54,13 @@
 
             {{-- Chip tipologie attive, solo mobile (XD app: pill #EBF9FD testo #4FB8D8 con X) --}}
             <div class="mt-4 flex items-center gap-1.5 lg:hidden">
+                {{-- Chip fascia di prezzo (XD app "Cerca - risultati – click su 'filtri'": "9 - 415 €" con X) --}}
+                @if ($priceMin !== \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MIN || $priceMax !== \App\Livewire\Catalog\AnimalHolidayRegion::PRICE_MAX)
+                    <flux:button wire:click="resetPrice" class="!flex !h-[31px] !items-center !rounded-full !border !border-[#C8C8C8] !bg-[#EBF9FD] !px-4 !text-sm !font-normal !text-[#4FB8D8] !shadow-none [&>span]:!flex [&>span]:!items-center [&>span]:!gap-2">
+                        {{ $priceMin }} - {{ $priceMax }} €
+                        <flux:icon.close class="h-2.5 w-2.5" />
+                    </flux:button>
+                @endif
                 @foreach ($activeTypes as $activeType)
                     <flux:button wire:key="chip-{{ $activeType }}" wire:click="removeType('{{ $activeType }}')" class="!flex !h-[31px] !items-center !rounded-full !border !border-[#C8C8C8] !bg-[#EBF9FD] !px-4 !text-sm !font-normal !text-[#4FB8D8] !shadow-none [&>span]:!flex [&>span]:!items-center [&>span]:!gap-2">
                         {{ $activeType === 'hotel' ? __('catalog.badge_hotel') : __('catalog.filter_types.'.$activeType) }}
@@ -205,23 +212,23 @@
             <h3 class="text-lg font-semibold text-[#0D171A]">{{ __('holiday.filter_type') }}</h3>
             <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
                 <flux:button wire:click="toggleType('hotel')" class="{{ $filterCard }} {{ in_array('hotel', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                    <flux:icon.structure-bb class="h-8 w-8 text-[#2B2B2B]" />
+                    <flux:icon.structure-bb class="h-8 w-8 {{ in_array('hotel', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                     <span class="text-[15px] font-medium {{ in_array('hotel', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.hotel') }}</span>
                 </flux:button>
                 <flux:button wire:click="toggleType('servizi')" class="{{ $filterCard }} {{ in_array('servizi', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                    <flux:icon.animal class="h-8 w-8 text-[#2B2B2B]" />
+                    <flux:icon.animal class="h-8 w-8 {{ in_array('servizi', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                     <span class="text-[15px] font-medium {{ in_array('servizi', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.servizi') }}</span>
                 </flux:button>
                 <flux:button wire:click="toggleType('attivita')" class="{{ $filterCard }} {{ in_array('attivita', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                    <flux:icon.activity-balloons class="h-8 w-8 text-[#2B2B2B]" />
+                    <flux:icon.activity-balloons class="h-8 w-8 {{ in_array('attivita', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                     <span class="text-[15px] font-medium {{ in_array('attivita', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.attivita') }}</span>
                 </flux:button>
                 <flux:button wire:click="toggleType('eventi')" class="{{ $filterCard }} {{ in_array('eventi', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                    <flux:icon.activity-navigation class="h-8 w-8 text-[#2B2B2B]" />
+                    <flux:icon.activity-navigation class="h-8 w-8 {{ in_array('eventi', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                     <span class="text-[15px] font-medium {{ in_array('eventi', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.eventi') }}</span>
                 </flux:button>
                 <flux:button wire:click="toggleType('smartbox')" class="{{ $filterCard }} {{ in_array('smartbox', $activeTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                    <flux:icon.gift class="h-8 w-8 text-[#2B2B2B]" />
+                    <flux:icon.gift class="h-8 w-8 {{ in_array('smartbox', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                     <span class="text-[15px] font-medium {{ in_array('smartbox', $activeTypes, true) ? 'text-brand-cyan' : 'text-[#0D171A]' }}">{{ __('catalog.filter_types.smartbox') }}</span>
                 </flux:button>
             </div>
@@ -233,15 +240,15 @@
                 <h3 class="text-lg font-semibold text-[#0D171A]">{{ __('catalog.smartbox_type_title') }}</h3>
                 <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
                     <flux:button wire:click="toggleSmartboxType('soggiorno')" class="{{ $filterCard }} {{ in_array('soggiorno', $smartboxTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                        <flux:icon.structure-bb class="h-8 w-8 text-[#2B2B2B]" />
+                        <flux:icon.structure-bb class="h-8 w-8 {{ in_array('soggiorno', $smartboxTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                         <span class="text-left text-sm font-normal text-[#959595]">{{ __('catalog.smartbox_types.soggiorno') }}</span>
                     </flux:button>
                     <flux:button wire:click="toggleSmartboxType('benessere')" class="{{ $filterCard }} {{ in_array('benessere', $smartboxTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                        <flux:icon.smartbox-wellness class="h-8 w-8 text-[#2B2B2B]" />
+                        <flux:icon.smartbox-wellness class="h-8 w-8 {{ in_array('benessere', $smartboxTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                         <span class="text-left text-sm font-normal text-[#959595]">{{ __('catalog.smartbox_types.benessere') }}</span>
                     </flux:button>
                     <flux:button wire:click="toggleSmartboxType('avventura')" class="{{ $filterCard }} {{ in_array('avventura', $smartboxTypes, true) ? '!bg-[#EBF9FD]' : '!bg-white' }}">
-                        <flux:icon.smartbox-adventure class="h-8 w-8 text-[#2B2B2B]" />
+                        <flux:icon.smartbox-adventure class="h-8 w-8 {{ in_array('avventura', $smartboxTypes, true) ? 'text-brand-cyan' : 'text-[#2B2B2B]' }}" />
                         <span class="text-left text-sm font-normal text-[#959595]">{{ __('catalog.smartbox_types.avventura') }}</span>
                     </flux:button>
                 </div>
