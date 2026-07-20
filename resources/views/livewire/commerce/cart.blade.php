@@ -8,7 +8,8 @@
     @include('partials.site-header')
 
     <main class="flex-1">
-        <div class="{{ $px }} pb-[140px] pt-14">
+        {{-- Su mobile la pagina finisce sopra la barra CTA fissa + tabbar (XD app "Carrello - click 'procedi'") --}}
+        <div class="{{ $px }} pb-[140px] pt-14 max-lg:pb-[70px] max-lg:pt-5">
             <div class="mx-auto w-full max-w-[1496px]">
                 @if ($items === [])
                     {{-- Titolo stato vuoto: "Carrello" Nunito Bold 36 nero (artboard "Carrello vuoto", niente conteggio) --}}
@@ -60,16 +61,18 @@
                         @endforeach
                     </div>
                 @else
-                    {{-- Titolo 20px regular grigio (non un H1 bold) con conteggio dinamico e singolare/plurale --}}
-                    <h1 class="text-xl font-normal leading-none text-[#555555]">{{ __('cart.ui.title') }} ({{ $count }} {{ $count === 1 ? __('cart.ui.item_one') : __('cart.ui.item_many') }})</h1>
+                    {{-- Titolo 20px regular grigio (non un H1 bold) con conteggio dinamico e singolare/plurale;
+                         su mobile scende a 14px (XD app: "Carrello (2 prodotto)") --}}
+                    {{-- Su mobile "Carrello" è 18 semibold e il conteggio fra parentesi resta 14 --}}
+                    <h1 class="text-xl font-normal leading-none text-[#555555] max-lg:text-lg max-lg:font-semibold">{{ __('cart.ui.title') }} <span class="max-lg:text-sm max-lg:font-normal">({{ $count }} {{ $count === 1 ? __('cart.ui.item_one') : __('cart.ui.item_many') }})</span></h1>
 
-                    <div class="mt-[54px] flex flex-col gap-[35px] min-[87.5rem]:flex-row min-[87.5rem]:items-start">
+                    <div class="mt-[54px] flex flex-col gap-[35px] min-[87.5rem]:flex-row min-[87.5rem]:items-start max-lg:mt-5">
                         {{-- Colonna sinistra: card articoli 1062, gap verticale 20 --}}
-                        <div class="min-w-0 flex-1 space-y-5">
+                        <div class="min-w-0 flex-1 space-y-5 max-lg:space-y-0">
                             @foreach ($items as $item)
                                 {{-- Card articolo ~1062x223 ("Rettangolo 399": bg bianco pieno, non l'op=0.5 del dump);
                                      nel flusso regalo la card cresce in basso con pill validità + campi dedica (XD y251..~721) --}}
-                                <article wire:key="cart-item-{{ $item['id'] }}" class="min-h-[223px] w-full rounded-[3px] border border-[#E9E9E9] bg-white p-[18px] shadow-[0px_1px_10px_#0000001A]">
+                                <article wire:key="cart-item-{{ $item['id'] }}" class="min-h-[223px] w-full rounded-[3px] border border-[#E9E9E9] bg-white p-[18px] shadow-[0px_1px_10px_#0000001A] max-lg:hidden">
                                     <div class="flex gap-[19px]">
                                     {{-- Foto 278x185 con chip tipologia sovrapposta (16px dentro la foto); chip = ProductType REALE del prodotto --}}
                                     <div class="relative hidden shrink-0 sm:block">
@@ -152,11 +155,77 @@
                                         </div>
                                     @endif
                                 </article>
+
+                                {{-- Card mobile (XD app "Carrello - click 'procedi'"): foto a tutta larghezza,
+                                     striscia scura col prezzo e colonna Elimina rossa appoggiate sul fondo della
+                                     foto, righe meta sotto. Niente "Modifica": l'XD app non la prevede. --}}
+                                @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
+                                <article wire:key="cart-item-mobile-{{ $item['id'] }}" class="w-full border-b border-[#E9E9E9] py-6 first:pt-0 lg:hidden">
+                                    {{-- XD: box 308x104 (x16..324) con la foto clippata dentro dalla maschera, velo
+                                         scuro #232A2C 40%, tag in alto a sinistra e prezzo al centro; di fianco la
+                                         colonna Elimina 30x104 (x328..358). --}}
+                                    <div class="flex items-stretch gap-1">
+                                        <div class="relative h-[104px] min-w-0 flex-1 overflow-hidden rounded-[4px]">
+                                            <img src="{{ $item['photoUrl'] }}" alt="{{ $item['title'] }}" class="absolute inset-0 h-full w-full object-cover">
+                                            <div class="absolute inset-0 bg-[#232A2C]/40" aria-hidden="true"></div>
+                                            <span class="absolute left-2 top-3 flex h-[27px] items-center rounded-[3px] px-[10px] text-sm font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
+                                            <span class="absolute inset-0 flex items-center justify-center text-xl font-bold text-white">{{ \App\Support\Format::money($item['price']) }}</span>
+                                        </div>
+                                        <flux:button wire:click="removeItem('{{ $item['id'] }}')" square aria-label="{{ __('cart.ui.remove') }}" class="!h-[104px] !w-[30px] !shrink-0 !rounded-[3px] !border !border-[#E8E8E8] !bg-[#FAE9E7] !p-0 !text-[#DC5A48] !shadow-none [&>span]:!flex [&>span]:!h-full [&>span]:!items-center [&>span]:!justify-center">
+                                            <flux:icon.trash class="h-4 w-4" />
+                                        </flux:button>
+                                    </div>
+
+                                    {{-- Righe meta: titolo bold 14 col pin, poi date/ospiti/animali 13 regular --}}
+                                    <div class="mt-[15px] space-y-[13px] text-[13px] font-normal leading-none text-[#0D171A]">
+                                        <div class="flex items-center gap-2 text-sm font-bold">
+                                            <flux:icon.pin class="h-[13px] w-[13px] shrink-0" />
+                                            <span class="truncate">{{ $item['title'] }}</span>
+                                        </div>
+                                        @if ($item['dates'] !== null)
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.calendar class="h-[13px] w-[13px] shrink-0" />
+                                                <span>{{ $item['dates']['checkIn'] }}@if ($item['dates']['checkOut'] !== null) - {{ $item['dates']['checkOut'] }}@endif</span>
+                                            </div>
+                                        @elseif ($item['serviceSlot'] !== null)
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.calendar class="h-[13px] w-[13px] shrink-0" />
+                                                <span>{{ $item['serviceSlot'] }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($item['guests'] !== null)
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.user class="!h-[13px] !w-[13px] shrink-0" />
+                                                <span>{{ \App\Support\Format::guests($item['guests']) }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($item['animals'] !== null)
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.animal class="h-[13px] w-[13px] shrink-0" />
+                                                <span>{{ \App\Support\Format::animals($item['animals']) }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if ($item['gift'])
+                                        {{-- Estensione regalo: l'XD app non la disegna, riuso i campi desktop impilati --}}
+                                        <div class="mt-5">
+                                            <div class="flex h-[47px] w-full items-center justify-center gap-[6px] rounded-[4px] border border-[#DEDEDE] px-4">
+                                                <flux:icon.gift class="h-5 w-5 shrink-0 text-[#2B2B2B]" />
+                                                <span class="truncate text-[15px] font-medium leading-none text-[#2B2B2B]">{{ $item['giftValidity'] }}</span>
+                                            </div>
+                                            <flux:input wire:model="giftDedication.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_dedication_placeholder') }}" class="mt-4 !min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
+                                            <flux:textarea wire:model="giftMessage.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_message_placeholder') }}" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
+                                        </div>
+                                    @endif
+                                </article>
                             @endforeach
+
                         </div>
 
-                        {{-- Box riepilogo 399 (stesso stile contenitore delle card); in modalità regalo è 399x269: niente blocco "Cancellazione gratuita" --}}
-                        <aside class="w-full shrink-0 min-[87.5rem]:w-[399px]">
+                        {{-- Box riepilogo 399 (stesso stile contenitore delle card); in modalità regalo è 399x269: niente blocco "Cancellazione gratuita".
+                             Su mobile non esiste: l'XD app porta il totale nel checkout e lascia solo la CTA fissa. --}}
+                        <aside class="w-full shrink-0 min-[87.5rem]:w-[399px] max-lg:hidden">
                             <div class="rounded-[3px] border border-[#E9E9E9] bg-white {{ $gift ? 'pb-[23px]' : 'pb-[34px]' }} shadow-[0px_1px_10px_#0000001A]">
                                 <div class="flex items-start justify-between px-6 pt-10">
                                     <span class="text-sm leading-none text-[#555555]">{{ __('cart.ui.total') }} ({{ $count }} {{ $count === 1 ? __('cart.ui.item_one') : __('cart.ui.item_many') }})</span>
@@ -207,8 +276,37 @@
         </div>
     </main>
 
-    {{-- Footer slim (direttiva utente: pagine funnel carrello/checkout) --}}
-    @include('partials.footer-minimal')
+    {{-- Barra fissa sopra la tabbar, solo mobile: Totale (Nunito Bold 20) e CTA
+         "Button azzurro" 343x39 r19 #6CD1EF (XD app "Carrello - click 'procedi'") --}}
+    @if ($items !== [])
+        <div class="fixed inset-x-0 bottom-20 z-30 bg-white px-4 pb-3 pt-4 shadow-[0px_-3px_6px_#00000029] lg:hidden">
+            {{-- Codice promozionale (XD app: box 343x32 r4 #F2F2F2, icona coupon e testo 14 #959595).
+                 TODO: applicazione del coupon non in scope, come sul desktop. --}}
+            <div class="mb-4 flex h-8 w-full items-center gap-2 rounded-[4px] bg-[#F2F2F2] px-3">
+                <flux:icon.coupon-ticket class="h-5 w-[13px] shrink-0 text-[#959595]" />
+                <span class="truncate text-sm tracking-[0.025em] text-[#959595]">{{ __('cart.ui.promo_code') }}</span>
+            </div>
+            <div class="flex items-center justify-between text-xl font-bold text-black">
+                <span>{{ __('cart.ui.total') }}</span>
+                <span>{{ \App\Support\Format::money($total) }}</span>
+            </div>
+            @if ($gift)
+                <flux:button wire:click="goToCheckout" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
+            @else
+                <flux:button href="{{ route('checkout') }}" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
+            @endif
+        </div>
+    @endif
+
+    {{-- Footer slim (direttiva utente: pagine funnel carrello/checkout); su mobile al suo posto c'è la tabbar --}}
+    <div class="max-lg:hidden">
+        @include('partials.footer-minimal')
+    </div>
+
+    {{-- Tabbar mobile: il carrello usa il footer minimal, che non la include --}}
+    <div class="lg:hidden">
+        @include('partials.mobile-tabbar')
+    </div>
 
     {{-- Pop-up "Modifica prenotazione" (symbol XD): uno solo, accordion per famiglia della riga selezionata
          (structure = date/ospiti/animali, service = giorno/orari/animali, activity = ospiti/animali, smartbox = animali) --}}

@@ -41,7 +41,7 @@ class CartPageTest extends TestCase
 
         $this->get('/carrello')
             ->assertOk()
-            ->assertSee('Carrello (2 articoli)')
+            ->assertSeeText('Carrello (2 articoli)')
             // Riga struttura: titolo, località, date dalle options, etichette condivise.
             ->assertSee('Hotel Brescia')
             ->assertSee('Dario Boario Terme (BS), Italia')
@@ -111,11 +111,11 @@ class CartPageTest extends TestCase
         $this->addActivityLine();          // 236 €
 
         Livewire::test(Cart::class)
-            ->assertSee('Carrello (2 articoli)')
+            ->assertSeeText('Carrello (2 articoli)')
             ->assertSee("451\u{A0}€")
             ->call('removeItem', $hotelKey)
             // Conteggio (con singolare) e totale si riallineano al volo.
-            ->assertSee('Carrello (1 articolo)')
+            ->assertSeeText('Carrello (1 articolo)')
             ->assertDontSee('Hotel Brescia')
             ->assertSee("236\u{A0}€")
             ->assertDontSee("215\u{A0}€");
@@ -160,7 +160,7 @@ class CartPageTest extends TestCase
         // /carrello senza flag: SOLO la riga normale, totale sul set filtrato.
         $this->get('/carrello')
             ->assertOk()
-            ->assertSee('Carrello (1 articolo)')
+            ->assertSeeText('Carrello (1 articolo)')
             ->assertSee('Hotel Brescia')
             ->assertSee("86\u{A0}€")
             ->assertDontSee('Weekend di relax in Lombardia')
@@ -169,7 +169,7 @@ class CartPageTest extends TestCase
         // ?regalo=1: SOLO la riga regalo, con la pill validità della smartbox.
         $this->get('/carrello?regalo=1')
             ->assertOk()
-            ->assertSee('Carrello (1 articolo)')
+            ->assertSeeText('Carrello (1 articolo)')
             ->assertSee('Weekend di relax in Lombardia')
             ->assertSee('Smartbox valida per 1 anno')
             ->assertSee("215\u{A0}€")

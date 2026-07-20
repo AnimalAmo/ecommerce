@@ -39,6 +39,8 @@ return [
         'free_cancellation' => 'Free cancellation',
         'free_cancellation_note' => '(No later than 2 weeks before the event)',
         'go_to_checkout' => 'Go to checkout',
+        // Mobile sticky bar CTA (app XD "Carrello - click 'procedi'")
+        'proceed_checkout' => 'Proceed to checkout',
         'edit_booking' => 'Edit booking',
         'check_in' => 'Check-in',
         'check_out' => 'Check-out',

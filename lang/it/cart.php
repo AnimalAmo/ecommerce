@@ -39,6 +39,8 @@ return [
         'free_cancellation' => 'Cancellazione gratuita',
         'free_cancellation_note' => '(Non oltre 2 settimane prima dell’evento)',
         'go_to_checkout' => 'Vai al checkout',
+        // CTA della barra fissa mobile (XD app "Carrello - click 'procedi'")
+        'proceed_checkout' => 'Procedi con il checkout',
         'edit_booking' => 'Modifica prenotazione',
         'check_in' => 'Check-in',
         'check_out' => 'Check-out',
