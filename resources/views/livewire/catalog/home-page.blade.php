@@ -12,9 +12,10 @@
 
         <div class="{{ $px }} flex min-h-[560px] max-h-[976px] flex-col justify-center py-24 lg:h-[calc(100svh-5rem)]">
             {{-- Box hero (stile XD: #152E36, radius 2px): titolo, testo, Dove/Quando --}}
-            <div class="w-full max-w-2xl rounded-[2px] bg-[#152E36] px-4 py-6 shadow-[0px_3px_6px_#00000029]">
-                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white">{{ __('home.hero_title') }}</h1>
-                <p class="mt-4 text-sm leading-relaxed text-white/70">{{ __('home.hero_text') }}</p>
+            {{-- Mobile (XD app "Cerca - home"): niente box scuro, testo diretto sulla foto --}}
+            <div class="w-full max-w-2xl rounded-[2px] bg-[#152E36] px-4 py-6 shadow-[0px_3px_6px_#00000029] max-lg:bg-transparent max-lg:px-0 max-lg:py-0 max-lg:shadow-none">
+                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.hero_title') }}</h1>
+                <p class="mt-4 text-sm leading-relaxed text-white/70 max-lg:text-[15px] max-lg:text-white">{{ __('home.hero_text') }}</p>
 
                 {{-- Search bar stile XD: pill bianco (border #F4F4F4, radius 100px) con input + pulsante dentro --}}
                 <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2">
@@ -23,11 +24,12 @@
                         <flux:icon.pin class="h-5 w-5 shrink-0 text-brand-cyan" />
                         <flux:input wire:model="where" type="text" placeholder="{{ __('home.search_where') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!border-0 [&_input]:!bg-transparent [&_input]:!p-0 [&_input]:!text-sm [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:focus:!outline-none [&_input]:focus-visible:!outline-none [&_input]:placeholder:text-gray-400" />
                     </flux:field>
-                    <span class="h-6 w-px shrink-0 bg-gray-200"></span>
+                    <span class="h-6 w-px shrink-0 bg-gray-200 max-lg:hidden"></span>
                     {{-- "Quando": trigger + popover Alpine col calendario range condiviso. Il popover NON si
                          chiude al click su un giorno (il range richiede 2 click); i wire:click del calendario
                          restano funzionanti dentro. Layout della pill invariato: stesso segmento flex-1. --}}
-                    <div x-data="{ open: false }" class="relative flex flex-1 items-center">
+                    {{-- Mobile: pill con solo "Dove" (XD app), il segmento Quando resta desktop-only --}}
+                    <div x-data="{ open: false }" class="relative flex flex-1 items-center max-lg:hidden">
                         <flux:button type="button" variant="ghost" x-on:click="open = ! open" class="!flex !h-auto !w-full !items-center !justify-start !gap-3 !rounded-none !bg-transparent !px-4 !py-2 !shadow-none hover:!bg-transparent [&>span]:!flex [&>span]:!min-w-0 [&>span]:!items-center [&>span]:!gap-3">
                             <flux:icon.calendar class="h-5 w-5 shrink-0 text-brand-cyan" />
                             <span class="truncate text-sm {{ $editCheckIn ? 'text-ink' : 'text-gray-400' }}">{{ $editCheckIn ? $editCheckIn.' – '.($editCheckOut ?? '…') : __('home.search_when') }}</span>
@@ -42,32 +44,38 @@
                 </form>
             </div>
 
+            {{-- "Scopri di più" solo mobile (XD app: link bianco centrato in fondo all'hero) --}}
+            <a href="#holiday" class="mt-auto flex items-center gap-2 self-center pt-10 text-[15px] text-white lg:hidden">
+                {{ __('home.discover_more') }}
+                <flux:icon.chevron-down class="h-4 w-4" />
+            </a>
         </div>
     </section>
 
     {{-- ============ ANIMAL HOLIDAY ============ --}}
-    <section id="holiday" class="{{ $px }} scroll-mt-20 py-20">
-        <div class="mb-10 flex items-end justify-between">
+    <section id="holiday" class="{{ $px }} scroll-mt-20 py-20 max-lg:py-10">
+        <div class="mb-10 flex items-end justify-between max-lg:mb-6">
             <div>
                 <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.holiday_kicker') }}</p>
-                <h2 class="text-4xl font-extrabold">{{ __('home.holiday_title') }}</h2>
-                <p class="mt-3 max-w-xl text-lg text-gray-500">{{ __('home.holiday_subtitle') }}</p>
+                <h2 class="text-4xl font-extrabold max-lg:text-2xl max-lg:font-bold">{{ __('home.holiday_title') }}</h2>
+                <p class="mt-3 max-w-xl text-lg text-gray-500 max-lg:text-[15px]">{{ __('home.holiday_subtitle') }}</p>
             </div>
         </div>
-        <div class="grid grid-cols-3 gap-6">
+        {{-- Mobile (XD app): riga di card 280px a scroll orizzontale invece della griglia --}}
+        <div class="grid grid-cols-3 gap-6 max-lg:-mx-4 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
             @foreach ($regions as $region)
-                <a href="{{ route('holiday.region', ['region' => $region->slug]) }}" wire:key="reg-{{ $region->id }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px]">
+                <a href="{{ route('holiday.region', ['region' => $region->slug]) }}" wire:key="reg-{{ $region->id }}" class="group block rounded-[3px] border border-[#E9E9E9] bg-white p-[10px] max-lg:w-[280px] max-lg:shrink-0 max-lg:snap-start">
                     <div class="relative overflow-hidden">
-                        <img src="{{ asset('img/xd/'.$region->img.'.jpg') }}" alt="{{ __('catalog.region_title', ['region' => $region->name]) }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
+                        <img src="{{ asset('img/xd/'.$region->img.'.jpg') }}" alt="{{ __('catalog.region_title', ['region' => $region->name]) }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105 max-lg:h-44">
                         <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
                         <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ __('catalog.structures_count', ['count' => $region->structures_count]) }}</flux:badge>
-                        <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white">{{ __('catalog.region_title', ['region' => $region->name]) }}</h3>
+                        <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white max-lg:text-[15px]">{{ __('catalog.region_title', ['region' => $region->name]) }}</h3>
                     </div>
                 </a>
             @endforeach
         </div>
         <div class="mt-10 flex justify-center">
-            <a href="{{ route('holiday') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">{{ __('home.see_all') }}</a>
+            <a href="{{ route('holiday') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C] max-lg:py-2.5">{{ __('home.see_all') }}</a>
         </div>
     </section>
 
@@ -77,16 +85,17 @@
         <div class="relative isolate overflow-hidden">
             <img src="{{ asset('img/eventi-bg.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#00000099_0%,#71717100_100%)]"></div>
-            <div class="{{ $px }} flex min-h-[660px] flex-col justify-end pb-10 pt-24">
-                <h2 class="text-4xl font-extrabold text-white">{{ __('home.events_title') }}</h2>
-                <p class="mt-3 max-w-xl text-lg text-white/85">{{ __('home.events_subtitle') }}</p>
+            <div class="{{ $px }} flex min-h-[660px] flex-col justify-end pb-10 pt-24 max-lg:min-h-[420px] max-lg:pt-16">
+                <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.events_title') }}</h2>
+                <p class="mt-3 max-w-xl text-lg text-white/85 max-lg:text-[15px]">{{ __('home.events_subtitle') }}</p>
                 <a href="{{ route('eventi') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.events_cta') }}</a>
             </div>
         </div>
         <div class="{{ $px }} pb-16 pt-6">
-            <div class="grid grid-cols-5 gap-6">
+            {{-- Mobile (XD app): card 280px a scroll orizzontale --}}
+            <div class="grid grid-cols-5 gap-6 max-lg:-mx-4 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
                 @foreach ($events as $event)
-                    <div wire:key="ev-{{ $event->id }}" class="group flex h-full flex-col rounded-[3px] border border-[#E9E9E9] bg-white p-2">
+                    <div wire:key="ev-{{ $event->id }}" class="group flex h-full flex-col rounded-[3px] border border-[#E9E9E9] bg-white p-2 max-lg:w-[280px] max-lg:shrink-0 max-lg:snap-start">
                         <div class="relative overflow-hidden">
                             <img src="{{ $event->imageUrl() }}" alt="{{ $event->title }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
                         </div>
@@ -99,7 +108,7 @@
                                 <flux:icon.pin class="h-4 w-4 shrink-0 text-[#555555]" />
                                 {{ $event->location }}
                             </p>
-                            <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black">{{ $event->title }}</h3>
+                            <h3 class="mt-[10px] text-[20px] font-semibold leading-snug text-black max-lg:text-[17px]">{{ $event->title }}</h3>
                             {{-- Blocco pulsante+prezzo: sempre in fondo (mt-auto) e su un solo rigo,
                                  pulsante e prezzo affiancati; 'A partire da' più piccolo per starci. --}}
                             <div class="mt-auto flex items-center justify-between gap-2 pt-4">
@@ -118,7 +127,7 @@
                 @endforeach
             </div>
             <div class="mt-10 flex justify-center">
-                <a href="{{ route('eventi') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">{{ __('home.see_all') }}</a>
+                <a href="{{ route('eventi') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C] max-lg:py-2.5">{{ __('home.see_all') }}</a>
             </div>
         </div>
     </section>
@@ -126,12 +135,13 @@
     {{-- ============ SMARTBOX ============ --}}
     <section id="smartbox" class="{{ $px }} scroll-mt-20 pb-20">
         {{-- Card group stile XD: immagine + card bianca attaccate, shadow 1px 1px 10px --}}
-        <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A]">
-            <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover">
-            <div class="flex flex-col items-end justify-center bg-white p-16 text-right">
+        {{-- Mobile: card impilata (foto sopra, testo sotto allineato a sinistra) --}}
+        <div class="mx-20 grid min-h-[660px] grid-cols-2 shadow-[1px_1px_10px_#0000001A] max-lg:mx-0 max-lg:min-h-0 max-lg:grid-cols-1">
+            <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover max-lg:h-56 max-lg:min-h-0">
+            <div class="flex flex-col items-end justify-center bg-white p-16 text-right max-lg:items-start max-lg:p-6 max-lg:text-left">
                 <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.smartbox_kicker') }}</p>
-                <h2 class="text-[36px] font-bold leading-tight text-black">{{ __('home.smartbox_title') }}</h2>
-                <p class="mt-4 text-[18px] text-[#555555]">{{ __('home.smartbox_subtitle') }}</p>
+                <h2 class="text-[36px] font-bold leading-tight text-black max-lg:text-2xl">{{ __('home.smartbox_title') }}</h2>
+                <p class="mt-4 text-[18px] text-[#555555] max-lg:text-[15px]">{{ __('home.smartbox_subtitle') }}</p>
                 <flux:button href="{{ route('smartbox') }}" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">{{ __('home.smartbox_cta') }}</flux:button>
             </div>
         </div>
@@ -142,12 +152,13 @@
         <div class="{{ $px }}">
             <div class="text-center">
                 <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.news_kicker') }}</p>
-                <h2 class="text-[36px] font-bold text-black">{{ __('home.news_title') }}</h2>
-                <p class="mt-3 text-[18px] font-normal text-[#555555]">{{ __('home.news_subtitle') }}</p>
+                <h2 class="text-[36px] font-bold text-black max-lg:text-2xl">{{ __('home.news_title') }}</h2>
+                <p class="mt-3 text-[18px] font-normal text-[#555555] max-lg:text-[15px]">{{ __('home.news_subtitle') }}</p>
             </div>
-            <div class="mt-10 grid grid-cols-3 gap-6">
+            {{-- Mobile (XD app): card 300px a scroll orizzontale --}}
+            <div class="mt-10 grid grid-cols-3 gap-6 max-lg:-mx-4 max-lg:mt-6 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
                 @foreach ($news as $article)
-                    <div wire:key="news-{{ $loop->index }}" class="rounded-[3px] bg-white px-[10px] py-2">
+                    <div wire:key="news-{{ $loop->index }}" class="rounded-[3px] bg-white px-[10px] py-2 max-lg:w-[300px] max-lg:shrink-0 max-lg:snap-start">
                         <img src="{{ asset('img/xd/'.$article['img'].'.jpg') }}" alt="{{ $article['title'] }}" class="h-[237px] w-full object-cover">
                         <div class="p-2">
                             <p class="flex items-center gap-1.5 font-[Roboto,sans-serif] text-sm text-[#959595]">
@@ -166,7 +177,7 @@
                 @endforeach
             </div>
             <div class="mt-10 flex justify-center">
-                <a href="{{ route('news') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C]">{{ __('home.see_all') }}</a>
+                <a href="{{ route('news') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C] max-lg:py-2.5">{{ __('home.see_all') }}</a>
             </div>
         </div>
     </section>
@@ -177,15 +188,15 @@
             <img src="{{ asset('img/footer-community.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
             {{-- Gradiente XD: nero 60% a dx → trasparente a sx --}}
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(270deg,#00000099_0%,#71717100_100%)]"></div>
-            <div class="{{ $px }} flex min-h-[660px] flex-col pb-[98px]">
-                <div class="my-auto">
+            <div class="{{ $px }} flex min-h-[660px] flex-col pb-[98px] max-lg:min-h-[520px] max-lg:pb-10">
+                <div class="my-auto max-lg:pt-16">
                     <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-yellow">{{ __('home.community_kicker') }}</p>
-                    <h2 class="text-4xl font-extrabold text-white">{{ __('home.community_title') }}</h2>
-                    <p class="mt-3 max-w-md text-lg text-white/85">{{ __('home.community_subtitle') }}</p>
+                    <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.community_title') }}</h2>
+                    <p class="mt-3 max-w-md text-lg text-white/85 max-lg:text-[15px]">{{ __('home.community_subtitle') }}</p>
                     <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.community_cta') }}</a>
                 </div>
                 {{-- Box recensione XD: glass bianco su foto, blur 7px --}}
-                <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px]">
+                <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px] max-lg:mt-8 max-lg:self-stretch">
                     <div class="flex items-center justify-between gap-6">
                         <p class="text-[13px] font-semibold text-brand-yellow">25/11/23</p>
                         <p class="text-[13px] font-semibold text-brand-yellow">{{ __('home.community_replies') }}</p>

@@ -6,6 +6,7 @@ return [
 
     // Hero — Benvenuti in Animal Amo
     'hero_title' => 'Benvenuti in Animal Amo',
+    'discover_more' => 'Scopri di più',
     'hero_text' => 'La piattaforma dedicata a chi ama davvero gli animali. Scopri strutture pet-friendly, esperienze, servizi e una community con cui condividere la tua passione. Tutto ciò che serve a te e al tuo compagno di avventure, in un unico posto.',
     'search_where' => 'Dove',
     'search_when' => 'Quando',

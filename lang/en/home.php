@@ -6,6 +6,7 @@ return [
 
     // Hero — Welcome to Animal Amo
     'hero_title' => 'Welcome to Animal Amo',
+    'discover_more' => 'Discover more',
     'hero_text' => 'The platform for people who truly love animals. Discover pet-friendly places, experiences, services and a community to share your passion with. Everything you and your travel companion need, all in one place.',
     'search_where' => 'Where',
     'search_when' => 'When',
