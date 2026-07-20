@@ -26,6 +26,14 @@ I bottoni Flux tengono spinner `animate-spin` nascosti (wire:loading) sempre ani
 
 Attenzione: `window.__shot` muore a ogni navigazione — fai il dump subito. Se il risultato è la stringa `undefined` la pagina è stata ricaricata: rifai lo screenshot.
 
+**Se il file `x.b64` non compare su disco** (il server MCP può salvare in una cwd non raggiungibile): fallback via HTTP. Avvia un one-shot server in Bash (`&`, porta 8765) che decodifica il body base64 in `shot.png`, poi dal browser:
+
+```js
+await page.evaluate(async d => (await fetch('http://127.0.0.1:8765/', {method:'POST', headers:{'Content-Type':'text/plain'}, body: d})).text(), data)
+```
+
+(`Content-Type: text/plain` = simple request, niente preflight CORS; basta `Access-Control-Allow-Origin: *` nella risposta). Si può fare tutto in un solo `browser_run_code_unsafe`: CDP screenshot + POST, senza passare da `window.__shot`.
+
 ## Interazioni: trappole note
 
 - **Dialog multipli**: i flyout Flux sono `<dialog>` sempre nel DOM. Scopa i locator per titolo: `page.locator('dialog:has-text("Titolo Modale")')`.
