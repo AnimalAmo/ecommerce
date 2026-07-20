@@ -16,6 +16,8 @@ return [
 
     // Modal "Filtri 2" mobile (XD app "Filtri 2 ricerca")
     'filters_title' => 'Filtri',
+    'filter_price' => 'Fascia di prezzo',
+    'filter_type' => 'Tipologia',
     'filter_price_min' => 'Minimo',
     'filter_price_max' => 'Massimo',
     'filter_types' => [
