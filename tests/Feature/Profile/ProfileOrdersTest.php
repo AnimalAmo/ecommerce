@@ -175,7 +175,6 @@ class ProfileOrdersTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
-            ->assertSet('past', true)
             ->call('openReview', $item->id)
             ->assertSet('reviewItemId', $item->id)
             ->set('reviewTitle', 'Super weekend rilassante!')
@@ -198,11 +197,10 @@ class ProfileOrdersTest extends TestCase
         $user = User::factory()->create();
         $order = $this->orderWithWindow($user, now()->addDays(5), now()->addDays(10));
 
-        // L'artboard app del riepilogo tiene la pillola su ogni card: il prototipo XD ci
-        // arriva da "i miei ordini - in programma", non solo dai passati.
+        // Il controllo recensione non dipende dal bucket: l'artboard app del riepilogo lo
+        // tiene su ogni card ed è raggiunto proprio da "i miei ordini - in programma".
         Livewire::actingAs($user)
             ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
-            ->assertSet('past', false)
             ->assertSee(__('profile.write_review'));
     }
 

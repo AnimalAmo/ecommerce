@@ -13,9 +13,6 @@ class ProfileOrderSummary extends Component
     /** order_number dalla rotta ({order}), scopato sull'utente autenticato (altrui → 404). */
     public string $order = '';
 
-    /** Ordine passato → variante XD "– 1": box 206px con "Scrivi una recensione". */
-    public bool $past = false;
-
     /** Riga ordine in recensione nel pop-up (XD "Pop-up scrivi recensione"); null = chiuso. */
     public ?int $reviewItemId = null;
 
@@ -37,10 +34,10 @@ class ProfileOrderSummary extends Component
     /** Ordine risolto una volta per request (mount, azioni e render). */
     private ?Order $resolvedOrder = null;
 
-    public function mount(OrderQueryService $orders): void
+    public function mount(): void
     {
-        // Bucket derivato: stesso criterio della lista (max booked_until < now()).
-        $this->past = $orders->isPast($this->orderModel());
+        // Ordine inesistente o di altri: 404 subito, non al primo render.
+        $this->orderModel();
     }
 
     /** "Scrivi una recensione" / "Vedi recensione": apre il form, già compilato se la riga è recensita. */

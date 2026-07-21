@@ -64,31 +64,30 @@
                     <span>{{ $header['price'] }}</span>
                 </div>
 
-                {{-- Box articolo 468x170 (XD "Box preferiti" senza cuore/borsa), 3 per riga con gap 10.
-                     Ordine passato (XD "– 1"): box 206 con divider sotto il titolo e "Scrivi una recensione" sotto la foto --}}
+                {{-- Box articolo (XD "Box ordine scrivi recensione" 468x206): divider sotto il titolo e
+                     "Scrivi una recensione" sotto la foto. 3 per riga con gap 10.
+                     Il controllo c'è su ogni card a prescindere dal bucket: gli artboard desktop
+                     lo danno solo ai passati, quello app (più recente) anche agli ordini in
+                     programma — unificato sulla variante con recensione. --}}
                 <div class="mt-10 flex flex-wrap gap-[10px] max-lg:mt-[18px] max-lg:gap-[15px]">
                     @foreach ($items as $item)
-                        {{-- L'artboard app del riepilogo tiene la pillola recensione su OGNI card,
-                             anche in programma: il prototipo ci arriva proprio da "i miei ordini - in programma". --}}
                         <div wire:key="item-mobile-{{ $item['id'] }}" class="w-full lg:hidden">
                             @include('partials.profile-item-card-mobile', ['item' => $item, 'review' => true])
                         </div>
 
-                        <article wire:key="item-{{ $item['id'] }}" class="relative flex w-full max-w-[468px] rounded-[3px] border border-[#E9E9E9] bg-white p-[6px] max-lg:hidden {{ $past ? 'h-[206px] flex-col' : 'h-[170px]' }}">
+                        <article wire:key="item-{{ $item['id'] }}" class="relative flex h-[206px] w-full max-w-[468px] flex-col rounded-[3px] border border-[#E9E9E9] bg-white p-[6px] max-lg:hidden">
                             <span class="absolute left-[11px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
 
-                            <div class="flex min-h-0 w-full {{ $past ? 'h-[158px]' : 'h-full' }}">
+                            <div class="flex h-[158px] min-h-0 w-full">
                                 <img src="{{ $item['photo'] }}" alt="{{ $item['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
 
                                 <div class="flex min-w-0 flex-1 flex-col pb-2 pl-1 pr-1 pt-[7px] border-b border-[#E9E9E9]">
                                     <h2 class="truncate text-base font-semibold leading-none text-black">{{ $item['title'] }}</h2>
 
-                                    @if ($past)
-                                        <div class="mr-[9px] mt-[14px] h-px shrink-0 bg-[#E9E9E9]" aria-hidden="true"></div>
-                                    @endif
+                                    <div class="mr-[9px] mt-[14px] h-px shrink-0 bg-[#E9E9E9]" aria-hidden="true"></div>
 
                                     {{-- Righe meta 13px a passo 24 (pin/calendar/ospiti+cane come il riepilogo checkout); le righe assenti fanno salire le successive --}}
-                                    <div class="{{ $past ? 'mt-[10px]' : 'mt-[17px]' }} space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
+                                    <div class="mt-[10px] space-y-[11px] text-[13px] font-semibold leading-[13px] text-[#555555]">
                                         @if ($item['location'] !== null)
                                             <div class="flex items-center gap-2">
                                                 <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
@@ -123,11 +122,9 @@
                                 </div>
                             </div>
 
-                            @if ($past)
-                                {{-- Hover ciano: seconda variante colore del simbolo XD "scrivi recensione".
-                                     icon prop: matita e testo centrati nativamente dal flex del bottone --}}
-                                <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }})" class="!h-auto !w-full flex-1 !gap-[5px] !p-0 !text-sm !font-medium !text-[#2B2B2B] transition-colors hover:!bg-transparent hover:!text-[#68CDEB] [&_svg]:!size-[14px]">{{ __('profile.write_review') }}</flux:button>
-                            @endif
+                            {{-- Hover ciano: seconda variante colore del simbolo XD "scrivi recensione".
+                                 icon prop: matita e testo centrati nativamente dal flex del bottone --}}
+                            <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }})" class="!h-auto !w-full flex-1 !gap-[5px] !p-0 !text-sm !font-medium !text-[#2B2B2B] transition-colors hover:!bg-transparent hover:!text-[#68CDEB] [&_svg]:!size-[14px]">{{ $item['reviewed'] ? __('profile.view_review') : __('profile.write_review') }}</flux:button>
                         </article>
                     @endforeach
                 </div>
