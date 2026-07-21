@@ -6,6 +6,7 @@ use App\Actions\Order\PlaceOrderAction;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductType;
 use App\Livewire\Commerce\Checkout;
 use App\Models\Event\Event;
 use App\Models\Order\Order;
@@ -85,7 +86,10 @@ class CheckoutPaymentTest extends TestCase
             ->assertSet('processing', false)
             ->assertSee('Grazie del tuo acquisto!')
             // Step 3 dallo snapshot: il carrello è già stato svuotato.
-            ->assertSee($structure->name);
+            ->assertSee($structure->name)
+            // CTA "Vai ai tuoi acquisti": una struttura è un ordine, non una partecipazione.
+            // (assert sulla variabile di vista: l'URL degli ordini è anche nel menu dell'header)
+            ->assertViewHas('purchasesUrl', route('profilo.ordini'));
 
         // Capture verificato con l'importo server-side (mai dal client).
         $this->assertSame(
@@ -119,6 +123,53 @@ class CheckoutPaymentTest extends TestCase
         $this->assertTrue($this->cart()->items()->isEmpty());
     }
 
+    // ── CTA post-acquisto: sezione di profilo per tipo di acquisto ───────────
+
+    public function test_an_event_only_order_sends_the_buyer_to_the_events_he_attends(): void
+    {
+        $this->actingAs($this->buyer());
+
+        $event = Event::factory()->create([
+            'price_cents' => 2500,
+            'max_participants' => 10,
+            'starts_at' => '2026-08-10 18:00:00',
+            'ends_at' => '2026-08-10 20:00:00',
+        ]);
+        $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
+            ->assertSet('step', 3)
+            // Solo eventi: la CTA porta a "Eventi a cui partecipo", non agli ordini.
+            ->assertViewHas('purchasesUrl', route('profilo.eventi'))
+            ->assertSee(route('profilo.eventi'));
+
+        $this->assertSame(ProductType::Event, Order::sole()->items()->sole()->product_type);
+    }
+
+    public function test_a_mixed_order_stays_on_my_orders(): void
+    {
+        $this->actingAs($this->buyer());
+
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $event = Event::factory()->create([
+            'price_cents' => 2500,
+            'max_participants' => 10,
+            'starts_at' => '2026-08-10 18:00:00',
+            'ends_at' => '2026-08-10 20:00:00',
+        ]);
+        $this->cart()->addItem('event', $event->id, ['participants' => 1], false);
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
+            ->assertSet('step', 3)
+            // Un ordine è atomico: misto = "I miei ordini", mai spezzato in due sezioni.
+            ->assertViewHas('purchasesUrl', route('profilo.ordini'))
+            ->assertDontSee(route('profilo.eventi'));
+    }
+
     // ── Guest checkout ───────────────────────────────────────────────────────
 
     public function test_guest_checkout_creates_an_order_without_user(): void
@@ -133,7 +184,11 @@ class CheckoutPaymentTest extends TestCase
             ->call('goToStep', 2)
             ->assertSet('step', 2)
             ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
-            ->assertSet('step', 3);
+            ->assertSet('step', 3)
+            // Ordine senza user_id + pagine profilo dietro auth: niente CTA acquisti,
+            // resta la sola "Torna alla Home" (prima era un link a un vicolo cieco).
+            ->assertViewHas('purchasesUrl', null)
+            ->assertDontSee('Vai ai tuoi acquisti');
 
         $order = Order::sole();
         $this->assertNull($order->user_id);

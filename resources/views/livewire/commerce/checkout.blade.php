@@ -326,10 +326,15 @@
 
                     <div class="mx-4 h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
-                    {{-- CTA finali: coppia centrata (gap 24) — Home nera + acquisti brand-cyan #6CD1EF --}}
+                    {{-- CTA finali: coppia centrata (gap 24) — Home nera + acquisti brand-cyan #6CD1EF.
+                         La seconda punta alla sezione di profilo che accoglie l'acquisto
+                         (Checkout::render → OrderQueryService::profileRouteFor); da ospite
+                         non c'è nessuna pagina profilo da aprire e resta la sola Home. --}}
                     <div class="mt-[33px] flex flex-col items-center justify-center gap-6 sm:flex-row">
                         <flux:button href="{{ route('home') }}" class="!h-10 !w-[178px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('checkout.ui.back_home') }}</flux:button>
-                        <flux:button href="{{ route('profilo.ordini') }}" class="!h-10 !w-[192px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('checkout.ui.go_to_purchases') }}</flux:button>
+                        @if ($purchasesUrl !== null)
+                            <flux:button href="{{ $purchasesUrl }}" class="!h-10 !w-[192px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('checkout.ui.go_to_purchases') }}</flux:button>
+                        @endif
                     </div>
                 </div>
             @endif

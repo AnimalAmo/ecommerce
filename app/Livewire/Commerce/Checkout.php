@@ -7,11 +7,13 @@ use App\Contracts\Payment\PaymentGatewayInterface;
 use App\Data\Cart\CartItemData;
 use App\Data\Checkout\PlaceOrderData;
 use App\Enums\PaymentMethod;
+use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Exceptions\OrderAlreadyPlacedException;
 use App\Exceptions\PaymentConfigurationException;
 use App\Services\Availability\AvailabilityService;
 use App\Services\Cart\CartManager;
+use App\Services\Orders\OrderQueryService;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
 use Flux\Flux;
@@ -392,7 +394,7 @@ class Checkout extends Component
         Flux::toast(text: $message !== '' ? $message : __('payment.errors.capture_failed'), variant: 'danger');
     }
 
-    public function render()
+    public function render(OrderQueryService $orders)
     {
         // Riepilogo ordine: le righe reali del carrello (filtrate sul flusso corrente),
         // stesso contratto card del carrello; allo step 3 lo snapshot pre-pipeline.
@@ -422,6 +424,16 @@ class Checkout extends Component
             // Chiave pubblica per il JS dalla config (mai VITE_*).
             'stripeKey' => (string) config('payment.stripe.key'),
             'returnUrl' => $this->returnUrl(),
+            // CTA "Vai ai tuoi acquisti" dello step 3: la sezione di profilo dipende
+            // da cosa è stato comprato (eventi → "Eventi a cui partecipo", resto →
+            // "I miei ordini"). Ospite: l'ordine non ha user_id e le pagine profilo
+            // sono dietro auth, quindi nessun link invece di un vicolo cieco.
+            'purchasesUrl' => Auth::check()
+                ? route($orders->profileRouteFor(
+                    array_map(fn (array $item): ?ProductType => ProductType::tryFrom($item['type']), $items),
+                    $this->gift,
+                ))
+                : null,
             // Step 3 "Fatto!": email destinataria dallo snapshot dell'ordine, in
             // anteprima UI dalle options della prima riga regalo ancora in carrello.
             'giftRecipientEmail' => $this->placedGiftRecipientEmail !== ''
