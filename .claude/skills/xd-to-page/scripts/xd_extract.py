@@ -12,6 +12,7 @@ Stdlib only. Artboard name match is case-insensitive prefix; pass the id too.
 """
 import io
 import json
+import math
 import re
 import shutil
 import sys
@@ -151,7 +152,45 @@ def baseline_offset(text):
     return 0
 
 
-def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
+IDENTITY = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+
+
+def mat_of(node):
+    """Matrice locale del nodo come (a, b, c, d, tx, ty) — stessa convenzione di SVG."""
+    t = node.get('transform', {}) or {}
+    return (t.get('a', 1), t.get('b', 0), t.get('c', 0), t.get('d', 1),
+            t.get('tx', 0), t.get('ty', 0))
+
+
+def mat_mul(p, c):
+    """p ∘ c: la trasformazione del figlio applicata dentro quella del padre."""
+    pa, pb, pc, pd, ptx, pty = p
+    ca, cb, cc, cd, ctx, cty = c
+    return (pa * ca + pc * cb, pb * ca + pd * cb,
+            pa * cc + pc * cd, pb * cc + pd * cd,
+            pa * ctx + pc * cty + ptx, pb * ctx + pd * cty + pty)
+
+
+def mat_apply(m, x, y):
+    a, b, c, d, tx, ty = m
+    return (a * x + c * y + tx, b * x + d * y + ty)
+
+
+def mat_rotation(m):
+    """Rotazione in gradi (senso orario, come CSS rotate): 0 se solo scala/traslazione."""
+    return math.degrees(math.atan2(m[1], m[0]))
+
+
+def mapped_box(m, box):
+    """Bounding box RESA di una box locale: i 4 angoli passati per la matrice."""
+    corners = [mat_apply(m, box[0], box[1]), mat_apply(m, box[2], box[1]),
+               mat_apply(m, box[0], box[3]), mat_apply(m, box[2], box[3])]
+    xs = [p[0] for p in corners]
+    ys = [p[1] for p in corners]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def describe(node, xd, depth=0, pm=IDENTITY, out=None, seen=None):
     """Walk a node tree, expanding syncRef symbol instances, accumulating offsets."""
     if out is None:
         out, seen = [], set()
@@ -162,12 +201,15 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
         sym = xd.symbols.get(guid) or xd.nodes.get(guid)
         if sym and guid not in seen:
             seen.add(guid)
-            describe(sym, xd, depth, ox, oy, out, seen)
+            describe(sym, xd, depth, pm, out, seen)
             seen.discard(guid)
         return out
 
-    t = node.get('transform', {})
-    x, y = ox + t.get('tx', 0), oy + t.get('ty', 0)
+    # Matrice accumulata (non solo gli offset): un'icona ruotata sta dove la
+    # porta la sua a/b/c/d, non dove cade la sua tx/ty.
+    m = mat_mul(pm, mat_of(node))
+    x, y = m[4], m[5]
+    rot = mat_rotation(m)
     st = node.get('style', {}) or {}
     bits = []
     typ = node.get('type', '?')
@@ -192,14 +234,22 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
         if w is None and box:
             # path/circle non dichiarano width/height: senza queste misure un tondo o
             # un'icona restano "w=None" e si finisce a stimarle a occhio dal PNG.
+            # Restano le misure INTRINSECHE (pre-rotazione): sono quelle da dare
+            # all'elemento CSS, che poi si ruota di rot=.
             w, h = f'{box[2] - box[0]:.0f}', f'{box[3] - box[1]:.0f}'
         bits.append(f'SHAPE {sh.get("type")} w={w} h={h}'
                     f' fill={fill} stroke={stroke_desc(st)}'
                     + (f' radius={r}' if r else ''))
         # Un path parte quasi sempre a un offset dal proprio nodo: senza il box assoluto
-        # la [x,y] della riga non è l'angolo di ciò che si vede.
-        if box and sh.get('type') != 'rect':
-            bits.append(f'box=[{x + box[0]:.0f},{y + box[1]:.0f}]')
+        # la [x,y] della riga non è l'angolo di ciò che si vede. Con una rotazione vale
+        # anche per i rect, e l'angolo va preso DOPO la matrice (mapped_box).
+        if box and (sh.get('type') != 'rect' or abs(rot) >= 0.5):
+            rb = mapped_box(m, box)
+            bits.append(f'box=[{rb[0]:.0f},{rb[1]:.0f}]')
+            if abs(rot) >= 0.5:
+                # Elemento ruotato: box= è l'ingombro reso, w/h restano quelle da
+                # dichiarare in CSS. Centra l'elemento nel box e applica rotate(rot).
+                bits.append(f'rot={rot:.0f}deg rendered={rb[2] - rb[0]:.0f}x{rb[3] - rb[1]:.0f}')
     elif typ in ('group', 'artboard'):
         bits.append(f'GROUP {name!r}' if name else 'GROUP')
         pad = node.get('meta', {}).get('ux', {}).get('contentPadding')
@@ -216,7 +266,7 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     bits.extend(shadow_descs(st))
     out.append(f'{"  " * depth}[{x:.0f},{y:.0f}] ' + ' '.join(bits))
     for c in children_of(node):
-        describe(c, xd, depth + 1, x, y, out, seen)
+        describe(c, xd, depth + 1, m, out, seen)
     return out
 
 
@@ -249,11 +299,11 @@ def cmd_dump(xd, needle, raw=False):
     if raw:
         json.dump(data, sys.stdout, indent=1)
         return
-    ox, oy = -bounds.get('x', 0), -bounds.get('y', 0)
+    origin = (1.0, 0.0, 0.0, 1.0, -bounds.get('x', 0), -bounds.get('y', 0))
     for top in data.get('children', []):
         root = top.get('artboard', top)
         for c in root.get('children', []):
-            for line in describe(c, xd, ox=ox, oy=oy):
+            for line in describe(c, xd, pm=origin):
                 print(line)
 
 

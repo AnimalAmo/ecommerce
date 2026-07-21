@@ -35,6 +35,8 @@ Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenu
 
 - **`box=[x,y]` sui non-rect**: `path`, `circle` ed `ellipse` non dichiarano `width`/`height` nell'.agc — lo script le ricava (dal `d` SVG o da `r`/`cx`/`cy`) e stampa anche l'angolo reale del disegno, che quasi mai coincide con la `[x,y]` del nodo. Il tondo giallo del banner Community è `[168,197] SHAPE path w=40 h=40`, il `+` dentro è `w=15 h=15 box=[180,209]` (nodo a `[174,203]`). Usa `box=` per gli allineamenti, non la coordinata del nodo.
 
+- **`rot=<gradi>deg rendered=WxH`**: il nodo ha una matrice con rotazione (o scala). `w=`/`h=` restano le misure **intrinseche** da mettere in CSS, `box=` è l'angolo dell'ingombro **reso** e `rendered=` la sua taglia. Ricetta: elemento `w`×`h` centrato nel centro del box reso, più `rotate-[<gradi>deg]` — NON piazzare l'angolo dell'elemento su `box=`, con una rotazione i due non coincidono. La punta della freccia disegnata a mano degli stati vuoti (`Tracciato 654`, 16x15 ruotata di 161°) sta 30px a sinistra della sua `[x,y]`: presa alla lettera resta staccata dal tratteggio a cui deve agganciarsi.
+
 - `stroke=none` = bordo **disattivato** (XD conserva il colore di uno stroke spento): niente `border` nel markup. Con il bordo attivo esce `stroke=#RRGGBB@spessore`.
 - `shadow=dx,dy,blur,#RRGGBB@alpha` (ordine CSS `box-shadow`) compare quando il nodo ha un dropShadow: `shadow=0,0,5.5,#000000@0.11` → `shadow-[0px_0px_6px_#0000001C]`. Un pannello "con contorno colorato" spesso è in realtà bianco con ombra.
 
@@ -75,5 +77,6 @@ Nodi: `transform.tx/.ty` = offset dal parent (accumula per l'assoluto); `style.f
 | Gruppo vuoto nel `dump` (es. campi input) | erano syncRef non risolti: ora lo script li espande. Se ne resta uno vuoto, il nodo sta in un `states[]` annidato non ancora indicizzato — controlla `meta.ux.symbolId`/`stateId` dell'istanza |
 | Dare per scontato lo stato "selezionato" di un controllo | le varianti stanno in `meta.ux.states[]` del symbol: il "check" dei filtri è un tondo pieno #DEDEDE che nello `Stato 2` diventa #6CD1EF con la spunta bianca |
 | Stimare a occhio la misura di un tondo o di un'icona | `dump` ora dà `w=`/`h=` anche per path e circle, più il `box=` con l'angolo vero |
+| Usare `box=` come angolo di un elemento ruotato | con `rot=` quello è l'ingombro reso: centra l'elemento (`w`×`h` intrinseche) nel centro del box e ruotalo, altrimenti finisce decine di px lontano da dove sta nel mockup |
 | Fidarsi del `fill` sulle icone-linea (es. X delle chip con fill arancio #FF9F3E) | i path aperti tipo `ion-close-outline` rendono solo lo `stroke`: il fill è un residuo invisibile in XD — usa il colore di stroke |
 | Disegnare un bordo colorato perché il dump mostra uno stroke | se la riga dice `stroke=none` il bordo è spento: quel colore è un residuo. Le "voci con contorno viola" del menu Profilo app sono bianche **senza bordo**, con `shadow=0,0,5.5,#000000@0.11` |
