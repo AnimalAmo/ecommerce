@@ -39,6 +39,7 @@ await page.evaluate(async d => (await fetch('http://127.0.0.1:8765/', {method:'P
 Quando il server MCP non è in sessione, pilota Chrome a mano: `google-chrome --headless=new --remote-debugging-port=9334 --user-data-dir=/tmp/... about:blank`, poi un client websocket minimale (stdlib Python: handshake + frame mascherati) sul `webSocketDebuggerUrl`. Attenzione: da Chrome ≥111 `/json/new` vuole il metodo **PUT** (con GET sembra che Chrome non sia partito).
 
 - **Viewport mobile**: `--window-size=375,812` NON basta, headless new impone un minimo di 500px e taglia lo screenshot facendo sembrare che il layout sfori. Usa `Emulation.setDeviceMetricsOverride {width:375,height:812,deviceScaleFactor:2,mobile:true}` + `Page.captureScreenshot {captureBeyondViewport:true}`.
+- **Modali `<dialog>` slavate**: con `captureBeyondViewport:true` il top layer viene composto male e la modale Flux esce semitrasparente, con la pagina che traspare — sembra un bug di opacità/transizione ma non lo è (`getComputedStyle` dice `opacity: 1`). Per le modali cattura **senza** `captureBeyondViewport`.
 - **Login** (le pagine profilo/partner lo richiedono, e il login è una modale, non una rotta GET): carica la home e chiama il componente Livewire via `Runtime.evaluate` con `awaitPromise: true`:
   ```js
   const c = Livewire.all().find(x => (x.name || '').includes('auth-modal'));

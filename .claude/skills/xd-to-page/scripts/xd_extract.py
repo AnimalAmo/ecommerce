@@ -102,6 +102,15 @@ def shadow_descs(st):
     return out
 
 
+def baseline_offset(text):
+    """Offset della baseline della prima riga rispetto all'origine del nodo testo."""
+    for para in text.get('paragraphs', []):
+        for line in para.get('lines', []):
+            for run in line:
+                return run.get('y', 0)
+    return 0
+
+
 def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     """Walk a node tree, expanding syncRef symbol instances, accumulating offsets."""
     if out is None:
@@ -124,11 +133,16 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     typ = node.get('type', '?')
     name = node.get('name')
     if typ == 'text':
-        raw = node.get('text', {}).get('rawText', '').replace('\n', '\\n')
+        txt = node.get('text', {})
+        raw = txt.get('rawText', '').replace('\n', '\\n')
         f = st.get('font', {})
         fill = hexcolor(st.get('fill', {}).get('color', {}).get('value'))
         bits.append(f'TEXT {raw!r} font={f.get("postscriptName") or f.get("family")}'
                     f' size={f.get("size")} color={fill}')
+        # L'origine del nodo NON è il bordo del testo: XD tiene la baseline della prima
+        # riga in text.paragraphs[0].lines[0][0].y (0 per frame "positioned", ~size per
+        # "autoHeight"). Senza questo si sbaglia lo spacing verticale di una riga intera.
+        bits.append(f'baseline={y + baseline_offset(txt):.0f}')
     elif typ == 'shape':
         sh = node.get('shape', {})
         fill = hexcolor(st.get('fill', {}).get('color', {}).get('value'))

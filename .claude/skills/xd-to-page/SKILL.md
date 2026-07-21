@@ -29,7 +29,9 @@ python3 .claude/skills/xd-to-page/scripts/xd_extract.py "$XD" images OUTDIR     
 
 Solo stdlib, nessuna dipendenza. Il nome artboard è un prefix match case-insensitive; funziona anche l'id. `dump --raw` per il JSON grezzo se il riassunto non basta.
 
-Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi.
+Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#… baseline=…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi.
+
+- **Sui TEXT usa `baseline=`, non la `y`**: la `y` è l'origine del nodo, che per i frame `positioned` coincide con la baseline ma per gli `autoHeight` sta una riga più in alto. Confrontare `y` fra due testi di frame diverso sbaglia lo spacing di ~1 line-height. Da baseline a margini CSS: con `leading-none` il bordo superiore del testo sta a `baseline − size`, quello inferiore a `baseline + 0.25·size` (Nunito).
 
 - `stroke=none` = bordo **disattivato** (XD conserva il colore di uno stroke spento): niente `border` nel markup. Con il bordo attivo esce `stroke=#RRGGBB@spessore`.
 - `shadow=dx,dy,blur,#RRGGBB@alpha` (ordine CSS `box-shadow`) compare quando il nodo ha un dropShadow: `shadow=0,0,5.5,#000000@0.11` → `shadow-[0px_0px_6px_#0000001C]`. Un pannello "con contorno colorato" spesso è in realtà bianco con ombra.
