@@ -60,6 +60,17 @@ class OrderQueryService
     }
 
     /**
+     * Testata del riepilogo (conteggio | data | totale): stessa riga della lista,
+     * usata dall'artboard app "Profilo – i miei ordini - riepilogo ordine".
+     *
+     * @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string}
+     */
+    public function presentHeader(Order $order): array
+    {
+        return $this->presentRow($order);
+    }
+
+    /**
      * Card articolo del riepilogo, dal solo snapshot riga.
      *
      * @return list<array<string, mixed>>

@@ -1,7 +1,7 @@
 {{-- Profilo – i miei ordini – riepilogo (XD): card a tutta larghezza senza sidebar, link Indietro + 3 box articolo --}}
 @php
     $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8';
-    $card = 'rounded-[3px] border border-[#E9E9E9] bg-white shadow-[0px_1px_10px_#0000001A]';
+    $card = 'rounded-[3px] border border-[#E9E9E9] bg-white shadow-[0px_1px_10px_#0000001A] max-lg:rounded-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none';
 @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -9,20 +9,38 @@
     @include('partials.site-header')
 
     <main class="flex-1 bg-[linear-gradient(to_top_left,#FF3EA51A,#68CDEB1A)]">
-        <div class="{{ $px }} pb-[140px] pt-[60px]">
-            <div class="{{ $card }} p-6">
-                <a href="{{ route('profilo.ordini') }}" class="inline-flex items-center gap-[5px] text-[13px] leading-none text-[#555555]">
+        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-9">
+            <div class="{{ $card }} p-6 max-lg:p-0">
+                @include('partials.profile-mobile-header', [
+                    'title' => __('profile.order_summary_title'),
+                    'backHref' => route('profilo.ordini'),
+                ])
+
+                <a href="{{ route('profilo.ordini') }}" class="inline-flex items-center gap-[5px] text-[13px] leading-none text-[#555555] max-lg:hidden">
                     <flux:icon.arrow-back class="h-[13px] w-[13px] shrink-0" />
                     {{ __('profile.back') }}
                 </a>
 
-                <h1 class="mt-[22px] text-2xl font-bold leading-none text-black">{{ __('profile.order_summary_title') }}</h1>
+                <h1 class="mt-[22px] text-2xl font-bold leading-none text-black max-lg:hidden">{{ __('profile.order_summary_title') }}</h1>
+
+                {{-- App: testata conteggio | data | totale sopra le card --}}
+                <div class="mt-[22px] flex items-center gap-[10px] text-[13px] leading-none text-[#0D171A] lg:hidden">
+                    <span>{{ $header['itemsLabel'] }}</span>
+                    <span class="h-[13px] w-px shrink-0 bg-[#DEDEDE]" aria-hidden="true"></span>
+                    <span>{{ $header['date'] }}</span>
+                    <span class="h-[13px] w-px shrink-0 bg-[#DEDEDE]" aria-hidden="true"></span>
+                    <span>{{ $header['price'] }}</span>
+                </div>
 
                 {{-- Box articolo 468x170 (XD "Box preferiti" senza cuore/borsa), 3 per riga con gap 10.
                      Ordine passato (XD "– 1"): box 206 con divider sotto il titolo e "Scrivi una recensione" sotto la foto --}}
-                <div class="mt-10 flex flex-wrap gap-[10px]">
+                <div class="mt-10 flex flex-wrap gap-[10px] max-lg:mt-[34px] max-lg:gap-[15px]">
                     @foreach ($items as $item)
-                        <article wire:key="item-{{ $item['id'] }}" class="relative flex w-full max-w-[468px] rounded-[3px] border border-[#E9E9E9] bg-white p-[6px] {{ $past ? 'h-[206px] flex-col' : 'h-[170px]' }}">
+                        <div wire:key="item-mobile-{{ $item['id'] }}" class="w-full lg:hidden">
+                            @include('partials.profile-item-card-mobile', ['item' => $item, 'review' => $past])
+                        </div>
+
+                        <article wire:key="item-{{ $item['id'] }}" class="relative flex w-full max-w-[468px] rounded-[3px] border border-[#E9E9E9] bg-white p-[6px] max-lg:hidden {{ $past ? 'h-[206px] flex-col' : 'h-[170px]' }}">
                             <span class="absolute left-[11px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $item['tagColor'] }}">{{ $item['tag'] }}</span>
 
                             <div class="flex min-h-0 w-full {{ $past ? 'h-[158px]' : 'h-full' }}">
@@ -97,15 +115,27 @@
         </div>
     </main>
 
-    @include('partials.footer-minimal')
+    <div class="max-lg:hidden">
+        @include('partials.footer-minimal')
+    </div>
 
-    {{-- Pop-up scrivi recensione (XD 1020x512): box articolo centrato + campi titolo/recensione, Annulla/Conferma --}}
-    <flux:modal name="scrivi-recensione" :closable="false" class="w-full !max-w-[1020px] !rounded-[3px] !border !border-[#E9E9E9] bg-white !p-6 backdrop:!bg-black/30">
+    <div class="lg:hidden">
+        @include('partials.mobile-tabbar')
+    </div>
+
+    {{-- Pop-up scrivi recensione (XD 1020x512): box articolo centrato + campi titolo/recensione, Annulla/Conferma.
+         Sull'app è una schermata intera: qui il pop-up si stringe al viewport --}}
+    <flux:modal name="scrivi-recensione" :closable="false" class="w-full !max-w-[1020px] !rounded-[3px] !border !border-[#E9E9E9] bg-white !p-6 backdrop:!bg-black/30 max-lg:!p-4">
         @if ($reviewItem !== null)
-            <flux:heading level="2" class="!text-center !text-2xl !font-bold !leading-none !text-[#0D171A]">{{ __('profile.write_review') }}</flux:heading>
+            <flux:heading level="2" class="!text-center !text-2xl !font-bold !leading-none !text-[#0D171A] max-lg:!text-lg max-lg:!font-semibold">{{ __('profile.write_review') }}</flux:heading>
+
+            {{-- App: la stessa card compatta del riepilogo --}}
+            <div class="lg:hidden">
+                @include('partials.profile-item-card-mobile', ['item' => $reviewItem, 'review' => false])
+            </div>
 
             {{-- Box articolo 467x172 con bordo sottile #C8C8C8 (niente prezzo né azioni) --}}
-            <div class="relative mx-auto flex h-[172px] w-full max-w-[467px] rounded-[3px] border border-[#C8C8C8]/70 bg-white p-[7px]">
+            <div class="relative mx-auto flex h-[172px] w-full max-w-[467px] rounded-[3px] border border-[#C8C8C8]/70 bg-white p-[7px] max-lg:hidden">
                 <span class="absolute left-[12px] top-[13px] flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $reviewItem['tagColor'] }}">{{ $reviewItem['tag'] }}</span>
 
                 <img src="{{ $reviewItem['photo'] }}" alt="{{ $reviewItem['title'] }}" class="h-[158px] w-[163px] shrink-0 rounded-[2px] object-cover">
@@ -148,16 +178,17 @@
                 </div>
             </div>
 
-            {{-- Campi come la dedica del carrello: placeholder #0D171A non corsivo --}}
-            <div class="mt-6">
-                <flux:input wire:model="reviewTitle" placeholder="{{ __('profile.review_title_placeholder') }}" class="!min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
+            {{-- Campi come la dedica del carrello: placeholder #0D171A non corsivo (app: r5, testo 14, textarea 160) --}}
+            <div class="mt-6 max-lg:mt-[21px]">
+                <flux:input wire:model="reviewTitle" placeholder="{{ __('profile.review_title_placeholder') }}" class="!min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A] max-lg:[&_input]:!rounded-[5px] max-lg:[&_input]:!px-4 max-lg:[&_input]:!text-sm" />
 
-                <flux:textarea wire:model="reviewText" placeholder="{{ __('profile.review_text_placeholder') }}" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
+                <flux:textarea wire:model="reviewText" placeholder="{{ __('profile.review_text_placeholder') }}" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A] max-lg:!mt-[21px] max-lg:!h-[160px] max-lg:!rounded-[5px] max-lg:!px-4 max-lg:!text-sm" />
             </div>
 
-            <div class="mt-6 flex items-center justify-end gap-3">
-                <flux:button variant="ghost" wire:click="closeReview" class="!h-auto !p-0 !text-lg !font-medium !text-[#959595] hover:!bg-transparent hover:!text-[#959595]">{{ __('profile.cancel') }}</flux:button>
-                <flux:button wire:click="confirmReview" class="!h-10 !w-[134px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#68CDEB]">{{ __('profile.confirm') }}</flux:button>
+            {{-- App: un solo bottone azzurro a tutta larghezza; Annulla resta sotto per chiudere --}}
+            <div class="mt-6 flex items-center justify-end gap-3 max-lg:mt-[21px] max-lg:flex-col-reverse max-lg:items-stretch max-lg:gap-4">
+                <flux:button variant="ghost" wire:click="closeReview" class="!h-auto !p-0 !text-lg !font-medium !text-[#959595] hover:!bg-transparent hover:!text-[#959595] max-lg:!text-[15px]">{{ __('profile.cancel') }}</flux:button>
+                <flux:button wire:click="confirmReview" class="!h-10 !w-[134px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#68CDEB] max-lg:!h-[39px] max-lg:!w-full max-lg:!font-semibold">{{ __('profile.confirm') }}</flux:button>
             </div>
         @endif
     </flux:modal>

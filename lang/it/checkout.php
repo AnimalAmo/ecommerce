@@ -5,8 +5,6 @@ return [
     'payment_unavailable' => 'Il pagamento online non è al momento disponibile. Riprova tra qualche minuto o scegli un altro metodo.',
     // JS: conferma Stripe terminata senza esito positivo
     'payment_incomplete' => 'Il pagamento non è stato completato. Riprova.',
-    // JS: errore dei bottoni PayPal
-    'paypal_error' => 'Si è verificato un errore con PayPal. Riprova.',
 
     // Stringhe di UI del funnel Checkout (blade commerce/checkout)
     'ui' => [
@@ -25,7 +23,6 @@ return [
         'continue_purchase' => 'Prosegui l’acquisto',
         'select_payment_method' => 'Seleziona un metodo di pagamento',
         'pay_now' => 'Paga ora',
-        'redirect_note' => 'Verrai reindirizzato al provider per completare il pagamento',
         'order_summary' => 'Riepilogo dell’ordine',
         'dedicated_to' => 'Dedicato a: :name',
         'message' => 'Messaggio: :message',

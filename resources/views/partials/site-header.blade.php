@@ -17,8 +17,9 @@
                 <a href="{{ route('work-with-us') }}" class="hover:font-bold {{ $navActive('work-with-us', 'work-with-us.*') }}">{{ __('nav.menu.become_partner') }}</a>
             </nav>
         </div>
-        <div class="flex items-center gap-5">
-            <flux:dropdown>
+        <div class="flex items-center gap-5 max-lg:gap-2">
+            {{-- Lingua/valuta e Accedi: solo desktop, su mobile vivono nel menu hamburger --}}
+            <flux:dropdown class="max-lg:hidden">
                 <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">{{ strtoupper(app()->getLocale()) }} / EUR</flux:button>
                 <flux:menu>
                     <flux:menu.group heading="{{ __('nav.language') }}">
@@ -38,15 +39,18 @@
 
             @guest
                 <flux:modal.trigger name="login">
-                    <flux:button class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">{{ __('nav.login_register') }}</flux:button>
+                    <flux:button class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:hidden">{{ __('nav.login_register') }}</flux:button>
                 </flux:modal.trigger>
             @endguest
 
             <div class="flex items-center gap-3">
-                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.favorites') }}" href="{{ route('preferiti') }}" class="!rounded-full !text-ink hover:!text-brand-magenta">
+                {{-- Preferiti e carrello: solo desktop, su mobile vivono nella tabbar --}}
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.favorites') }}" href="{{ route('preferiti') }}" class="!rounded-full !text-ink hover:!text-brand-magenta max-lg:!hidden">
                     <flux:icon.heart class="h-5 w-5" />
                 </flux:button>
-                <livewire:commerce.cart-badge />
+                <div class="max-lg:hidden">
+                    <livewire:commerce.cart-badge />
+                </div>
 
                 @auth
                     <flux:dropdown>
@@ -64,7 +68,72 @@
                         </flux:menu>
                     </flux:dropdown>
                 @endauth
+
+                {{-- Hamburger, solo mobile (XD app: header con logo + menu) --}}
+                <flux:modal.trigger name="mobile-nav">
+                    <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.menu_open') }}" class="!rounded-full !text-ink lg:hidden">
+                        <flux:icon.bars-3 class="h-6 w-6" />
+                    </flux:button>
+                </flux:modal.trigger>
             </div>
         </div>
     </div>
+
+    {{-- Menu mobile full-screen (XD app: Header stato "Menu open") --}}
+    <flux:modal name="mobile-nav" :closable="false" class="w-full !m-0 !max-w-full !min-h-dvh !max-h-none !rounded-none bg-white !px-4 !py-6 lg:hidden">
+        <div class="flex items-center justify-between">
+            <a href="{{ route('home') }}">
+                <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="w-[72px]">
+            </a>
+            <flux:modal.close>
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.menu_close') }}" class="!rounded-full !text-ink">
+                    <flux:icon.close class="h-4 w-4" />
+                </flux:button>
+            </flux:modal.close>
+        </div>
+
+        {{-- Link nav: 16px semibold con separatore sotto (XD: righe da 59px) --}}
+        <nav class="mt-6 flex flex-col text-base font-semibold text-black">
+            <a href="{{ route('home') }}#holiday" class="border-b border-gray-150 py-4">{{ __('nav.menu.holiday') }}</a>
+            <a href="{{ route('eventi') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.events') }}</a>
+            <a href="{{ route('smartbox') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.smartbox') }}</a>
+            <a href="{{ route('news') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.news') }}</a>
+            <a href="{{ route('community') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.community') }}</a>
+            <a href="{{ route('about') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.about') }}</a>
+            <a href="{{ route('work-with-us') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.become_partner') }}</a>
+
+            {{-- Riga lingua/valuta a scomparsa (equivalente del dropdown desktop) --}}
+            <div x-data="{ open: false }" class="border-b border-gray-150">
+                <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !w-full !items-center !justify-between !rounded-none !px-0 !py-4 !text-base !font-semibold !text-black hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!justify-between">
+                    {{ strtoupper(app()->getLocale()) }} / EUR
+                    <flux:icon.chevron-down class="h-4 w-4 transition" x-bind:class="open && 'rotate-180'" />
+                </flux:button>
+                <div x-show="open" x-transition.opacity style="display: none" class="pb-4">
+                    @foreach (\Mcamara\LaravelLocalization\Facades\LaravelLocalization::getSupportedLocales() as $code => $properties)
+                        @if ($code !== app()->getLocale())
+                            <a href="{{ route('locale.switch', $code) }}" class="block py-2 text-sm font-normal text-[#555555]">{{ ucfirst($properties['native']) }}</a>
+                        @endif
+                    @endforeach
+                    <p class="py-2 text-sm font-normal text-[#555555]">USD $</p>
+                </div>
+            </div>
+        </nav>
+
+        @guest
+            {{-- Pill gialla come da XD (182x39, r20, #EDFF00) --}}
+            <div class="mt-10 flex justify-center">
+                <flux:button x-on:click="$flux.modal('mobile-nav').close(); $flux.modal('login').show()" class="!rounded-full !bg-brand-yellow !px-8 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">{{ __('nav.login_register') }}</flux:button>
+            </div>
+        @endguest
+        @auth
+            <div class="mt-6 flex flex-col text-base font-semibold text-black">
+                <a href="{{ route('profilo') }}" class="border-b border-gray-150 py-4">{{ __('nav.my_profile') }}</a>
+                <a href="{{ route('profilo.ordini') }}" class="border-b border-gray-150 py-4">{{ __('nav.my_orders') }}</a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <flux:button type="submit" variant="ghost" class="!w-full !justify-start !rounded-none !px-0 !py-4 !text-base !font-semibold !text-black hover:!bg-transparent">{{ __('nav.logout') }}</flux:button>
+                </form>
+            </div>
+        @endauth
+    </flux:modal>
 </header>

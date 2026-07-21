@@ -40,8 +40,7 @@ class PlaceOrderAction
             $carrier = DB::transaction(function () use ($data): OrderPipelineData {
                 // Idempotenza: lo stesso incasso (provider + gateway session id)
                 // non genera mai un secondo ordine — replay del callback via
-                // devtools, riapertura del return URL Klarna, race del carrello
-                // guest condiviso fra sessioni.
+                // devtools, race del carrello guest condiviso fra sessioni.
                 if (($existing = $this->findRegisteredOrder($data->capture)) !== null) {
                     throw OrderAlreadyPlacedException::forOrder($existing);
                 }

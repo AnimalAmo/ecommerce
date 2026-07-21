@@ -21,6 +21,7 @@ return [
     'from_price_label' => 'A partire da',
 
     // Paginazione
+    'load_more' => 'Carica altro',
     'pagination' => 'Paginazione',
     'prev_page' => 'Pagina precedente',
     'next_page' => 'Pagina successiva',
@@ -43,6 +44,8 @@ return [
     // Recensioni
     'reviews' => 'Recensioni dei clienti',
     'reviews_count_label' => 'Recensioni',
+    // Riga valutazione sotto la foto, solo mobile (XD app "Dettaglio struttura")
+    'rating_with_reviews' => ':rating (:count recensioni)',
     'reviewed_by' => 'Recensito da',
     'load_more_reviews' => 'Carica altre recensioni',
 

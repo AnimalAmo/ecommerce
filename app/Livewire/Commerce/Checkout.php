@@ -59,9 +59,6 @@ class Checkout extends Component
     /** PaymentIntent riusato agli switch di metodo Stripe (update dei types, mai un PI orfano a ogni click). */
     public ?string $paymentIntentId = null;
 
-    /** Ordine PayPal corrente (SDK JS classico). */
-    public ?string $paypalOrderId = null;
-
     /**
      * Importo (cents) con cui è stata aperta la sessione gateway corrente: se
      * al "Paga ora" il carrello (cambiato in un'altra tab) non coincide più,
@@ -91,16 +88,6 @@ class Checkout extends Component
     /** Tab dello stepper (statici: si avanza solo con le CTA, i tab non sono cliccabili). */
     public const STEPS = [1 => 'I tuoi dati', 2 => 'Pagamento', 3 => 'Fatto!'];
 
-    /**
-     * Stash dei dati step 1 (il ritorno dal redirect Klarna ricrea il
-     * componente da zero), namespacizzato PER FLUSSO: il ritorno del flusso
-     * regalo non deve mai ripristinare il buyer del flusso normale e viceversa.
-     */
-    private function buyerSessionKey(): string
-    {
-        return 'checkout.buyer.'.($this->gift ? 'gift' : 'normal');
-    }
-
     public function mount(): void
     {
         // Carrello (filtrato sul flusso corrente) vuoto: niente checkout, si torna al carrello.
@@ -117,8 +104,6 @@ class Checkout extends Component
             $this->email = $user->email;
             $this->phone = $user->phone ?? '';
         }
-
-        $this->handleRedirectReturn();
     }
 
     /**
@@ -160,7 +145,6 @@ class Checkout extends Component
                 return;
             }
 
-            $this->stashBuyer();
             $this->ensureMethodIsAvailable();
             $this->initPaymentSession();
         }
@@ -168,7 +152,7 @@ class Checkout extends Component
         $this->step = $step;
     }
 
-    /** Seleziona il metodo di pagamento (riga abilitata) e riapre la sessione gateway (update PI types / nuovo ordine PayPal). */
+    /** Seleziona il metodo di pagamento (riga abilitata) e riapre la sessione gateway (update del PaymentIntent). */
     public function selectPayment(string $method): void
     {
         $selected = PaymentMethod::tryFrom($method);
@@ -191,10 +175,13 @@ class Checkout extends Component
             return;
         }
 
-        // Il carrello può essere cambiato in un'altra tab dopo l'init: la
-        // sessione gateway (PI Stripe / ordine PayPal) va ri-allineata al
-        // totale corrente PRIMA di confermare — niente dispatch, si ricontrolla.
+        // Il carrello può essere cambiato in un'altra tab dopo l'init: il
+        // PaymentIntent va ri-allineato al totale corrente PRIMA di
+        // confermare — niente dispatch, si ricontrolla. PI nuovo, non update:
+        // un update manterrebbe lo stesso client_secret e il wire:key non
+        // rimonterebbe l'Element — elementReady resterebbe false per sempre.
         if ($this->sessionAmountCents !== null && $this->cart()->total($this->gift) !== $this->sessionAmountCents) {
+            $this->paymentIntentId = null;
             $this->initPaymentSession();
             Flux::toast(text: __('payment.errors.total_updated'), variant: 'danger');
 
@@ -221,11 +208,11 @@ class Checkout extends Component
     }
 
     /**
-     * Esito della conferma client (Payment/Express Checkout Element, bottoni
-     * PayPal, ritorno redirect Klarna): riverifica il pagamento server-side
-     * (captureFromCheckout) e SOLO a capture valido crea l'ordine in pipeline.
-     * Sold-out concorrente post-capture: rollback totale già avvenuto →
-     * storno immediato col transaction id del capture e si resta allo step 2.
+     * Esito della conferma client (Payment/Express Checkout Element):
+     * riverifica il pagamento server-side (captureFromCheckout) e SOLO a
+     * capture valido crea l'ordine in pipeline. Sold-out concorrente
+     * post-capture: rollback totale già avvenuto → storno immediato col
+     * transaction id del capture e si resta allo step 2.
      */
     public function handlePaymentCallback(array $payload): void
     {
@@ -248,11 +235,10 @@ class Checkout extends Component
             return;
         }
 
-        // Path JS non-redirect: il payload del client non può puntare a un
-        // PI/ordine PayPal diverso dalla sessione corrente. Il ritorno redirect
-        // Klarna (componente ricreato, proprietà nulle) resta coperto dal
-        // guard idempotente a db (provider + gateway_session_id unici).
-        if (! $this->payloadMatchesSession($method, $payload)) {
+        // Il payload del client non può puntare a un PI diverso dalla
+        // sessione corrente; il backstop resta il guard idempotente a db
+        // (provider + gateway_session_id unici).
+        if (! $this->payloadMatchesSession($payload)) {
             $this->processing = false;
             Flux::toast(text: __('payment.errors.capture_failed'), variant: 'danger');
 
@@ -357,8 +343,6 @@ class Checkout extends Component
             return;
         }
 
-        session()->forget($this->buyerSessionKey());
-
         $this->placedItems = $placedItems;
         $this->placedGiftRecipientEmail = (string) $placedGiftRecipientEmail;
         $this->processing = false;
@@ -398,9 +382,8 @@ class Checkout extends Component
             // Righe metodo: solo i PaymentMethod il cui gateway è abilitato.
             'hasCardMethod' => in_array(PaymentMethod::Card, $methods, true),
             'altMethods' => array_values(array_filter($methods, fn (PaymentMethod $method): bool => $method !== PaymentMethod::Card)),
-            // Chiavi pubbliche per il JS dalla config (mai VITE_*).
+            // Chiave pubblica per il JS dalla config (mai VITE_*).
             'stripeKey' => (string) config('payment.stripe.key'),
-            'paypalClientId' => (string) config('payment.paypal.client_id'),
             'returnUrl' => $this->returnUrl(),
             // Step 3 "Fatto!": email destinataria dallo snapshot dell'ordine, in
             // anteprima UI dalle options della prima riga regalo ancora in carrello.
@@ -411,56 +394,6 @@ class Checkout extends Component
     }
 
     /**
-     * Ritorno dal redirect Klarna (unico metodo full-redirect): Stripe rimanda
-     * su return_url con payment_intent/redirect_status. succeeded → stesso
-     * path del callback; altrimenti si riparte dallo step 2 con la sessione
-     * ripristinata e un toast. Il componente è ricreato da zero, quindi i
-     * dati step 1 tornano dallo stash di sessione.
-     */
-    private function handleRedirectReturn(): void
-    {
-        $intentId = (string) request()->query('payment_intent', '');
-        $redirectStatus = (string) request()->query('redirect_status', '');
-
-        if ($intentId === '' || $redirectStatus === '') {
-            return;
-        }
-
-        // Il metodo viaggia nel return_url; fallback Klarna (unico flusso redirect).
-        $method = PaymentMethod::tryFrom((string) request()->query('method', '')) ?? PaymentMethod::Klarna;
-        $this->paymentMethod = $method->value;
-
-        $buyer = session($this->buyerSessionKey());
-
-        if (is_array($buyer)) {
-            $this->firstName = $buyer['first_name'] ?? $this->firstName;
-            $this->lastName = $buyer['last_name'] ?? $this->lastName;
-            $this->email = $buyer['email'] ?? $this->email;
-            $this->phone = $buyer['phone'] ?? $this->phone;
-            $this->country = $buyer['country'] ?? $this->country;
-            $this->recipientEmail = $buyer['recipient_email'] ?? $this->recipientEmail;
-        }
-
-        $this->step = 2;
-
-        if ($redirectStatus === 'succeeded') {
-            $this->handlePaymentCallback(['payment_intent_id' => $intentId]);
-
-            return;
-        }
-
-        // failed/canceled: il PI torna requires_payment_method ed è riusabile.
-        $this->paymentIntentId = $intentId;
-        $this->clientSecret = ((string) request()->query('payment_intent_client_secret', '')) ?: null;
-
-        if ($this->clientSecret === null) {
-            $this->initPaymentSession();
-        }
-
-        Flux::toast(text: __('payment.errors.capture_failed'), variant: 'danger');
-    }
-
-    /**
      * Apre (o aggiorna) la sessione di pagamento del metodo corrente. Config
      * mancante (chiavi .env vuote) o errore API: toast + box informativo al
      * posto dell'element — il checkout non crasha MAI per un gateway rotto.
@@ -468,7 +401,6 @@ class Checkout extends Component
     private function initPaymentSession(): void
     {
         $this->clientSecret = null;
-        $this->paypalOrderId = null;
         $this->sessionAmountCents = null;
         $this->elementReady = false;
         $this->paymentUnavailable = false;
@@ -486,21 +418,15 @@ class Checkout extends Component
         try {
             $gateway = app(PaymentGatewayFactory::class)->make($method);
 
-            if ($method->gatewayCode() === 'stripe') {
-                // Stesso PI aggiornato agli switch card/apple/google/klarna.
-                $session = $gateway->initPaymentSession(
-                    $amountCents,
-                    $method,
-                    $this->paymentIntentId !== null ? ['payment_intent_id' => $this->paymentIntentId] : [],
-                );
+            // Stesso PI aggiornato agli switch card/apple/google.
+            $session = $gateway->initPaymentSession(
+                $amountCents,
+                $method,
+                $this->paymentIntentId !== null ? ['payment_intent_id' => $this->paymentIntentId] : [],
+            );
 
-                $this->clientSecret = $session['client_secret'];
-                $this->paymentIntentId = $session['payment_intent_id'];
-            } else {
-                $session = $gateway->initPaymentSession($amountCents, $method);
-
-                $this->paypalOrderId = $session['paypal_order_id'];
-            }
+            $this->clientSecret = $session['client_secret'];
+            $this->paymentIntentId = $session['payment_intent_id'];
 
             // Importo della sessione appena aperta: confrontato al "Paga ora"
             // col totale corrente per intercettare i carrelli cambiati altrove.
@@ -520,20 +446,15 @@ class Checkout extends Component
     }
 
     /**
-     * Il payload del client deve puntare alla sessione di pagamento corrente
-     * (PI Stripe / ordine PayPal): un id diverso è un tentativo di replay via
-     * devtools. Proprietà nulla = flusso redirect (componente ricreato): il
-     * controllo passa al guard idempotente a db.
+     * Il payload del client deve puntare al PaymentIntent della sessione
+     * corrente: un id diverso è un tentativo di replay via devtools.
+     * Proprietà nulla (init mai riuscito): il controllo passa al guard
+     * idempotente a db.
      */
-    private function payloadMatchesSession(PaymentMethod $method, array $payload): bool
+    private function payloadMatchesSession(array $payload): bool
     {
-        if ($method->gatewayCode() === 'stripe') {
-            return $this->paymentIntentId === null
-                || (string) ($payload['payment_intent_id'] ?? '') === $this->paymentIntentId;
-        }
-
-        return $this->paypalOrderId === null
-            || (string) ($payload['paypal_order_id'] ?? '') === $this->paypalOrderId;
+        return $this->paymentIntentId === null
+            || (string) ($payload['payment_intent_id'] ?? '') === $this->paymentIntentId;
     }
 
     /**
@@ -547,7 +468,6 @@ class Checkout extends Component
     private function finishAsAlreadyPlaced(): void
     {
         $this->processing = false;
-        session()->forget($this->buyerSessionKey());
         Flux::toast(text: __('payment.errors.already_placed'));
         $this->redirectRoute(Auth::check() ? 'profilo.ordini' : 'home');
     }
@@ -582,19 +502,6 @@ class Checkout extends Component
         }
     }
 
-    /** Il redirect Klarna ricrea il componente: i dati step 1 sopravvivono in sessione. */
-    private function stashBuyer(): void
-    {
-        session([$this->buyerSessionKey() => [
-            'first_name' => $this->firstName,
-            'last_name' => $this->lastName,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'country' => $this->country,
-            'recipient_email' => $this->recipientEmail,
-        ]]);
-    }
-
     /** Metodo corrente spento (gateway disabilitato/manomesso): fallback sulla prima riga abilitata. */
     private function ensureMethodIsAvailable(): void
     {
@@ -614,8 +521,8 @@ class Checkout extends Component
     }
 
     /**
-     * Metodi mostrabili: PaymentMethod il cui gateway (stripe/paypal) è
-     * abilitato in payment_gateways (righe dei gateway spenti nascoste).
+     * Metodi mostrabili: PaymentMethod il cui gateway è abilitato in
+     * payment_gateways (righe dei gateway spenti nascoste).
      *
      * @return list<PaymentMethod>
      */
@@ -634,10 +541,10 @@ class Checkout extends Component
         return in_array($method, $this->availableMethods(), true);
     }
 
-    /** return_url del flusso redirect (Klarna): checkout corrente con flusso regalo e metodo. */
+    /** return_url richiesto da confirmPayment (i metodi attivi non reindirizzano mai). */
     private function returnUrl(): string
     {
-        return route('checkout', ($this->gift ? ['regalo' => 1] : []) + ['method' => $this->paymentMethod]);
+        return route('checkout', $this->gift ? ['regalo' => 1] : []);
     }
 
     /** Facciata carrello (singleton: storage sessione da guest, db da autenticato). */

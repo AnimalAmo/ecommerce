@@ -21,6 +21,7 @@ return [
     'from_price_label' => 'From',
 
     // Pagination
+    'load_more' => 'Load more',
     'pagination' => 'Pagination',
     'prev_page' => 'Previous page',
     'next_page' => 'Next page',
@@ -43,6 +44,8 @@ return [
     // Reviews
     'reviews' => 'Customer reviews',
     'reviews_count_label' => 'Reviews',
+    // Rating row under the photo, mobile only (XD app "Dettaglio struttura")
+    'rating_with_reviews' => ':rating (:count reviews)',
     'reviewed_by' => 'Reviewed by',
     'load_more_reviews' => 'Load more reviews',
 

@@ -80,4 +80,47 @@ class SmartboxPagesTest extends TestCase
         Livewire::test(Smartbox::class)
             ->assertDontSeeHtml('aria-label="Paginazione"');
     }
+
+    public function test_smartbox_chips_restrict_the_grid_by_type(): void
+    {
+        Livewire::test(Smartbox::class)
+            ->call('toggleSmartboxType', 'benessere')
+            ->assertSee('Weekend di relax in Lombardia')
+            ->assertDontSee('Weekend nella capitale');
+    }
+
+    public function test_smartbox_search_filters_by_title(): void
+    {
+        Livewire::test(Smartbox::class)
+            ->set('where', 'capitale')
+            ->call('search')
+            ->assertSee('Weekend nella capitale')
+            ->assertDontSee('Weekend di relax in Lombardia');
+    }
+
+    public function test_smartbox_empty_result_falls_back_to_similar_results(): void
+    {
+        // I cofanetti seedati hanno price_from_cents 0: qualunque fascia diversa dai
+        // default li esclude. L'XD app non lascia la griglia vuota ma propone card simili.
+        Livewire::test(Smartbox::class)
+            ->set('priceMin', 100)
+            ->assertSee('Nessun risultato trovato')
+            ->assertSee('Risultati simili alla tua ricerca:')
+            ->assertSee('Weekend di relax in Lombardia');
+    }
+
+    public function test_smartbox_load_more_extends_the_first_page(): void
+    {
+        SmartboxPackage::factory()->create([
+            'title' => 'Cofanetto tredicesimo',
+            'slug' => 'tredicesimo',
+            'position' => 99,
+        ]);
+
+        Livewire::test(Smartbox::class)
+            ->assertDontSee('Cofanetto tredicesimo')
+            ->call('loadMore')
+            ->assertSee('Weekend di relax in Lombardia')
+            ->assertSee('Cofanetto tredicesimo');
+    }
 }

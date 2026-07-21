@@ -76,22 +76,15 @@ class StripeGatewayTest extends TestCase
             ->once()
             ->with('pi_existing', [
                 'amount' => 20000,
-                'payment_method_types' => ['klarna'],
+                'payment_method_types' => ['card'],
             ])
             ->andReturn($this->intent('pi_existing'));
 
-        $session = $this->gateway->initPaymentSession(20000, PaymentMethod::Klarna, [
+        $session = $this->gateway->initPaymentSession(20000, PaymentMethod::GooglePay, [
             'payment_intent_id' => 'pi_existing',
         ]);
 
         $this->assertSame('pi_existing', $session['payment_intent_id']);
-    }
-
-    public function test_init_rejects_methods_not_handled_by_stripe(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        $this->gateway->initPaymentSession(1000, PaymentMethod::Paypal);
     }
 
     // ── capture (riverifica server-side) ────────────────────────────────

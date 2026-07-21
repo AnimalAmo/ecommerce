@@ -1,4 +1,4 @@
-// Componenti Alpine del checkout (Stripe Payment/Express Checkout Element, PayPal Buttons).
+// Componenti Alpine del checkout (Stripe Payment/Express Checkout Element).
 import './payment';
 
 // Header nav: dopo un full-reload il mouse resta fermo sopra il link appena cliccato,

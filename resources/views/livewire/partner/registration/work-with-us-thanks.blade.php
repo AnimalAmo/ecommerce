@@ -1,21 +1,22 @@
-{{-- Lavora con noi – thank you (XD: "Lavora con noi – thankyou page") --}}
+{{-- Lavora con noi – thank you (XD: "Lavora con noi – thankyou page"; app: "Diventa partner - click 'chiudi'") --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
 
     @include('partials.site-header')
 
-    {{-- Banda gradiente (XD: 296deg #FF3EA526 → #68CDEB33) --}}
+    {{-- Banda gradiente (XD: 296deg #FF3EA526 → #68CDEB33); resta identica anche su mobile --}}
     <main class="flex-1 bg-[linear-gradient(296deg,#FF3EA526_0%,#68CDEB33_100%)]">
-        <div class="{{ $px }} flex justify-center pt-[160px] pb-32">
-            {{-- Card (XD: 865x358, bianco op 0.5, bordo #E9E9E9, r 3) --}}
-            <div class="relative w-full max-w-[865px] rounded-[3px] border border-gray-150 bg-white/50 px-8 pb-[70px] pt-[74px] text-center">
-                <flux:heading level="1" class="!text-4xl !font-bold !text-brand-cyan">{{ __('partner.thanks_heading') }}</flux:heading>
+        <div class="{{ $px }} flex justify-center pt-[160px] pb-32 max-lg:pt-10 max-lg:pb-10">
+            {{-- Card (XD desktop: 865x358, bianco op 0.5, bordo #E9E9E9, r 3;
+                 XD app: pannello #EBF9FD bordo #6CD1EF, titolo 18 bold ciano, testo 15 #555555) --}}
+            <div class="relative w-full max-w-[865px] rounded-[3px] border border-gray-150 bg-white/50 px-8 pb-[70px] pt-[74px] text-center max-lg:rounded-[10px] max-lg:border-brand-cyan max-lg:bg-[#EBF9FD] max-lg:px-6 max-lg:py-10">
+                <flux:heading level="1" class="!text-4xl !font-bold !text-brand-cyan max-lg:!text-lg">{{ __('partner.thanks_heading') }}</flux:heading>
 
-                <p class="mt-8 text-lg text-black">{{ __('partner.thanks_line_1') }}<br>{{ __('partner.thanks_line_2') }}</p>
+                <p class="mt-8 text-lg text-black max-lg:mt-4 max-lg:text-[15px] max-lg:text-[#555555]">{{ __('partner.thanks_line_1') }}<br>{{ __('partner.thanks_line_2') }}</p>
 
-                <div class="mt-10">
-                    <flux:button href="{{ route('home') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white">{{ __('partner.back_home') }}</flux:button>
+                <div class="mt-10 max-lg:mt-8">
+                    <flux:button href="{{ route('home') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.back_home') }}</flux:button>
                 </div>
 
                 {{-- Aeroplanino di carta (XD "Tracciato 654", rotazione 135° già applicata al path) --}}
@@ -26,5 +27,11 @@
         </div>
     </main>
 
-    @include('partials.footer-minimal')
+    {{-- Su mobile il footer lascia il posto alla tabbar (XD app) --}}
+    <div class="max-lg:hidden">
+        @include('partials.footer-minimal')
+    </div>
+    <div class="lg:hidden">
+        @include('partials.mobile-tabbar')
+    </div>
 </div>

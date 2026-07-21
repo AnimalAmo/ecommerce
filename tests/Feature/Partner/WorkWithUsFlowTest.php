@@ -73,6 +73,24 @@ class WorkWithUsFlowTest extends TestCase
         });
     }
 
+    public function test_on_mobile_the_application_is_confirmed_by_the_modal_instead_of_the_thanks_page(): void
+    {
+        Mail::fake();
+
+        $component = $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->set('confirmInPlace', true)
+            ->call('submit')
+            ->assertHasNoErrors()
+            ->assertNoRedirect()
+            ->assertSet('showConfirmation', true);
+
+        $this->assertSame('susanna@example.com', PartnerApplication::firstOrFail()->email);
+
+        $component->call('closeConfirmation')
+            ->assertSet('showConfirmation', false)
+            ->assertSet('form.email', '');
+    }
+
     public function test_the_application_requires_the_mandatory_fields(): void
     {
         Mail::fake();

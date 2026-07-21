@@ -4,8 +4,16 @@ return [
     // Titolo della tab (browser) — solo brand
     'meta_title' => 'AnimalAmo — Smartbox',
 
+    // Barra di ricerca mobile (XD app, simbolo "Box ricerca")
+    'search_where' => 'Dove',
+    'search_when' => 'Quando',
+    'search_guests' => 'Aggiungi ospiti',
+    'search_animals' => 'Animali',
+    'search_cta' => 'Cerca',
+
     // Listing
     'filter_your_search' => 'Filtra la tua ricerca:',
+    'load_more' => 'Carica altro',
     'filter_type' => 'Tipologia',
     'filter_price' => 'Fascia di prezzo',
     'filter_people' => 'Numero di persone',

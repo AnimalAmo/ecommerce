@@ -116,31 +116,14 @@
                                         </flux:button>
 
                                         @if ($paymentMethod === $method->value)
-                                            @php $sessionReady = $method->gatewayCode() === 'stripe' ? $clientSecret !== null : $paypalOrderId !== null; @endphp
-
-                                            @if ($paymentUnavailable || ! $sessionReady)
+                                            @if ($paymentUnavailable || $clientSecret === null)
                                                 <div wire:key="unavailable-{{ $method->value }}" class="my-3 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[13px] leading-5 text-[#555555]">{{ __('checkout.payment_unavailable') }}</div>
-                                            @elseif ($method->usesExpressCheckout())
+                                            @else
                                                 {{-- Apple/Google Pay: Express Checkout Element (bottone brand del wallet; fallback se il device non lo supporta) --}}
                                                 <div wire:ignore wire:key="ece-{{ $method->value }}-{{ $clientSecret }}" class="my-3 max-w-[295px]"
                                                     x-data="stripeExpressCheckout(@js($clientSecret), @js($stripeKey), { wallet: @js($method === \App\Enums\PaymentMethod::ApplePay ? 'applePay' : 'googlePay'), returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
                                                     <div x-ref="element"></div>
                                                     <p x-show="walletUnavailable" style="display: none;" class="text-[13px] leading-5 text-[#959595]">{{ __('payment.errors.wallet_unavailable') }}</p>
-                                                </div>
-                                            @elseif ($method === \App\Enums\PaymentMethod::Klarna)
-                                                <p class="mt-2 text-[13px] leading-none text-[#959595]">{{ __('checkout.ui.redirect_note') }}</p>
-                                                {{-- Payment Element (solo klarna): la conferma reindirizza a Klarna e torna sul return_url --}}
-                                                <div wire:ignore wire:key="stripe-klarna-{{ $clientSecret }}" class="mt-3"
-                                                    x-data="stripePayment(@js($clientSecret), @js($stripeKey), { method: 'klarna', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
-                                                    <div x-ref="element"></div>
-                                                </div>
-                                                {{-- "Paga ora" spento finché l'Element non è montato (markElementReady dal JS): mai un click nel vuoto --}}
-                                                <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mb-1 mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">{{ __('checkout.ui.pay_now') }}</flux:button>
-                                            @else
-                                                {{-- PayPal: bottoni dell'SDK classico (la CTA del provider sostituisce "Paga ora") --}}
-                                                <div wire:ignore wire:key="paypal-{{ $paypalOrderId }}" class="my-3 max-w-[295px]"
-                                                    x-data="paypalButtons(@js($paypalOrderId), @js($paypalClientId), { errorMessage: @js(__('checkout.paypal_error')) })">
-                                                    <div x-ref="element"></div>
                                                 </div>
                                             @endif
                                         @endif

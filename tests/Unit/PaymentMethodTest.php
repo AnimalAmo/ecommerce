@@ -21,8 +21,6 @@ class PaymentMethodTest extends TestCase
             'card via stripe' => [PaymentMethod::Card, 'stripe'],
             'apple pay via stripe' => [PaymentMethod::ApplePay, 'stripe'],
             'google pay via stripe' => [PaymentMethod::GooglePay, 'stripe'],
-            'klarna via stripe' => [PaymentMethod::Klarna, 'stripe'],
-            'paypal via paypal' => [PaymentMethod::Paypal, 'paypal'],
         ];
     }
 
@@ -38,13 +36,11 @@ class PaymentMethodTest extends TestCase
             'card' => [PaymentMethod::Card, ['card']],
             'apple pay' => [PaymentMethod::ApplePay, ['card']],
             'google pay' => [PaymentMethod::GooglePay, ['card']],
-            'klarna' => [PaymentMethod::Klarna, ['klarna']],
-            'paypal (non stripe)' => [PaymentMethod::Paypal, null],
         ];
     }
 
     #[DataProvider('stripeTypesProvider')]
-    public function test_stripe_payment_method_types(PaymentMethod $method, ?array $expected): void
+    public function test_stripe_payment_method_types(PaymentMethod $method, array $expected): void
     {
         $this->assertSame($expected, $method->stripePaymentMethodTypes());
     }
@@ -54,8 +50,6 @@ class PaymentMethodTest extends TestCase
         $this->assertSame('Carta di credito o di debito', PaymentMethod::Card->label());
         $this->assertSame('Apple Pay', PaymentMethod::ApplePay->label());
         $this->assertSame('Google Pay', PaymentMethod::GooglePay->label());
-        $this->assertSame('Klarna', PaymentMethod::Klarna->label());
-        $this->assertSame('PayPal', PaymentMethod::Paypal->label());
     }
 
     public function test_only_wallets_use_express_checkout(): void
@@ -63,7 +57,5 @@ class PaymentMethodTest extends TestCase
         $this->assertTrue(PaymentMethod::ApplePay->usesExpressCheckout());
         $this->assertTrue(PaymentMethod::GooglePay->usesExpressCheckout());
         $this->assertFalse(PaymentMethod::Card->usesExpressCheckout());
-        $this->assertFalse(PaymentMethod::Klarna->usesExpressCheckout());
-        $this->assertFalse(PaymentMethod::Paypal->usesExpressCheckout());
     }
 }

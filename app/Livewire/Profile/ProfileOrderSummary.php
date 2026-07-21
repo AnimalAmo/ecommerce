@@ -65,6 +65,8 @@ class ProfileOrderSummary extends Component
 
         return view('livewire.profile.profile-order-summary', [
             'items' => $items,
+            // Testata conteggio | data | totale: solo mobile (l'artboard app la mostra sopra le card).
+            'header' => $orders->presentHeader($this->orderModel()),
             'reviewItem' => collect($items)->firstWhere('id', $this->reviewItemId),
         ])->title(__('profile.title_order_summary'));
     }

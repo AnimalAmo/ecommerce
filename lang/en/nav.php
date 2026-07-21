@@ -23,11 +23,21 @@ return [
     'language' => 'Language',
     'currency' => 'Currency',
     'login_register' => 'Log in / Sign up',
+    'menu_open' => 'Open menu',
+    'menu_close' => 'Close menu',
+    'close' => 'Close',
     'favorites' => 'Favorites',
     'profile' => 'Profile',
     'my_profile' => 'My profile',
     'my_orders' => 'My orders',
     'logout' => 'Log out',
+
+    // Mobile tabbar (app XD)
+    'tabbar' => [
+        'explore' => 'Explore',
+        'community' => 'Community',
+        'cart' => 'Cart',
+    ],
 
     // Full footer
     'footer' => [

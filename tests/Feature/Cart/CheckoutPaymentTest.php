@@ -15,7 +15,6 @@ use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
 use App\Services\Payment\PaymentGatewayService;
-use App\Services\Payment\PaypalGateway;
 use App\Services\Payment\StripeGateway;
 use Database\Seeders\PaymentGatewaySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,10 +27,10 @@ use Tests\TestCase;
 
 /**
  * Wiring pagamento del checkout (step 4): FakePaymentGateway nel container al
- * posto di Stripe/PayPal (i test non toccano MAI la rete) — flusso completo
+ * posto di Stripe (i test non toccano MAI la rete) — flusso completo
  * step 1→2→callback→ordine→step 3, guest, regalo, capture fallito, refund sul
- * sold-out post-capture, ritorno redirect Klarna, gateway disabilitato e
- * degradazione senza chiavi. Orologio fisso come PlaceOrderActionTest.
+ * sold-out post-capture, gateway disabilitato e degradazione senza chiavi.
+ * Orologio fisso come PlaceOrderActionTest.
  */
 class CheckoutPaymentTest extends TestCase
 {
@@ -52,10 +51,8 @@ class CheckoutPaymentTest extends TestCase
         $this->seed(PaymentGatewaySeeder::class);
         app(PaymentGatewayService::class)->clearCache();
 
-        // Un unico fake per entrambi i gateway: la factory risolve per classe.
         $this->gateway = new FakePaymentGateway;
         $this->app->instance(StripeGateway::class, $this->gateway);
-        $this->app->instance(PaypalGateway::class, $this->gateway);
     }
 
     protected function tearDown(): void
@@ -253,83 +250,64 @@ class CheckoutPaymentTest extends TestCase
         $this->assertCount(2, $this->gateway->initCalls);
     }
 
-    // ── Ritorno redirect Klarna ──────────────────────────────────────────────
+    // ── Selezione wallet (Express Checkout Element) ──────────────────────────
 
-    public function test_klarna_redirect_return_with_succeeded_places_the_order(): void
+    public function test_selecting_a_wallet_reuses_the_intent_and_orders_with_that_method(): void
     {
         $this->actingAs($this->buyer());
         $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
 
-        Livewire::withQueryParams([
-            'payment_intent' => 'pi_fake_1',
-            'redirect_status' => 'succeeded',
-            'method' => 'klarna',
-        ])->test(Checkout::class)
-            ->assertSet('paymentMethod', 'klarna')
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            // Metodo rimosso/sconosciuto: selezione rifiutata, resta card.
+            ->call('selectPayment', 'paypal')
+            ->assertSet('paymentMethod', 'card')
+            ->call('selectPayment', 'google_pay')
+            ->assertSet('paymentMethod', 'google_pay')
+            // La riga wallet monta l'Express Checkout Element.
+            ->assertSeeHtml('stripeExpressCheckout')
+            ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
             ->assertSet('step', 3);
 
+        // Lo switch riusa il PI della sessione (update, mai un PI orfano).
+        $this->assertCount(2, $this->gateway->initCalls);
+        $this->assertSame('google_pay', $this->gateway->initCalls[1]['method']);
+        $this->assertSame(['payment_intent_id' => 'pi_fake_1'], $this->gateway->initCalls[1]['context']);
+
         $order = Order::sole();
-        $this->assertSame(OrderStatus::Paid, $order->status);
-        $this->assertSame(PaymentMethod::Klarna, $order->payment->payment_method);
-        $this->assertSame('pi_fake_1', $order->payment->transaction_id);
+        $this->assertSame(PaymentMethod::GooglePay, $order->payment->payment_method);
     }
 
-    public function test_klarna_redirect_return_with_failed_lands_on_step_two(): void
+    // ── Init fallito: il callback passa comunque dalla verifica capture ──────
+
+    public function test_callback_with_a_null_session_still_goes_through_capture(): void
     {
         $this->actingAs($this->buyer());
         $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
 
-        Livewire::withQueryParams([
-            'payment_intent' => 'pi_fake_1',
-            'payment_intent_client_secret' => 'cs_fake_secret',
-            'redirect_status' => 'failed',
-            'method' => 'klarna',
-        ])->test(Checkout::class)
-            ->assertSet('step', 2)
-            ->assertSet('paymentMethod', 'klarna')
-            // Il PI fallito resta riusabile: sessione ripristinata dalla query.
-            ->assertSet('paymentIntentId', 'pi_fake_1')
-            ->assertSet('clientSecret', 'cs_fake_secret');
+        // Errore API transitorio all'init: step 2 raggiunto con sessione nulla.
+        $this->gateway->initThrows = true;
 
-        $this->assertDatabaseCount('orders', 0);
-        $this->assertSame([], $this->gateway->captureCalls);
+        $component = Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSet('paymentUnavailable', true)
+            ->assertSet('paymentIntentId', null);
+
+        // payloadMatchesSession con proprietà nulla lascia passare: la
+        // riverifica server-side del capture resta il filtro (più il guard
+        // idempotente a db su provider + gateway_session_id).
+        $this->gateway->initThrows = false;
+        $component->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
+            ->assertSet('step', 3);
+
+        $this->assertSame(
+            [['payload' => ['payment_intent_id' => 'pi_fake_1'], 'expected_amount_cents' => 50000]],
+            $this->gateway->captureCalls,
+        );
+        $this->assertSame(1, Order::count());
     }
 
     // ── Idempotenza: lo stesso incasso non genera mai due ordini ─────────────
-
-    public function test_replaying_the_klarna_return_url_never_creates_a_second_order(): void
-    {
-        $this->actingAs($this->buyer());
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
-        $this->addStructureLine($structure);
-
-        // Primo ritorno Klarna: ordine creato, carrello svuotato.
-        Livewire::withQueryParams([
-            'payment_intent' => 'pi_fake_1',
-            'redirect_status' => 'succeeded',
-            'method' => 'klarna',
-        ])->test(Checkout::class)->assertSet('step', 3);
-
-        $this->assertSame(1, Order::count());
-
-        // Replay del return URL con lo STESSO PI dopo aver ri-aggiunto una
-        // riga di pari totale: esito idempotente — nessun secondo ordine,
-        // nessun refund (l'incasso appartiene all'ordine esistente).
-        $this->addStructureLine($structure);
-
-        Livewire::withQueryParams([
-            'payment_intent' => 'pi_fake_1',
-            'redirect_status' => 'succeeded',
-            'method' => 'klarna',
-        ])->test(Checkout::class)
-            ->assertRedirect(route('profilo.ordini'));
-
-        $this->assertSame(1, Order::count());
-        $this->assertDatabaseCount('order_payments', 1);
-        $this->assertSame([], $this->gateway->refundCalls);
-        // La riga ri-aggiunta resta in carrello: nessuna pipeline è girata.
-        $this->assertCount(1, $this->cart()->items());
-    }
 
     public function test_replaying_the_callback_with_the_same_intent_is_idempotent(): void
     {
@@ -480,6 +458,9 @@ class CheckoutPaymentTest extends TestCase
 
         $this->assertCount(2, $this->gateway->initCalls);
         $this->assertSame(70000, $this->gateway->initCalls[1]['amount_cents']);
+        // PI nuovo, non update: il client_secret cambia e il wire:key rimonta
+        // l'Element (un update lascerebbe "Paga ora" spento per sempre).
+        $this->assertSame([], $this->gateway->initCalls[1]['context']);
         $this->assertDatabaseCount('orders', 0);
     }
 
@@ -507,7 +488,7 @@ class CheckoutPaymentTest extends TestCase
 
     public function test_methods_of_a_disabled_gateway_are_hidden_and_rejected(): void
     {
-        PaymentGateway::query()->where('code', 'paypal')->update(['is_enabled' => false]);
+        PaymentGateway::query()->where('code', 'stripe')->update(['is_enabled' => false]);
         app(PaymentGatewayService::class)->clearCache();
 
         $this->actingAs($this->buyer());
@@ -515,13 +496,12 @@ class CheckoutPaymentTest extends TestCase
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
-            // Riga PayPal nascosta e selezione rifiutata.
-            ->assertDontSee('PayPal')
-            ->call('selectPayment', 'paypal')
-            ->assertSet('paymentMethod', 'card')
-            // Tampering client-side della property: la capture è comunque rifiutata.
-            ->set('paymentMethod', 'paypal')
-            ->call('handlePaymentCallback', ['paypal_order_id' => 'pp_fake_1'])
+            // Nessuna riga metodo: box informativo al posto dell'element.
+            ->assertSet('paymentUnavailable', true)
+            ->assertDontSee('Google Pay')
+            ->assertSee(__('checkout.payment_unavailable'))
+            // Tampering client-side: la capture è comunque rifiutata.
+            ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
             ->assertSet('step', 2);
 
         $this->assertDatabaseCount('orders', 0);
@@ -532,10 +512,9 @@ class CheckoutPaymentTest extends TestCase
 
     public function test_missing_gateway_config_degrades_to_an_info_box(): void
     {
-        // Risoluzione REALE dei gateway (niente fake) con chiavi vuote.
+        // Risoluzione REALE del gateway (niente fake) con chiavi vuote.
         $this->app->forgetInstance(StripeGateway::class);
-        $this->app->forgetInstance(PaypalGateway::class);
-        config(['payment.stripe.secret' => '', 'payment.paypal.client_id' => '', 'payment.paypal.secret' => '']);
+        config(['payment.stripe.secret' => '']);
 
         $this->actingAs($this->buyer());
         $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
