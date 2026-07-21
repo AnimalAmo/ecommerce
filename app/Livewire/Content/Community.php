@@ -25,7 +25,11 @@ class Community extends Component
     /** Tag selezionati nel composer (flux:checkbox.group variant pills, multi-selezione; default XD "Avventura"). */
     public array $composerTags = ['Avventura'];
 
-    /** Filtri tipologia attivi (chips sotto la toolbar, artboard "Community – filtro"). */
+    /**
+     * Filtri tipologia attivi (chips sotto la toolbar, artboard "Community – filtro").
+     * Su desktop ci arrivano da addFilter/removeFilter, su mobile dal wire:model del
+     * pannello "Filtri community": va quindi ripulito anche in ingresso.
+     */
     public array $activeFilters = [];
 
     /** Bozze di risposta per id post (input pill in fondo a ogni card). */
@@ -159,6 +163,16 @@ class Community extends Component
 
         $this->composerBody = '';
         $this->composerTags = ['Avventura'];
+
+        // Composer mobile: chiude il pannello a tutta pagina. close() su un <dialog> non
+        // aperto è un no-op, quindi da desktop non ha effetti (a differenza di show()).
+        Flux::modal('scrivi-domanda')->close();
+    }
+
+    /** Il pannello filtri mobile scrive direttamente l'array: tiene solo i tag noti. */
+    public function updatedActiveFilters(): void
+    {
+        $this->activeFilters = array_values(array_intersect(self::TAGS, $this->activeFilters));
     }
 
     /** Selezione dal menu "Filtra tipologia" → aggiunge la chip filtro attivo. */

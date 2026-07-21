@@ -1,4 +1,4 @@
-{{-- Tab "In programma / Passati" condivise da Ordini ed Eventi: un solo flux:tabs responsive.
+{{-- Tab a pillola condivise da Ordini, Eventi e Community (mobile): un solo flux:tabs responsive.
      App (XD): pillole h31 r100 bianche SENZA bordo, ombra 0,0,5.5 #000000@0.11, attiva #4FB8D8.
      Desktop (XD): tab sottolineate ciano sulla linea #DEDEDE.
      Riceve $tabs (chiave → label) e binda wire:model.live sulla proprietà $tab del componente. --}}
