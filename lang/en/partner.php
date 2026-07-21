@@ -32,6 +32,7 @@ return [
     'offer_type' => 'Offer type',
     'description' => 'Description',
     'description_placeholder' => 'Describe the service you would like to offer, the location and a few details',
+    'select_placeholder' => 'Select a type',
 
     // Roles
     'role_owner' => 'Owner',

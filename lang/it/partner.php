@@ -32,6 +32,7 @@ return [
     'offer_type' => 'Tipologia Offerta',
     'description' => 'Descrizione',
     'description_placeholder' => 'Descrivi il servizio che vorresti offrire, il luogo e alcune caratteristiche',
+    'select_placeholder' => 'Seleziona tipologia',
 
     // Ruoli
     'role_owner' => 'Proprietario',
