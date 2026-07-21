@@ -14,8 +14,8 @@
 
     @include('partials.site-header')
 
-    {{-- Banda gradiente (XD desktop: 296deg #FF3EA526 → #68CDEB33); su mobile la pagina è su bianco --}}
-    <main class="flex-1 bg-[linear-gradient(296deg,#FF3EA526_0%,#68CDEB33_100%)] max-lg:bg-none">
+    {{-- Banda gradiente (XD: 296deg #FF3EA526 → #68CDEB33); resta identica anche su mobile --}}
+    <main class="flex-1 bg-[linear-gradient(296deg,#FF3EA526_0%,#68CDEB33_100%)]">
         <div class="{{ $px }} pt-[60px] pb-20 max-lg:pt-[54px] max-lg:pb-10">
             <h1 class="text-4xl font-bold text-black max-lg:text-[18px] max-lg:leading-[21px] max-lg:text-[#0D171A]">{{ __('partner.heading') }}</h1>
             <p class="mt-4 max-w-4xl text-lg text-black max-lg:mt-[10px] max-lg:text-[15px] max-lg:leading-5 max-lg:text-[#2B2B2B]">{{ __('partner.intro') }}</p>

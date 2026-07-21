@@ -5,8 +5,8 @@
 
     @include('partials.site-header')
 
-    {{-- Banda gradiente (XD desktop: 296deg #FF3EA526 → #68CDEB33); su mobile la pagina è su bianco --}}
-    <main class="flex-1 bg-[linear-gradient(296deg,#FF3EA526_0%,#68CDEB33_100%)] max-lg:bg-none">
+    {{-- Banda gradiente (XD: 296deg #FF3EA526 → #68CDEB33); resta identica anche su mobile --}}
+    <main class="flex-1 bg-[linear-gradient(296deg,#FF3EA526_0%,#68CDEB33_100%)]">
         <div class="{{ $px }} flex justify-center pt-[160px] pb-32 max-lg:pt-10 max-lg:pb-10">
             {{-- Card (XD desktop: 865x358, bianco op 0.5, bordo #E9E9E9, r 3;
                  XD app: pannello #EBF9FD bordo #6CD1EF, titolo 18 bold ciano, testo 15 #555555) --}}
