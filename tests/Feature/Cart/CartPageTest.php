@@ -148,7 +148,9 @@ class CartPageTest extends TestCase
             ->assertSee("A partire da 0,00\u{A0}€")
             ->assertSee("A partire da 250\u{A0}€")
             // Il quarto classificato (1 cuore) resta fuori dalle 3 card.
-            ->assertDontSee('Pomeriggio di addestramento');
+            ->assertDontSee('Pomeriggio di addestramento')
+            // Le stesse card servono il carosello mobile (artboard app "Carrello vuoto").
+            ->assertSee('wire:key="most-loved-', false);
     }
 
     public function test_gift_mode_shows_only_gift_lines_and_vice_versa(): void

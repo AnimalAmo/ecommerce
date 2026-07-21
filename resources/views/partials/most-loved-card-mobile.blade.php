@@ -1,6 +1,6 @@
 {{-- Card "Le attività più amate su Animal-Amo" (XD app "Preferiti - vuoti", symbol "Card ' i più acquistati'" 280x200):
      foto 264x184 con gradiente scuro sul fondo, tag e cuore in alto, titolo/pin/meta bianchi in basso.
-     Contratto: $item (card FavoriteService::topFavorited). --}}
+     Contratto: $item (card FavoriteService::topFavorited), $heartActive/$heartAction come su partials/favorite-card. --}}
 @php $itemType = \App\Enums\ProductType::from($item['type']); @endphp
 
 <article wire:key="most-loved-{{ $item['id'] }}" class="w-[280px] shrink-0 snap-start rounded-[3px] border border-[#E9E9E9] bg-white p-2">
@@ -12,14 +12,10 @@
 
         <span class="absolute left-[7px] top-2 flex h-[26px] items-center rounded-[3px] px-[10px] text-[13px] font-medium text-white" style="background-color: {{ $itemType->color() }}">{{ $itemType->label() }}</span>
 
-        @include('partials.favorite-heart', [
-            'type' => $item['favoritable_type'],
-            'id' => $item['favoritable_id'],
-            'active' => $this->isFavorite($item['favoritable_type'], $item['favoritable_id']),
-            'classes' => '!absolute !right-[6px] !top-2 !z-[2]',
-            'sizeClasses' => '!h-[26px] !w-[26px]',
-            'iconClasses' => 'h-3 w-[15px]',
-        ])
+        {{-- Cuore bianco che diventa giallo da preferito (stessi gialli della card desktop) --}}
+        <flux:button wire:click="{{ $heartAction }}" square aria-label="{{ $heartActive ? __('nav.card.remove_from_favorites') : __('nav.card.add_to_favorites') }}" class="!absolute !right-[6px] !top-2 !z-[2] !h-[26px] !w-[26px] !min-w-0 !rounded-full !border-0 !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center {{ $heartActive ? '!bg-brand-yellow hover:!bg-brand-yellow' : '!bg-[#fff] hover:!bg-[#fff]' }}">
+            <flux:icon.heart class="h-3 w-[15px] text-black" />
+        </flux:button>
 
         <div class="absolute inset-x-0 bottom-[13px] px-2 text-white">
             <h3 class="truncate text-[15px] font-bold leading-none">{{ $item['title'] }}</h3>

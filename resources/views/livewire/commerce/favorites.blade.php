@@ -44,7 +44,12 @@
                             {{-- Scorre fino al bordo schermo: -mr-4 annulla il padding del container --}}
                             <div class="-mr-4 mt-[17px] flex snap-x gap-4 overflow-x-auto pb-1">
                                 @foreach ($suggestions as $item)
-                                    @include('partials.most-loved-card-mobile', ['item' => $item])
+                                    {{-- Cuore reale: aggiunge il preferito e la pagina passa subito alla lista --}}
+                                    @include('partials.most-loved-card-mobile', [
+                                        'item' => $item,
+                                        'heartActive' => $this->isFavorite($item['favoritable_type'], $item['favoritable_id']),
+                                        'heartAction' => "toggleFavorite('" . $item['favoritable_type'] . "', " . $item['favoritable_id'] . ')',
+                                    ])
                                 @endforeach
                             </div>
                         </section>
