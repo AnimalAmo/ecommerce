@@ -41,15 +41,26 @@ class StripeGateway implements PaymentGatewayInterface
     {
         $types = $method->stripePaymentMethodTypes();
 
+        // Carta salvata: il PI nasce già intestato al customer e con il
+        // payment method allegato, così il client conferma col solo client
+        // secret (nessun Element, nessun dato carta nel browser). Gli id
+        // arrivano SEMPRE dal server (utente autenticato), mai dal payload.
+        $saved = array_filter([
+            'customer' => $context['customer_id'] ?? null,
+            'payment_method' => $context['payment_method_id'] ?? null,
+        ]);
+
         $intent = isset($context['payment_intent_id'])
             ? $this->client->paymentIntents->update($context['payment_intent_id'], [
                 'amount' => $amountCents,
                 'payment_method_types' => $types,
+                ...$saved,
             ])
             : $this->client->paymentIntents->create([
                 'amount' => $amountCents,
                 'currency' => 'eur',
                 'payment_method_types' => $types,
+                ...$saved,
             ]);
 
         return [

@@ -78,8 +78,14 @@ async function confirmStripePayment(component, options) {
     // Timestamp per il watchdog di "Paga ora": una conferma è partita davvero.
     window.__paymentConfirmAt = Date.now();
 
+    // Carta salvata: nessun Element montato, il PaymentIntent ha già il
+    // payment method allegato lato server e basta il client secret.
+    const source = component.elements
+        ? { elements: component.elements }
+        : { clientSecret: component.clientSecret };
+
     const { error, paymentIntent } = await component.stripe.confirmPayment({
-        elements: component.elements,
+        ...source,
         confirmParams: { return_url: options.returnUrl },
         redirect: 'if_required',
     });
@@ -125,6 +131,39 @@ window.stripePayment = (clientSecret, publishableKey, options = {}) => ({
         });
 
         // Element montato e listener attivo: il server abilita "Paga ora".
+        this.$wire.markElementReady();
+    },
+
+    destroy() {
+        if (typeof this.stopListening === 'function') this.stopListening();
+    },
+});
+
+// ─── Carta salvata (checkout, nessun Element) ───────────────────────────────
+// Il PaymentIntent arriva dal server già col customer e il payment method
+// dell'utente: qui serve solo Stripe.js per confermare (ed eventuale 3DS).
+// options: { method, returnUrl, incompleteMessage }
+window.stripeSavedCard = (clientSecret, publishableKey, options = {}) => ({
+    stripe: null,
+    elements: null,
+    clientSecret,
+    stopListening: null,
+
+    async init() {
+        try {
+            const StripeFactory = await loadStripeJs();
+            this.stripe = StripeFactory(publishableKey);
+        } catch (error) {
+            console.error('[Stripe saved card] init failed', error);
+            this.$wire.reportPaymentInitFailed();
+            return;
+        }
+
+        this.stopListening = Livewire.on('process-payment', ({ method }) => {
+            if (method !== options.method) return;
+            confirmStripePayment(this, options);
+        });
+
         this.$wire.markElementReady();
     },
 

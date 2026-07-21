@@ -22,6 +22,8 @@ return [
         'contact_note' => 'We will only contact you about important updates or changes to your booking',
         'continue_purchase' => 'Continue to purchase',
         'select_payment_method' => 'Select a payment method',
+        'saved_card' => 'Saved card •••• :last4',
+        'new_card' => 'Use another card',
         'pay_now' => 'Pay now',
         'order_summary' => 'Order summary',
         'dedicated_to' => 'Dedicated to: :name',

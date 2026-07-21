@@ -22,6 +22,8 @@ return [
         'contact_note' => 'Ti contatteremo solo in caso di aggiornamenti importanti o modifiche alla tua prenotazione',
         'continue_purchase' => 'Prosegui l’acquisto',
         'select_payment_method' => 'Seleziona un metodo di pagamento',
+        'saved_card' => 'Carta salvata •••• :last4',
+        'new_card' => 'Usa un\'altra carta',
         'pay_now' => 'Paga ora',
         'order_summary' => 'Riepilogo dell’ordine',
         'dedicated_to' => 'Dedicato a: :name',

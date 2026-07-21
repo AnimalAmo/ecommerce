@@ -18,6 +18,7 @@ use Flux\Flux;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Throwable;
@@ -52,6 +53,21 @@ class Checkout extends Component
 
     /** Metodo di pagamento selezionato (value di PaymentMethod: 'card', 'apple_pay', ...). */
     public string $paymentMethod = 'card';
+
+    /**
+     * Riga carta: paga con la carta salvata a profilo invece di inserirne una
+     * nuova. Attiva di default quando l'utente ne ha una (Profilo → Dati
+     * pagamento); i guest non la vedono mai.
+     */
+    public bool $useSavedCard = false;
+
+    /**
+     * La sessione gateway corrente è stata aperta con la carta salvata: un PI
+     * con payment method allegato non è riusabile per un metodo diverso, va
+     * ricreato (vedi initPaymentSession).
+     */
+    #[Locked]
+    public bool $sessionUsedSavedCard = false;
 
     /** Sessione Stripe corrente (Payment/Express Checkout Element). */
     public ?string $clientSecret = null;
@@ -103,6 +119,7 @@ class Checkout extends Component
             $this->lastName = $user->last_name;
             $this->email = $user->email;
             $this->phone = $user->phone ?? '';
+            $this->useSavedCard = $user->hasSavedCard();
         }
     }
 
@@ -162,6 +179,24 @@ class Checkout extends Component
         }
 
         $this->paymentMethod = $method;
+
+        if ($this->step === 2) {
+            $this->initPaymentSession();
+        }
+    }
+
+    /**
+     * Sotto-scelta della riga carta: carta salvata a profilo oppure una nuova
+     * (Payment Element). Cambia la forma del PaymentIntent, quindi la sessione
+     * gateway va riaperta.
+     */
+    public function selectSavedCard(bool $saved): void
+    {
+        if ($this->useSavedCard === $saved || ($saved && ! $this->hasSavedCard())) {
+            return;
+        }
+
+        $this->useSavedCard = $saved;
 
         if ($this->step === 2) {
             $this->initPaymentSession();
@@ -381,6 +416,8 @@ class Checkout extends Component
             ],
             // Righe metodo: solo i PaymentMethod il cui gateway è abilitato.
             'hasCardMethod' => in_array(PaymentMethod::Card, $methods, true),
+            // Carta salvata a profilo: solo il mascherato serve alla riga.
+            'savedCardLast4' => $this->hasSavedCard() ? Auth::user()->card_last4 : null,
             'altMethods' => array_values(array_filter($methods, fn (PaymentMethod $method): bool => $method !== PaymentMethod::Card)),
             // Chiave pubblica per il JS dalla config (mai VITE_*).
             'stripeKey' => (string) config('payment.stripe.key'),
@@ -414,6 +451,13 @@ class Checkout extends Component
         }
 
         $amountCents = $this->cart()->total($this->gift);
+        $withSavedCard = $method === PaymentMethod::Card && $this->useSavedCard && $this->hasSavedCard();
+
+        // Un PI con payment method allegato non serve un metodo diverso (e
+        // viceversa): cambiando forma si riparte da un PI nuovo.
+        if ($withSavedCard !== $this->sessionUsedSavedCard) {
+            $this->paymentIntentId = null;
+        }
 
         try {
             $gateway = app(PaymentGatewayFactory::class)->make($method);
@@ -422,11 +466,15 @@ class Checkout extends Component
             $session = $gateway->initPaymentSession(
                 $amountCents,
                 $method,
-                $this->paymentIntentId !== null ? ['payment_intent_id' => $this->paymentIntentId] : [],
+                array_merge(
+                    $this->paymentIntentId !== null ? ['payment_intent_id' => $this->paymentIntentId] : [],
+                    $withSavedCard ? $this->savedCardContext() : [],
+                ),
             );
 
             $this->clientSecret = $session['client_secret'];
             $this->paymentIntentId = $session['payment_intent_id'];
+            $this->sessionUsedSavedCard = $withSavedCard;
 
             // Importo della sessione appena aperta: confrontato al "Paga ora"
             // col totale corrente per intercettare i carrelli cambiati altrove.
@@ -437,12 +485,45 @@ class Checkout extends Component
         } catch (Throwable $exception) {
             Log::warning('Checkout: init della sessione di pagamento fallita', [
                 'method' => $method->value,
+                'saved_card' => $withSavedCard,
                 'error' => $exception->getMessage(),
             ]);
+
+            // Carta salvata non più valida su Stripe (staccata dalla
+            // dashboard, customer cancellato): si ricade sull'inserimento
+            // manuale invece di bloccare il checkout.
+            if ($withSavedCard) {
+                $this->useSavedCard = false;
+                $this->paymentIntentId = null;
+                $this->initPaymentSession();
+
+                return;
+            }
 
             $this->paymentUnavailable = true;
             Flux::toast(text: __('payment.errors.init_failed'), variant: 'danger');
         }
+    }
+
+    /**
+     * Riferimenti Stripe della carta salvata dell'utente autenticato: mai dal
+     * client, sempre dal record in sessione.
+     *
+     * @return array{customer_id: string, payment_method_id: string}
+     */
+    private function savedCardContext(): array
+    {
+        $user = Auth::user();
+
+        return [
+            'customer_id' => (string) $user->stripe_customer_id,
+            'payment_method_id' => (string) $user->stripe_payment_method_id,
+        ];
+    }
+
+    private function hasSavedCard(): bool
+    {
+        return Auth::user()?->hasSavedCard() ?? false;
     }
 
     /**

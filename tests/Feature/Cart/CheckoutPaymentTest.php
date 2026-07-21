@@ -547,6 +547,121 @@ class CheckoutPaymentTest extends TestCase
         ]);
     }
 
+    // ── Carta salvata a profilo ──────────────────────────────────────────────
+
+    public function test_a_saved_card_opens_the_session_with_the_customer_and_the_payment_method(): void
+    {
+        $this->actingAs($this->buyerWithSavedCard());
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            // Carta salvata preselezionata: niente Element da compilare.
+            ->assertSet('useSavedCard', true)
+            ->call('goToStep', 2)
+            ->assertSet('step', 2)
+            ->assertSet('clientSecret', 'cs_fake_secret')
+            ->assertSee('4242');
+
+        $this->assertSame(
+            ['customer_id' => 'cus_test', 'payment_method_id' => 'pm_test'],
+            $this->gateway->initCalls[0]['context'],
+        );
+    }
+
+    public function test_the_saved_card_pays_and_places_the_order(): void
+    {
+        $buyer = $this->buyerWithSavedCard();
+        $this->actingAs($buyer);
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('markElementReady')
+            ->call('processPayment')
+            ->assertDispatched('process-payment', method: 'card')
+            ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
+            ->assertSet('step', 3);
+
+        $order = Order::sole();
+        $this->assertSame(OrderStatus::Paid, $order->status);
+        $this->assertSame(PaymentMethod::Card, $order->payment->payment_method);
+    }
+
+    public function test_choosing_another_card_reopens_the_session_without_the_saved_one(): void
+    {
+        $this->actingAs($this->buyerWithSavedCard());
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('selectSavedCard', false)
+            ->assertSet('useSavedCard', false)
+            ->assertSet('clientSecret', 'cs_fake_secret');
+
+        // PI con payment method allegato non riusabile: sessione nuova, niente
+        // payment_intent_id e nessun riferimento alla carta salvata.
+        $this->assertSame([], $this->gateway->initCalls[1]['context']);
+    }
+
+    public function test_switching_to_a_wallet_drops_the_saved_card_session(): void
+    {
+        $this->actingAs($this->buyerWithSavedCard());
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('selectPayment', PaymentMethod::GooglePay->value)
+            ->assertSet('paymentMethod', 'google_pay');
+
+        $this->assertSame([], $this->gateway->initCalls[1]['context']);
+    }
+
+    public function test_a_buyer_without_a_saved_card_keeps_the_element_flow(): void
+    {
+        $this->actingAs($this->buyer());
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->assertSet('useSavedCard', false)
+            ->call('goToStep', 2)
+            ->assertSet('step', 2);
+
+        $this->assertSame([], $this->gateway->initCalls[0]['context']);
+    }
+
+    public function test_a_saved_card_broken_on_stripe_falls_back_to_a_new_card(): void
+    {
+        $this->actingAs($this->buyerWithSavedCard());
+        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+
+        // pm staccato dalla dashboard: il checkout non deve restare bloccato.
+        $this->gateway->initThrowsWithSavedCard = true;
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSet('useSavedCard', false)
+            ->assertSet('paymentUnavailable', false)
+            ->assertSet('clientSecret', 'cs_fake_secret');
+    }
+
+    /** Acquirente con una carta già salvata a profilo (Stripe customer + payment method). */
+    private function buyerWithSavedCard(): User
+    {
+        $buyer = $this->buyer();
+
+        $buyer->forceFill([
+            'stripe_customer_id' => 'cus_test',
+            'stripe_payment_method_id' => 'pm_test',
+            'card_brand' => 'visa',
+            'card_last4' => '4242',
+            'card_exp_month' => 12,
+            'card_exp_year' => 2030,
+            'card_holder' => 'Giulia Rossi',
+        ])->save();
+
+        return $buyer;
+    }
+
     /** Riga struttura: 01/08 → 06/08 (5 notti), 2 adulti e 1 cane. */
     private function addStructureLine(Structure $structure): int|string
     {
