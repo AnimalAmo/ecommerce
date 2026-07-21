@@ -29,7 +29,7 @@ python3 .claude/skills/xd-to-page/scripts/xd_extract.py "$XD" images OUTDIR     
 
 Solo stdlib, nessuna dipendenza. Il nome artboard è un prefix match case-insensitive; funziona anche l'id. `dump --raw` per il JSON grezzo se il riassunto non basta.
 
-Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#… baseline=…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi.
+Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#… baseline=…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi: il `syncSourceGuid` non punta al symbol ma a un **nodo interno** alla sua definizione (o a uno dei suoi `states`, cioè le varianti del componente), quindi lo script indicizza tutti i nodi per id. Da lì escono le misure di Tag, "Indietro", "check", "invia" e della testata, che altrimenti sarebbero gruppi vuoti.
 
 - **Sui TEXT usa `baseline=`, non la `y`**: la `y` è l'origine del nodo, che per i frame `positioned` coincide con la baseline ma per gli `autoHeight` sta una riga più in alto. Confrontare `y` fra due testi di frame diverso sbaglia lo spacing di ~1 line-height. Da baseline a margini CSS: con `leading-none` il bordo superiore del testo sta a `baseline − size`, quello inferiore a `baseline + 0.25·size` (Nunito).
 
@@ -72,7 +72,8 @@ Nodi: `transform.tx/.ty` = offset dal parent (accumula per l'assoluto); `style.f
 | Aspettarsi PNG per-artboard dentro l'.xd | c'è solo `preview.png` di UN artboard; il layout viene dal JSON |
 | Coordinate dump usate come CSS | sono design coords a 1920px — mappa proporzioni |
 | Aprire lo script sul path `.xd` esterno | il file vero è quello doppio-annidato `X.xd/X.xd` (per l'App è un file zip, per gli altri una directory — lo script legge entrambi) |
-| Gruppo vuoto nel `dump` (es. campi input) | è un `syncRef` non risolto: la definizione sta in `resources/graphics/graphicContent.agc` sotto `resources.meta.ux.symbols[]` — cerca l'`id` del syncRef lì dentro |
+| Gruppo vuoto nel `dump` (es. campi input) | erano syncRef non risolti: ora lo script li espande. Se ne resta uno vuoto, il nodo sta in un `states[]` annidato non ancora indicizzato — controlla `meta.ux.symbolId`/`stateId` dell'istanza |
+| Dare per scontato lo stato "selezionato" di un controllo | le varianti stanno in `meta.ux.states[]` del symbol: il "check" dei filtri è un tondo pieno #DEDEDE che nello `Stato 2` diventa #6CD1EF con la spunta bianca |
 | Stimare a occhio la misura di un tondo o di un'icona | `dump` ora dà `w=`/`h=` anche per path e circle, più il `box=` con l'angolo vero |
 | Fidarsi del `fill` sulle icone-linea (es. X delle chip con fill arancio #FF9F3E) | i path aperti tipo `ion-close-outline` rendono solo lo `stroke`: il fill è un residuo invisibile in XD — usa il colore di stroke |
 | Disegnare un bordo colorato perché il dump mostra uno stroke | se la riga dice `stroke=none` il bordo è spento: quel colore è un residuo. Le "voci con contorno viola" del menu Profilo app sono bianche **senza bordo**, con `shadow=0,0,5.5,#000000@0.11` |

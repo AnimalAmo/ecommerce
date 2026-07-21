@@ -55,7 +55,8 @@ Quando il server MCP non è in sessione, pilota Chrome a mano: `google-chrome --
 
 - **Dialog multipli**: i flyout Flux sono `<dialog>` sempre nel DOM. Scopa i locator per titolo: `page.locator('dialog:has-text("Titolo Modale")')`.
 - **Testi duplicati nascosti**: bottoni/menu con lo stesso testo esistono in popover chiusi → `has-text` è case-insensitive e becca quelli invisibili. Usa `:text-is("Testo Esatto")` (case-sensitive) o scoping sul dialog visibile, e `[data-flux-menu]:visible` per i menu aperti.
-- **Controlli custom element**: radio = `ui-radio`, switch = `ui-switch`, select listbox = `ui-select` + opzioni `ui-option[value=...]` (`getByRole('option')` matcha doppio: option nativa + ui-option).
+- **Controlli custom element**: radio = `ui-radio`, checkbox = `ui-checkbox` (indicatore `[data-flux-checkbox-indicator]`), switch = `ui-switch`, select listbox = `ui-select` + opzioni `ui-option[value=...]` (`getByRole('option')` matcha doppio: option nativa + ui-option).
+- **Le label sono `<ui-label>`, non `<label>`**: dentro un field Flux stanno accanto al controllo, non dentro. Una classe `[&_label]:…` sul `flux:checkbox` non le tocca (né come tag né come discendenza): vestile dal gruppo con `[&_[data-flux-label]]:…`. Stesso posto per azzerare l'`mb-3` dei field: `[&_[data-flux-field]]:!mb-0`.
 - **Livewire è asincrono**: dopo click che fanno roundtrip aspetta `waitForTimeout(800-1500)` prima di asserire.
 - Dopo `wire:navigate`/redirect il contesto Alpine riparte: ricontrolla lo stato, non fidarti dei riferimenti precedenti.
 

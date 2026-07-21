@@ -41,6 +41,20 @@ class XD:
         for s in ux.get('symbols', []):
             if s.get('id'):
                 self.symbols[s['id']] = s
+        # Un syncRef punta al singolo NODO dentro la definizione del symbol (o dentro
+        # uno dei suoi `states`, le varianti del componente), non al symbol stesso:
+        # cercarlo solo fra i symbol lascia gruppi vuoti nel dump (Tag, Indietro, …).
+        self.nodes = {}
+        for s in ux.get('symbols', []):
+            self._index(s)
+
+    def _index(self, node):
+        if node.get('id'):
+            self.nodes.setdefault(node['id'], node)
+        for c in children_of(node):
+            self._index(c)
+        for state in node.get('meta', {}).get('ux', {}).get('states', []) or []:
+            self._index(state)
 
     def artboards(self):
         for top in self.manifest.get('children', []):
@@ -145,7 +159,7 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
         return out
     if node.get('type') == 'syncRef':
         guid = node.get('syncSourceGuid')
-        sym = xd.symbols.get(guid)
+        sym = xd.symbols.get(guid) or xd.nodes.get(guid)
         if sym and guid not in seen:
             seen.add(guid)
             describe(sym, xd, depth, ox, oy, out, seen)
