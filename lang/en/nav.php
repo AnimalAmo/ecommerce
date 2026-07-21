@@ -25,6 +25,7 @@ return [
     'login_register' => 'Log in / Sign up',
     'menu_open' => 'Open menu',
     'menu_close' => 'Close menu',
+    'close' => 'Close',
     'favorites' => 'Favorites',
     'profile' => 'Profile',
     'my_profile' => 'My profile',

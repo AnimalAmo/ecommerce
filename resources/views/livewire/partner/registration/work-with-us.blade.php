@@ -23,7 +23,12 @@
             {{-- Card form (XD desktop: 1496x512, bianco op 0.5, bordo #E9E9E9, r 3); su mobile i campi
                  stanno direttamente sulla pagina, a tutta larghezza (XD app: 343px dentro px-4) --}}
             {{-- flux:field stacca la label con mb-3: sull'XD app il passo è 4px (label 271 → box 291) --}}
-            <form wire:submit="submit" class="mt-10 rounded-[3px] border border-gray-150 bg-white/50 px-6 pb-8 pt-8 max-lg:mt-7 max-lg:rounded-none max-lg:border-0 max-lg:bg-transparent max-lg:p-0 max-lg:[&_[data-flux-label]]:!mb-1">
+            {{-- Sotto lg la conferma è la modale dell'XD app, non la thank-you page --}}
+            <form wire:submit="submit"
+                x-data
+                x-init="$wire.$set('confirmInPlace', window.innerWidth < 1024, false)"
+                @resize.window="$wire.$set('confirmInPlace', window.innerWidth < 1024, false)"
+                class="mt-10 rounded-[3px] border border-gray-150 bg-white/50 px-6 pb-8 pt-8 max-lg:mt-7 max-lg:rounded-none max-lg:border-0 max-lg:bg-transparent max-lg:p-0 max-lg:[&_[data-flux-label]]:!mb-1">
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.first_name') }}</flux:label>
@@ -89,6 +94,19 @@
             </form>
         </div>
     </main>
+
+    {{-- Conferma "Grazie!" (XD app "Diventa partner - click 'chiudi'") --}}
+    <x-sweet-alert name="partner-application-sent" model="showConfirmation" wire:close="closeConfirmation"
+        :heading="__('partner.thanks_heading')" :close-label="__('nav.close')">
+        {{ __('partner.thanks_line_1') }}<br>{{ __('partner.thanks_line_2') }}
+
+        <x-slot:decoration>
+            {{-- Aeroplanino di carta (XD "Tracciato 654": nel mockup sborda di 7px sotto il bordo) --}}
+            <svg viewBox="7.98 10.76 15.54 14.51" aria-hidden="true" class="absolute bottom-[8px] right-[28px] h-[15px] w-[16px] text-brand-cyan">
+                <path fill="currentColor" d="M 23.45912933349609 18.17945861816406 C 23.47298622131348 18.16393852233887 23.48444366455078 18.14694023132324 23.49367904663086 18.12846374511719 C 23.49718856811523 18.12144470214844 23.50032997131348 18.11497688293457 23.50309944152832 18.1077709197998 C 23.51252365112305 18.08227920532227 23.5191764831543 18.05548477172852 23.5191764831543 18.02740478515625 C 23.5191764831543 17.99932098388672 23.51252365112305 17.97253036499023 23.5029182434082 17.94703483581543 C 23.50014686584473 17.93982887268066 23.49700927734375 17.93336296081543 23.49349212646484 17.92634391784668 C 23.4842586517334 17.90768432617188 23.47298622131348 17.890869140625 23.45894622802734 17.8753490447998 C 23.45469665527344 17.87054443359375 23.45118713378906 17.86537170410156 23.44656944274902 17.86093902587891 C 23.4288330078125 17.84394264221191 23.40887832641602 17.82897758483887 23.38578414916992 17.81826019287109 L 8.328280448913574 10.80331230163574 C 8.240521430969238 10.76211357116699 8.136136054992676 10.7807731628418 8.067221641540527 10.84950065612793 C 7.998679161071777 10.91804504394531 7.980387687683105 11.02243232727051 8.021403312683105 11.11037349700928 L 11.25516414642334 18.02721786499023 L 8.021403312683105 24.94424819946289 C 7.980387687683105 25.03237724304199 7.998679161071777 25.13657760620117 8.067221641540527 25.20512199401855 C 8.111563682556152 25.24946594238281 8.170868873596191 25.27292823791504 8.230730056762695 25.27292823791504 C 8.263799667358398 25.27292823791504 8.297056198120117 25.26590538024902 8.328280448913574 25.25131225585938 L 23.38578414916992 18.23654747009277 C 23.40887832641602 18.22564697265625 23.4288330078125 18.21068382263184 23.44656944274902 18.19386863708496 C 23.45137214660645 18.18943405151367 23.45469665527344 18.18444442749023 23.45912933349609 18.17945861816406 Z M 8.708874702453613 11.49004554748535 L 22.24547958374023 17.79645919799805 L 11.65700626373291 17.7962760925293 L 8.708874702453613 11.49004554748535 Z M 11.65719032287598 18.25816345214844 L 22.24584579467773 18.25834655761719 L 8.70887565612793 24.56457710266113 L 11.65719032287598 18.25816345214844 Z" />
+            </svg>
+        </x-slot:decoration>
+    </x-sweet-alert>
 
     {{-- Su mobile il footer lascia il posto alla tabbar (XD app) --}}
     <div class="max-lg:hidden">
