@@ -53,7 +53,8 @@
     </div>
 
     @if ($review)
-        {{-- XD: pillola grigia piena (319x39 r20 #F4F4F4), non un link testuale --}}
-        <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }})" class="!mt-[18px] !h-[39px] !w-full !gap-[7px] !rounded-[20px] !bg-[#F4F4F4] !text-sm !font-bold !text-[#0D171A] hover:!bg-[#EAEAEA] [&_svg]:!size-[14px]">{{ $reviewed ? __('profile.view_review') : __('profile.write_review') }}</flux:button>
+        {{-- XD: pillola grigia piena (319x39 r20 #F4F4F4), non un link testuale.
+             asModal false: qui la recensione è la schermata inline, non il pop-up desktop. --}}
+        <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }}, false)" class="!mt-[18px] !h-[39px] !w-full !gap-[7px] !rounded-[20px] !bg-[#F4F4F4] !text-sm !font-bold !text-[#0D171A] hover:!bg-[#EAEAEA] [&_svg]:!size-[14px]">{{ $reviewed ? __('profile.view_review') : __('profile.write_review') }}</flux:button>
     @endif
 </article>

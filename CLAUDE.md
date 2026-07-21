@@ -49,6 +49,7 @@ The app is served by a Homestead-style VM: `http://animalamo.test` → `192.168.
 
 - `flux:button` with `wire:click` wraps the slot in a `display:block` `<span>` (spinner swap) that stacks icon above label → add `[&>span]:flex [&>span]:items-center [&>span]:gap-2`.
 - `flux:tabs` must ALWAYS sit inside `flux:tab.group`.
+- **Never `Flux::modal(...)->show()` on a modal that a breakpoint hides.** `flux:modal` is a native `<dialog>`; `showModal()` blocks the whole document even when an ancestor is `display:none`, so a desktop-only modal opened from a mobile viewport leaves the page inert (nothing clickable, scroll locked) with no visible pop-up. PHP can't see the viewport — let the clicked control say which UI it wants (e.g. `openReview($id, asModal: false)` from the mobile pill).
 - More traps (screenshots, selectors, custom elements) in the `verify-in-browser` skill.
 
 ## Project skills (.claude/skills/)

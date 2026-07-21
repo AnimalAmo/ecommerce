@@ -192,6 +192,31 @@ class ProfileOrdersTest extends TestCase
             ->assertSet('reviewTitle', 'Super weekend rilassante!');
     }
 
+    public function test_desktop_review_control_opens_the_modal(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $order->items->first()->id)
+            ->assertDispatched('modal-show');
+    }
+
+    public function test_mobile_review_control_does_not_open_the_desktop_modal(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+
+        // Il pop-up desktop vive in un wrapper max-lg:hidden: da mobile showModal() aprirebbe
+        // un <dialog> invisibile che rende inerte tutta la pagina (indietro/condividi morti).
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $order->items->first()->id, false)
+            ->assertSet('reviewItemId', $order->items->first()->id)
+            ->assertNotDispatched('modal-show');
+    }
+
     public function test_upcoming_order_summary_still_offers_the_review_button(): void
     {
         $user = User::factory()->create();

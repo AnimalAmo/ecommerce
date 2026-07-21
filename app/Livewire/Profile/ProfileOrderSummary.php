@@ -40,15 +40,24 @@ class ProfileOrderSummary extends Component
         $this->orderModel();
     }
 
-    /** "Scrivi una recensione" / "Vedi recensione": apre il form, già compilato se la riga è recensita. */
-    public function openReview(int $itemId): void
+    /**
+     * "Scrivi una recensione" / "Vedi recensione": apre il form, già compilato se la riga è recensita.
+     *
+     * $asModal distingue il controllo desktop (pop-up) da quello mobile (schermata inline): il
+     * <dialog> Flux sta in un wrapper max-lg:hidden, e showModal() su un dialog non renderizzato
+     * blocca comunque il resto del documento — da mobile ne uscirebbe una pagina inerte
+     * (indietro, campi e "condividi" morti). Il viewport lo sa solo il controllo cliccato.
+     */
+    public function openReview(int $itemId, bool $asModal = true): void
     {
         if ($this->orderModel()->items->contains('id', $itemId)) {
             $this->reviewItemId = $itemId;
             $this->reviewTitle = $this->reviews[$itemId]['title'] ?? '';
             $this->reviewText = $this->reviews[$itemId]['text'] ?? '';
 
-            Flux::modal('scrivi-recensione')->show();
+            if ($asModal) {
+                Flux::modal('scrivi-recensione')->show();
+            }
         }
     }
 
