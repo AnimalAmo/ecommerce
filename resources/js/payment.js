@@ -133,6 +133,71 @@ window.stripePayment = (clientSecret, publishableKey, options = {}) => ({
     },
 });
 
+// ─── Payment Element in modalità setup (Profilo → Dati pagamento) ──────────
+// Salva la carta senza addebito: il PAN va da Stripe, noi vediamo solo il
+// SetupIntent, che il server riverifica prima di persistere il payment method.
+// options: { returnUrl, incompleteMessage }
+window.stripeSetupMethod = (clientSecret, publishableKey, options = {}) => ({
+    stripe: null,
+    elements: null,
+    stopListening: null,
+
+    async init() {
+        try {
+            const StripeFactory = await loadStripeJs();
+            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret));
+            // Il titolare è un campo nostro (label del mock XD) e il mock non
+            // prevede il paese: entrambi 'never', li passiamo in confirmParams.
+            this.elements
+                .create('payment', {
+                    layout: 'tabs',
+                    fields: { billingDetails: { name: 'never', address: { country: 'never' } } },
+                    wallets: { applePay: 'never', googlePay: 'never', link: 'never' },
+                })
+                .mount(this.$refs.element);
+        } catch (error) {
+            console.error('[Stripe setup] init failed', error);
+            this.$wire.reportSetupInitFailed();
+            return;
+        }
+
+        // "Salva" → save() valida il titolare lato server e poi dispatcha.
+        this.stopListening = Livewire.on('confirm-setup', ({ name }) => this.confirm(name));
+
+        this.$wire.markElementReady();
+    },
+
+    async confirm(name) {
+        // return_url è richiesto dall'API ma la carta conferma senza redirect;
+        // in caso di 3DS con redirect Stripe torna qui con setup_intent nell'url.
+        const { error, setupIntent } = await this.stripe.confirmSetup({
+            elements: this.elements,
+            confirmParams: {
+                return_url: options.returnUrl,
+                payment_method_data: {
+                    billing_details: { name, address: { country: options.country } },
+                },
+            },
+            redirect: 'if_required',
+        });
+
+        if (error) {
+            this.$wire.onSetupFailed(error.message || options.incompleteMessage || '');
+            return;
+        }
+
+        if (setupIntent && setupIntent.status === 'succeeded') {
+            this.$wire.onSetupSucceeded({ setup_intent_id: setupIntent.id });
+        } else {
+            this.$wire.onSetupFailed(options.incompleteMessage || '');
+        }
+    },
+
+    destroy() {
+        if (typeof this.stopListening === 'function') this.stopListening();
+    },
+});
+
 // ─── Express Checkout Element (Apple Pay / Google Pay) ──────────────────────
 // options: { wallet: 'applePay'|'googlePay', returnUrl, incompleteMessage }
 window.stripeExpressCheckout = (clientSecret, publishableKey, options = {}) => ({

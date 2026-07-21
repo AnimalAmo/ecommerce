@@ -60,6 +60,24 @@ class User extends Authenticatable
         return Attribute::get(fn (): string => trim($this->first_name.' '.$this->last_name));
     }
 
+    /**
+     * Carta salvata su Stripe (Profilo → Dati pagamento). Le colonne card_*
+     * sono solo lo specchio mascherato del payment method: non sono fillable,
+     * le scrive SOLO SavedPaymentMethodService dopo il SetupIntent.
+     */
+    public function hasSavedCard(): bool
+    {
+        return $this->stripe_payment_method_id !== null && $this->card_last4 !== null;
+    }
+
+    /** Scadenza in formato MM/AA come nel mock XD (vuota se manca la carta). */
+    protected function cardExpiry(): Attribute
+    {
+        return Attribute::get(fn (): string => $this->card_exp_month === null || $this->card_exp_year === null
+            ? ''
+            : sprintf('%02d/%02d', $this->card_exp_month, $this->card_exp_year % 100));
+    }
+
     public function pets(): HasMany
     {
         return $this->hasMany(Pet::class);

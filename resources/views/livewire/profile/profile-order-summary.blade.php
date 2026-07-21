@@ -9,7 +9,7 @@
     @include('partials.site-header')
 
     <main class="flex-1 bg-[linear-gradient(to_top_left,#FF3EA51A,#68CDEB1A)]">
-        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-9">
+        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-4">
             <div class="{{ $card }} p-6 max-lg:p-0">
                 @include('partials.profile-mobile-header', [
                     'title' => __('profile.order_summary_title'),

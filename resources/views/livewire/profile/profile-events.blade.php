@@ -9,7 +9,7 @@
     @include('partials.site-header')
 
     <main class="flex-1 bg-[linear-gradient(to_top_left,#FF3EA51A,#68CDEB1A)]">
-        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-9">
+        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-4">
             <div class="flex flex-col gap-10 lg:flex-row lg:gap-[61px]">
                 @include('partials.profile-sidebar', ['active' => 'eventi'])
 
