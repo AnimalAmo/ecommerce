@@ -16,20 +16,7 @@
 
         {{-- Riga meta per tipo: star/calendar custom tintabili; user/clock/shopping-bag = heroicon più vicine (approssimazione accettata a queste taglie) --}}
         <div class="mt-[6px] flex items-center gap-[6px] text-brand-magenta">
-            @switch($item['metaType'])
-                @case('rating')
-                    <flux:icon.star class="h-[11px] w-[11px] shrink-0" />
-                    @break
-                @case('data')
-                    <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
-                    @break
-                @case('persone')
-                    <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />
-                    @break
-                @case('durata')
-                    <flux:icon.clock class="!h-[11px] !w-[11px] shrink-0" />
-                    @break
-            @endswitch
+            @include('partials.card-meta-icon', ['metaType' => $item['metaType'], 'class' => '!h-[11px] !w-[11px]'])
             <span class="truncate text-[11px] font-bold leading-none">{{ $item['metaText'] }}</span>
         </div>
 
