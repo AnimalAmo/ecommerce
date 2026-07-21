@@ -19,6 +19,9 @@ class ProfileOrderSummary extends Component
     /** Riga ordine in recensione nel pop-up (XD "Pop-up scrivi recensione"); null = chiuso. */
     public ?int $reviewItemId = null;
 
+    /** Riga con recensione appena condivisa: apre lo sweet alert verde dell'app; null = chiuso. */
+    public ?int $reviewDoneItemId = null;
+
     public string $reviewTitle = '';
 
     public string $reviewText = '';
@@ -52,11 +55,21 @@ class ProfileOrderSummary extends Component
         Flux::modal('scrivi-recensione')->close();
     }
 
-    /** "Conferma": chiude e basta — submit ancora mock (recensioni reali = step 5). */
+    /** "Conferma"/"Condividi": chiude e apre lo sweet alert — submit ancora mock (recensioni reali = step 5). */
     public function confirmReview(): void
     {
         // TODO: invio recensione backend (step 5)
+        $shared = $this->reviewItemId;
+
         $this->closeReview();
+
+        $this->reviewDoneItemId = $shared;
+    }
+
+    /** X / click fuori dallo sweet alert "Recensione condivisa con successo!". */
+    public function dismissReviewDone(): void
+    {
+        $this->reviewDoneItemId = null;
     }
 
     public function render(OrderQueryService $orders)
@@ -68,6 +81,7 @@ class ProfileOrderSummary extends Component
             // Testata conteggio | data | totale: solo mobile (l'artboard app la mostra sopra le card).
             'header' => $orders->presentHeader($this->orderModel()),
             'reviewItem' => collect($items)->firstWhere('id', $this->reviewItemId),
+            'reviewDoneItem' => collect($items)->firstWhere('id', $this->reviewDoneItemId),
         ])->title(__('profile.title_order_summary'));
     }
 

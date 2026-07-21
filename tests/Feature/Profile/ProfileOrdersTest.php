@@ -3,6 +3,7 @@
 namespace Tests\Feature\Profile;
 
 use App\Livewire\Profile\ProfileOrders;
+use App\Livewire\Profile\ProfileOrderSummary;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\User;
@@ -164,6 +165,40 @@ class ProfileOrdersTest extends TestCase
             ->assertSee('Hotel Fantasma')
             ->assertSee(Format::money(21500))
             ->assertSee(Format::dateRange($from, $until));
+    }
+
+    public function test_review_flow_opens_the_form_and_ends_on_the_success_alert(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+        $item = $order->items->first();
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->assertSet('past', true)
+            ->call('openReview', $item->id)
+            ->assertSet('reviewItemId', $item->id)
+            ->set('reviewTitle', 'Super weekend rilassante!')
+            ->call('confirmReview')
+            // Il form si chiude e lascia il posto allo sweet alert verde sulla stessa riga.
+            ->assertSet('reviewItemId', null)
+            ->assertSet('reviewDoneItemId', $item->id)
+            ->assertSee(__('profile.review_shared'))
+            ->call('dismissReviewDone')
+            ->assertSet('reviewDoneItemId', null)
+            ->assertDontSee(__('profile.review_shared'));
+    }
+
+    public function test_review_cannot_be_opened_on_an_item_of_another_order(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+        $other = $this->orderWithWindow($user, now()->subDays(20), now()->subDays(15));
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $other->items->first()->id)
+            ->assertSet('reviewItemId', null);
     }
 
     public function test_gift_order_summary_shows_dedication_and_message(): void

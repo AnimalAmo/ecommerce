@@ -102,6 +102,10 @@ return [
     'write_review' => 'Scrivi una recensione',
     'review_title_placeholder' => 'Titolo',
     'review_text_placeholder' => 'Recensione',
+    'review_title_label' => 'Titolo',
+    'review_text_label' => 'Descrizione',
+    'review_share' => 'Condividi',
+    'review_shared' => 'Recensione condivisa con successo!',
     'gift_dedicated_to' => 'Dedicato a: :name',
     'gift_message' => 'Messaggio: :message',
 

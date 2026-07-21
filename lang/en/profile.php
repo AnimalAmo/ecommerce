@@ -102,6 +102,10 @@ return [
     'write_review' => 'Write a review',
     'review_title_placeholder' => 'Title',
     'review_text_placeholder' => 'Review',
+    'review_title_label' => 'Title',
+    'review_text_label' => 'Description',
+    'review_share' => 'Share',
+    'review_shared' => 'Review shared successfully!',
     'gift_dedicated_to' => 'Dedicated to: :name',
     'gift_message' => 'Message: :message',
 
