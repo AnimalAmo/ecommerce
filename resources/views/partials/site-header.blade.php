@@ -53,7 +53,8 @@
                 </div>
 
                 @auth
-                    <flux:dropdown>
+                    {{-- Profilo: solo desktop, su mobile è la voce fissa della tabbar --}}
+                    <flux:dropdown class="max-lg:hidden">
                         <flux:button variant="ghost" size="sm" square aria-label="{{ __('nav.profile') }}" class="!rounded-full !text-ink hover:!text-brand-cyan">
                             <flux:icon.profile class="h-5 w-5" />
                         </flux:button>
@@ -126,8 +127,8 @@
             </div>
         @endguest
         @auth
+            {{-- Niente "Il mio profilo": su mobile il profilo è la voce fissa della tabbar --}}
             <div class="mt-6 flex flex-col text-base font-semibold text-black">
-                <a href="{{ route('profilo') }}" class="border-b border-gray-150 py-4">{{ __('nav.my_profile') }}</a>
                 <a href="{{ route('profilo.ordini') }}" class="border-b border-gray-150 py-4">{{ __('nav.my_orders') }}</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

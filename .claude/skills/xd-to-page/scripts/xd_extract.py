@@ -12,6 +12,7 @@ Stdlib only. Artboard name match is case-insensitive prefix; pass the id too.
 """
 import io
 import json
+import re
 import shutil
 import sys
 import zipfile
@@ -40,6 +41,20 @@ class XD:
         for s in ux.get('symbols', []):
             if s.get('id'):
                 self.symbols[s['id']] = s
+        # Un syncRef punta al singolo NODO dentro la definizione del symbol (o dentro
+        # uno dei suoi `states`, le varianti del componente), non al symbol stesso:
+        # cercarlo solo fra i symbol lascia gruppi vuoti nel dump (Tag, Indietro, …).
+        self.nodes = {}
+        for s in ux.get('symbols', []):
+            self._index(s)
+
+    def _index(self, node):
+        if node.get('id'):
+            self.nodes.setdefault(node['id'], node)
+        for c in children_of(node):
+            self._index(c)
+        for state in node.get('meta', {}).get('ux', {}).get('states', []) or []:
+            self._index(state)
 
     def artboards(self):
         for top in self.manifest.get('children', []):
@@ -88,6 +103,31 @@ def stroke_desc(st):
     return f'{color}@{s.get("width")}'
 
 
+def shape_box(sh):
+    """Bounding box (x0, y0, x1, y1) of a shape, relative to its own node.
+
+    Only `rect` carries width/height in the .agc: circles give r/cx/cy and paths give
+    nothing but the SVG `d`. Measuring those from a PNG export is guesswork, so derive
+    them here — the numbers in `d` are plain absolute coordinate pairs.
+    """
+    t = sh.get('type')
+    if t == 'rect':
+        return (sh.get('x', 0), sh.get('y', 0),
+                sh.get('x', 0) + sh.get('width', 0), sh.get('y', 0) + sh.get('height', 0))
+    if t in ('circle', 'ellipse'):
+        rx = sh.get('rx', sh.get('r', 0))
+        ry = sh.get('ry', sh.get('r', 0))
+        cx, cy = sh.get('cx', 0), sh.get('cy', 0)
+        return (cx - rx, cy - ry, cx + rx, cy + ry)
+    if t in ('path', 'compoundPath'):
+        nums = [float(n) for n in re.findall(r'-?\d+(?:\.\d+)?(?:[eE]-?\d+)?', sh.get('path') or '')]
+        if len(nums) < 2:
+            return None
+        xs, ys = nums[0::2], nums[1::2]
+        return (min(xs), min(ys), max(xs), max(ys))
+    return None
+
+
 def shadow_descs(st):
     """dropShadow filters as `shadow=dx,dy,blur,#RRGGBB@alpha` (CSS box-shadow order)."""
     out = []
@@ -102,6 +142,15 @@ def shadow_descs(st):
     return out
 
 
+def baseline_offset(text):
+    """Offset della baseline della prima riga rispetto all'origine del nodo testo."""
+    for para in text.get('paragraphs', []):
+        for line in para.get('lines', []):
+            for run in line:
+                return run.get('y', 0)
+    return 0
+
+
 def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     """Walk a node tree, expanding syncRef symbol instances, accumulating offsets."""
     if out is None:
@@ -110,7 +159,7 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
         return out
     if node.get('type') == 'syncRef':
         guid = node.get('syncSourceGuid')
-        sym = xd.symbols.get(guid)
+        sym = xd.symbols.get(guid) or xd.nodes.get(guid)
         if sym and guid not in seen:
             seen.add(guid)
             describe(sym, xd, depth, ox, oy, out, seen)
@@ -124,18 +173,33 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     typ = node.get('type', '?')
     name = node.get('name')
     if typ == 'text':
-        raw = node.get('text', {}).get('rawText', '').replace('\n', '\\n')
+        txt = node.get('text', {})
+        raw = txt.get('rawText', '').replace('\n', '\\n')
         f = st.get('font', {})
         fill = hexcolor(st.get('fill', {}).get('color', {}).get('value'))
         bits.append(f'TEXT {raw!r} font={f.get("postscriptName") or f.get("family")}'
                     f' size={f.get("size")} color={fill}')
+        # L'origine del nodo NON è il bordo del testo: XD tiene la baseline della prima
+        # riga in text.paragraphs[0].lines[0][0].y (0 per frame "positioned", ~size per
+        # "autoHeight"). Senza questo si sbaglia lo spacing verticale di una riga intera.
+        bits.append(f'baseline={y + baseline_offset(txt):.0f}')
     elif typ == 'shape':
         sh = node.get('shape', {})
         fill = hexcolor(st.get('fill', {}).get('color', {}).get('value'))
         r = sh.get('r')
-        bits.append(f'SHAPE {sh.get("type")} w={sh.get("width")} h={sh.get("height")}'
+        w, h = sh.get('width'), sh.get('height')
+        box = shape_box(sh)
+        if w is None and box:
+            # path/circle non dichiarano width/height: senza queste misure un tondo o
+            # un'icona restano "w=None" e si finisce a stimarle a occhio dal PNG.
+            w, h = f'{box[2] - box[0]:.0f}', f'{box[3] - box[1]:.0f}'
+        bits.append(f'SHAPE {sh.get("type")} w={w} h={h}'
                     f' fill={fill} stroke={stroke_desc(st)}'
                     + (f' radius={r}' if r else ''))
+        # Un path parte quasi sempre a un offset dal proprio nodo: senza il box assoluto
+        # la [x,y] della riga non è l'angolo di ciò che si vede.
+        if box and sh.get('type') != 'rect':
+            bits.append(f'box=[{x + box[0]:.0f},{y + box[1]:.0f}]')
     elif typ in ('group', 'artboard'):
         bits.append(f'GROUP {name!r}' if name else 'GROUP')
         pad = node.get('meta', {}).get('ux', {}).get('contentPadding')

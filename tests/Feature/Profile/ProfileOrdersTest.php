@@ -3,6 +3,7 @@
 namespace Tests\Feature\Profile;
 
 use App\Livewire\Profile\ProfileOrders;
+use App\Livewire\Profile\ProfileOrderSummary;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\User;
@@ -57,7 +58,7 @@ class ProfileOrdersTest extends TestCase
         Livewire::actingAs($user)
             ->test(ProfileOrders::class)
             ->assertSee($order->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertDontSee($order->order_number);
     }
 
@@ -69,7 +70,7 @@ class ProfileOrdersTest extends TestCase
         Livewire::actingAs($user)
             ->test(ProfileOrders::class)
             ->assertDontSee($order->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertSee($order->order_number);
     }
 
@@ -90,7 +91,7 @@ class ProfileOrdersTest extends TestCase
         Livewire::actingAs($user)
             ->test(ProfileOrders::class)
             ->assertSee($order->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertDontSee($order->order_number);
     }
 
@@ -112,7 +113,7 @@ class ProfileOrdersTest extends TestCase
             ->test(ProfileOrders::class)
             ->assertSee($valid->order_number)
             ->assertDontSee($expired->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertSee($expired->order_number)
             ->assertDontSee($valid->order_number);
     }
@@ -164,6 +165,80 @@ class ProfileOrdersTest extends TestCase
             ->assertSee('Hotel Fantasma')
             ->assertSee(Format::money(21500))
             ->assertSee(Format::dateRange($from, $until));
+    }
+
+    public function test_review_flow_opens_the_form_and_ends_on_the_success_alert(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+        $item = $order->items->first();
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $item->id)
+            ->assertSet('reviewItemId', $item->id)
+            ->set('reviewTitle', 'Super weekend rilassante!')
+            ->call('confirmReview')
+            // Il form si chiude e lascia il posto allo sweet alert verde sulla stessa riga.
+            ->assertSet('reviewItemId', null)
+            ->assertSet('reviewDoneItemId', $item->id)
+            ->assertSee(__('profile.review_shared'))
+            ->call('dismissReviewDone')
+            ->assertSet('reviewDoneItemId', null)
+            ->assertDontSee(__('profile.review_shared'))
+            // Riga recensita: la pillola cambia etichetta e il form si riapre compilato.
+            ->assertSee(__('profile.view_review'))
+            ->call('openReview', $item->id)
+            ->assertSet('reviewTitle', 'Super weekend rilassante!');
+    }
+
+    public function test_desktop_review_control_opens_the_modal(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $order->items->first()->id)
+            ->assertDispatched('modal-show');
+    }
+
+    public function test_mobile_review_control_does_not_open_the_desktop_modal(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+
+        // Il pop-up desktop vive in un wrapper max-lg:hidden: da mobile showModal() aprirebbe
+        // un <dialog> invisibile che rende inerte tutta la pagina (indietro/condividi morti).
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $order->items->first()->id, false)
+            ->assertSet('reviewItemId', $order->items->first()->id)
+            ->assertNotDispatched('modal-show');
+    }
+
+    public function test_upcoming_order_summary_still_offers_the_review_button(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->addDays(5), now()->addDays(10));
+
+        // Il controllo recensione non dipende dal bucket: l'artboard app del riepilogo lo
+        // tiene su ogni card ed è raggiunto proprio da "i miei ordini - in programma".
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->assertSee(__('profile.write_review'));
+    }
+
+    public function test_review_cannot_be_opened_on_an_item_of_another_order(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->subDays(10), now()->subDays(5));
+        $other = $this->orderWithWindow($user, now()->subDays(20), now()->subDays(15));
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->call('openReview', $other->items->first()->id)
+            ->assertSet('reviewItemId', null);
     }
 
     public function test_gift_order_summary_shows_dedication_and_message(): void

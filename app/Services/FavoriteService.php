@@ -123,12 +123,64 @@ class FavoriteService
         ));
     }
 
+    /**
+     * Card "Le attività più amate su Animal-Amo" (stato vuoto di carrello e
+     * preferiti): i prodotti più messi tra i preferiti, tie-break id crescente.
+     * Stesso contratto di card(), ma id = 'alias-id' (unico tra i morph:
+     * qui non c'è una riga favorites dell'utente da cui prendere la PK).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function topFavorited(int $limit = 3): array
+    {
+        return Favorite::query()
+            ->select(['favoritable_type', 'favoritable_id'])
+            ->selectRaw('count(*) as favorites_count')
+            ->groupBy('favoritable_type', 'favoritable_id')
+            ->orderByDesc('favorites_count')
+            ->orderBy('favoritable_id')
+            ->limit($limit)
+            ->get()
+            ->map(function (Favorite $row): ?array {
+                $product = Relation::getMorphedModel($row->favoritable_type)::find($row->favoritable_id);
+
+                // Prodotti nel frattempo rimossi dal catalogo: card saltata.
+                return $product !== null ? $this->cardFields($product) + [
+                    'id' => $row->favoritable_type.'-'.$product->getKey(),
+                    'type' => $product->type->value,
+                    'favoritable_type' => $row->favoritable_type,
+                    'favoritable_id' => $product->getKey(),
+                    'photo' => $product->imageUrl(),
+                ] : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
     /** Presenta il prodotto preferito nella card, per famiglia (Event / Structure / SmartboxPackage). */
     private function present(Favorite $favorite): array
     {
         $product = $favorite->favoritable;
 
-        $card = match (true) {
+        return $this->cardFields($product) + [
+            'id' => $favorite->id,
+            'type' => $product->type->value,
+            // Alias morph + PK del prodotto (dalla riga Favorite): l'aggiunta reale
+            // al carrello deriva la famiglia dal ProductType, ma scrive sull'alias.
+            'favoritable_type' => $favorite->favoritable_type,
+            'favoritable_id' => $favorite->favoritable_id,
+            // Eventi gratuiti / "Partecipa" non sono acquistabili: niente bottone borsa.
+            'can_add_to_cart' => ! ($product instanceof Event && $product->hasJoinCta()),
+            // Stessa foto della card listing del prodotto (URL risolto da HasCatalogImages).
+            'photo' => $product->imageUrl(),
+        ];
+    }
+
+    /** Parte comune della card (titolo, riga pin, riga meta, prezzo), per famiglia di prodotto. */
+    private function cardFields(Model $product): array
+    {
+        return match (true) {
             $product instanceof Event => [
                 'title' => $product->title,
                 'location' => $product->location,
@@ -160,19 +212,6 @@ class FavoriteService
                 'price' => Format::money($product->price_from_cents),
             ],
         };
-
-        return $card + [
-            'id' => $favorite->id,
-            'type' => $product->type->value,
-            // Alias morph + PK del prodotto (dalla riga Favorite): l'aggiunta reale
-            // al carrello deriva la famiglia dal ProductType, ma scrive sull'alias.
-            'favoritable_type' => $favorite->favoritable_type,
-            'favoritable_id' => $favorite->favoritable_id,
-            // Eventi gratuiti / "Partecipa" non sono acquistabili: niente bottone borsa.
-            'can_add_to_cart' => ! ($product instanceof Event && $product->hasJoinCta()),
-            // Stessa foto della card listing del prodotto (URL risolto da HasCatalogImages).
-            'photo' => $product->imageUrl(),
-        ];
     }
 
     /**

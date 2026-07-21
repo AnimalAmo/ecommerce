@@ -81,8 +81,14 @@ return [
     'payment_card_number' => 'Card number',
     'payment_card_expiry' => 'Expiry date',
     'payment_card_cvv' => 'Security code',
-    'payment_expiry_placeholder' => 'MM/YY',
-    'payment_cvv_placeholder' => '3 digits',
+    'payment_edit_card' => 'Edit card',
+    'payment_remove_card' => 'Delete card',
+    'payment_remove_confirm' => 'Delete the saved card?',
+    'payment_card_saved' => 'Card saved successfully',
+    'payment_card_removed' => 'Card deleted',
+    'payment_card_error' => 'We could not save your card. Please try again.',
+    'payment_card_incomplete' => 'Complete the card details to save it.',
+    'payment_unavailable' => 'Saving a card is not available right now. Please try again later.',
 
     // Security and Privacy
     'current_password_label' => 'Current password',
@@ -94,8 +100,13 @@ return [
 
     // Order summary / review
     'write_review' => 'Write a review',
+    'view_review' => 'View review',
     'review_title_placeholder' => 'Title',
     'review_text_placeholder' => 'Review',
+    'review_title_label' => 'Title',
+    'review_text_label' => 'Description',
+    'review_share' => 'Share',
+    'review_shared' => 'Review shared successfully!',
     'gift_dedicated_to' => 'Dedicated to: :name',
     'gift_message' => 'Message: :message',
 

@@ -120,7 +120,31 @@ class FavoritesPageTest extends TestCase
         $this->get('/preferiti')
             ->assertOk()
             ->assertSee('Aggiungi nuove avventure nei preferiti')
-            ->assertDontSee('Hotel Brescia');
+            // Nessuna card personale: il cuore che cancella una riga favorites non esiste in pagina.
+            ->assertDontSee('removeFavorite(');
+    }
+
+    public function test_the_empty_state_offers_the_most_favorited_products(): void
+    {
+        // Carosello mobile dello stato vuoto (artboard app "Preferiti - vuoti"):
+        // le 3 attività più messe tra i preferiti, non i preferiti dell'utente.
+        $response = $this->get('/preferiti')
+            ->assertOk()
+            ->assertSee('Le attività più amate su Animal-Amo')
+            ->assertSee('most-loved-');
+
+        // Le card sono al massimo 3, come nello stato vuoto del carrello.
+        $this->assertLessThanOrEqual(3, substr_count($response->getContent(), 'wire:key="most-loved-'));
+    }
+
+    public function test_the_mobile_list_opens_on_the_count_line(): void
+    {
+        // XD app "Preferiti": riga "Preferiti (N prodotti)" al posto del titolo desktop
+        // ("Preferiti" semibold, il conteggio in un suo span grigio).
+        $this->actingAs($this->giulia)->get('/preferiti')
+            ->assertOk()
+            ->assertSee('(6 prodotti)')
+            ->assertDontSee('Le attività più amate su Animal-Amo');
     }
 
     public function test_user_without_favorites_sees_the_empty_state(): void

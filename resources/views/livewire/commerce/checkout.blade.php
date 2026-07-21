@@ -86,8 +86,33 @@
                                     </flux:button>
 
                                     @if ($paymentMethod === 'card')
+                                        {{-- Carta salvata a profilo: sotto-scelta della riga carta (i guest non la vedono) --}}
+                                        @if ($savedCardLast4 !== null)
+                                            <div class="mt-3 space-y-1 pl-[26px]">
+                                                @foreach ([
+                                                    ['saved' => true, 'label' => __('checkout.ui.saved_card', ['last4' => $savedCardLast4])],
+                                                    ['saved' => false, 'label' => __('checkout.ui.new_card')],
+                                                ] as $choice)
+                                                    <flux:button variant="ghost" wire:click="selectSavedCard({{ $choice['saved'] ? 'true' : 'false' }})" wire:key="card-choice-{{ $choice['saved'] ? 'saved' : 'new' }}" class="!h-7 !w-full !justify-start !p-0 !text-[15px] !font-normal !text-[#0D171A] hover:!bg-transparent hover:!text-[#0D171A] [&>span]:flex [&>span]:items-center [&>span]:gap-[10px]">
+                                                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full {{ $useSavedCard === $choice['saved'] ? 'bg-brand-yellow' : 'border border-[#C8C8C8] bg-white' }}">
+                                                            @if ($useSavedCard === $choice['saved'])
+                                                                <flux:icon.check class="h-2 w-2 text-black" />
+                                                            @endif
+                                                        </span>
+                                                        {{ $choice['label'] }}
+                                                    </flux:button>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
                                         @if ($paymentUnavailable || $clientSecret === null)
                                             <div class="mt-4 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[13px] leading-5 text-[#555555]">{{ __('checkout.payment_unavailable') }}</div>
+                                        @elseif ($useSavedCard && $savedCardLast4 !== null)
+                                            {{-- Nessun Element: il PI ha già la carta allegata, Stripe.js serve solo a confermare (3DS incluso) --}}
+                                            <div wire:ignore wire:key="stripe-saved-{{ $clientSecret }}"
+                                                x-data="stripeSavedCard(@js($clientSecret), @js($stripeKey), { method: 'card', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })"></div>
+
+                                            <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">{{ __('checkout.ui.pay_now') }}</flux:button>
                                         @else
                                             {{-- Payment Element (solo card), Appearance API allineata agli input Flux della pagina --}}
                                             <div wire:ignore wire:key="stripe-card-{{ $clientSecret }}" class="mt-4"

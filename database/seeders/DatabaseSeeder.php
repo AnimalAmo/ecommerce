@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             DemoUserSeeder::class,
             DemoOrderSeeder::class,
+            CommunitySeeder::class, // dopo gli utenti demo: "I miei post" è di Giulia
         ]);
     }
 }

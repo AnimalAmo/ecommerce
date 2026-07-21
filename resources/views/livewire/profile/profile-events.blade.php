@@ -9,7 +9,7 @@
     @include('partials.site-header')
 
     <main class="flex-1 bg-[linear-gradient(to_top_left,#FF3EA51A,#68CDEB1A)]">
-        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-9">
+        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-4">
             <div class="flex flex-col gap-10 lg:flex-row lg:gap-[61px]">
                 @include('partials.profile-sidebar', ['active' => 'eventi'])
 
@@ -19,19 +19,9 @@
 
                     <h1 class="text-2xl font-bold leading-none text-black max-lg:hidden">{{ __('profile.interests_title') }}</h1>
 
-                    {{-- App: tab a pillole al posto delle tab sottolineate --}}
-                    <div class="mt-[22px]">
-                        @include('partials.profile-mobile-tabs')
-                    </div>
-
                     {{-- Tab identiche a "I miei ordini" --}}
-                    <div class="relative mt-[50px] max-lg:hidden">
-                        <div class="absolute inset-x-0 bottom-0 h-px bg-[#DEDEDE]" aria-hidden="true"></div>
-                        <div class="relative flex gap-[50px]">
-                            @foreach ($tabs as $key => $label)
-                                <flux:button variant="ghost" wire:click="setTab('{{ $key }}')" wire:key="tab-{{ $key }}" class="relative !h-auto !rounded-none !p-0 !pb-3 !text-lg !font-medium !leading-none hover:!bg-transparent {{ $tab === $key ? '!text-[#68CDEB] after:absolute after:inset-x-0 after:bottom-0 after:h-[2.5px] after:bg-[#68CDEB]' : '!text-[#C8C8C8] hover:!text-[#C8C8C8]' }}">{{ $label }}</flux:button>
-                            @endforeach
-                        </div>
+                    <div class="mt-[22px] lg:mt-[50px]">
+                        @include('partials.profile-tabs')
                     </div>
 
                     @if ($events === [])
@@ -46,7 +36,8 @@
                                     <div class="flex gap-[10px]">
                                         <img src="{{ asset('img/xd/' . $event['photo']) }}" alt="{{ $event['title'] }}" class="h-[78px] w-[84px] shrink-0 rounded-[2px] object-cover">
 
-                                        <div class="flex min-w-0 flex-1 flex-col">
+                                        {{-- XD: il tag parte 6px sotto il bordo della foto, non a filo --}}
+                                        <div class="flex min-w-0 flex-1 flex-col pt-[6px]">
                                             <span class="flex h-[26px] w-fit items-center rounded-[3px] bg-brand-purple-soft px-[10px] text-[13px] font-medium text-white">{{ $event['tag'] }}</span>
                                             <h2 class="mt-[13px] truncate text-sm font-bold leading-none text-[#0D171A]">{{ $event['title'] }}</h2>
                                         </div>

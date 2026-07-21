@@ -12,6 +12,7 @@ return [
     'smartbox.detail' => 'smartbox/{box}',
     'about' => 'about-us',
     'community' => 'community',
+    'community.post' => 'community/{post}',
     'preferiti' => 'favourites',
     'carrello' => 'cart',
     'checkout' => 'checkout',

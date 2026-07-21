@@ -29,7 +29,11 @@ python3 .claude/skills/xd-to-page/scripts/xd_extract.py "$XD" images OUTDIR     
 
 Solo stdlib, nessuna dipendenza. Il nome artboard è un prefix match case-insensitive; funziona anche l'id. `dump --raw` per il JSON grezzo se il riassunto non basta.
 
-Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi.
+Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#… baseline=…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi: il `syncSourceGuid` non punta al symbol ma a un **nodo interno** alla sua definizione (o a uno dei suoi `states`, cioè le varianti del componente), quindi lo script indicizza tutti i nodi per id. Da lì escono le misure di Tag, "Indietro", "check", "invia" e della testata, che altrimenti sarebbero gruppi vuoti.
+
+- **Sui TEXT usa `baseline=`, non la `y`**: la `y` è l'origine del nodo, che per i frame `positioned` coincide con la baseline ma per gli `autoHeight` sta una riga più in alto. Confrontare `y` fra due testi di frame diverso sbaglia lo spacing di ~1 line-height. Da baseline a margini CSS: con `leading-none` il bordo superiore del testo sta a `baseline − size`, quello inferiore a `baseline + 0.25·size` (Nunito).
+
+- **`box=[x,y]` sui non-rect**: `path`, `circle` ed `ellipse` non dichiarano `width`/`height` nell'.agc — lo script le ricava (dal `d` SVG o da `r`/`cx`/`cy`) e stampa anche l'angolo reale del disegno, che quasi mai coincide con la `[x,y]` del nodo. Il tondo giallo del banner Community è `[168,197] SHAPE path w=40 h=40`, il `+` dentro è `w=15 h=15 box=[180,209]` (nodo a `[174,203]`). Usa `box=` per gli allineamenti, non la coordinata del nodo.
 
 - `stroke=none` = bordo **disattivato** (XD conserva il colore di uno stroke spento): niente `border` nel markup. Con il bordo attivo esce `stroke=#RRGGBB@spessore`.
 - `shadow=dx,dy,blur,#RRGGBB@alpha` (ordine CSS `box-shadow`) compare quando il nodo ha un dropShadow: `shadow=0,0,5.5,#000000@0.11` → `shadow-[0px_0px_6px_#0000001C]`. Un pannello "con contorno colorato" spesso è in realtà bianco con ombra.
@@ -45,7 +49,8 @@ Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenu
    ```
 5. **Icone**: SVG esportati in `storage/Icone/`; convertili a mano in `resources/views/flux/icon/<nome>.blade.php` (`<flux:icon.nome>`). Rimuovi i `fill="#..."` hardcoded sui path, altrimenti le classi Tailwind di colore non hanno effetto.
 6. Costruisci il componente Livewire + Flux seguendo le regole del CLAUDE.md (Flux-only, token, container `$px`).
-7. **Verifica fedeltà**: se esiste un PNG di riferimento in `design/<pagina>.png` (export 1x dell'artboard, gitignorato — vedi `design/README.md`), confronta visivamente con la skill `verify-in-browser`. Le spec extra dal cliente arrivano come snippet CSS in px: traducili letteralmente in classi arbitrarie (`rounded-[3px]`, `border-[#E9E9E9]`) salvo token esatto.
+7. **Misura, non guardare**: la verifica più veloce non è confrontare due PNG a occhio ma leggere i `getBoundingClientRect()` nel browser e sottrarli alle coordinate dell'artboard, ancorando tutto a un elemento (es. l'`h1`) perché l'header reale non è alto come quello dell'XD. Uno scarto costante su tutta la colonna = un solo margine sbagliato; scarti che crescono = un'altezza sbagliata che si accumula.
+8. **Verifica fedeltà**: se esiste un PNG di riferimento in `design/<pagina>.png` (export 1x dell'artboard, gitignorato — vedi `design/README.md`), confronta visivamente con la skill `verify-in-browser`. Le spec extra dal cliente arrivano come snippet CSS in px: traducili letteralmente in classi arbitrarie (`rounded-[3px]`, `border-[#E9E9E9]`) salvo token esatto.
 
 ## Formato .xd (se lo script non basta)
 
@@ -67,6 +72,8 @@ Nodi: `transform.tx/.ty` = offset dal parent (accumula per l'assoluto); `style.f
 | Aspettarsi PNG per-artboard dentro l'.xd | c'è solo `preview.png` di UN artboard; il layout viene dal JSON |
 | Coordinate dump usate come CSS | sono design coords a 1920px — mappa proporzioni |
 | Aprire lo script sul path `.xd` esterno | il file vero è quello doppio-annidato `X.xd/X.xd` (per l'App è un file zip, per gli altri una directory — lo script legge entrambi) |
-| Gruppo vuoto nel `dump` (es. campi input) | è un `syncRef` non risolto: la definizione sta in `resources/graphics/graphicContent.agc` sotto `resources.meta.ux.symbols[]` — cerca l'`id` del syncRef lì dentro |
+| Gruppo vuoto nel `dump` (es. campi input) | erano syncRef non risolti: ora lo script li espande. Se ne resta uno vuoto, il nodo sta in un `states[]` annidato non ancora indicizzato — controlla `meta.ux.symbolId`/`stateId` dell'istanza |
+| Dare per scontato lo stato "selezionato" di un controllo | le varianti stanno in `meta.ux.states[]` del symbol: il "check" dei filtri è un tondo pieno #DEDEDE che nello `Stato 2` diventa #6CD1EF con la spunta bianca |
+| Stimare a occhio la misura di un tondo o di un'icona | `dump` ora dà `w=`/`h=` anche per path e circle, più il `box=` con l'angolo vero |
 | Fidarsi del `fill` sulle icone-linea (es. X delle chip con fill arancio #FF9F3E) | i path aperti tipo `ion-close-outline` rendono solo lo `stroke`: il fill è un residuo invisibile in XD — usa il colore di stroke |
 | Disegnare un bordo colorato perché il dump mostra uno stroke | se la riga dice `stroke=none` il bordo è spento: quel colore è un residuo. Le "voci con contorno viola" del menu Profilo app sono bianche **senza bordo**, con `shadow=0,0,5.5,#000000@0.11` |

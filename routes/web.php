@@ -18,6 +18,7 @@ use App\Livewire\Content\AboutUs;
 use App\Livewire\Content\Community;
 use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
+use App\Livewire\Content\PostDetail;
 use App\Livewire\Partner\Activity\ActivityAnimalServices as PartnerActivityAnimalServices;
 use App\Livewire\Partner\Activity\ActivityCancellation as PartnerActivityCancellation;
 use App\Livewire\Partner\Activity\ActivityCost as PartnerActivityCost;
@@ -93,6 +94,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.smartbox.detail'), SmartboxDetail::class)->name('smartbox.detail');
     Route::get(LaravelLocalization::transRoute('routes.about'), AboutUs::class)->name('about');
     Route::get(LaravelLocalization::transRoute('routes.community'), Community::class)->name('community');
+    Route::get(LaravelLocalization::transRoute('routes.community.post'), PostDetail::class)->name('community.post');
     Route::get(LaravelLocalization::transRoute('routes.preferiti'), Favorites::class)->name('preferiti');
     Route::get(LaravelLocalization::transRoute('routes.carrello'), Cart::class)->name('carrello');
     Route::get(LaravelLocalization::transRoute('routes.checkout'), Checkout::class)->name('checkout');

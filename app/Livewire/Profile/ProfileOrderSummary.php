@@ -13,34 +13,51 @@ class ProfileOrderSummary extends Component
     /** order_number dalla rotta ({order}), scopato sull'utente autenticato (altrui → 404). */
     public string $order = '';
 
-    /** Ordine passato → variante XD "– 1": box 206px con "Scrivi una recensione". */
-    public bool $past = false;
-
     /** Riga ordine in recensione nel pop-up (XD "Pop-up scrivi recensione"); null = chiuso. */
     public ?int $reviewItemId = null;
+
+    /** Riga con recensione appena condivisa: apre lo sweet alert verde dell'app; null = chiuso. */
+    public ?int $reviewDoneItemId = null;
 
     public string $reviewTitle = '';
 
     public string $reviewText = '';
 
+    /**
+     * Recensioni scritte in questa sessione, per id riga: la pillola diventa "Vedi recensione"
+     * e riapre il form compilato. Mock finché le recensioni non hanno una tabella (step 5).
+     *
+     * @var array<int, array{title: string, text: string}>
+     */
+    public array $reviews = [];
+
     /** Ordine risolto una volta per request (mount, azioni e render). */
     private ?Order $resolvedOrder = null;
 
-    public function mount(OrderQueryService $orders): void
+    public function mount(): void
     {
-        // Bucket derivato: stesso criterio della lista (max booked_until < now()).
-        $this->past = $orders->isPast($this->orderModel());
+        // Ordine inesistente o di altri: 404 subito, non al primo render.
+        $this->orderModel();
     }
 
-    /** "Scrivi una recensione": apre il pop-up con i campi azzerati. */
-    public function openReview(int $itemId): void
+    /**
+     * "Scrivi una recensione" / "Vedi recensione": apre il form, già compilato se la riga è recensita.
+     *
+     * $asModal distingue il controllo desktop (pop-up) da quello mobile (schermata inline): il
+     * <dialog> Flux sta in un wrapper max-lg:hidden, e showModal() su un dialog non renderizzato
+     * blocca comunque il resto del documento — da mobile ne uscirebbe una pagina inerte
+     * (indietro, campi e "condividi" morti). Il viewport lo sa solo il controllo cliccato.
+     */
+    public function openReview(int $itemId, bool $asModal = true): void
     {
         if ($this->orderModel()->items->contains('id', $itemId)) {
             $this->reviewItemId = $itemId;
-            $this->reviewTitle = '';
-            $this->reviewText = '';
+            $this->reviewTitle = $this->reviews[$itemId]['title'] ?? '';
+            $this->reviewText = $this->reviews[$itemId]['text'] ?? '';
 
-            Flux::modal('scrivi-recensione')->show();
+            if ($asModal) {
+                Flux::modal('scrivi-recensione')->show();
+            }
         }
     }
 
@@ -52,22 +69,41 @@ class ProfileOrderSummary extends Component
         Flux::modal('scrivi-recensione')->close();
     }
 
-    /** "Conferma": chiude e basta — submit ancora mock (recensioni reali = step 5). */
+    /** "Conferma"/"Condividi": chiude e apre lo sweet alert — submit ancora mock (recensioni reali = step 5). */
     public function confirmReview(): void
     {
         // TODO: invio recensione backend (step 5)
+        $shared = $this->reviewItemId;
+
+        if ($shared !== null) {
+            $this->reviews[$shared] = ['title' => $this->reviewTitle, 'text' => $this->reviewText];
+        }
+
         $this->closeReview();
+
+        $this->reviewDoneItemId = $shared;
+    }
+
+    /** X / click fuori dallo sweet alert "Recensione condivisa con successo!". */
+    public function dismissReviewDone(): void
+    {
+        $this->reviewDoneItemId = null;
     }
 
     public function render(OrderQueryService $orders)
     {
-        $items = $orders->presentItems($this->orderModel());
+        // reviewed: stato UI della sessione, non del catalogo — merge qui, non nel service.
+        $items = array_map(
+            fn (array $item): array => $item + ['reviewed' => isset($this->reviews[$item['id']])],
+            $orders->presentItems($this->orderModel()),
+        );
 
         return view('livewire.profile.profile-order-summary', [
             'items' => $items,
             // Testata conteggio | data | totale: solo mobile (l'artboard app la mostra sopra le card).
             'header' => $orders->presentHeader($this->orderModel()),
             'reviewItem' => collect($items)->firstWhere('id', $this->reviewItemId),
+            'reviewDoneItem' => collect($items)->firstWhere('id', $this->reviewDoneItemId),
         ])->title(__('profile.title_order_summary'));
     }
 

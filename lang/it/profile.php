@@ -81,8 +81,14 @@ return [
     'payment_card_number' => 'Numero della carta',
     'payment_card_expiry' => 'Data di scadenza',
     'payment_card_cvv' => 'Codice di sicurezza',
-    'payment_expiry_placeholder' => 'MM/AA',
-    'payment_cvv_placeholder' => '3 cifre',
+    'payment_edit_card' => 'Modifica carta',
+    'payment_remove_card' => 'Elimina carta',
+    'payment_remove_confirm' => 'Vuoi eliminare la carta salvata?',
+    'payment_card_saved' => 'Carta salvata correttamente',
+    'payment_card_removed' => 'Carta eliminata',
+    'payment_card_error' => 'Non è stato possibile salvare la carta. Riprova.',
+    'payment_card_incomplete' => 'Completa i dati della carta per salvarla.',
+    'payment_unavailable' => 'Il salvataggio della carta non è al momento disponibile. Riprova più tardi.',
 
     // Sicurezza e Privacy
     'current_password_label' => 'Password attuale',
@@ -94,8 +100,13 @@ return [
 
     // Riepilogo ordine / recensione
     'write_review' => 'Scrivi una recensione',
+    'view_review' => 'Vedi recensione',
     'review_title_placeholder' => 'Titolo',
     'review_text_placeholder' => 'Recensione',
+    'review_title_label' => 'Titolo',
+    'review_text_label' => 'Descrizione',
+    'review_share' => 'Condividi',
+    'review_shared' => 'Recensione condivisa con successo!',
     'gift_dedicated_to' => 'Dedicato a: :name',
     'gift_message' => 'Messaggio: :message',
 

@@ -78,8 +78,14 @@ async function confirmStripePayment(component, options) {
     // Timestamp per il watchdog di "Paga ora": una conferma è partita davvero.
     window.__paymentConfirmAt = Date.now();
 
+    // Carta salvata: nessun Element montato, il PaymentIntent ha già il
+    // payment method allegato lato server e basta il client secret.
+    const source = component.elements
+        ? { elements: component.elements }
+        : { clientSecret: component.clientSecret };
+
     const { error, paymentIntent } = await component.stripe.confirmPayment({
-        elements: component.elements,
+        ...source,
         confirmParams: { return_url: options.returnUrl },
         redirect: 'if_required',
     });
@@ -126,6 +132,104 @@ window.stripePayment = (clientSecret, publishableKey, options = {}) => ({
 
         // Element montato e listener attivo: il server abilita "Paga ora".
         this.$wire.markElementReady();
+    },
+
+    destroy() {
+        if (typeof this.stopListening === 'function') this.stopListening();
+    },
+});
+
+// ─── Carta salvata (checkout, nessun Element) ───────────────────────────────
+// Il PaymentIntent arriva dal server già col customer e il payment method
+// dell'utente: qui serve solo Stripe.js per confermare (ed eventuale 3DS).
+// options: { method, returnUrl, incompleteMessage }
+window.stripeSavedCard = (clientSecret, publishableKey, options = {}) => ({
+    stripe: null,
+    elements: null,
+    clientSecret,
+    stopListening: null,
+
+    async init() {
+        try {
+            const StripeFactory = await loadStripeJs();
+            this.stripe = StripeFactory(publishableKey);
+        } catch (error) {
+            console.error('[Stripe saved card] init failed', error);
+            this.$wire.reportPaymentInitFailed();
+            return;
+        }
+
+        this.stopListening = Livewire.on('process-payment', ({ method }) => {
+            if (method !== options.method) return;
+            confirmStripePayment(this, options);
+        });
+
+        this.$wire.markElementReady();
+    },
+
+    destroy() {
+        if (typeof this.stopListening === 'function') this.stopListening();
+    },
+});
+
+// ─── Payment Element in modalità setup (Profilo → Dati pagamento) ──────────
+// Salva la carta senza addebito: il PAN va da Stripe, noi vediamo solo il
+// SetupIntent, che il server riverifica prima di persistere il payment method.
+// options: { returnUrl, incompleteMessage }
+window.stripeSetupMethod = (clientSecret, publishableKey, options = {}) => ({
+    stripe: null,
+    elements: null,
+    stopListening: null,
+
+    async init() {
+        try {
+            const StripeFactory = await loadStripeJs();
+            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret));
+            // Il titolare è un campo nostro (label del mock XD) e il mock non
+            // prevede il paese: entrambi 'never', li passiamo in confirmParams.
+            this.elements
+                .create('payment', {
+                    layout: 'tabs',
+                    fields: { billingDetails: { name: 'never', address: { country: 'never' } } },
+                    wallets: { applePay: 'never', googlePay: 'never', link: 'never' },
+                })
+                .mount(this.$refs.element);
+        } catch (error) {
+            console.error('[Stripe setup] init failed', error);
+            this.$wire.reportSetupInitFailed();
+            return;
+        }
+
+        // "Salva" → save() valida il titolare lato server e poi dispatcha.
+        this.stopListening = Livewire.on('confirm-setup', ({ name }) => this.confirm(name));
+
+        this.$wire.markElementReady();
+    },
+
+    async confirm(name) {
+        // return_url è richiesto dall'API ma la carta conferma senza redirect;
+        // in caso di 3DS con redirect Stripe torna qui con setup_intent nell'url.
+        const { error, setupIntent } = await this.stripe.confirmSetup({
+            elements: this.elements,
+            confirmParams: {
+                return_url: options.returnUrl,
+                payment_method_data: {
+                    billing_details: { name, address: { country: options.country } },
+                },
+            },
+            redirect: 'if_required',
+        });
+
+        if (error) {
+            this.$wire.onSetupFailed(error.message || options.incompleteMessage || '');
+            return;
+        }
+
+        if (setupIntent && setupIntent.status === 'succeeded') {
+            this.$wire.onSetupSucceeded({ setup_intent_id: setupIntent.id });
+        } else {
+            this.$wire.onSetupFailed(options.incompleteMessage || '');
+        }
     },
 
     destroy() {

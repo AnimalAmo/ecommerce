@@ -20,6 +20,9 @@ class FakePaymentGateway implements PaymentGatewayInterface
     /** Simula un errore API all'init: sessione nulla, checkout in paymentUnavailable. */
     public bool $initThrows = false;
 
+    /** Come sopra ma SOLO col contesto carta salvata (pm staccato su Stripe). */
+    public bool $initThrowsWithSavedCard = false;
+
     /** Simula l'"incassato ma non valido" (importo/valuta cambiati): failure con fundsCaptured. */
     public bool $captureAmountMismatch = false;
 
@@ -43,7 +46,7 @@ class FakePaymentGateway implements PaymentGatewayInterface
             'context' => $context,
         ];
 
-        if ($this->initThrows) {
+        if ($this->initThrows || ($this->initThrowsWithSavedCard && isset($context['payment_method_id']))) {
             throw new RuntimeException('init failed');
         }
 

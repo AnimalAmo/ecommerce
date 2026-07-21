@@ -6,15 +6,11 @@ use App\Data\Cart\CartItemData;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
-use App\Models\Event\Event;
-use App\Models\Favorite\Favorite;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
-use App\Support\Format;
+use App\Services\FavoriteService;
 use DateTimeImmutable;
 use Flux\Flux;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -218,7 +214,7 @@ class Cart extends Component
             'animalsAtMax' => $this->animalsAtMax(),
             'bookingHours' => self::bookingHours(),
             // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
-            'suggestions' => $items === [] ? $this->suggestions() : [],
+            'suggestions' => $items === [] ? app(FavoriteService::class)->topFavorited() : [],
         ])->title(__('cart.ui.page_title'));
     }
 
@@ -318,73 +314,6 @@ class Cart extends Component
 
         // Valori assenti/non validi omessi: il merge del manager conserva quelli correnti.
         return array_filter($options, fn (mixed $value): bool => $value !== null);
-    }
-
-    /**
-     * Le 3 attività "più amate" reali per lo stato vuoto: top prodotti per
-     * numero di preferiti (tie-break id crescente), presentati nel contratto
-     * della card condivisa (come FavoriteService::present, ma con prezzo
-     * "A partire da" = price_from_cents).
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function suggestions(): array
-    {
-        return Favorite::query()
-            ->select(['favoritable_type', 'favoritable_id'])
-            ->selectRaw('count(*) as favorites_count')
-            ->groupBy('favoritable_type', 'favoritable_id')
-            ->orderByDesc('favorites_count')
-            ->orderBy('favoritable_id')
-            ->limit(3)
-            ->get()
-            ->map(function (Favorite $row): ?array {
-                $product = Relation::getMorphedModel($row->favoritable_type)::find($row->favoritable_id);
-
-                // Prodotti nel frattempo rimossi dal catalogo: card saltata.
-                return $product !== null ? $this->presentSuggestion($row->favoritable_type, $product) : null;
-            })
-            ->filter()
-            ->values()
-            ->all();
-    }
-
-    /** Presenta il prodotto suggerito nella card condivisa, per famiglia (id = 'alias-id', unico tra i morph). */
-    private function presentSuggestion(string $alias, Model $product): array
-    {
-        $card = match (true) {
-            $product instanceof Event => [
-                'title' => $product->title,
-                'location' => $product->location,
-                ...($product->type === ProductType::Activity && $product->duration_days
-                    ? ['metaType' => 'durata', 'metaText' => mb_strtoupper(__('format.duration_days', ['days' => $product->duration_days]))]
-                    : ['metaType' => 'data', 'metaText' => $product->starts_at ? Format::eventTime($product->starts_at) : '']),
-                // Gli eventi non hanno price_from: prezzo pieno (0 per i gratuiti, '0,00 €' fedele al mock).
-                'price' => Format::money($product->price_cents ?? 0),
-            ],
-            $product instanceof Structure => [
-                'title' => $product->name,
-                'location' => $product->location,
-                'metaType' => 'rating',
-                // Strutture partner senza recensioni: stato "Nuovo" al posto del voto.
-                'metaText' => $product->rating !== null ? Format::rating($product->rating) : __('holiday.new'),
-                'price' => Format::money($product->price_from_cents),
-            ],
-            // SmartboxPackage: la riga pin mostra l'audience (null per i box partner), la riga durata la validità.
-            default => [
-                'title' => $product->title,
-                'location' => $product->audience ?? '',
-                'metaType' => 'durata',
-                'metaText' => mb_strtoupper(__('format.valid_for', ['validity' => Format::validity($product->validity_months)])),
-                'price' => Format::money($product->price_from_cents),
-            ],
-        };
-
-        return $card + [
-            'id' => $alias.'-'.$product->getKey(),
-            'type' => $product->type->value,
-            'photo' => $product->imageUrl(),
-        ];
     }
 
     /** 'Y-m-d' (options) → 'dd/mm/yyyy' (display pop-up). */

@@ -21,14 +21,7 @@ class ProfileOrders extends Component
         $this->normalizeTab();
     }
 
-    public function setTab(string $tab): void
-    {
-        if (array_key_exists($tab, self::TABS)) {
-            $this->tab = $tab;
-        }
-    }
-
-    /** Il binding #[Url] accetta qualunque ?tab=…: fuori whitelist → 'programma'. */
+    /** Il binding #[Url] (e il wire:model delle tab) accetta qualunque valore: fuori whitelist → 'programma'. */
     private function normalizeTab(): void
     {
         if (! array_key_exists($this->tab, self::TABS)) {

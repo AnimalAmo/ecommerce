@@ -9,7 +9,7 @@
     @include('partials.site-header')
 
     <main class="flex-1 bg-[linear-gradient(to_top_left,#FF3EA51A,#68CDEB1A)]">
-        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-9">
+        <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 max-lg:pt-4">
             <div class="flex flex-col gap-10 lg:flex-row lg:gap-[61px]">
                 @include('partials.profile-sidebar', ['active' => 'ordini'])
 
@@ -18,19 +18,9 @@
 
                     <h1 class="text-2xl font-bold leading-none text-black max-lg:hidden">{{ __('profile.orders_title') }}</h1>
 
-                    {{-- App: tab a pillole al posto delle tab sottolineate --}}
-                    <div class="mt-[22px]">
-                        @include('partials.profile-mobile-tabs')
-                    </div>
-
-                    {{-- Tab: stesso pattern dello stepper checkout (linea #DEDEDE, attivo ciano con sottolineatura 2.5px) --}}
-                    <div class="relative mt-[50px] max-lg:hidden">
-                        <div class="absolute inset-x-0 bottom-0 h-px bg-[#DEDEDE]" aria-hidden="true"></div>
-                        <div class="relative flex gap-[50px]">
-                            @foreach ($tabs as $key => $label)
-                                <flux:button variant="ghost" wire:click="setTab('{{ $key }}')" wire:key="tab-{{ $key }}" class="relative !h-auto !rounded-none !p-0 !pb-3 !text-lg !font-medium !leading-none hover:!bg-transparent {{ $tab === $key ? '!text-[#68CDEB] after:absolute after:inset-x-0 after:bottom-0 after:h-[2.5px] after:bg-[#68CDEB]' : '!text-[#C8C8C8] hover:!text-[#C8C8C8]' }}">{{ $label }}</flux:button>
-                            @endforeach
-                        </div>
+                    {{-- App: pillole; desktop: tab sottolineate (stesso flux:tabs) --}}
+                    <div class="mt-[22px] lg:mt-[50px]">
+                        @include('partials.profile-tabs')
                     </div>
 
                     {{-- Righe ordine (passo XD 122): conteggio + striscia miniature | data + totale + chevron --}}
@@ -47,7 +37,7 @@
                                         <span>{{ $order['price'] }}</span>
                                     </div>
 
-                                    <div class="mt-[17px] flex gap-px overflow-hidden">
+                                    <div class="mt-[17px] flex gap-2 overflow-hidden">
                                         @foreach ($order['photos'] as $photo)
                                             <img src="{{ $photo }}" alt="" class="h-[66px] w-[99px] shrink-0 rounded-[2px] object-cover" wire:key="photo-mobile-{{ $order['number'] }}-{{ $loop->index }}">
                                         @endforeach

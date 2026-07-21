@@ -86,3 +86,9 @@ textarea[data-flux-control] {
 .radio-check [data-flux-radio-indicator] > div {
     display: none;
 }
+
+/* Elementi che Alpine mostra in base allo stato (es. il bottone invia del dettaglio
+   post): nascosti finché Alpine non ha valutato x-show, altrimenti lampeggiano. */
+[x-cloak] {
+    display: none !important;
+}

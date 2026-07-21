@@ -4,12 +4,16 @@ namespace App\Livewire\Commerce;
 
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Services\FavoriteService;
 use Flux\Flux;
 use Livewire\Component;
 
 class Favorites extends Component
 {
+    // I cuori delle card "più amate" dello stato vuoto (solo mobile) sono quelli del catalogo.
+    use TogglesFavorites;
+
     /** Filtro "Tipologia" attivo dal dropdown sopra il contenitore (value ProductType, null = tutte). */
     public ?string $typeFilter = null;
 
@@ -22,6 +26,8 @@ class Favorites extends Component
         auth()->user()?->favorites()->whereKey($id)->delete();
 
         $this->inCart = array_values(array_diff($this->inCart, [$id]));
+
+        unset($this->favoritedKeys);
     }
 
     /**
@@ -93,6 +99,8 @@ class Favorites extends Component
             'favorites' => $favorites,
             'visibleFavorites' => $visibleFavorites,
             'types' => $types,
+            // Card "Le attività più amate" sotto lo stato vuoto (artboard app "Preferiti - vuoti").
+            'suggestions' => $favorites === [] ? $service->topFavorited() : [],
         ])->title(__('favorites.page_title'));
     }
 }

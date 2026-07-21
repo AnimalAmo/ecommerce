@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Exceptions\PaymentConfigurationException;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
+use App\Services\Payment\SavedPaymentMethodService;
 use App\Services\Payment\StripeGateway;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +32,7 @@ class PaymentServiceProvider extends ServiceProvider
         $this->app->singleton(StripeGateway::class);
         $this->app->singleton(PaymentGatewayFactory::class);
         $this->app->singleton(PaymentGatewayService::class);
+        $this->app->singleton(SavedPaymentMethodService::class);
     }
 
     public function boot(): void
