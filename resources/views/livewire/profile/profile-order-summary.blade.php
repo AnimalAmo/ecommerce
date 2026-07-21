@@ -233,10 +233,11 @@
 
                     <flux:icon.check-circle class="mx-auto mt-1 h-10 w-10 text-[#43BA6C]" stroke-width="3" />
 
-                    {{-- XD manda a capo dopo "condivisa": larghezza limitata invece di un <br> nella traduzione --}}
-                    <p class="mx-auto mt-2 max-w-[240px] text-center text-lg font-bold leading-[26px] text-[#43BA6C]">{{ __('profile.review_shared') }}</p>
+                    {{-- XD manda a capo dopo "condivisa": larghezza limitata invece di un <br> nella traduzione
+                         (la chiave resta la frase piena, serve anche come aria-label del dialog) --}}
+                    <p class="mx-auto mt-[10px] max-w-[205px] text-center text-lg font-bold leading-[26px] text-[#43BA6C]">{{ __('profile.review_shared') }}</p>
 
-                    <div class="mt-[18px]">
+                    <div class="mt-[28px]">
                         @include('partials.profile-item-card-mobile', ['item' => $reviewDoneItem, 'review' => false, 'accent' => '#43BA6C80', 'plain' => true])
                     </div>
                 </div>

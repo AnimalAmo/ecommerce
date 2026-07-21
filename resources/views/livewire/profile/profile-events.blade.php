@@ -36,7 +36,8 @@
                                     <div class="flex gap-[10px]">
                                         <img src="{{ asset('img/xd/' . $event['photo']) }}" alt="{{ $event['title'] }}" class="h-[78px] w-[84px] shrink-0 rounded-[2px] object-cover">
 
-                                        <div class="flex min-w-0 flex-1 flex-col">
+                                        {{-- XD: il tag parte 6px sotto il bordo della foto, non a filo --}}
+                                        <div class="flex min-w-0 flex-1 flex-col pt-[6px]">
                                             <span class="flex h-[26px] w-fit items-center rounded-[3px] bg-brand-purple-soft px-[10px] text-[13px] font-medium text-white">{{ $event['tag'] }}</span>
                                             <h2 class="mt-[13px] truncate text-sm font-bold leading-none text-[#0D171A]">{{ $event['title'] }}</h2>
                                         </div>
