@@ -28,4 +28,10 @@ return [
     'filter_by_type' => 'Filter by type',
     'show_results' => 'Show :count result|Show :count results',
     'close' => 'Close',
+    'shared_title' => 'Question shared successfully!',
+    'shared_body' => 'Your question has been shared with the community. Someone will reply soon!',
+    'reply_placeholder' => 'Write something…',
+    'send' => 'Send',
+    'author_me' => ':name (Me)',
+    'open_post' => 'Open the post :title',
 ];

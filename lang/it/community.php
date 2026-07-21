@@ -28,4 +28,10 @@ return [
     'filter_by_type' => 'Filtra per tipologia',
     'show_results' => 'Mostra :count risultato|Mostra :count risultati',
     'close' => 'Chiudi',
+    'shared_title' => 'Domanda condivisa con successo!',
+    'shared_body' => 'La tua domanda è stata condivisa sulla community. Presto qualcuno ti risponderà!',
+    'reply_placeholder' => 'Scrivi qualcosa…',
+    'send' => 'Invia',
+    'author_me' => ':name (Io)',
+    'open_post' => 'Apri il post :title',
 ];

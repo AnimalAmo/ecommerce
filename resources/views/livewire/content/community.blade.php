@@ -189,8 +189,8 @@
 
         {{-- ===== Mobile (XD app "Community" 375x1101) =====
              Niente hero né risposte inline: titolo, banner giallo, tab a pillola, ricerca + filtri,
-             card post (tag/titolo/autore/testo) e "Vedi altri". Rispondere è nell'artboard
-             "Dettaglio post", non ancora implementato. --}}
+             card post (tag/titolo/autore/testo) e "Vedi altri". Le risposte stanno nel
+             dettaglio post, che la card apre. --}}
         <div class="px-4 pb-[120px] pt-4 lg:hidden">
             <h1 class="text-lg font-bold leading-none text-[#0D171A]">{{ __('community.title_mobile') }}</h1>
 
@@ -251,15 +251,17 @@
 
             <div class="mt-6 space-y-4">
                 @forelse ($visiblePosts as $post)
-                    {{-- TODO: tap sulla card → artboard "Dettaglio post" (risposte) --}}
-                    {{-- Padding XD asimmetrico: 13 sopra, 19 sotto (card 343x273 col testo campione) --}}
-                    <article wire:key="post-mobile-{{ $post['id'] }}" class="w-full rounded-[4px] bg-white px-3 pb-[19px] pt-[13px] shadow-[1px_1px_3px_#0000001A]">
-                        <span class="flex h-[26px] w-fit items-center rounded-[3px] px-[10px] text-sm font-medium {{ $chipClasses[$post['tagColor']] ?? 'bg-[#555555] text-white' }}">{{ $post['tag'] }}</span>
+                    {{-- La card apre il dettaglio (XD "Dettaglio post - scrivi"), dove si risponde --}}
+                    <a wire:key="post-mobile-{{ $post['id'] }}" href="{{ route('community.post', $post['id']) }}" aria-label="{{ __('community.open_post', ['title' => $post['title']]) }}" class="block">
+                        {{-- Padding XD asimmetrico: 13 sopra, 19 sotto (card 343x273 col testo campione) --}}
+                        <article class="w-full rounded-[4px] bg-white px-3 pb-[19px] pt-[13px] shadow-[1px_1px_3px_#0000001A]">
+                            <span class="flex h-[26px] w-fit items-center rounded-[3px] px-[10px] text-sm font-medium {{ $chipClasses[$post['tagColor']] ?? 'bg-[#555555] text-white' }}">{{ $post['tag'] }}</span>
 
-                        <h2 class="mt-3 text-lg font-bold leading-none text-black">{{ $post['title'] }}</h2>
-                        <p class="mt-[14px] text-[15px] font-semibold leading-none text-[#C8C8C8]">{{ $post['author'] }}</p>
-                        <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $post['body'] }}</p>
-                    </article>
+                            <h2 class="mt-3 text-lg font-bold leading-none text-black">{{ $post['title'] }}</h2>
+                            <p class="mt-[14px] text-[15px] font-semibold leading-none text-[#C8C8C8]">{{ $post['author'] }}</p>
+                            <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $post['body'] }}</p>
+                        </article>
+                    </a>
                 @empty
                     <p class="text-[15px] leading-[21px] text-[#959595]">{{ __('community.no_posts') }}</p>
                 @endforelse
@@ -319,30 +321,70 @@
     </flux:modal>
     @endauth
 
-    {{-- Pannello filtri a tutta pagina (XD "Filtri community"): stessi 7 tag del menu desktop --}}
-    <flux:modal name="filtri-community" :closable="false" class="w-full !m-0 !max-h-none !min-h-dvh !max-w-full !rounded-none bg-white !px-4 !py-6 lg:hidden">
-        <div class="flex items-center justify-between">
+    {{-- Pannello filtri a tutta pagina (XD "Filtri community" 375x812): testata col titolo
+         centrato e la × a destra, riga #E9E9E9 a tutta larghezza, 7 tag a passo 40px e la
+         pillola scura "Mostra N risultati" a 32px dal fondo. --}}
+    <flux:modal name="filtri-community" :closable="false" class="!m-0 flex w-full !max-h-none !min-h-dvh !max-w-full flex-col !rounded-none bg-white !p-0 lg:hidden">
+        {{-- pb-[4px]: nell'artboard il titolo non è centrato in colonna, sta 19px sotto l'inizio della testata --}}
+        <div class="relative flex h-[62px] shrink-0 items-center justify-center pb-[4px]">
             <flux:heading level="2" class="!text-lg !font-semibold !leading-none !text-[#0D171A]">{{ __('community.filters_title') }}</flux:heading>
+
             <flux:modal.close>
-                <flux:button variant="ghost" size="sm" square aria-label="{{ __('community.close') }}" class="!rounded-full !text-[#555555]">
-                    <flux:icon.close class="h-4 w-4" />
+                {{-- XD: × 10px di solo tratto #555555, a 16px dal bordo --}}
+                <flux:button variant="ghost" size="sm" square aria-label="{{ __('community.close') }}" class="!absolute !right-[11px] !top-1/2 !-translate-y-1/2 !text-[#555555] hover:!bg-transparent hover:!text-[#555555]">
+                    <flux:icon.close class="h-[10px] w-[10px]" stroke-width="2.5" />
                 </flux:button>
             </flux:modal.close>
         </div>
 
-        <flux:separator class="!mt-4 !border-[#E9E9E9]" />
+        <flux:separator class="!border-[#E9E9E9]" />
 
-        <h3 class="mt-6 text-lg font-semibold leading-none text-[#0D171A]">{{ __('community.filter_by_type') }}</h3>
+        <div class="px-6">
+            <h3 class="mt-[14px] text-lg font-semibold leading-none text-[#0D171A]">{{ __('community.filter_by_type') }}</h3>
 
-        {{-- Righe a passo 40px come l'artboard --}}
-        <flux:checkbox.group wire:model.live="activeFilters" class="mt-5 flex flex-col gap-2">
-            @foreach ($tags as $tag)
-                <flux:checkbox wire:key="filtro-mobile-{{ $tag }}" value="{{ $tag }}" label="{{ $tag }}" class="[&_label]:!text-[15px] [&_label]:!font-medium [&_label]:!text-[#0D171A]" />
-            @endforeach
-        </flux:checkbox.group>
+            {{-- Righe a passo 40px = pallino 20 + gap 20: serve azzerare l'mb-3 che Flux mette
+                 sui field dei gruppi. La label è un <ui-label>, quindi si veste da qui (un
+                 selettore `label` sul checkbox non la raggiunge: è un fratello, non un figlio).
+                 Il check XD è un tondo pieno #DEDEDE che da selezionato diventa ciano con la
+                 spunta bianca. --}}
+            <flux:checkbox.group wire:model.live="activeFilters" class="mt-[19px] flex flex-col gap-5 [&_[data-flux-field]]:!mb-0 [&_[data-flux-field]]:!gap-2 [&_[data-flux-label]]:!text-[15px] [&_[data-flux-label]]:!font-medium [&_[data-flux-label]]:!leading-5 [&_[data-flux-label]]:!text-[#0D171A]">
+                @foreach ($tags as $tag)
+                    <flux:checkbox wire:key="filtro-mobile-{{ $tag }}" value="{{ $tag }}" label="{{ $tag }}"
+                        class="!mt-0 !size-5 [&_[data-flux-checkbox-indicator]]:!size-5 [&_[data-flux-checkbox-indicator]]:!rounded-full [&_[data-flux-checkbox-indicator]]:!border-0 [&_[data-flux-checkbox-indicator]]:!bg-[#DEDEDE] [&_[data-flux-checkbox-indicator]]:!shadow-none data-checked:[&_[data-flux-checkbox-indicator]]:!bg-brand-cyan [&_[data-flux-checkbox-indicator]_svg]:!text-white" />
+                @endforeach
+            </flux:checkbox.group>
+        </div>
 
-        <flux:modal.close class="mt-10 block">
+        <flux:modal.close class="mx-auto mb-8 mt-auto block w-[184px] pt-10">
             <flux:button class="!h-[39px] !w-full !rounded-[20px] !border-0 !bg-[#0D171A] !text-sm !font-bold !text-white !shadow-none">{{ trans_choice('community.show_results', count($visiblePosts), ['count' => count($visiblePosts)]) }}</flux:button>
         </flux:modal.close>
     </flux:modal>
+
+    {{-- Sweet alert "Domanda condivisa con successo!" (XD "Community – sweet alert", card 315x224).
+         Overlay e non <flux:modal>: è solo mobile, e showModal() su un dialog nascosto dal
+         breakpoint bloccherebbe la pagina desktop (vedi CLAUDE.md). --}}
+    @if ($shared)
+        <div class="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="{{ __('community.shared_title') }}" x-data @keydown.escape.window="$wire.dismissShared()">
+            <div class="absolute inset-0 bg-black/40" wire:click="dismissShared" aria-hidden="true"></div>
+
+            <div class="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
+                {{-- Ritmo XD: 21 sopra l'icona, 11 icona→titolo, 11 titolo→testo. Il fondo è 28
+                     invece di 49 perché il testo qui occupa 3 righe e non 2 (la prima frase
+                     misura 341px nel nostro Nunito, non entra nei 315 della card): così la
+                     card resta alta 224 come l'artboard. --}}
+                <div class="pointer-events-auto relative w-full max-w-[315px] rounded-[4px] border border-[#43BA6C]/50 bg-[#EAFFF1] px-4 pb-[26px] pt-[21px]">
+                    <flux:button variant="ghost" size="sm" square wire:click="dismissShared" aria-label="{{ __('community.close') }}" class="!absolute !right-1 !top-1 !text-[#0D171A] hover:!bg-transparent">
+                        <flux:icon.close class="h-4 w-4" />
+                    </flux:button>
+
+                    <flux:icon.check-circle class="mx-auto h-[38px] w-[38px] text-[#43BA6C]" stroke-width="3" />
+
+                    {{-- XD va a capo dopo "condivisa" e dopo "community.": larghezze limitate
+                         invece di <br> nelle traduzioni (le chiavi restano frasi intere) --}}
+                    <p class="mx-auto mt-[11px] max-w-[170px] text-center text-lg font-bold leading-[26px] text-[#43BA6C]">{{ __('community.shared_title') }}</p>
+                    <p class="mx-auto mt-[11px] text-center text-[15px] leading-[21px] text-[#555555]">{{ __('community.shared_body') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Content;
 
 use App\Livewire\Content\Community;
+use Database\Seeders\CommunitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -10,6 +11,14 @@ use Tests\TestCase;
 class CommunityFiltersTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // I post arrivano dal DB: senza seed la lista è vuota e non c'è niente da filtrare.
+        $this->seed(CommunitySeeder::class);
+    }
 
     public function test_filter_chips_narrow_the_post_list(): void
     {
