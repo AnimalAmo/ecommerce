@@ -27,6 +27,17 @@ class ProfileUpdateTest extends TestCase
         'phone' => '333 1234567',
     ];
 
+    /** La schermata mobile "Dati anagrafici" ha una rotta propria sullo stesso componente. */
+    public function test_personal_data_route_renders_the_profile_component(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('profilo.anagrafica'))
+            ->assertOk()
+            ->assertSeeLivewire(Profile::class);
+    }
+
     public function test_mount_shows_seeded_demo_values(): void
     {
         $this->seed(DatabaseSeeder::class);

@@ -41,6 +41,10 @@ return [
     'nav_orders' => 'I miei ordini',
     'nav_events' => 'Eventi a cui partecipo',
 
+    // Voci del menu mobile (XD app "Profilo": etichette più corte della sidebar desktop)
+    'nav_personal_data' => 'Dati anagrafici',
+    'nav_payment_data' => 'Dati pagamento',
+
     // Heading delle card
     'personal_info_title' => 'Informazioni personali',
     'orders_title' => 'I miei ordini',

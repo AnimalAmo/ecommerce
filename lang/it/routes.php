@@ -16,6 +16,7 @@ return [
     'carrello' => 'carrello',
     'checkout' => 'checkout',
     'profilo' => 'profilo',
+    'profilo.anagrafica' => 'profilo/dati-anagrafici',
     'profilo.pagamento' => 'profilo/metodo-pagamento',
     'profilo.sicurezza' => 'profilo/sicurezza',
     'profilo.ordini' => 'profilo/i-miei-ordini',

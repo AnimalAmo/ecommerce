@@ -99,6 +99,9 @@ Route::group([
 
     Route::middleware('auth')->group(function () {
         Route::get(LaravelLocalization::transRoute('routes.profilo'), Profile::class)->name('profilo');
+        // Stesso componente: su mobile /profilo è solo il menu (artboard app "Profilo"),
+        // i campi anagrafici stanno sulla loro schermata. Su desktop le due rotte coincidono.
+        Route::get(LaravelLocalization::transRoute('routes.profilo.anagrafica'), Profile::class)->name('profilo.anagrafica');
         Route::get(LaravelLocalization::transRoute('routes.profilo.pagamento'), ProfilePayment::class)->name('profilo.pagamento');
         Route::get(LaravelLocalization::transRoute('routes.profilo.sicurezza'), ProfileSecurity::class)->name('profilo.sicurezza');
         Route::get(LaravelLocalization::transRoute('routes.profilo.ordini'), ProfileOrders::class)->name('profilo.ordini');

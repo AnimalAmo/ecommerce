@@ -41,6 +41,10 @@ return [
     'nav_orders' => 'My orders',
     'nav_events' => 'Events I attend',
 
+    // Mobile menu items (XD app "Profilo": shorter labels than the desktop sidebar)
+    'nav_personal_data' => 'Personal details',
+    'nav_payment_data' => 'Payment details',
+
     // Card headings
     'personal_info_title' => 'Personal information',
     'orders_title' => 'My orders',
