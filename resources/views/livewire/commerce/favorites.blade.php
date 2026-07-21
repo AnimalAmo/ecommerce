@@ -50,9 +50,11 @@
                         </section>
                     @endif
                 @else
-                    {{-- Mobile: la pagina apre sulla riga di conteggio grigia (XD "Preferiti (2 prodotto)") --}}
+                    {{-- Mobile: la pagina apre sulla riga di conteggio (XD "Preferiti (2 prodotto)").
+                         Come sul carrello, "Preferiti" è 18 semibold #0D171A e solo il conteggio
+                         resta 14 grigio (l'artboard tiene tutta la riga a 14 regular). --}}
                     @php $count = count($visibleFavorites); @endphp
-                    <p class="text-sm leading-none text-[#959595] lg:hidden">{{ __('favorites.title') }} ({{ $count }} {{ $count === 1 ? __('favorites.count_one') : __('favorites.count_many') }})</p>
+                    <p class="text-lg font-semibold leading-none text-[#0D171A] lg:hidden">{{ __('favorites.title') }} <span class="text-sm font-normal text-[#959595]">({{ $count }} {{ $count === 1 ? __('favorites.count_one') : __('favorites.count_many') }})</span></p>
 
                     <div class="max-lg:hidden">
                         {{-- Riga filtro a destra sopra il contenitore (assente nello stato vuoto e su mobile) --}}
@@ -101,7 +103,7 @@
                     </div>
 
                     {{-- Lista mobile: card verticali a tutta larghezza, gap 16 (artboard app "Preferiti") --}}
-                    <div class="mt-[31px] space-y-4 lg:hidden">
+                    <div class="mt-[24px] space-y-4 lg:hidden">
                         @foreach ($visibleFavorites as $item)
                             @include('partials.favorite-card-mobile', [
                                 'item' => $item,

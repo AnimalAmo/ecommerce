@@ -139,10 +139,11 @@ class FavoritesPageTest extends TestCase
 
     public function test_the_mobile_list_opens_on_the_count_line(): void
     {
-        // XD app "Preferiti": riga grigia "Preferiti (N prodotti)" al posto del titolo desktop.
+        // XD app "Preferiti": riga "Preferiti (N prodotti)" al posto del titolo desktop
+        // ("Preferiti" semibold, il conteggio in un suo span grigio).
         $this->actingAs($this->giulia)->get('/preferiti')
             ->assertOk()
-            ->assertSee('Preferiti (6 prodotti)')
+            ->assertSee('(6 prodotti)')
             ->assertDontSee('Le attività più amate su Animal-Amo');
     }
 
