@@ -29,7 +29,10 @@ python3 .claude/skills/xd-to-page/scripts/xd_extract.py "$XD" images OUTDIR     
 
 Solo stdlib, nessuna dipendenza. Il nome artboard è un prefix match case-insensitive; funziona anche l'id. `dump --raw` per il JSON grezzo se il riassunto non basta.
 
-Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#…`, `SHAPE rect w= h= fill=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi.
+Output di `dump`: ogni riga ha `[x,y]` relativi all'artboard, poi `TEXT 'contenuto' font=… size=… color=#…`, `SHAPE rect w= h= fill=… stroke=… radius=…`, o `GROUP` (con `padding=`/`stack=` se il designer ha usato layout content-aware). I symbol (`syncRef`) sono auto-espansi.
+
+- `stroke=none` = bordo **disattivato** (XD conserva il colore di uno stroke spento): niente `border` nel markup. Con il bordo attivo esce `stroke=#RRGGBB@spessore`.
+- `shadow=dx,dy,blur,#RRGGBB@alpha` (ordine CSS `box-shadow`) compare quando il nodo ha un dropShadow: `shadow=0,0,5.5,#000000@0.11` → `shadow-[0px_0px_6px_#0000001C]`. Un pannello "con contorno colorato" spesso è in realtà bianco con ombra.
 
 ## Workflow
 
@@ -66,3 +69,4 @@ Nodi: `transform.tx/.ty` = offset dal parent (accumula per l'assoluto); `style.f
 | Aprire lo script sul path `.xd` esterno | il file vero è quello doppio-annidato `X.xd/X.xd` (per l'App è un file zip, per gli altri una directory — lo script legge entrambi) |
 | Gruppo vuoto nel `dump` (es. campi input) | è un `syncRef` non risolto: la definizione sta in `resources/graphics/graphicContent.agc` sotto `resources.meta.ux.symbols[]` — cerca l'`id` del syncRef lì dentro |
 | Fidarsi del `fill` sulle icone-linea (es. X delle chip con fill arancio #FF9F3E) | i path aperti tipo `ion-close-outline` rendono solo lo `stroke`: il fill è un residuo invisibile in XD — usa il colore di stroke |
+| Disegnare un bordo colorato perché il dump mostra uno stroke | se la riga dice `stroke=none` il bordo è spento: quel colore è un residuo. Le "voci con contorno viola" del menu Profilo app sono bianche **senza bordo**, con `shadow=0,0,5.5,#000000@0.11` |

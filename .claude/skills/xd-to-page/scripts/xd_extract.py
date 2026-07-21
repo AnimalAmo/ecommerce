@@ -78,6 +78,30 @@ def children_of(node):
     return node.get('group', {}).get('children', []) or node.get('children', [])
 
 
+def stroke_desc(st):
+    """Stroke only when actually enabled: XD keeps a colour on disabled strokes
+    (type 'none'), so printing it blindly invents borders that aren't there."""
+    s = st.get('stroke') or {}
+    if s.get('type') in (None, 'none'):
+        return 'none'
+    color = hexcolor(s.get('color', {}).get('value'))
+    return f'{color}@{s.get("width")}'
+
+
+def shadow_descs(st):
+    """dropShadow filters as `shadow=dx,dy,blur,#RRGGBB@alpha` (CSS box-shadow order)."""
+    out = []
+    for f in st.get('filters') or []:
+        if f.get('type') != 'dropShadow' or f.get('visible') is False:
+            continue
+        for d in f.get('params', {}).get('dropShadows', []):
+            color = d.get('color', {}) or {}
+            alpha = color.get('alpha', 1)
+            out.append(f'shadow={d.get("dx")},{d.get("dy")},{d.get("r")},'
+                       f'{hexcolor(color.get("value"))}@{alpha:.2f}')
+    return out
+
+
 def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     """Walk a node tree, expanding syncRef symbol instances, accumulating offsets."""
     if out is None:
@@ -108,10 +132,9 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     elif typ == 'shape':
         sh = node.get('shape', {})
         fill = hexcolor(st.get('fill', {}).get('color', {}).get('value'))
-        stroke = hexcolor(st.get('stroke', {}).get('color', {}).get('value'))
         r = sh.get('r')
         bits.append(f'SHAPE {sh.get("type")} w={sh.get("width")} h={sh.get("height")}'
-                    f' fill={fill} stroke={stroke}'
+                    f' fill={fill} stroke={stroke_desc(st)}'
                     + (f' radius={r}' if r else ''))
     elif typ in ('group', 'artboard'):
         bits.append(f'GROUP {name!r}' if name else 'GROUP')
@@ -126,6 +149,7 @@ def describe(node, xd, depth=0, ox=0.0, oy=0.0, out=None, seen=None):
     opacity = st.get('opacity')
     if opacity is not None and opacity != 1:
         bits.append(f'opacity={opacity}')
+    bits.extend(shadow_descs(st))
     out.append(f'{"  " * depth}[{x:.0f},{y:.0f}] ' + ' '.join(bits))
     for c in children_of(node):
         describe(c, xd, depth + 1, x, y, out, seen)
