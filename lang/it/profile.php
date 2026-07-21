@@ -100,6 +100,7 @@ return [
 
     // Riepilogo ordine / recensione
     'write_review' => 'Scrivi una recensione',
+    'view_review' => 'Vedi recensione',
     'review_title_placeholder' => 'Titolo',
     'review_text_placeholder' => 'Recensione',
     'review_title_label' => 'Titolo',

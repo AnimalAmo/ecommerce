@@ -26,6 +26,14 @@ class ProfileOrderSummary extends Component
 
     public string $reviewText = '';
 
+    /**
+     * Recensioni scritte in questa sessione, per id riga: la pillola diventa "Vedi recensione"
+     * e riapre il form compilato. Mock finché le recensioni non hanno una tabella (step 5).
+     *
+     * @var array<int, array{title: string, text: string}>
+     */
+    public array $reviews = [];
+
     /** Ordine risolto una volta per request (mount, azioni e render). */
     private ?Order $resolvedOrder = null;
 
@@ -35,13 +43,13 @@ class ProfileOrderSummary extends Component
         $this->past = $orders->isPast($this->orderModel());
     }
 
-    /** "Scrivi una recensione": apre il pop-up con i campi azzerati. */
+    /** "Scrivi una recensione" / "Vedi recensione": apre il form, già compilato se la riga è recensita. */
     public function openReview(int $itemId): void
     {
         if ($this->orderModel()->items->contains('id', $itemId)) {
             $this->reviewItemId = $itemId;
-            $this->reviewTitle = '';
-            $this->reviewText = '';
+            $this->reviewTitle = $this->reviews[$itemId]['title'] ?? '';
+            $this->reviewText = $this->reviews[$itemId]['text'] ?? '';
 
             Flux::modal('scrivi-recensione')->show();
         }
@@ -61,6 +69,10 @@ class ProfileOrderSummary extends Component
         // TODO: invio recensione backend (step 5)
         $shared = $this->reviewItemId;
 
+        if ($shared !== null) {
+            $this->reviews[$shared] = ['title' => $this->reviewTitle, 'text' => $this->reviewText];
+        }
+
         $this->closeReview();
 
         $this->reviewDoneItemId = $shared;
@@ -74,7 +86,11 @@ class ProfileOrderSummary extends Component
 
     public function render(OrderQueryService $orders)
     {
-        $items = $orders->presentItems($this->orderModel());
+        // reviewed: stato UI della sessione, non del catalogo — merge qui, non nel service.
+        $items = array_map(
+            fn (array $item): array => $item + ['reviewed' => isset($this->reviews[$item['id']])],
+            $orders->presentItems($this->orderModel()),
+        );
 
         return view('livewire.profile.profile-order-summary', [
             'items' => $items,

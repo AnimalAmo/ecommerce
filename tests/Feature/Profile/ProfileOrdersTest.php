@@ -186,7 +186,24 @@ class ProfileOrdersTest extends TestCase
             ->assertSee(__('profile.review_shared'))
             ->call('dismissReviewDone')
             ->assertSet('reviewDoneItemId', null)
-            ->assertDontSee(__('profile.review_shared'));
+            ->assertDontSee(__('profile.review_shared'))
+            // Riga recensita: la pillola cambia etichetta e il form si riapre compilato.
+            ->assertSee(__('profile.view_review'))
+            ->call('openReview', $item->id)
+            ->assertSet('reviewTitle', 'Super weekend rilassante!');
+    }
+
+    public function test_upcoming_order_summary_still_offers_the_review_button(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->addDays(5), now()->addDays(10));
+
+        // L'artboard app del riepilogo tiene la pillola su ogni card: il prototipo XD ci
+        // arriva da "i miei ordini - in programma", non solo dai passati.
+        Livewire::actingAs($user)
+            ->test(ProfileOrderSummary::class, ['order' => $order->order_number])
+            ->assertSet('past', false)
+            ->assertSee(__('profile.write_review'));
     }
 
     public function test_review_cannot_be_opened_on_an_item_of_another_order(): void

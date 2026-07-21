@@ -1,12 +1,14 @@
 {{-- Card articolo mobile (XD app "Componente 30" 343x243: riepilogo ordine, scrivi recensione, sweet alert).
      Foto 84x64 + tag/prezzo, titolo col pin, divider, date/ospiti/animali, pillola recensione 319x39.
      La riga "luogo" non c'è: nell'artboard il pin accompagna il titolo.
-     Riceve $item e, opzionali: $review (pillola "Scrivi una recensione"), $accent (colore divider),
-     $plain (senza cornice: nello sweet alert la card sta nuda sul pannello verde). --}}
+     Riceve $item e, opzionali: $review (pillola recensione), $accent (colore divider),
+     $plain (senza cornice: nello sweet alert la card sta nuda sul pannello verde).
+     Recensione già scritta ($item['reviewed']) → la pillola diventa "Vedi recensione" (XD variante "– 1"). --}}
 @php
     $review ??= false;
     $accent ??= '#E9E9E9';
     $plain ??= false;
+    $reviewed = $item['reviewed'] ?? false;
 @endphp
 
 <article class="w-full {{ $plain ? '' : 'rounded-[3px] border border-[#E9E9E9] bg-white p-3' }} {{ $review ? 'pb-[15px]' : '' }}">
@@ -52,6 +54,6 @@
 
     @if ($review)
         {{-- XD: pillola grigia piena (319x39 r20 #F4F4F4), non un link testuale --}}
-        <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }})" class="!mt-[18px] !h-[39px] !w-full !gap-[7px] !rounded-[20px] !bg-[#F4F4F4] !text-sm !font-bold !text-[#0D171A] hover:!bg-[#EAEAEA] [&_svg]:!size-[14px]">{{ __('profile.write_review') }}</flux:button>
+        <flux:button variant="ghost" icon="pencil" icon:variant="outline" wire:click="openReview({{ $item['id'] }})" class="!mt-[18px] !h-[39px] !w-full !gap-[7px] !rounded-[20px] !bg-[#F4F4F4] !text-sm !font-bold !text-[#0D171A] hover:!bg-[#EAEAEA] [&_svg]:!size-[14px]">{{ $reviewed ? __('profile.view_review') : __('profile.write_review') }}</flux:button>
     @endif
 </article>

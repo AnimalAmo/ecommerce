@@ -100,6 +100,7 @@ return [
 
     // Order summary / review
     'write_review' => 'Write a review',
+    'view_review' => 'View review',
     'review_title_placeholder' => 'Title',
     'review_text_placeholder' => 'Review',
     'review_title_label' => 'Title',

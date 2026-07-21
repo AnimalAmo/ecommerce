@@ -19,7 +19,7 @@
                         {{ __('profile.back') }}
                     </flux:button>
 
-                    <h1 class="mt-4 text-lg font-semibold leading-none text-[#0D171A]">{{ __('profile.write_review') }}</h1>
+                    <h1 class="mt-4 text-lg font-semibold leading-none text-[#0D171A]">{{ $reviewItem['reviewed'] ? __('profile.view_review') : __('profile.write_review') }}</h1>
 
                     <div class="mt-[18px]">
                         @include('partials.profile-item-card-mobile', ['item' => $reviewItem, 'review' => false])
@@ -68,8 +68,10 @@
                      Ordine passato (XD "– 1"): box 206 con divider sotto il titolo e "Scrivi una recensione" sotto la foto --}}
                 <div class="mt-10 flex flex-wrap gap-[10px] max-lg:mt-[18px] max-lg:gap-[15px]">
                     @foreach ($items as $item)
+                        {{-- L'artboard app del riepilogo tiene la pillola recensione su OGNI card,
+                             anche in programma: il prototipo ci arriva proprio da "i miei ordini - in programma". --}}
                         <div wire:key="item-mobile-{{ $item['id'] }}" class="w-full lg:hidden">
-                            @include('partials.profile-item-card-mobile', ['item' => $item, 'review' => $past])
+                            @include('partials.profile-item-card-mobile', ['item' => $item, 'review' => true])
                         </div>
 
                         <article wire:key="item-{{ $item['id'] }}" class="relative flex w-full max-w-[468px] rounded-[3px] border border-[#E9E9E9] bg-white p-[6px] max-lg:hidden {{ $past ? 'h-[206px] flex-col' : 'h-[170px]' }}">
@@ -160,7 +162,7 @@
     <div class="max-lg:hidden">
     <flux:modal name="scrivi-recensione" :closable="false" class="w-full !max-w-[1020px] !rounded-[3px] !border !border-[#E9E9E9] bg-white !p-6 backdrop:!bg-black/30">
         @if ($reviewItem !== null)
-            <flux:heading level="2" class="!text-center !text-2xl !font-bold !leading-none !text-[#0D171A]">{{ __('profile.write_review') }}</flux:heading>
+            <flux:heading level="2" class="!text-center !text-2xl !font-bold !leading-none !text-[#0D171A]">{{ $reviewItem['reviewed'] ? __('profile.view_review') : __('profile.write_review') }}</flux:heading>
 
             {{-- Box articolo 467x172 con bordo sottile #C8C8C8 (niente prezzo né azioni) --}}
             <div class="relative mx-auto flex h-[172px] w-full max-w-[467px] rounded-[3px] border border-[#C8C8C8]/70 bg-white p-[7px]">
