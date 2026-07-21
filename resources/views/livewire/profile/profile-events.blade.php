@@ -19,19 +19,9 @@
 
                     <h1 class="text-2xl font-bold leading-none text-black max-lg:hidden">{{ __('profile.interests_title') }}</h1>
 
-                    {{-- App: tab a pillole al posto delle tab sottolineate --}}
-                    <div class="mt-[22px]">
-                        @include('partials.profile-mobile-tabs')
-                    </div>
-
                     {{-- Tab identiche a "I miei ordini" --}}
-                    <div class="relative mt-[50px] max-lg:hidden">
-                        <div class="absolute inset-x-0 bottom-0 h-px bg-[#DEDEDE]" aria-hidden="true"></div>
-                        <div class="relative flex gap-[50px]">
-                            @foreach ($tabs as $key => $label)
-                                <flux:button variant="ghost" wire:click="setTab('{{ $key }}')" wire:key="tab-{{ $key }}" class="relative !h-auto !rounded-none !p-0 !pb-3 !text-lg !font-medium !leading-none hover:!bg-transparent {{ $tab === $key ? '!text-[#68CDEB] after:absolute after:inset-x-0 after:bottom-0 after:h-[2.5px] after:bg-[#68CDEB]' : '!text-[#C8C8C8] hover:!text-[#C8C8C8]' }}">{{ $label }}</flux:button>
-                            @endforeach
-                        </div>
+                    <div class="mt-[22px] lg:mt-[50px]">
+                        @include('partials.profile-tabs')
                     </div>
 
                     @if ($events === [])

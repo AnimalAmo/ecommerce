@@ -34,15 +34,23 @@ class ProfileEvents extends Component
         'passati' => [],
     ];
 
-    public function setTab(string $tab): void
+    public function mount(): void
     {
-        if (array_key_exists($tab, self::TABS)) {
-            $this->tab = $tab;
+        $this->normalizeTab();
+    }
+
+    /** Il binding #[Url] (e il wire:model delle tab) accetta qualunque valore: fuori whitelist → 'programma'. */
+    private function normalizeTab(): void
+    {
+        if (! array_key_exists($this->tab, self::TABS)) {
+            $this->tab = 'programma';
         }
     }
 
     public function render()
     {
+        $this->normalizeTab();
+
         return view('livewire.profile.profile-events', [
             'tabs' => array_map(fn ($key) => __($key), self::TABS),
             'events' => self::EVENTS[$this->tab],

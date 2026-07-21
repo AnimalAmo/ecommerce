@@ -1,6 +1,12 @@
 {{-- Tabbar fissa in basso, solo mobile (XD app: symbol "Tabbar", barra bianca h80, label 11px) --}}
 @php
-    $tabActive = fn (string ...$patterns): bool => request()->routeIs(...$patterns);
+    // Durante un update Livewire la rotta corrente è livewire/update: l'evidenziazione va
+    // calcolata sull'URL originale della pagina, altrimenti a ogni click la tab si spegne.
+    $currentRoute = rescue(fn () => \Livewire\Livewire::isLivewireRequest()
+        ? app('router')->getRoutes()->match(\Illuminate\Http\Request::create(\Livewire\Livewire::originalUrl()))->getName()
+        : request()->route()?->getName(), null, false);
+
+    $tabActive = fn (string ...$patterns): bool => $currentRoute !== null && \Illuminate\Support\Str::is($patterns, $currentRoute);
     $tabClass = fn (bool $active): string => $active ? 'text-brand-cyan' : 'text-[#2B2B2B]';
     // Contatore carrello: la tabbar sta dentro la root del componente di pagina, quindi
     // il badge si aggiorna a ogni render Livewire (stesso conteggio dell'header).

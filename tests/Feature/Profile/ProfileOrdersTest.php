@@ -57,7 +57,7 @@ class ProfileOrdersTest extends TestCase
         Livewire::actingAs($user)
             ->test(ProfileOrders::class)
             ->assertSee($order->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertDontSee($order->order_number);
     }
 
@@ -69,7 +69,7 @@ class ProfileOrdersTest extends TestCase
         Livewire::actingAs($user)
             ->test(ProfileOrders::class)
             ->assertDontSee($order->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertSee($order->order_number);
     }
 
@@ -90,7 +90,7 @@ class ProfileOrdersTest extends TestCase
         Livewire::actingAs($user)
             ->test(ProfileOrders::class)
             ->assertSee($order->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertDontSee($order->order_number);
     }
 
@@ -112,7 +112,7 @@ class ProfileOrdersTest extends TestCase
             ->test(ProfileOrders::class)
             ->assertSee($valid->order_number)
             ->assertDontSee($expired->order_number)
-            ->call('setTab', 'passati')
+            ->set('tab', 'passati')
             ->assertSee($expired->order_number)
             ->assertDontSee($valid->order_number);
     }
