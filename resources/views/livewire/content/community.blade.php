@@ -53,7 +53,6 @@
             <div class="{{ $px }} relative h-full">
                 <div class="mx-auto w-full max-w-[1062px] pt-[102px]">
                     <h1 class="text-4xl font-bold leading-none text-white">{{ __('community.hero_title') }}</h1>
-                    <p class="mt-[28px] text-lg leading-[25px] text-white">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut l voluptua.</p>
 
                     {{-- Solo gli utenti loggati possono scrivere; gli ospiti leggono e vedono la CTA di accesso. --}}
                     @guest

@@ -16,6 +16,7 @@ use App\Livewire\Commerce\Checkout;
 use App\Livewire\Commerce\Favorites;
 use App\Livewire\Content\AboutUs;
 use App\Livewire\Content\Community;
+use App\Livewire\Content\Contact;
 use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
 use App\Livewire\Content\PostDetail;
@@ -93,6 +94,7 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.smartbox'), Smartbox::class)->name('smartbox');
     Route::get(LaravelLocalization::transRoute('routes.smartbox.detail'), SmartboxDetail::class)->name('smartbox.detail');
     Route::get(LaravelLocalization::transRoute('routes.about'), AboutUs::class)->name('about');
+    Route::get(LaravelLocalization::transRoute('routes.contact'), Contact::class)->name('contact');
     Route::get(LaravelLocalization::transRoute('routes.community'), Community::class)->name('community');
     Route::get(LaravelLocalization::transRoute('routes.community.post'), PostDetail::class)->name('community.post');
     Route::get(LaravelLocalization::transRoute('routes.preferiti'), Favorites::class)->name('preferiti');

@@ -274,7 +274,9 @@
                                 {{ $article['date'] }}
                             </p>
                             <h3 class="my-4 text-[20px] font-semibold text-black">{{ $article['title'] }}</h3>
-                            <p class="mb-4 text-sm font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
+                            @if (filled($article['excerpt']))
+                                <p class="mb-4 text-sm font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
+                            @endif
                             <div class="flex justify-center">
                                 {{-- Le card home non hanno slug proprio: si risolve per immagine su News::ARTICLES (la card fuori elenco rimanda a /news) --}}
                                 @php $newsSlug = collect(\App\Livewire\Content\News::ARTICLES)->firstWhere('img', $article['img'])['slug'] ?? null; @endphp

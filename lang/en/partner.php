@@ -70,7 +70,6 @@ return [
     'nav_bookings' => 'Bookings',
     'nav_profile' => 'Profile',
     'help_contact' => 'Contact us',
-    'help_support' => 'Support',
     'help_faq' => 'Faq',
 
     'footer_company' => 'Company',

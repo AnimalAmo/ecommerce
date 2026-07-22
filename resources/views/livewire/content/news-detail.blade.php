@@ -21,13 +21,19 @@
 
             {{-- Corpo (frame 978x486, Nunito-Regular 16/24; app: 15/22 #2B2B2B) + foto hero mascherata 620x451 r4 a destra --}}
             <div class="mt-2 flex items-start gap-10 lg:mt-4">
-                <div class="min-w-0 max-w-[978px] flex-1 space-y-[22px] text-[15px] font-normal leading-[22px] text-[#2B2B2B] lg:space-y-6 lg:text-base lg:leading-6 lg:text-black">
-                    @foreach ($body as $paragraph)
-                        <p>{{ $paragraph }}</p>
-                    @endforeach
-                </div>
-                {{-- XD "Gruppo di maschere 12": clip 620x451 r=[4], foto scaleBehavior=fill → object-cover --}}
-                <img src="{{ asset($hero) }}" alt="{{ $article['title'] }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover xl:block">
+                @if (filled($body))
+                    <div class="min-w-0 max-w-[978px] flex-1 space-y-[22px] text-[15px] font-normal leading-[22px] text-[#2B2B2B] lg:space-y-6 lg:text-base lg:leading-6 lg:text-black">
+                        @foreach ($body as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                        @endforeach
+                    </div>
+                    {{-- XD "Gruppo di maschere 12": clip 620x451 r=[4], foto scaleBehavior=fill → object-cover --}}
+                    <img src="{{ asset($hero) }}" alt="{{ $article['title'] }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover xl:block">
+                @else
+                    {{-- Corpo vuoto (copy in attesa della cliente): resta la sola hero, da lg in su
+                         (senza colonna vuota che la spinge a destra; sotto lg c'è già la hero mobile) --}}
+                    <img src="{{ asset($hero) }}" alt="{{ $article['title'] }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover lg:block">
+                @endif
             </div>
 
             {{-- Articoli correlati (XD: colonna x211..1711 → 1500px centrati; 4 card 354x482, gap 28) --}}
@@ -63,7 +69,9 @@
                                     {{ $item['date'] }}
                                 </p>
                                 <h3 class="mt-4 max-w-[314px] text-base font-semibold leading-[21px] text-black">{{ $item['title'] }}</h3>
-                                <p class="mt-2.5 line-clamp-4 max-w-[314px] text-sm font-normal leading-[23px] text-[#555555]">{{ $item['excerpt'] }}</p>
+                                @if (filled($item['excerpt']))
+                                    <p class="mt-2.5 line-clamp-4 max-w-[314px] text-sm font-normal leading-[23px] text-[#555555]">{{ $item['excerpt'] }}</p>
+                                @endif
                                 <a href="{{ route('news.detail', $item['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-4 text-sm font-normal text-[#242C2C]">{{ __('news.read_more') }}</a>
                             </div>
                             {{-- Link overlay all'articolo correlato --}}

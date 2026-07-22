@@ -9,9 +9,8 @@
         {{-- Padding verticale ridotto su mobile (XD app: titolo a 44px dall'header) --}}
         <div class="{{ $px }} pt-10 pb-20 max-lg:pt-6 max-lg:pb-10">
             <h1 class="text-4xl font-bold text-black max-lg:hidden">{{ __('catalog.region_title', ['region' => $regionName]) }}</h1>
-            {{-- Titolo mobile (XD app "Cerca - risultati"): sostituisce titolo e sottotitolo desktop --}}
+            {{-- Titolo mobile (XD app "Cerca - risultati"): sostituisce il titolo desktop --}}
             <h1 class="text-xl font-medium text-[#0D171A] lg:hidden">{{ __('catalog.results_title') }}</h1>
-            <p class="mt-4 max-w-[1295px] text-lg leading-6 text-black max-lg:hidden">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
             {{-- Barra ricerca mobile (XD app, simbolo "Box ricerca"): pill 56px alta, raggio 28,
                  bordo #E2EAEB e nessuna ombra; destinazione sulla prima riga, riepilogo

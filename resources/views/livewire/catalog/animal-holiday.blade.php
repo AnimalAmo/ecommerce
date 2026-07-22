@@ -8,7 +8,6 @@
     <main class="flex-1">
         <div class="{{ $px }} pt-10 pb-20">
             <h1 class="text-4xl font-bold text-black">Animal Holiday</h1>
-            <p class="mt-4 max-w-5xl text-lg text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
             {{-- Barra ricerca (XD: pill bianco r28, stessa dell'hero home, con ospiti e animali) --}}
             <form wire:submit="search" class="mt-8 flex w-full items-center gap-2 rounded-[100px] border border-[#F4F4F4] bg-white p-2 shadow-[1px_1px_10px_#0000001A]">

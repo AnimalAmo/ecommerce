@@ -3,17 +3,16 @@
 namespace Database\Seeders;
 
 use App\Models\Community\CommunityPost;
-use App\Models\Community\CommunityPostReply;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
 /**
- * Community: i quattro post del mock XD più un riempimento generato.
+ * Community: solo i quattro post del mock XD.
  *
  * I post del mock restano testuali perché le schermate mobile sono misurate su
- * quei testi (altezze card, ritorni a capo); il resto è fake, così la lista, la
- * ricerca e i filtri hanno abbastanza materiale. Va dopo DemoUserSeeder: i post
- * "I miei post" appartengono a Giulia.
+ * quei testi (altezze card, ritorni a capo). Il riempimento Faker è stato tolto:
+ * i suoi testi sono lorem e finivano in pagina (rimozione lorem, lug 2026).
+ * Va dopo DemoUserSeeder: i post "I miei post" appartengono a Giulia.
  */
 class CommunitySeeder extends Seeder
 {
@@ -80,15 +79,14 @@ class CommunitySeeder extends Seeder
             }
         }
 
-        // Riempimento fake solo al primo giro: ri-seedare non deve moltiplicare la lista.
-        if (CommunityPost::count() > count(self::XD_POSTS)) {
-            return;
-        }
-
-        CommunityPost::factory()->count(8)->create()->each(
-            fn (CommunityPost $post) => CommunityPostReply::factory()
-                ->count(fake()->numberBetween(0, 2))
-                ->create(['community_post_id' => $post->id]),
-        );
+        // Cleanup del vecchio riempimento Faker (testi lorem): la delete ripulisce
+        // anche i DB già seminati; i post utente reali hanno titoli propri e restano
+        // solo se non collidono col filler (in demo il filler era l'unico extra).
+        CommunityPost::whereNotIn('title', array_column(self::XD_POSTS, 'title'))
+            ->get()
+            ->each(function (CommunityPost $post): void {
+                $post->replies()->delete();
+                $post->delete();
+            });
     }
 }

@@ -9,9 +9,6 @@
         {{-- 1. Hero full-bleed (XD: foto 1920x524, titolo Nunito Bold 45 bianco centrato; app: 375x261, titolo Bold 18) --}}
         <section class="relative h-[261px] w-full overflow-hidden lg:h-[524px]">
             <img src="{{ asset('img/xd/about-hero.jpg') }}" alt="{{ __('about.hero_alt') }}" class="absolute inset-0 h-full w-full object-cover">
-            <div class="relative flex h-full items-center justify-center px-4">
-                <p class="text-center text-lg font-bold leading-tight text-white lg:text-[45px]">Lorem ipsum dolor sit sed est</p>
-            </div>
         </section>
 
         {{-- Colonna contenuti XD: x211..1709 → 1498px centrati dentro il container $px --}}
@@ -35,15 +32,13 @@
                     <div class="relative flex min-h-[365px] flex-1 flex-col items-center justify-center overflow-hidden rounded-[7px] px-3 max-lg:order-2 max-lg:mt-3.5 lg:px-6">
                         <img src="{{ asset('img/xd/about-holiday.jpg') }}" alt="{{ __('about.holiday_alt') }}" class="absolute inset-0 h-full w-full object-cover">
                         <div class="absolute inset-0 bg-black/30 lg:bg-black/25" aria-hidden="true"></div>
-                        <p class="relative max-w-[319px] text-center text-base font-medium leading-5 text-white lg:max-w-[576px] lg:text-lg lg:leading-7">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam est.</p>
-                        <flux:button href="{{ route('holiday') }}" class="relative !mt-4 !h-[39px] !rounded-full !border-0 !bg-[#0D171A] !px-[33px] !text-sm !font-bold !text-white !shadow-none hover:!bg-[#232A2C] lg:!mt-[34px] lg:!h-10 lg:!text-[15px]">{{ __('about.holiday_cta') }}</flux:button>
+                        <flux:button href="{{ route('holiday') }}" class="relative !h-[39px] !rounded-full !border-0 !bg-[#0D171A] !px-[33px] !text-sm !font-bold !text-white !shadow-none hover:!bg-[#232A2C] lg:!h-10 lg:!text-[15px]">{{ __('about.holiday_cta') }}</flux:button>
                     </div>
                     {{-- Card destra: Eventi e attività --}}
                     <div class="relative flex min-h-[365px] flex-1 flex-col items-center justify-center overflow-hidden rounded-[7px] px-3 max-lg:order-4 max-lg:mt-[22px] lg:px-6">
                         <img src="{{ asset('img/xd/about-events.jpg') }}" alt="{{ __('about.events_alt') }}" class="absolute inset-0 h-full w-full object-cover">
                         <div class="absolute inset-0 bg-black/25" aria-hidden="true"></div>
-                        <p class="relative max-w-[319px] text-center text-base font-medium leading-5 text-white lg:max-w-[576px] lg:text-lg lg:leading-7">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam est.</p>
-                        <flux:button href="{{ route('eventi') }}" class="relative !mt-4 !h-[39px] !rounded-full !border-0 !bg-[#0D171A] !px-[33px] !text-sm !font-bold !text-white !shadow-none hover:!bg-[#232A2C] lg:!mt-[34px] lg:!h-10 lg:!text-[15px]">{{ __('about.events_cta') }}</flux:button>
+                        <flux:button href="{{ route('eventi') }}" class="relative !h-[39px] !rounded-full !border-0 !bg-[#0D171A] !px-[33px] !text-sm !font-bold !text-white !shadow-none hover:!bg-[#232A2C] lg:!h-10 lg:!text-[15px]">{{ __('about.events_cta') }}</flux:button>
                     </div>
                 </div>
 

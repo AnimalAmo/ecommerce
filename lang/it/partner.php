@@ -70,7 +70,6 @@ return [
     'nav_bookings' => 'Prenotazioni',
     'nav_profile' => 'Profilo',
     'help_contact' => 'Contattaci',
-    'help_support' => 'Assistenza',
     'help_faq' => 'Faq',
 
     'footer_company' => 'Azienda',

@@ -21,7 +21,6 @@ return [
 
     // Switcher lingua/valuta + azioni utente (header)
     'language' => 'Lingua',
-    'currency' => 'Valuta',
     'login_register' => 'Accedi / Registrati',
     'menu_open' => 'Apri menu',
     'menu_close' => 'Chiudi menu',
@@ -52,7 +51,6 @@ return [
         'work_with_us' => 'Lavora con noi',
         'how_it_works' => 'Come funziona',
         'contact_us' => 'Contattaci',
-        'support' => 'Assistenza',
         'copyright' => 'Copyright ©',
         'terms' => 'Termini e condizioni',
         'privacy' => 'Informazioni privacy',

@@ -29,10 +29,11 @@ class HomePage extends Component
     }
 
     // News ancora mock: il backend news arriva con lo step 5 della roadmap.
+    // Excerpt vuoti: copy in attesa della cliente (la card degrada a foto+data+titolo+link).
     public array $news = [
-        ['img' => 'news-trenitalia', 'date' => '20 Ottobre 2023', 'title' => 'Novità Trenitalia trasporto animali', 'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
-        ['img' => 'news-easyjet', 'date' => '3 Ottobre 2023', 'title' => 'Novità EasyJet trasporto animali', 'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
-        ['img' => 'event-cavallo', 'date' => '5 Ottobre 2025', 'title' => 'Viaggiare in montagna con il cane', 'excerpt' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'],
+        ['img' => 'news-trenitalia', 'date' => '20 Ottobre 2023', 'title' => 'Novità Trenitalia trasporto animali', 'excerpt' => ''],
+        ['img' => 'news-easyjet', 'date' => '3 Ottobre 2023', 'title' => 'Novità EasyJet trasporto animali', 'excerpt' => ''],
+        ['img' => 'event-cavallo', 'date' => '5 Ottobre 2025', 'title' => 'Viaggiare in montagna con il cane', 'excerpt' => ''],
     ];
 
     /** Tap su un suggerimento del pannello Destinazione (modal filtri mobile). */

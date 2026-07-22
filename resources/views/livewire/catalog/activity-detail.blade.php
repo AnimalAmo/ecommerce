@@ -76,28 +76,35 @@
                 @if ($tab === 'informazioni')
                 {{-- Colonna sinistra: descrizione, informazioni generali, attività, cosa è incluso --}}
                 <div wire:key="tab-informazioni" class="min-w-0 flex-1 lg:max-w-[896px] lg:pt-[22px]">
-                    {{-- 4a. Descrizione --}}
-                    <section>
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.description') }}</h2>
-                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
-                    </section>
+                    {{-- 4a. Descrizione (nascosta senza copy) --}}
+                    @if (filled($activity->description))
+                        <section>
+                            <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.description') }}</h2>
+                            <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
+                        </section>
+                    @endif
 
                     {{-- 4b. Informazioni generali: durata, località, ritrovo --}}
-                    <section class="mt-10">
+                    {{-- first:mt-0: con la descrizione nascosta questa è la prima sezione, il mt-10 raddoppierebbe il padding della colonna --}}
+                    <section class="mt-10 first:mt-0">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
                             <li class="flex items-start gap-4">
                                 <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $durationLabel }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->time_note }}</p>
+                                    @if (filled($activity->time_note))
+                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->time_note }}</p>
+                                    @endif
                                 </div>
                             </li>
                             <li class="flex items-start gap-4">
                                 <flux:icon.pin class="mt-0.5 h-[15px] w-3 shrink-0 text-[#0D171A]" />
                                 <div>
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $activity->location }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue_note }}</p>
+                                    @if (filled($activity->venue_note))
+                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->venue_note }}</p>
+                                    @endif
                                 </div>
                             </li>
                             {{-- venue_id nullable: guard sulle attività senza venue --}}
@@ -114,11 +121,13 @@
                         </ul>
                     </section>
 
-                    {{-- 4c. Attività --}}
-                    <section class="mt-10">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.activity') }}</h2>
-                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
-                    </section>
+                    {{-- 4c. Attività (nascosta senza copy) --}}
+                    @if (filled($activity->description))
+                        <section class="mt-10">
+                            <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.activity') }}</h2>
+                            <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
+                        </section>
+                    @endif
 
                     {{-- 4d. Cosa è incluso (box bordato, check verdi / X rosa su due colonne) --}}
                     <section class="mt-8 min-h-[250px] w-full rounded-[4px] border border-[#DEDEDE] bg-white px-4 pb-6 pt-[22px]">
@@ -275,11 +284,11 @@
                 </div>
             </section>
             @elseif ($tab !== 'informazioni')
-            {{-- 8. Domande frequenti a tutta larghezza sotto entrambe le colonne (XD "Raggruppa 3017" + "Linea 43") --}}
+            {{-- 8. Domande frequenti a tutta larghezza sotto entrambe le colonne (XD "Raggruppa 3017" + "Linea 43"; sezione intera nascosta senza FAQ) --}}
+            @if ($faqs->isNotEmpty())
             <section wire:key="faq" class="mt-[60px] border-t border-[#DEDEDE]">
                 <div class="pl-[79px] pr-[71px] pt-10">
                     <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">{{ __('events.faq') }}</h2>
-                    @if ($faqs->isNotEmpty())
                         {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
                         <div class="mt-[31px] flex items-start justify-between gap-4">
                             <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faqs->first()->question }}</p>
@@ -296,9 +305,9 @@
                             @endforeach
                             <div class="border-t border-[#E2EAEB]" aria-hidden="true"></div>
                         </div>
-                    @endif
                 </div>
             </section>
+            @endif
             @endif
         </div>
     </main>

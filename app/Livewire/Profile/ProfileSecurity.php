@@ -16,8 +16,8 @@ class ProfileSecurity extends Component
 
     public string $passwordConfirm = '';
 
-    /** Testo segnaposto delle sezioni privacy come da mock XD. */
-    public const PRIVACY_PLACEHOLDER = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.';
+    /** Copy sezioni privacy vuota: in attesa del testo della cliente (i paragrafi sono guardati nel blade). */
+    public const PRIVACY_PLACEHOLDER = '';
 
     protected function rules(): array
     {

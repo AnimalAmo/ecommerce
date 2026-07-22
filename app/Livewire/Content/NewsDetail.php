@@ -9,19 +9,8 @@ class NewsDetail extends Component
     /** Slug articolo dalla rotta (es. "normative-strutture-pet-friendly"); il nome differisce dal parametro {article} per non collidere col binding Livewire. */
     public string $articleSlug = '';
 
-    /**
-     * Paragrafo del corpo articolo — lorem come da XD "News – dettaglio"
-     * (i primi tre paragrafi sono identici nell'artboard).
-     */
-    private const PARAGRAPH = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.';
-
-    /** Corpo articolo: 4 paragrafi come nel frame testo XD (978x486, il quarto è più corto). */
-    public const BODY = [
-        self::PARAGRAPH,
-        self::PARAGRAPH,
-        self::PARAGRAPH,
-        'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.',
-    ];
+    /** Corpo articolo vuoto: copy in attesa della cliente — la pagina resta hero + titolo + correlati. */
+    public const BODY = [];
 
     /**
      * Ordine di preferenza degli "Articoli correlati": la selezione dell'artboard XD

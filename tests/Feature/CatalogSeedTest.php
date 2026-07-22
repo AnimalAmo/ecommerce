@@ -57,7 +57,8 @@ class CatalogSeedTest extends TestCase
         $this->assertSame(4300, $hotel->price_cents);
         $this->assertSame(4.5, $hotel->rating);
         $this->assertCount(12, $hotel->reviews);
-        $this->assertCount(5, $hotel->faqs);
+        // FAQ lorem rimosse: restano a zero finché la cliente non consegna i testi.
+        $this->assertCount(0, $hotel->faqs);
         $this->assertCount(6, $hotel->amenityRows('hotel'));
         $this->assertCount(6, $hotel->amenityRows('animal'));
         $this->assertSame('Pet sitting', $hotel->amenityRows('animal')[0]['label']);

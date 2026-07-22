@@ -29,8 +29,8 @@
                 <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.help_support') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.how_it_works') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.support') }}</a></li>
+                    {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
+                    <li><a href="{{ route('contact') }}" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
                 </ul>
             </div>
         </div>
@@ -42,6 +42,8 @@
     </div>
     <div class="{{ $px }} flex items-center justify-center gap-4 py-6 text-xs font-light text-[#8D8D8D] max-lg:flex-wrap max-lg:gap-x-4 max-lg:gap-y-2">
         <span>{{ __('nav.footer.copyright') }} {{ date('Y') }}</span>
+        {{-- Dati societari (non tradotti: denominazione e dati fiscali) --}}
+        <span>Animal Amo Srl — P.IVA 02746270228 — Capitale sociale 10.000,00 €</span>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.terms') }}</a>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.privacy') }}</a>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.cookie_policy') }}</a>

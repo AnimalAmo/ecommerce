@@ -30,17 +30,21 @@
                         </div>
                     </div>
 
-                    {{-- Impostazioni sulla Privacy (copy segnaposto, in attesa del testo cliente) --}}
+                    {{-- Impostazioni sulla Privacy (copy in attesa del testo della cliente) --}}
                     <div class="mt-12 max-w-[820px]">
-                        <p class="text-[15px] leading-relaxed text-[#627277]">{{ $privacyText }}</p>
+                        @if (filled($privacyText))
+                            <p class="text-[15px] leading-relaxed text-[#627277]">{{ $privacyText }}</p>
+                        @endif
                         <div class="mt-4">
                             <flux:link href="#" class="{{ $ctaClass }}">{{ __('partner.profile.privacy_settings') }}</flux:link>
                         </div>
                     </div>
 
-                    {{-- Elimina account (copy segnaposto + flusso backend pendente) --}}
+                    {{-- Elimina account (copy in attesa del testo della cliente + flusso backend pendente) --}}
                     <div class="mt-10 max-w-[820px]">
-                        <p class="text-[15px] leading-relaxed text-[#627277]">{{ $deleteText }}</p>
+                        @if (filled($deleteText))
+                            <p class="text-[15px] leading-relaxed text-[#627277]">{{ $deleteText }}</p>
+                        @endif
                         <div class="mt-4">
                             <flux:button variant="ghost" class="!px-0 {{ $ctaClass }}">{{ __('partner.profile.delete_account') }}</flux:button>
                         </div>

@@ -40,8 +40,9 @@ class SmartboxPackageSeeder extends Seeder
                 'validity_months' => 12,
                 'img' => $row['img'],
                 'hero_img' => 'smartbox-dettaglio-hero',
-                'description' => XdCopy::LONG,
-                'extended_description' => XdCopy::EXTENDED,
+                // Descrizioni vuote: copy in attesa della cliente (le sezioni sono guardate nel blade).
+                'description' => '',
+                'extended_description' => '',
                 'general_info' => self::generalInfo(),
                 'features' => self::features(),
                 'position' => $index + 1,
@@ -55,7 +56,7 @@ class SmartboxPackageSeeder extends Seeder
     private static function generalInfo(): array
     {
         return [
-            ['icon' => 'calendar-return', 'title' => 'Cancellazione gratuita', 'lines' => [XdCopy::SHORT]],
+            ['icon' => 'calendar-return', 'title' => 'Cancellazione gratuita', 'lines' => []],
             ['icon' => 'coffee', 'title' => 'Colazione inclusa', 'lines' => ['Orario: 7:30-11:00']],
             ['icon' => 'lunch', 'title' => 'Pranzo e cena inclusi', 'lines' => ['Orario pranzo: 12:30-14:30', 'Orario cena: 19:30-21:30']],
         ];

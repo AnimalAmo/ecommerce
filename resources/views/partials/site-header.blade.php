@@ -18,9 +18,9 @@
             </nav>
         </div>
         <div class="flex items-center gap-5 max-lg:gap-2">
-            {{-- Lingua/valuta e Accedi: solo desktop, su mobile vivono nel menu hamburger --}}
+            {{-- Lingua e Accedi: solo desktop, su mobile vivono nel menu hamburger (valuta rimossa su richiesta cliente, lug 2026) --}}
             <flux:dropdown class="max-lg:hidden">
-                <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">{{ strtoupper(app()->getLocale()) }} / EUR</flux:button>
+                <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="!text-sm !font-normal !text-black font-sans">{{ strtoupper(app()->getLocale()) }}</flux:button>
                 <flux:menu>
                     <flux:menu.group heading="{{ __('nav.language') }}">
                         {{-- Solo le lingue diverse da quella attiva (la corrente è già nel bottone). --}}
@@ -29,10 +29,6 @@
                                 <flux:menu.item href="{{ route('locale.switch', $code) }}">{{ ucfirst($properties['native']) }}</flux:menu.item>
                             @endif
                         @endforeach
-                    </flux:menu.group>
-                    <flux:menu.group heading="{{ __('nav.currency') }}">
-                        {{-- La valuta attiva (EUR) è nascosta come la lingua; USD è l'alternativa (statica). --}}
-                        <flux:menu.item>USD $</flux:menu.item>
                     </flux:menu.group>
                 </flux:menu>
             </flux:dropdown>
@@ -103,10 +99,10 @@
             <a href="{{ route('about') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.about') }}</a>
             <a href="{{ route('work-with-us') }}" class="border-b border-gray-150 py-4">{{ __('nav.menu.become_partner') }}</a>
 
-            {{-- Riga lingua/valuta a scomparsa (equivalente del dropdown desktop) --}}
+            {{-- Riga lingua a scomparsa (equivalente del dropdown desktop; valuta rimossa su richiesta cliente, lug 2026) --}}
             <div x-data="{ open: false }" class="border-b border-gray-150">
                 <flux:button variant="ghost" x-on:click="open = ! open" class="!flex !w-full !items-center !justify-between !rounded-none !px-0 !py-4 !text-base !font-semibold !text-black hover:!bg-transparent [&>span]:!flex [&>span]:!w-full [&>span]:!items-center [&>span]:!justify-between">
-                    {{ strtoupper(app()->getLocale()) }} / EUR
+                    {{ strtoupper(app()->getLocale()) }}
                     <flux:icon.chevron-down class="h-4 w-4 transition" x-bind:class="open && 'rotate-180'" />
                 </flux:button>
                 <div x-show="open" x-transition.opacity style="display: none" class="pb-4">
@@ -115,7 +111,6 @@
                             <a href="{{ route('locale.switch', $code) }}" class="block py-2 text-sm font-normal text-[#555555]">{{ ucfirst($properties['native']) }}</a>
                         @endif
                     @endforeach
-                    <p class="py-2 text-sm font-normal text-[#555555]">USD $</p>
                 </div>
             </div>
         </nav>
