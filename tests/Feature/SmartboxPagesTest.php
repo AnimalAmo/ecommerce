@@ -42,7 +42,6 @@ class SmartboxPagesTest extends TestCase
             ->assertSee("215\u{A0}€")
             ->assertSee('1 anno')
             ->assertSee('Accesso alla Spa')
-            ->assertSee('Il tuo weekend')
             ->assertSee('Dog sitter');
     }
 

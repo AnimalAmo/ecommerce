@@ -86,14 +86,17 @@
                 {{-- Colonna sinistra: contenuti struttura --}}
                 <div class="min-w-0 max-w-[1048px] flex-1">
 
-                    {{-- 2a. Descrizione breve (su mobile il testo segue la località, senza titolo di sezione) --}}
-                    <section>
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:hidden">{{ __('holiday.short_description') }}</h2>
-                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B] max-lg:mt-0">{{ $structure->description }}</p>
-                    </section>
+                    {{-- 2a. Descrizione breve (su mobile il testo segue la località, senza titolo di sezione; nascosta senza copy) --}}
+                    @if (filled($structure->description))
+                        <section>
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:hidden">{{ __('holiday.short_description') }}</h2>
+                            <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B] max-lg:mt-0">{{ $structure->description }}</p>
+                        </section>
+                    @endif
 
                     {{-- 2b. Informazioni generali --}}
-                    <section class="mt-10">
+                    {{-- first:mt-0: con la descrizione nascosta questa è la prima sezione, il mt-10 raddoppierebbe il padding della colonna --}}
+                    <section class="mt-10 first:mt-0">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.general_info') }}</h2>
                         @include('partials.general-info', ['rows' => $structure->general_info])
                     </section>
@@ -154,7 +157,8 @@
                         </section>
                     @endif
 
-                    {{-- 6. Domande frequenti (accordion; prima riga aperta come da XD) --}}
+                    {{-- 6. Domande frequenti (accordion; prima riga aperta come da XD; nascosta senza FAQ) --}}
+                    @if ($faqs->isNotEmpty())
                     <section class="mt-14 max-lg:mt-10" x-data="{ open: 0 }">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.faq') }}</h2>
                         <div class="mt-4">
@@ -169,6 +173,7 @@
                             @endforeach
                         </div>
                     </section>
+                    @endif
 
                     {{-- 7. Recensioni dei clienti --}}
                     <section class="mt-14 max-lg:mt-10">
@@ -207,7 +212,9 @@
                                         @endif
                                     </p>
                                     <h3 class="mt-2.5 text-[15px] font-bold leading-[22px] text-[#0D171A]">{{ $review->title }}</h3>
-                                    <p class="mt-0.5 max-w-[1032px] text-[15px] leading-[22px] text-[#0D171A]">{{ $review->body }}</p>
+                                    @if (filled($review->body))
+                                        <p class="mt-0.5 max-w-[1032px] text-[15px] leading-[22px] text-[#0D171A]">{{ $review->body }}</p>
+                                    @endif
                                     {{-- Mobile (XD app): avatar 32px e "Recensito da <nome>" su una riga sola --}}
                                     <div class="mt-7 flex items-center gap-3 max-lg:mt-5">
                                         <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg text-white max-lg:h-8 max-lg:w-8 max-lg:text-[15px]" style="background-color: {{ $review->avatar_color }}">{{ $review->author_initials }}</span>

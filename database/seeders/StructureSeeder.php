@@ -51,7 +51,8 @@ class StructureSeeder extends Seeder
                 'img' => $row['img'],
                 'hero_img' => $isHotel ? 'struttura-hero' : 'servizio-hero',
                 'map_img' => $isHotel ? 'struttura-mappa' : 'servizio-mappa',
-                'description' => XdCopy::LONG,
+                // Descrizione vuota: copy in attesa della cliente (la sezione è guardata nel blade).
+                'description' => '',
                 'general_info' => $isHotel ? self::hotelGeneralInfo() : self::serviceGeneralInfo(),
                 'features' => $isHotel ? self::hotelFeatures() : null,
             ]);
@@ -61,18 +62,10 @@ class StructureSeeder extends Seeder
                 + AmenitySeeder::pivot(self::animalAmenities())
             );
 
-            $this->seedFaqs($structure);
+            // FAQ lorem rimosse (copy in attesa della cliente): delete esplicita così
+            // anche i DB già seminati si ripuliscono al riseed (updateOrCreate non basta).
+            $structure->faqs()->delete();
             $this->seedReviews($structure);
-        }
-    }
-
-    private function seedFaqs(Structure $structure): void
-    {
-        foreach (range(1, 5) as $position) {
-            $structure->faqs()->updateOrCreate(['position' => $position], [
-                'question' => XdCopy::FAQ_QUESTION,
-                'answer' => XdCopy::FAQ_ANSWER,
-            ]);
         }
     }
 
@@ -88,7 +81,8 @@ class StructureSeeder extends Seeder
         foreach (range(1, 12) as $position) {
             $structure->reviews()->updateOrCreate(['position' => $position], [
                 ...$samples[($position - 1) % 3],
-                'body' => XdCopy::REVIEW_BODY,
+                // Body vuoto: copy in attesa della cliente; le righe restano per contatore e media voti.
+                'body' => '',
                 'reviewed_at' => '2023-02-23',
             ]);
         }
@@ -123,7 +117,7 @@ class StructureSeeder extends Seeder
     private static function hotelGeneralInfo(): array
     {
         return [
-            ['icon' => 'calendar-return', 'title' => 'Cancellazione gratuita', 'lines' => [XdCopy::SHORT]],
+            ['icon' => 'calendar-return', 'title' => 'Cancellazione gratuita', 'lines' => []],
             ['icon' => 'coffee', 'title' => 'Colazione inclusa', 'lines' => ['Orario: 7:30-11:00']],
             ['icon' => 'lunch', 'title' => 'Pranzo e cena inclusi', 'lines' => ['Orario pranzo: 12:30-14:30', 'Orario cena: 19:30-21:30']],
         ];
@@ -132,8 +126,8 @@ class StructureSeeder extends Seeder
     private static function serviceGeneralInfo(): array
     {
         return [
-            ['icon' => 'calendar-return', 'title' => 'Cancellazione gratuita', 'lines' => [XdCopy::SHORT]],
-            ['icon' => 'home', 'title' => 'Dog sitting a casa', 'lines' => [XdCopy::SHORT]],
+            ['icon' => 'calendar-return', 'title' => 'Cancellazione gratuita', 'lines' => []],
+            ['icon' => 'home', 'title' => 'Dog sitting a casa', 'lines' => []],
         ];
     }
 

@@ -46,18 +46,22 @@
                         @endforeach
                     </div>
 
-                    {{-- Link e testi privacy come da XD (y321..533): magenta 13px, lorem 15px, elimina #EA2E68.
+                    {{-- Link e testi privacy come da XD (y321..533): magenta 13px, copy 15px (vuota, in attesa della cliente), elimina #EA2E68.
                          App: "Reimposta Password" allineato a destra e in ciano --}}
                     {{-- TODO: flussi reimposta password / impostazioni privacy / elimina account — flussi non presenti nel design, da segnalare al cliente --}}
                     <a href="#" class="mt-4 block text-[13px] leading-none text-brand-magenta max-lg:mt-[29px] max-lg:text-right max-lg:text-brand-cyan">{{ __('profile.reset_password') }}</a>
 
-                    <p class="mt-[30px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A] max-lg:mt-[37px] max-lg:leading-[19px]">{{ $privacyPlaceholder }}</p>
+                    @if (filled($privacyPlaceholder))
+                        <p class="mt-[30px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A] max-lg:mt-[37px] max-lg:leading-[19px]">{{ $privacyPlaceholder }}</p>
+                    @endif
 
-                    <a href="#" class="mt-[14px] block text-[13px] leading-none text-brand-magenta max-lg:mt-[18px]">{{ __('profile.privacy_settings') }}</a>
+                    <a href="#" class="mt-[30px] block text-[13px] leading-none text-brand-magenta max-lg:mt-[29px]">{{ __('profile.privacy_settings') }}</a>
 
-                    <p class="mt-[29px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A] max-lg:mt-[43px] max-lg:leading-[19px]">{{ $privacyPlaceholder }}</p>
+                    @if (filled($privacyPlaceholder))
+                        <p class="mt-[29px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A] max-lg:mt-[43px] max-lg:leading-[19px]">{{ $privacyPlaceholder }}</p>
+                    @endif
 
-                    <a href="#" class="mt-4 block text-[13px] leading-none text-[#EA2E68] max-lg:mt-[36px]">{{ __('profile.delete_account') }}</a>
+                    <a href="#" class="mt-[30px] block text-[13px] leading-none text-[#EA2E68] max-lg:mt-[29px]">{{ __('profile.delete_account') }}</a>
 
                     <flux:button wire:click="save" class="mt-[37px] !h-10 !w-[103px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan max-lg:!mt-8 max-lg:!h-[39px] max-lg:!w-full max-lg:!font-semibold">{{ __('profile.save') }}</flux:button>
                 </section>

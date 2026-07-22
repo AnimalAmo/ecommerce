@@ -105,14 +105,17 @@
             <div wire:key="tab-informazioni" class="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-6">
                 {{-- Colonna sinistra: descrizione, informazioni generali, cosa è incluso --}}
                 <div class="min-w-0 flex-1 lg:max-w-[896px]">
-                    {{-- 4a. Descrizione --}}
-                    <section>
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.description') }}</h2>
-                        <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $event->description }}</p>
-                    </section>
+                    {{-- 4a. Descrizione (nascosta senza copy) --}}
+                    @if (filled($event->description))
+                        <section>
+                            <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.description') }}</h2>
+                            <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $event->description }}</p>
+                        </section>
+                    @endif
 
                     {{-- 4b. Informazioni generali --}}
-                    <section class="mt-10">
+                    {{-- first:mt-0: con la descrizione nascosta questa è la prima sezione, il mt-10 raddoppierebbe il padding della colonna --}}
+                    <section class="mt-10 first:mt-0">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
                             @if ($event->starts_at && $event->ends_at)
@@ -120,7 +123,9 @@
                                     <flux:icon.time class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
                                     <div>
                                         <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ \App\Support\Format::eventTimeRange($event->starts_at, $event->ends_at) }}</p>
-                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
+                                        @if (filled($event->time_note))
+                                            <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->time_note }}</p>
+                                        @endif
                                     </div>
                                 </li>
                             @endif
@@ -129,7 +134,9 @@
                                 <div>
                                     {{-- venue_id nullable: guard sugli eventi senza venue --}}
                                     <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $event->venue?->address ?? $event->location }}</p>
-                                    <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->venue_note }}</p>
+                                    @if (filled($event->venue_note))
+                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->venue_note }}</p>
+                                    @endif
                                 </div>
                             </li>
                         </ul>
@@ -209,11 +216,11 @@
                     </section>
                 </div>
 
-                {{-- 7. Colonna destra: card "Domande frequenti" (XD Rettangolo 647 718x437 — su questa tab l'XD sostituisce la mappa con le FAQ) --}}
+                {{-- 7. Colonna destra: card "Domande frequenti" (XD Rettangolo 647 718x437 — su questa tab l'XD sostituisce la mappa con le FAQ; card intera nascosta senza FAQ) --}}
+                @if ($faqs->isNotEmpty())
                 <aside class="w-full shrink-0 lg:w-[718px]">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white px-[22px] pb-[1px] pt-[29px]">
                         <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">{{ __('events.faq') }}</h2>
-                        @if ($faqs->isNotEmpty())
                             {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
                             <div class="mt-[31px] flex items-start justify-between gap-4">
                                 <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faqs->first()->question }}</p>
@@ -229,9 +236,9 @@
                                     </div>
                                 @endforeach
                             </div>
-                        @endif
                     </div>
                 </aside>
+                @endif
             </div>
             @endif
         </div>

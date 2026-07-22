@@ -8,10 +8,9 @@
     <main class="flex-1">
         {{-- Padding verticale ridotto su mobile (XD app: titolo a 44px dall'header) --}}
         <div class="{{ $px }} pt-10 pb-[120px] max-lg:pt-6 max-lg:pb-10">
-            {{-- Titolo e sottotitolo restano quelli desktop anche su mobile (l'artboard app
+            {{-- Titolo resta quello desktop anche su mobile (l'artboard app
                  "Cerca - risultati" è la pagina dei risultati di ricerca, non questa index) --}}
             <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">Smartbox</h1>
-            <p class="mt-2 max-w-[1295px] text-[15px] leading-[22px] text-[#2B2B2B] lg:mt-4 lg:text-lg lg:leading-6 lg:text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
             {{-- Barra ricerca mobile (XD app, simbolo "Box ricerca"): pill 56px alta, raggio 28,
                  bordo #E2EAEB e nessuna ombra; termine sulla prima riga, riepilogo

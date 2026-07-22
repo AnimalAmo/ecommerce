@@ -42,9 +42,10 @@ class EventSeeder extends Seeder
                 'is_free' => $row['is_free'] ?? false,
                 'img' => $row['img'],
                 'hero_img' => $row['hero_img'] ?? ($isActivity ? 'activity-detail-hero' : (($row['is_free'] ?? false) ? 'free-event-detail-hero' : 'event-detail-hero')),
-                'description' => XdCopy::LONG,
-                'time_note' => XdCopy::SHORT,
-                'venue_note' => XdCopy::SHORT,
+                // Copy in attesa della cliente: null esplicito così updateOrCreate ripulisce anche i DB già seminati.
+                'description' => null,
+                'time_note' => null,
+                'venue_note' => null,
                 'position' => $row['position'] ?? null,
                 'home_position' => $row['home_position'] ?? null,
             ])
@@ -53,13 +54,10 @@ class EventSeeder extends Seeder
                 );
         }
 
+        // FAQ lorem rimosse (copy in attesa della cliente): delete esplicita così
+        // anche i DB già seminati si ripuliscono al riseed.
         foreach (Event::all() as $event) {
-            foreach (range(1, 5) as $position) {
-                $event->faqs()->updateOrCreate(['position' => $position], [
-                    'question' => XdCopy::FAQ_QUESTION,
-                    'answer' => XdCopy::FAQ_ANSWER,
-                ]);
-            }
+            $event->faqs()->delete();
         }
     }
 

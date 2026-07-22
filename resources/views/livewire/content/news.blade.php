@@ -10,7 +10,6 @@
         <div class="{{ $px }} pt-10 pb-[120px] max-lg:pt-5 max-lg:pb-8">
             <div class="mx-auto w-full max-w-[1498px]">
                 <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ __('news.title') }}</h1>
-                <p class="mt-2 max-w-[1295px] text-[15px] leading-[22px] text-[#2B2B2B] lg:mt-4 lg:text-lg lg:leading-6 lg:text-black">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</p>
 
                 {{-- Griglia news (XD: simbolo "Box News" 480x482, 3 colonne × 2 righe; ombra 0 1 5 #0000001A, senza bordo).
                      App: colonna singola di card 343x309 con bordo #E9E9E9 e senza ombra, foto 327x136. --}}
@@ -27,7 +26,9 @@
                                     {{ $article['date'] }}
                                 </p>
                                 <h3 class="mt-1 max-w-[369px] text-base font-semibold leading-[22px] text-[#0D171A] lg:mt-4 lg:text-[20px] lg:leading-[25px] lg:text-black">{{ $article['title'] }}</h3>
-                                <p class="mt-3 line-clamp-2 max-w-[428px] text-[15px] leading-[22px] font-normal text-[#2B2B2B] lg:mt-[18px] lg:line-clamp-4 lg:text-sm lg:leading-[23px] lg:text-[#555555]">{{ $article['excerpt'] }}</p>
+                                @if (filled($article['excerpt']))
+                                    <p class="mt-3 line-clamp-2 max-w-[428px] text-[15px] leading-[22px] font-normal text-[#2B2B2B] lg:mt-[18px] lg:line-clamp-4 lg:text-sm lg:leading-[23px] lg:text-[#555555]">{{ $article['excerpt'] }}</p>
+                                @endif
                                 {{-- App: link in corsivo allineato a sinistra; desktop resta centrato e in tondo --}}
                                 <a href="{{ route('news.detail', $article['slug']) }}" class="relative z-[2] mt-2.5 mr-auto text-sm font-normal italic text-[#959595] lg:mx-auto lg:mt-auto lg:pt-5 lg:not-italic lg:text-[#242C2C]">{{ __('news.read_more') }}</a>
                             </div>

@@ -50,14 +50,17 @@
                 {{-- Colonna sinistra: contenuti cofanetto --}}
                 <div class="min-w-0 max-w-[1032px] flex-1 pt-10">
 
-                    {{-- 2a. Descrizione breve --}}
-                    <section>
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.short_description') }}</h2>
-                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $box->description }}</p>
-                    </section>
+                    {{-- 2a. Descrizione breve (nascosta senza copy) --}}
+                    @if (filled($box->description))
+                        <section>
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.short_description') }}</h2>
+                            <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $box->description }}</p>
+                        </section>
+                    @endif
 
                     {{-- 2b. Informazioni generali --}}
-                    <section class="mt-10">
+                    {{-- first:mt-0: con la descrizione nascosta questa è la prima sezione, il mt-10 raddoppierebbe il padding della colonna --}}
+                    <section class="mt-10 first:mt-0">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.general_info') }}</h2>
                         @include('partials.general-info', ['rows' => $box->general_info])
                     </section>
@@ -70,11 +73,13 @@
                         </section>
                     @endif
 
-                    {{-- 4. Il tuo weekend --}}
-                    <section class="mt-10">
-                        <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.your_weekend') }}</h2>
-                        <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $box->extended_description }}</p>
-                    </section>
+                    {{-- 4. Il tuo weekend (nascosta senza copy) --}}
+                    @if (filled($box->extended_description))
+                        <section class="mt-10">
+                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('smartbox.your_weekend') }}</h2>
+                            <p class="mt-4 max-w-[1032px] text-[15px] leading-[22px] text-[#2B2B2B]">{{ $box->extended_description }}</p>
+                        </section>
+                    @endif
 
                     {{-- 5. Servizi Hotel / Servizi Animali --}}
                     <section class="mt-8 flex flex-wrap gap-3">

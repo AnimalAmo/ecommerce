@@ -9,9 +9,9 @@ class News extends Component
     /**
      * Articoli campione in ordine di griglia XD (riga per riga).
      * slug: riservato alla futura pagina News dettaglio.
-     * Testo excerpt = default del simbolo "Box News" (uguale per tutte le card in XD).
+     * Excerpt vuoto: copy in attesa della cliente — le card degradano a foto+data+titolo+link.
      */
-    private const EXCERPT = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita sanctus est Lorem ipsum dolor sit amet.';
+    private const EXCERPT = '';
 
     public const ARTICLES = [
         ['title' => 'Nuove normative strutture pet friendly', 'slug' => 'normative-strutture-pet-friendly', 'date' => '5 Ottobre 2023', 'img' => 'news-regulations', 'excerpt' => self::EXCERPT],
