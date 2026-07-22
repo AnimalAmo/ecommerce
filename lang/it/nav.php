@@ -21,7 +21,6 @@ return [
 
     // Switcher lingua/valuta + azioni utente (header)
     'language' => 'Lingua',
-    'currency' => 'Valuta',
     'login_register' => 'Accedi / Registrati',
     'menu_open' => 'Apri menu',
     'menu_close' => 'Chiudi menu',

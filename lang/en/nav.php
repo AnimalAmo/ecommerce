@@ -19,9 +19,8 @@ return [
         'become_partner' => 'Become a Partner',
     ],
 
-    // Language/currency switcher + user actions (header)
+    // Language switcher + user actions (header)
     'language' => 'Language',
-    'currency' => 'Currency',
     'login_register' => 'Log in / Sign up',
     'menu_open' => 'Open menu',
     'menu_close' => 'Close menu',
