@@ -42,6 +42,8 @@
     </div>
     <div class="{{ $px }} flex items-center justify-center gap-4 py-6 text-xs font-light text-[#8D8D8D] max-lg:flex-wrap max-lg:gap-x-4 max-lg:gap-y-2">
         <span>{{ __('nav.footer.copyright') }} {{ date('Y') }}</span>
+        {{-- Dati societari (non tradotti: denominazione e dati fiscali) --}}
+        <span>Animal Amo Srl — P.IVA 02746270228 — Capitale sociale 10.000,00 €</span>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.terms') }}</a>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.privacy') }}</a>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.cookie_policy') }}</a>
