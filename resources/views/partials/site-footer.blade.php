@@ -29,8 +29,8 @@
                 <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.help_support') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.how_it_works') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.support') }}</a></li>
+                    {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
+                    <li><a href="{{ route('contact') }}" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
                 </ul>
             </div>
         </div>

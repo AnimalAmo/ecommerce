@@ -7,8 +7,8 @@
         <flux:dropdown position="bottom" align="end">
             <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="font-sans !text-[15px] !font-normal !text-ink">{{ __('partner.nav_help') }}</flux:button>
             <flux:menu>
-                <flux:menu.item href="#">{{ __('partner.help_contact') }}</flux:menu.item>
-                <flux:menu.item href="#">{{ __('partner.help_support') }}</flux:menu.item>
+                {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
+                <flux:menu.item href="{{ route('contact') }}">{{ __('partner.help_contact') }}</flux:menu.item>
                 <flux:menu.item href="#">{{ __('partner.help_faq') }}</flux:menu.item>
             </flux:menu>
         </flux:dropdown>

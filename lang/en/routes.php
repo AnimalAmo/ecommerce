@@ -11,6 +11,7 @@ return [
     'smartbox' => 'smartbox',
     'smartbox.detail' => 'smartbox/{box}',
     'about' => 'about-us',
+    'contact' => 'contact-us',
     'community' => 'community',
     'community.post' => 'community/{post}',
     'preferiti' => 'favourites',

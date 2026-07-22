@@ -13,8 +13,8 @@
             <div>
                 <h3 class="text-[15px] font-semibold text-[#2B2B2B]">{{ __('partner.footer_help') }}</h3>
                 <ul class="mt-6 space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.help_contact') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.help_support') }}</a></li>
+                    {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
+                    <li><a href="{{ route('contact') }}" class="hover:text-brand-cyan">{{ __('partner.help_contact') }}</a></li>
                     <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.help_faq') }}</a></li>
                 </ul>
             </div>
