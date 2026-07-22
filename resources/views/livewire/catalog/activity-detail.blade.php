@@ -261,15 +261,14 @@
                 </aside>
             </div>
 
-            @if ($tab === 'informazioni' && $activity->venue?->map_img)
-            {{-- 7. Dove siamo: banda mappa a tutta larghezza con pill località (XD "Gruppo di maschere 7" 1638x389 + "Raggruppa 842") — nascosta senza venue/mappa (attività partner) --}}
+            @if ($tab === 'informazioni' && $activity->venue?->hasMap())
+            {{-- 7. Dove siamo: banda mappa a tutta larghezza con pill località (XD "Gruppo di maschere 7" 1638x389 + "Raggruppa 842") — Google Maps con la chiave, screenshot XD come fallback --}}
             <section wire:key="dove-siamo" class="mt-[57px]">
                 <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('events.where_we_are') }}</h2>
                 <div class="relative mt-4 h-[389px] w-full overflow-hidden rounded-[4px]">
-                    {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                    <img src="{{ asset('img/xd/'.$activity->venue->map_img.'.jpg') }}" alt="Mappa della zona — {{ $activity->venue->name }}" class="h-full w-full object-cover">
-                    {{-- TODO: apertura mappa (nessuna interazione definita nell'XD) --}}
-                    <flux:button class="!absolute !left-[715px] !top-[125px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
+                    <x-google-map :query="$activity->venue->mapQuery()" :fallback="$activity->venue->mapFallbackUrl()" alt="Mappa della zona — {{ $activity->venue->name }}" class="h-full" />
+                    {{-- Pill puramente descrittiva: pointer-events-none per non rubare i click alla mappa --}}
+                    <flux:button class="!pointer-events-none !absolute !left-[715px] !top-[125px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
                         <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                         {{ $activity->venue->name }}
                     </flux:button>

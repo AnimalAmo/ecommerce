@@ -127,9 +127,9 @@
             </div>
         @endguest
         @auth
-            {{-- Niente "Il mio profilo": su mobile il profilo è la voce fissa della tabbar --}}
+            {{-- Niente "Il mio profilo" né "I miei ordini": su mobile il profilo (e le
+                 sue sezioni) sono la voce fissa della tabbar, qui resta solo l'uscita --}}
             <div class="mt-6 flex flex-col text-base font-semibold text-black">
-                <a href="{{ route('profilo.ordini') }}" class="border-b border-gray-150 py-4">{{ __('nav.my_orders') }}</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <flux:button type="submit" variant="ghost" class="!w-full !justify-start !rounded-none !px-0 !py-4 !text-base !font-semibold !text-black hover:!bg-transparent">{{ __('nav.logout') }}</flux:button>

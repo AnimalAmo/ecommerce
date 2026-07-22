@@ -2,6 +2,7 @@
 
 namespace App\Services\Orders;
 
+use App\Enums\ProductType;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\User;
@@ -46,6 +47,29 @@ class OrderQueryService
             ->where('order_number', $orderNumber)
             ->with('items')
             ->first();
+    }
+
+    /**
+     * Sezione di profilo in cui l'acquirente ritrova un acquisto appena
+     * concluso: un ordine di SOLI eventi porta a "Eventi a cui partecipo",
+     * tutto il resto — soggiorni, servizi, attività, smartbox e ordini misti —
+     * a "I miei ordini" (un ordine è atomico: mai spezzato tra due sezioni).
+     * I regali restano sugli ordini: chi compra non partecipa.
+     *
+     * NOTA: ProfileEvents è ancora mock (TODO "eventi reali da backend"), quindi
+     * finché non legge dal db l'evento acquistato non comparirà nella lista.
+     *
+     * @param  list<ProductType|null>  $types  tipologie delle righe acquistate
+     * @return string nome della rotta (mai un path: la locale la mette route())
+     */
+    public function profileRouteFor(array $types, bool $gift = false): string
+    {
+        $eventsOnly = $types !== [] && ! $gift && array_filter(
+            $types,
+            fn (?ProductType $type): bool => $type !== ProductType::Event,
+        ) === [];
+
+        return $eventsOnly ? 'profilo.eventi' : 'profilo.ordini';
     }
 
     /**

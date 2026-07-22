@@ -157,15 +157,14 @@
                     </section>
                 </div>
 
-                {{-- 5. Colonna destra: card mappa con pill località (nascosta senza venue/mappa: eventi partner) --}}
-                @if ($event->venue?->map_img)
+                {{-- 5. Colonna destra: card mappa con pill località (Google Maps con la chiave, screenshot XD come fallback; nascosta senza venue) --}}
+                @if ($event->venue?->hasMap())
                     <aside class="w-full shrink-0 lg:w-[718px]">
                         <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-5">
                             <div class="relative overflow-hidden rounded-[4px]">
-                                {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                                <img src="{{ asset('img/xd/'.$event->venue->map_img.'.jpg') }}" alt="Mappa della zona — {{ $event->venue->name }}" class="h-[576px] w-full object-cover">
-                                {{-- TODO: apertura mappa (nessuna interazione definita nell'XD) --}}
-                                <flux:button class="!absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
+                                <x-google-map :query="$event->venue->mapQuery()" :fallback="$event->venue->mapFallbackUrl()" alt="Mappa della zona — {{ $event->venue->name }}" class="h-[576px]" />
+                                {{-- Pill puramente descrittiva: pointer-events-none per non rubare i click alla mappa --}}
+                                <flux:button class="!pointer-events-none !absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
                                     <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                                     {{ $event->venue->name }}
                                 </flux:button>
