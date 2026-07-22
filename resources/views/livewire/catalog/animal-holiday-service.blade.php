@@ -89,14 +89,13 @@
                         </div>
                     </section>
 
-                    {{-- 4. Dove siamo (nascosta senza mappa: i servizi partner non hanno map_img) --}}
-                    @if ($service->mapImageUrl())
+                    {{-- 4. Dove siamo (Google Maps con la chiave configurata, screenshot XD come fallback; senza entrambi la sezione sparisce) --}}
+                    @if ($service->hasMap())
                         <section class="mt-8">
                             <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
                             <div class="relative mt-5 overflow-hidden rounded-[4px]">
-                                {{-- TODO: screenshot placeholder dall'XD — sostituire con una mappa embedded reale --}}
-                                <img src="{{ $service->mapImageUrl() }}" alt="{{ __('holiday.map_alt', ['name' => $service->name]) }}" class="h-[389px] w-full object-cover">
-                                <span class="absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
+                                <x-google-map :query="$service->mapQuery()" :fallback="$service->mapFallbackUrl()" :alt="__('holiday.map_alt', ['name' => $service->name])" class="h-[389px]" />
+                                <span class="pointer-events-none absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
                                     <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                                     {{ $service->name }}
                                 </span>

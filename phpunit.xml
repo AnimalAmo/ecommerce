@@ -32,9 +32,10 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
-        <!-- I test non toccano MAI la rete: chiavi gateway sempre vuote (i .env di sviluppo possono averle) -->
+        <!-- I test non toccano MAI la rete: chiavi gateway/API sempre vuote (i .env di sviluppo possono averle) -->
         <env name="STRIPE_KEY" value=""/>
         <env name="STRIPE_SECRET" value=""/>
         <env name="STRIPE_WEBHOOK_SECRET" value=""/>
+        <env name="GOOGLE_MAPS_KEY" value=""/>
     </php>
 </phpunit>

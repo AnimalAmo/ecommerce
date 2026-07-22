@@ -6,6 +6,7 @@ use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
 use App\Models\Concerns\HasFaqs;
+use App\Models\Concerns\HasMapEmbed;
 use App\Models\Concerns\HasReviews;
 use App\Models\Structure\Concerns\StructureHasRelationships;
 use Database\Factories\Structure\StructureFactory;
@@ -16,7 +17,7 @@ use Spatie\Translatable\HasTranslations;
 class Structure extends Model
 {
     /** @use HasFactory<StructureFactory> */
-    use HasAmenities, HasCatalogImages, HasFactory, HasFaqs, HasReviews, HasTranslations, StructureHasRelationships;
+    use HasAmenities, HasCatalogImages, HasFactory, HasFaqs, HasMapEmbed, HasReviews, HasTranslations, StructureHasRelationships;
 
     /** SOLO colonne stringa — mai le json (general_info/features): spatie tratterebbe l'array come mappa di locale. */
     public array $translatable = ['name', 'description'];
@@ -56,5 +57,21 @@ class Structure extends Model
             'general_info' => 'array',
             'features' => 'array',
         ];
+    }
+
+    /** Query place per la Maps Embed: i partner non hanno screenshot ma hanno la località. */
+    public function mapQuery(): ?string
+    {
+        // Il solo nome non basta: Google centrerebbe un omonimo qualunque — meglio nascondere la sezione.
+        if (blank($this->location)) {
+            return null;
+        }
+
+        return collect([$this->name, $this->location])->filter()->implode(', ');
+    }
+
+    public function mapFallbackUrl(): ?string
+    {
+        return $this->mapImageUrl();
     }
 }

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Maps Embed API — chiave fornita dalla cliente (lug 2026); mappa "Dove siamo" nei detail catalogo.
+    'google' => [
+        'maps_key' => env('GOOGLE_MAPS_KEY'),
+    ],
+
 ];
