@@ -24,5 +24,7 @@
 
         @livewireScripts
         @fluxScripts
+
+        <script src="//code.tidio.co/lxyeqk5ehbrcahqlghaaeqmsdxzo9ztn.js" async></script>
     </body>
 </html>
