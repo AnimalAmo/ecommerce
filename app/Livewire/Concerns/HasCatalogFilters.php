@@ -125,9 +125,27 @@ trait HasCatalogFilters
         $this->onFiltersChanged();
     }
 
-    /** Le pill dropdown desktop scrivono le tipologie Smartbox via wire:model: stesso hook dei toggle. */
+    /**
+     * Le pill dropdown desktop scrivono le tipologie via wire:model: il payload client
+     * è arbitrario, quindi bonifica sui valori noti; svuotare tutto ripristina i default
+     * di pagina, come la X sull'ultima chip.
+     */
+    public function updatedActiveTypes(): void
+    {
+        $this->activeTypes = array_values(array_intersect(self::FILTER_TYPES, $this->activeTypes));
+
+        if ($this->activeTypes === []) {
+            $this->activeTypes = $this->defaultFilterTypes();
+        }
+
+        $this->onFiltersChanged();
+    }
+
+    /** Come updatedActiveTypes, per le sotto-sezioni Smartbox (vuoto = tutti i cofanetti). */
     public function updatedSmartboxTypes(): void
     {
+        $this->smartboxTypes = array_values(array_intersect(self::SMARTBOX_TYPES, $this->smartboxTypes));
+
         $this->onFiltersChanged();
     }
 
