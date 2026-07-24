@@ -88,6 +88,30 @@ class SmartboxPagesTest extends TestCase
             ->assertDontSee('Weekend nella capitale');
     }
 
+    public function test_smartbox_desktop_type_pill_restricts_the_grid_via_wire_model(): void
+    {
+        // Le pill dropdown desktop scrivono smartboxTypes via wire:model (non i toggle del modal).
+        Livewire::test(Smartbox::class)
+            ->set('smartboxTypes', ['benessere'])
+            ->assertSee('Weekend di relax in Lombardia')
+            ->assertDontSee('Weekend nella capitale');
+    }
+
+    public function test_smartbox_desktop_type_pill_resets_pagination(): void
+    {
+        SmartboxPackage::factory()->create([
+            'title' => 'Cofanetto tredicesimo',
+            'slug' => 'tredicesimo',
+            'position' => 99,
+        ]);
+
+        Livewire::test(Smartbox::class)
+            ->call('gotoPage', 2)
+            ->assertSet('paginators.page', 2)
+            ->set('smartboxTypes', ['benessere'])
+            ->assertSet('paginators.page', 1);
+    }
+
     public function test_smartbox_search_filters_by_title(): void
     {
         Livewire::test(Smartbox::class)

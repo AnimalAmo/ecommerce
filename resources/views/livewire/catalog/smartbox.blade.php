@@ -42,15 +42,71 @@
 
             @include('partials.catalog.filter-chips', ['priceFloor' => $this::PRICE_MIN, 'priceCeil' => $this::PRICE_MAX])
 
-            {{-- Filtri (XD: quattro pill dropdown "Componente 20"; comportamento dropdown TODO) --}}
+            {{-- Filtri desktop (XD: quattro pill dropdown "Componente 20"), collegati agli stessi
+                 stati del modal mobile: Tipologia e Prezzo filtrano la griglia; Persone raccoglie
+                 i gruppi come nel modal (la regola di filtro è in attesa del cliente); Luogo cerca
+                 nel titolo, perché i cofanetti non hanno una colonna luogo. --}}
+            @php
+                $pill = '!h-[30px] !gap-2 !rounded-full !border !bg-white !px-3.5 !text-sm !font-normal !shadow-none';
+                $pillOff = '!border-[#C8C8C8] !text-[#555555]';
+                $pillOn = '!border-brand-cyan !text-brand-cyan';
+                $priceMoved = $priceMin !== $this::PRICE_MIN || $priceMax !== $this::PRICE_MAX;
+            @endphp
             <p class="mt-10 text-lg font-semibold leading-6 text-black max-lg:hidden">{{ __('smartbox.filter_your_search') }}</p>
             <div class="mt-[17px] flex flex-wrap items-center gap-[11px] max-lg:hidden">
-                @foreach ([__('smartbox.filter_type'), __('smartbox.filter_price'), __('smartbox.filter_people'), __('smartbox.filter_place')] as $filter)
-                    <flux:button wire:key="filter-{{ $loop->index }}" class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
-                        {{ $filter }}
+                <flux:dropdown>
+                    <flux:button class="{{ $pill }} {{ $smartboxTypes !== [] ? $pillOn : $pillOff }}">
+                        {{ __('smartbox.filter_type') }}@if ($smartboxTypes !== []) ({{ count($smartboxTypes) }})@endif
                         <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
                     </flux:button>
-                @endforeach
+                    <flux:menu>
+                        <flux:menu.checkbox.group wire:model.live="smartboxTypes">
+                            @foreach ($this::SMARTBOX_TYPES as $type)
+                                <flux:menu.checkbox wire:key="pill-type-{{ $type }}" value="{{ $type }}">{{ __('catalog.smartbox_chips.'.$type) }}</flux:menu.checkbox>
+                            @endforeach
+                        </flux:menu.checkbox.group>
+                    </flux:menu>
+                </flux:dropdown>
+
+                <flux:dropdown>
+                    <flux:button class="{{ $pill }} {{ $priceMoved ? $pillOn : $pillOff }}">
+                        {{ __('smartbox.filter_price') }}@if ($priceMoved) ({{ $priceMin }}–{{ $priceMax }} €)@endif
+                        <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
+                    </flux:button>
+                    <flux:popover class="w-64 !p-4">
+                        <div class="flex items-end gap-3">
+                            <flux:input type="number" min="{{ $this::PRICE_MIN }}" max="{{ $this::PRICE_MAX }}" wire:model.live.debounce.500ms="priceMin" label="{{ __('catalog.filter_price_min') }}" size="sm" />
+                            <flux:input type="number" min="{{ $this::PRICE_MIN }}" max="{{ $this::PRICE_MAX }}" wire:model.live.debounce.500ms="priceMax" label="{{ __('catalog.filter_price_max') }}" size="sm" />
+                        </div>
+                    </flux:popover>
+                </flux:dropdown>
+
+                <flux:dropdown>
+                    <flux:button class="{{ $pill }} {{ $peopleGroups !== [] ? $pillOn : $pillOff }}">
+                        {{ __('smartbox.filter_people') }}@if ($peopleGroups !== []) ({{ count($peopleGroups) }})@endif
+                        <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
+                    </flux:button>
+                    <flux:menu>
+                        <flux:menu.checkbox.group wire:model.live="peopleGroups">
+                            @foreach (['coppia', 'famiglia', 'gruppo'] as $group)
+                                <flux:menu.checkbox wire:key="pill-people-{{ $group }}" value="{{ $group }}">{{ __('catalog.people_groups.'.$group) }}</flux:menu.checkbox>
+                            @endforeach
+                        </flux:menu.checkbox.group>
+                    </flux:menu>
+                </flux:dropdown>
+
+                <flux:dropdown>
+                    <flux:button class="{{ $pill }} {{ trim($where) !== '' ? $pillOn : $pillOff }}">
+                        {{ __('smartbox.filter_place') }}@if (trim($where) !== '') ({{ trim($where) }})@endif
+                        <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
+                    </flux:button>
+                    <flux:popover class="w-72 !p-4">
+                        <form wire:submit="search" class="flex items-end gap-2">
+                            <flux:input wire:model="where" type="text" placeholder="{{ __('smartbox.search_where') }}" size="sm" class="flex-1" />
+                            <flux:button type="submit" size="sm" class="!rounded-full !bg-brand-yellow !px-4 !text-sm !font-bold !text-ink [&>span]:flex [&>span]:items-center">{{ __('smartbox.search_cta') }}</flux:button>
+                        </form>
+                    </flux:popover>
+                </flux:dropdown>
             </div>
 
             {{-- Nessun risultato (XD app "Nessun risultato"): al posto della griglia vuota

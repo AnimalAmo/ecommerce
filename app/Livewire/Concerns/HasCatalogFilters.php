@@ -125,6 +125,12 @@ trait HasCatalogFilters
         $this->onFiltersChanged();
     }
 
+    /** Le pill dropdown desktop scrivono le tipologie Smartbox via wire:model: stesso hook dei toggle. */
+    public function updatedSmartboxTypes(): void
+    {
+        $this->onFiltersChanged();
+    }
+
     public function updatedPriceMin(): void
     {
         $this->normalizePriceRange();
