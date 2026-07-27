@@ -115,11 +115,12 @@ Errori tipici e cosa significano:
 
 ## 7. Note operative
 
-- **Invio sincrono.** `QUEUE_CONNECTION` è `database` in produzione ma il
-  listener `SendOrderPaidMails` gira come job: serve un worker attivo
-  (`php artisan queue:work`) o le mail post-pagamento restano in coda.
-  L'invito partner (`SendPartnerInvitation`) parte invece in-process e aggiunge
-  la latenza SMTP alla richiesta HTTP.
+- **Serve un worker attivo.** Tutte le email del portale sono asincrone: il
+  listener `SendOrderPaidMails` è un job, e `PartnerInvitationMail` è
+  `ShouldQueue`. Con `QUEUE_CONNECTION=database` (il default di produzione),
+  senza `php artisan queue:work` attivo **nessuna email parte** — restano nella
+  tabella `jobs`. È il singolo punto in cui questo setup si rompe in silenzio:
+  va messo sotto supervisor/systemd insieme al deploy.
 - **Fallimenti non bloccanti.** `SendOrderPaidMails` cattura e logga gli errori
   di invio: chi ha pagato non vede mai un errore. Il rovescio è che una mail non
   consegnata si vede solo nei log e nella dashboard Mailgun (Sending → Logs).

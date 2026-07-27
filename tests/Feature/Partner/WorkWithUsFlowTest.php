@@ -65,7 +65,9 @@ class WorkWithUsFlowTest extends TestCase
         $this->assertSame(PartnerApplication::STATUS_INVITED, $application->status);
         $this->assertNotNull($application->invited_at);
 
-        Mail::assertSent(PartnerInvitationMail::class, function (PartnerInvitationMail $mail) use ($application): bool {
+        // assertQueued, non assertSent: il mailable è ShouldQueue, quindi
+        // Mail::to()->send() lo accoda invece di consegnarlo in-process.
+        Mail::assertQueued(PartnerInvitationMail::class, function (PartnerInvitationMail $mail) use ($application): bool {
             return $mail->hasTo('susanna@example.com')
                 && $mail->application->is($application)
                 && str_contains($mail->link, 'application='.$application->id)
