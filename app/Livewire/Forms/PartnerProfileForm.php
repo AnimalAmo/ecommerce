@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -46,7 +47,7 @@ class PartnerProfileForm extends Form
             'firstName' => ['required', 'string', 'max:64'],
             'lastName' => ['required', 'string', 'max:64'],
             'email' => ['required', 'email', 'max:128', Rule::unique('users', 'email')->ignore($this->userId())],
-            'phone' => ['required', 'string', 'max:32'],
+            'phone' => ['required', ...Phone::rules()],
             'businessName' => ['required', 'string', 'max:128'],
             'address' => ['required', 'string', 'max:128'],
             'city' => ['required', 'string', 'max:64'],

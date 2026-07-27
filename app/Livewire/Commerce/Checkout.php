@@ -16,6 +16,7 @@ use App\Services\Cart\CartManager;
 use App\Services\Orders\OrderQueryService;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
+use App\Support\Phone;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Auth;
@@ -144,6 +145,9 @@ class Checkout extends Component
                 'firstName' => ['required'],
                 'lastName' => ['required'],
                 'email' => ['required', 'email'],
+                // Il telefono resta facoltativo (orders.phone è nullable), ma se
+                // c'è dev'essere un numero vero: finisce nello snapshot ordine.
+                'phone' => ['nullable', ...Phone::rules()],
                 ...($this->gift ? ['recipientEmail' => ['required', 'email']] : []),
             ]);
 

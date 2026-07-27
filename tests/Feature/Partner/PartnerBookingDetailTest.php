@@ -55,7 +55,7 @@ class PartnerBookingDetailTest extends TestCase
             ->assertOk()
             ->assertSee(__('partner.bookings.detail_customer'))
             ->assertSee('Giulia')
-            ->assertSee('3487384989')
+            ->assertSee('+39 348 738 4989')
             ->assertSee($item->order->order_number)
             ->assertSee(__('payment.methods.card'))
             ->assertSee('Hotel Bau Resort')

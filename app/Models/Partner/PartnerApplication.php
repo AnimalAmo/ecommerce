@@ -2,6 +2,8 @@
 
 namespace App\Models\Partner;
 
+use App\Support\Phone;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -38,5 +40,11 @@ class PartnerApplication extends Model
             'invited_at' => 'datetime',
             'registered_at' => 'datetime',
         ];
+    }
+
+    /** Il contatto della candidatura si archivia in E.164 come quello degli utenti. */
+    protected function phone(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => Phone::toE164($value));
     }
 }

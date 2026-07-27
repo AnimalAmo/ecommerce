@@ -15,6 +15,7 @@ return [
     'min' => [
         'string' => ':Attribute deve contenere almeno :min caratteri.',
     ],
+    'phone' => 'Inserisci un numero di telefono valido.',
     'required' => 'Inserisci :attribute.',
     'same' => ':Attribute non coincide con :other.',
     'string' => 'Valore non valido.',

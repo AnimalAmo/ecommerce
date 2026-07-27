@@ -45,7 +45,7 @@
 
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.phone') }}</flux:label>
-                        <flux:input type="tel" wire:model="form.phone" placeholder="{{ __('partner.phone') }}" class="{{ $inputClass }}" />
+                        <x-phone-input model="form.phone" :value="$form->phone" :number-placeholder="__('partner.phone')" :input-class="$inputClass" :select-class="$selectClass" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.website') }}</flux:label>

@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Models\Favorite\Favorite;
 use App\Models\Partner\PartnerProfile;
 use App\Models\Pet\Pet;
+use App\Support\Phone;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -52,6 +53,12 @@ class User extends Authenticatable
             'marketing_consent' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    /** Il numero arriva da form, seeder e factory: la normalizzazione E.164 vive qui, non nei form. */
+    protected function phone(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => Phone::toE164($value));
     }
 
     /** Nome completo: compatibilità con i punti che usavano la colonna 'name'. */

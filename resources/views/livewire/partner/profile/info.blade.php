@@ -1,6 +1,7 @@
 {{-- Profilo partner – Informazioni personali (XD "Profilo - info personali") --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php $fieldClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]'; @endphp
+@php $selectClass = '!h-10 !rounded-[3px] !border-[#C8C8C8]'; @endphp
 @php $labelClass = '!text-xs !font-normal !text-[#555555]'; @endphp
 
 <div class="flex min-h-screen flex-col bg-[linear-gradient(296deg,#FF3EA51A_0%,#68CDEB1A_100%)] font-sans text-ink antialiased">
@@ -40,7 +41,7 @@
                             </flux:field>
                             <flux:field>
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.profile.phone') }} *</flux:label>
-                                <flux:input type="tel" wire:model="form.phone" class="{{ $fieldClass }}" />
+                                <x-phone-input model="form.phone" :value="$form->phone" :input-class="$fieldClass" :select-class="$selectClass" />
                             </flux:field>
                             <flux:field>
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.profile.vat') }} *</flux:label>

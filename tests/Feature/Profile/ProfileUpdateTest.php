@@ -53,7 +53,7 @@ class ProfileUpdateTest extends TestCase
             ->assertSet('address', 'Viale Abruzzi 20')
             ->assertSet('city', 'Milano')
             ->assertSet('zip', '20131')
-            ->assertSet('phone', '340 5738920');
+            ->assertSet('phone', '+393405738920');
     }
 
     public function test_save_persists_all_columns_and_pet_species(): void
@@ -78,7 +78,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame('Via Roma 1', $user->address);
         $this->assertSame('Torino', $user->city);
         $this->assertSame('10121', $user->postal_code);
-        $this->assertSame('333 1234567', $user->phone);
+        $this->assertSame('+393331234567', $user->phone);
 
         // Il pet esistente viene aggiornato, non duplicato.
         $this->assertSame('Gatto', $user->pets()->sole()->species);

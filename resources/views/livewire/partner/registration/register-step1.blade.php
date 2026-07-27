@@ -2,6 +2,8 @@
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 {{-- Su mobile i campi seguono lo stile dei form ecommerce (XD app): 45px, r5, testo 14 --}}
 @php $fieldClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8] max-lg:[&_input]:!h-[45px] max-lg:[&_input]:!rounded-[5px] max-lg:[&_input]:!text-sm max-lg:[&_input]:!text-[#0D171A]'; @endphp
+{{-- Il select del prefisso (<x-phone-input>) riceve la classe sul <select>, non sul wrapper --}}
+@php $selectClass = '!h-10 !rounded-[3px] !border-[#C8C8C8] max-lg:!h-[45px] max-lg:!rounded-[5px] max-lg:!text-sm max-lg:!text-[#0D171A]'; @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
 
@@ -58,7 +60,7 @@
                         {{-- Cellulare | Partita IVA --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.phone') }} *</flux:label>
-                            <flux:input type="tel" wire:model="form.phone" class="{{ $fieldClass }}" />
+                            <x-phone-input model="form.phone" :value="$form->phone" :input-class="$fieldClass" :select-class="$selectClass" />
                         </flux:field>
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.vat') }} *</flux:label>

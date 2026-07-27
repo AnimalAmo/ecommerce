@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Support\Phone;
 use Livewire\Form;
 
 class PartnerApplicationForm extends Form
@@ -32,7 +33,7 @@ class PartnerApplicationForm extends Form
             'firstName' => ['required', 'string', 'max:64'],
             'lastName' => ['required', 'string', 'max:64'],
             'email' => ['required', 'email', 'max:128'],
-            'phone' => ['required', 'string', 'max:32'],
+            'phone' => ['required', ...Phone::rules()],
             'website' => ['nullable', 'string', 'max:128'],
             'city' => ['required', 'string', 'max:64'],
             'businessName' => ['required', 'string', 'max:128'],
