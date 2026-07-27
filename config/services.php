@@ -14,6 +14,19 @@ return [
     |
     */
 
+    /*
+     | Mailgun è il provider SMTP scelto dalla cliente (lug 2026). Serve solo al
+     | mailer "mailgun" (transport API HTTP); il mailer "smtp" legge le MAIL_*.
+     | ATTENZIONE alla regione: un dominio creato nell'area EU NON risponde sugli
+     | endpoint US. Default EU, coerente col GDPR e con l'utenza italiana.
+     */
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
+        'scheme' => 'https',
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
