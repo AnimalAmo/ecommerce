@@ -139,6 +139,39 @@ class RegistrationTest extends TestCase
         $this->assertSame(1, $component->get('step'));
     }
 
+    /**
+     * Regressione: gli step del wizard riusano la stessa posizione nel DOM, quindi
+     * senza una wire:key che cambia a ogni step il morph di Livewire ricicla gli
+     * <input> e la digitazione finisce anche nella property dello step precedente
+     * (la "tipologia animale" dello step 4 sovrascriveva l'indirizzo dello step 3).
+     */
+    public function test_each_step_has_its_own_wire_key(): void
+    {
+        $component = Livewire::test(RegisterModal::class)
+            ->set('form.firstName', 'Mario')
+            ->set('form.lastName', 'Verdi')
+            ->set('form.birthDate', '1990-05-10')
+            ->set('form.email', 'mario.verdi@example.com');
+
+        $component->assertSeeHtml('wire:key="register-step-1"');
+
+        $component->call('next')->assertSeeHtml('wire:key="register-step-2"');
+
+        $component
+            ->set('form.phone', '3331234567')
+            ->set('form.password', 'password123')
+            ->set('form.passwordConfirmation', 'password123')
+            ->call('next')
+            ->assertSeeHtml('wire:key="register-step-3"');
+
+        $component
+            ->set('form.address', 'Via Milano 2')
+            ->set('form.city', 'Brescia')
+            ->set('form.postalCode', '25121')
+            ->call('next')
+            ->assertSeeHtml('wire:key="register-step-4"');
+    }
+
     public function test_duplicate_email_is_blocked_at_step_one(): void
     {
         User::factory()->create(['email' => 'giulia.rossi@example.com']);

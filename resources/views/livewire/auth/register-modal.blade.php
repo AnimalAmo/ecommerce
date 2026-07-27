@@ -35,6 +35,11 @@
     </div>
 
     <form wire:submit="next" class="mt-6 max-lg:mt-8">
+        {{-- La chiave DEVE cambiare a ogni step: gli step occupano la stessa posizione
+             nel form, quindi senza chiave il morph di Livewire ricicla gli <input> e
+             ogni campo resta legato anche alla property dello step precedente
+             (la tipologia animale finiva nell'indirizzo). --}}
+        <div wire:key="register-step-{{ $step }}">
         @if ($step === 1)
             <div class="space-y-4">
                 <flux:field>
@@ -116,6 +121,7 @@
                 </flux:field>
             </div>
         @endif
+        </div>
 
         {{-- Bottone XD app: 343x39, radius 19, #6CD1EF, testo 15 SemiBold bianco --}}
         <div class="mt-8 flex justify-center">
