@@ -149,7 +149,27 @@ attivo — le mail del portale sono tutte asincrone.
 
 Configurazione provata end-to-end il 28 lug 2026: `mail:test animalamo24@gmail.com`
 → evento `delivered` sull'API Mailgun. `animalamo24@gmail.com` è il recipient
-autorizzato del sandbox. Verso qualsiasi altro indirizzo l'invio resta 403.
+autorizzato del sandbox (è l'indirizzo di apertura dell'account, quindi lo era
+già senza configurarlo). Verso qualsiasi altro indirizzo l'invio resta 403.
+
+### Come collaudare il demo
+
+La cliente prova il demo usando `animalamo24@gmail.com`. Il vincolo dei recipient
+vale per **ogni** indirizzo che l'applicazione tocca, non solo per quello di
+login, quindi va usato lo stesso indirizzo anche in:
+
+- registrazione utente e email dell'ordine in checkout;
+- **email del destinatario del regalo Smartbox** — con un indirizzo diverso la
+  `SmartboxGiftMail` fallisce con 403 e il regalo non arriva a nessuno;
+- email della candidatura partner B2B, che riceve l'invito.
+
+Il fallimento è silenzioso lato applicazione (`SendOrderPaidMails` invia con
+`sendSilently()` per non far fallire il webhook Stripe): se una mail non arriva,
+guardare prima la cartella spam, poi `./docs/mailgun-logs.sh`.
+
+Il mittente resta `postmaster@sandbox….mailgun.org` e non è modificabile: sul
+sandbox il from deve stare sul dominio sandbox. È il motivo principale per
+passare a un dominio verificato prima di mostrare il portale a terzi.
 
 ## 6. Verifica
 
@@ -189,3 +209,83 @@ Errori tipici e cosa significano:
   consegnata si vede solo nei log e nella dashboard Mailgun (Sending → Logs).
 - **Limiti piano.** Il piano gratuito Mailgun ha un tetto giornaliero e richiede
   carta per uscire dalla sandbox: da verificare con la cliente prima del go-live.
+
+## 8. Passaggio in produzione
+
+Il sandbox non è promuovibile: è un dominio usa-e-getta di Mailgun, non si
+verifica e non si rinomina. Il passaggio in produzione è la creazione di un
+dominio nuovo, e il sandbox si smette semplicemente di usarlo.
+
+### 8.1 Prerequisito: un dominio che esista
+
+Vedi §0. `animalamo.com` non è registrato, quindi o si registra, o si usa
+`animalamo.it` che è già della cliente. Nulla di quanto segue è fattibile prima
+di aver sciolto questo nodo.
+
+### 8.2 Creare il sending domain
+
+Su Mailgun, in **regione EU** (coerente col GDPR: passano indirizzi ed
+eventualmente nomi di utenti italiani), creare `mg.animalamo.it`. Il
+sottodominio dedicato è deliberato: la reputazione di invio si costruisce su
+`mg.`, e un eventuale problema di deliverability non contamina la posta
+ordinaria di `animalamo.it`.
+
+### 8.3 Record DNS su Register.it
+
+Quattro sono generati da Mailgun (Domain settings → DNS records) e vanno letti
+di lì — il DKIM in particolare è unico per dominio. La forma è questa:
+
+| Tipo | Host | Valore |
+|:--|:--|:--|
+| TXT | `mg.animalamo.it` | `v=spf1 include:mailgun.org ~all` |
+| TXT | `<selector>._domainkey.mg.animalamo.it` | chiave DKIM generata da Mailgun |
+| CNAME | `email.mg.animalamo.it` | `eu.mailgun.org` |
+| MX | `mg.animalamo.it` | `mxa.eu.mailgun.org` e `mxb.eu.mailgun.org`, priorità 10 |
+| TXT | `_dmarc.mg.animalamo.it` | `v=DMARC1; p=none; rua=mailto:…` (opzionale) |
+
+SPF e DKIM sono gli unici obbligatori per la verifica; MX serve solo a ricevere,
+il CNAME solo al tracking di aperture e click. Il DMARC non è richiesto da
+Mailgun ma migliora il recapito su Gmail e Outlook — con `p=none` non rifiuta
+nulla, si limita a raccogliere report.
+
+**Attenzione al campo Host.** Molti pannelli DNS (Register.it e DigitalOcean
+inclusi) appendono da soli il nome della zona. Nella zona `animalamo.it` va
+scritto `mg`, non `mg.animalamo.it`, altrimenti il record finisce su
+`mg.animalamo.it.animalamo.it` e la verifica non passa mai senza che sia ovvio
+il perché.
+
+Verifica da terminale prima ancora di guardare la dashboard:
+
+```bash
+dig +short TXT mg.animalamo.it
+dig +short TXT <selector>._domainkey.mg.animalamo.it
+```
+
+### 8.4 Configurazione applicativa
+
+```dotenv
+MAIL_MAILER=mailgun
+MAILGUN_DOMAIN=mg.animalamo.it
+MAILGUN_SECRET=<sending key EU>
+MAILGUN_ENDPOINT=api.eu.mailgun.net
+MAIL_FROM_ADDRESS="no-reply@mg.animalamo.it"
+MAIL_FROM_NAME="AnimalAmo"
+```
+
+Poi `php artisan config:clear`. Le sending key sono valide su entrambe le
+regioni (verificato: `HTTP 200` sia su `api.mailgun.net` che su
+`api.eu.mailgun.net`), quindi non serve rigenerarle passando da US a EU — cambia
+solo `MAILGUN_ENDPOINT`.
+
+### 8.5 Prima del go-live
+
+- Dominio **verde** su Mailgun (tutti i record verificati).
+- Piano a pagamento attivo, o quantomeno carta registrata: il tier gratuito ha
+  un tetto giornaliero che un portale con ordini reali supera in fretta.
+- `queue:work` sotto supervisor — vedi §7, è il punto in cui il setup si rompe
+  in silenzio.
+- `mail:test` verso un indirizzo **esterno** all'account (Gmail, Outlook e un
+  dominio aziendale): fuori dal sandbox non ci sono più recipient autorizzati,
+  ed è l'unico modo di accorgersi che si finisce in spam.
+- Ruotare le chiavi usate in sviluppo e tenere in produzione una sending key
+  dedicata.
