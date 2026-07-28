@@ -7,6 +7,33 @@ Lato codice è già tutto pronto: restano solo le credenziali e i record DNS.
 
 ---
 
+## 0. Stato al 28 lug 2026
+
+L'account Mailgun esiste ed è raggiungibile, ma **nessun dominio custom è
+verificabile allo stato attuale**:
+
+| Cosa | Stato |
+|:--|:--|
+| Dominio Mailgun `mg.animalamo.com` | creato in regione **EU**, `unverified` |
+| DNS `animalamo.com` | **non registrato** — `dig NS animalamo.com` → `NXDOMAIN` dai server `.com` |
+| DNS `animalamo.it` | registrato, NS su `ns1/ns2.register.it` (A `195.110.124.133`, MX `mail.register.it`) |
+| Sandbox `sandbox…9.mailgun.org` | regione **US**, `active`, 0 credenziali SMTP |
+| Demo | `https://ecommerce-0tepvdzv.on-forge.com/` (sottodominio Forge, nessun dominio custom) |
+
+Due conseguenze:
+
+1. `mg.animalamo.com` non si verificherà mai finché `animalamo.com` non viene
+   registrato: NXDOMAIN al registry significa che il dominio non esiste, quindi
+   non c'è zona in cui pubblicare SPF/DKIM. Una zona DNS creata su DigitalOcean
+   **non registra il dominio** e resta inerte finché il registrar non delega gli NS.
+2. Il dominio buono è `animalamo.it`, ma è delegato a Register.it. Per gestirne
+   il DNS su DigitalOcean vanno prima ricreati su DO **tutti** i record esistenti
+   (A del sito, MX di Register.it) e solo dopo cambiati gli NS sul registrar,
+   altrimenti sito ed email attuali si rompono durante la propagazione.
+
+Decisione presa: **sandbox per il demo adesso**, dominio reale + delega a
+DigitalOcean in un secondo momento (vedi §5b).
+
 ## 1. Cosa serve dalla cliente
 
 | Dato | Dove si trova su Mailgun | Va in |
@@ -87,6 +114,38 @@ MAILGUN_ENDPOINT=api.eu.mailgun.net
 
 Dipendenze già installate: `symfony/mailgun-mailer` + `symfony/http-client`.
 Il passaggio SMTP ⇄ API non richiede modifiche al codice.
+
+## 5b. Demo su Forge con il dominio sandbox
+
+Configurazione da usare sul demo (`ecommerce-0tepvdzv.on-forge.com`) finché non
+esiste un dominio verificato. Va nel `.env` **sul server**, mai committata:
+
+```dotenv
+MAIL_MAILER=mailgun
+MAILGUN_DOMAIN=sandboxb9ab51a50e0b4a03938857c0238c5bc9.mailgun.org
+MAILGUN_SECRET=<private api key>
+MAILGUN_ENDPOINT=api.mailgun.net
+MAIL_FROM_ADDRESS="postmaster@sandboxb9ab51a50e0b4a03938857c0238c5bc9.mailgun.org"
+MAIL_FROM_NAME="AnimalAmo"
+```
+
+Tre punti che rompono questa configurazione, tutti già verificati sul campo:
+
+- **`api.mailgun.net`, non `api.eu.mailgun.net`.** Il sandbox sta in regione US
+  anche quando i domini custom dell'account sono EU. Con l'endpoint EU la
+  risposta è `{"message":"Domain not found"}`.
+- **Transport API, non SMTP.** Il sandbox non ha credenziali SMTP generate
+  (`/v3/domains/<sandbox>/credentials` → `total_count: 0`), quindi `MAIL_MAILER=smtp`
+  non ha nulla con cui autenticarsi.
+- **Authorized Recipients obbligatori.** Verso un indirizzo non in lista Mailgun
+  risponde `HTTP 403 — Sandbox subdomains are for test purposes only`. Vanno
+  aggiunti a mano dalla dashboard (Sending → Domains → sandbox → Authorized
+  Recipients, max 5): l'endpoint API `authorized_recipients` non esiste più,
+  risponde `{"error":"not found"}`. Ogni indirizzo riceve una mail di conferma
+  e resta *pending* finché non clicca il link.
+
+Dopo la modifica: `php artisan config:clear` e assicurarsi che `queue:work` sia
+attivo — le mail del portale sono tutte asincrone.
 
 ## 6. Verifica
 
