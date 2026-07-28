@@ -147,6 +147,10 @@ Tre punti che rompono questa configurazione, tutti già verificati sul campo:
 Dopo la modifica: `php artisan config:clear` e assicurarsi che `queue:work` sia
 attivo — le mail del portale sono tutte asincrone.
 
+Configurazione provata end-to-end il 28 lug 2026: `mail:test animalamo24@gmail.com`
+→ evento `delivered` sull'API Mailgun. `animalamo24@gmail.com` è il recipient
+autorizzato del sandbox. Verso qualsiasi altro indirizzo l'invio resta 403.
+
 ## 6. Verifica
 
 ```bash
