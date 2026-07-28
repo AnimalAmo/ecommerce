@@ -38,9 +38,14 @@
                         <flux:label class="{{ $labelClass }}">{{ __('partner.last_name') }}</flux:label>
                         <flux:input wire:model="form.lastName" placeholder="{{ __('partner.last_name') }}" class="{{ $inputClass }}" />
                     </flux:field>
+                    {{-- Utente ecommerce loggato: l'email è quella del suo account (è ciò che
+                         a fine iscrizione decide quale utente promuovere a partner) --}}
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.email') }}</flux:label>
-                        <flux:input type="email" wire:model="form.email" placeholder="{{ __('partner.email') }}" class="{{ $inputClass }}" />
+                        <flux:input type="email" wire:model="form.email" placeholder="{{ __('partner.email') }}" :readonly="auth()->check()" class="{{ $inputClass }}" />
+                        @auth
+                            <flux:text class="!mt-1 !text-xs !text-[#555555]">{{ __('partner.email_account_hint') }}</flux:text>
+                        @endauth
                     </flux:field>
 
                     <flux:field>

@@ -3,12 +3,23 @@
 {{-- Su mobile (XD app) la sidebar sparisce: la pagina "Profilo" mostra il menu a pillole qui sotto,
      le altre pagine il link "Indietro" in cima al contenuto. --}}
 @php
+    // Ponte B2C → B2B: chi è già partner salta in dashboard, chi ha una richiesta
+    // aperta la riprende dallo step 1 (precompilato), gli altri vedono il form.
+    $partnerUser = auth()->user();
+    $partnerOpenApplication = $partnerUser?->hasRole('partner') ? null : $partnerUser?->openPartnerApplication();
+    $partnerEntry = match (true) {
+        $partnerUser?->hasRole('partner') => ['key' => 'partner', 'label' => __('profile.nav_partner_area'), 'href' => route('partner.dashboard')],
+        $partnerOpenApplication !== null => ['key' => 'partner', 'label' => __('profile.nav_partner_request_sent'), 'href' => route('partner.register')],
+        default => ['key' => 'partner', 'label' => __('profile.nav_become_partner'), 'href' => route('work-with-us')],
+    };
+
     $profileNav = [
         ['key' => 'profilo', 'label' => __('profile.nav_profile'), 'href' => route('profilo')],
         ['key' => 'pagamento', 'label' => __('profile.nav_payment'), 'href' => route('profilo.pagamento')],
         ['key' => 'sicurezza', 'label' => __('profile.nav_security'), 'href' => route('profilo.sicurezza')],
         ['key' => 'ordini', 'label' => __('profile.nav_orders'), 'href' => route('profilo.ordini')],
         ['key' => 'eventi', 'label' => __('profile.nav_events'), 'href' => route('profilo.eventi')],
+        $partnerEntry,
     ];
 
     // Menu mobile: ordine e etichette dell'artboard app "Profilo" (≠ ordine sidebar desktop).
@@ -18,6 +29,7 @@
         ['icon' => 'ticket', 'label' => __('profile.nav_orders'), 'href' => route('profilo.ordini')],
         ['icon' => 'event', 'label' => __('profile.nav_events'), 'href' => route('profilo.eventi')],
         ['icon' => 'lock', 'label' => __('profile.nav_security'), 'href' => route('profilo.sicurezza')],
+        ['icon' => 'partner', 'label' => $partnerEntry['label'], 'href' => $partnerEntry['href']],
     ];
 @endphp
 
@@ -37,6 +49,7 @@
                             @case('ticket') <flux:icon.ticket class="!h-[15px] !w-[15px]" /> @break
                             @case('event') <flux:icon.calendar class="!h-[15px] !w-[15px]" /> @break
                             @case('lock') <flux:icon.lock class="h-[15px] w-[15px]" /> @break
+                            @case('partner') <flux:icon.briefcase class="!h-[15px] !w-[15px]" /> @break
                         @endswitch
                     </span>
                     <span class="flex-1 truncate text-[15px] font-medium leading-none text-[#0D171A]">{{ $item['label'] }}</span>

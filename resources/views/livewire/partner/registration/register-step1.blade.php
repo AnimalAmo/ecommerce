@@ -39,9 +39,13 @@
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.business_name') }} *</flux:label>
                             <flux:input wire:model="form.businessName" class="{{ $fieldClass }}" />
                         </flux:field>
+                        {{-- Loggato: l'email è bloccata sull'account da promuovere a partner --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.email') }} *</flux:label>
-                            <flux:input type="email" wire:model="form.email" class="{{ $fieldClass }}" />
+                            <flux:input type="email" wire:model="form.email" :readonly="$emailLocked" class="{{ $fieldClass }}" />
+                            @if ($emailLocked)
+                                <flux:text class="!mt-1 !text-xs !text-[#555555]">{{ __('partner.email_account_hint') }}</flux:text>
+                            @endif
                         </flux:field>
 
                         {{-- Indirizzo | (Provincia + Cap) --}}

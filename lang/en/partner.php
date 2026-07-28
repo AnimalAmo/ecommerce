@@ -33,6 +33,7 @@ return [
     'description' => 'Description',
     'description_placeholder' => 'Describe the service you would like to offer, the location and a few details',
     'select_placeholder' => 'Select a type',
+    'email_account_hint' => 'This is your AnimalAmo account email: the request stays linked to this profile.',
 
     // Roles
     'role_owner' => 'Owner',
@@ -55,6 +56,7 @@ return [
     'thanks_line_1' => 'Your request has been submitted successfully.',
     'thanks_line_2' => 'We will get back to you as soon as possible.',
     'back_home' => 'Back to Home',
+    'thanks_continue' => 'Complete the registration',
 
     /*
     |--------------------------------------------------------------------------

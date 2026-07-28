@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Favorite\Favorite;
+use App\Models\Partner\PartnerApplication;
 use App\Models\Partner\PartnerProfile;
 use App\Models\Pet\Pet;
 use App\Support\Phone;
@@ -99,5 +100,20 @@ class User extends Authenticatable
     public function partnerProfile(): HasOne
     {
         return $this->hasOne(PartnerProfile::class);
+    }
+
+    /** Richieste "diventa partner" inviate dall'area ecommerce. */
+    public function partnerApplications(): HasMany
+    {
+        return $this->hasMany(PartnerApplication::class);
+    }
+
+    /**
+     * La richiesta ancora aperta (inviata ma non ancora diventata account
+     * partner): è quella che riapre il form e precompila l'iscrizione B2B.
+     */
+    public function openPartnerApplication(): ?PartnerApplication
+    {
+        return $this->partnerApplications()->open()->latest('id')->first();
     }
 }

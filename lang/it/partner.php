@@ -33,6 +33,7 @@ return [
     'description' => 'Descrizione',
     'description_placeholder' => 'Descrivi il servizio che vorresti offrire, il luogo e alcune caratteristiche',
     'select_placeholder' => 'Seleziona tipologia',
+    'email_account_hint' => 'È l’email del tuo account AnimalAmo: la richiesta resta collegata a questo profilo.',
 
     // Ruoli
     'role_owner' => 'Proprietario',
@@ -55,6 +56,7 @@ return [
     'thanks_line_1' => 'La tua richiesta è stata inoltrata correttamente.',
     'thanks_line_2' => 'Ti risponderemo il prima possibile.',
     'back_home' => 'Torna alla Home',
+    'thanks_continue' => 'Completa l’iscrizione',
 
     /*
     |--------------------------------------------------------------------------

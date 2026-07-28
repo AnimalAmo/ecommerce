@@ -15,8 +15,15 @@
 
                 <p class="mt-8 text-lg text-black max-lg:mt-4 max-lg:text-[15px] max-lg:text-[#555555]">{{ __('partner.thanks_line_1') }}<br>{{ __('partner.thanks_line_2') }}</p>
 
-                <div class="mt-10 max-lg:mt-8">
-                    <flux:button href="{{ route('home') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.back_home') }}</flux:button>
+                {{-- Chi ha inviato la richiesta da loggato è già identificato: prosegue
+                     subito con l'iscrizione B2B, senza aspettare il link dell'email --}}
+                <div class="mt-10 flex flex-col items-center gap-3 max-lg:mt-8 max-lg:w-full lg:flex-row lg:justify-center lg:gap-4">
+                    @if ($canContinueRegistration)
+                        <flux:button href="{{ route('partner.register') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.thanks_continue') }}</flux:button>
+                        <flux:button href="{{ route('home') }}" variant="ghost" class="!rounded-full !px-6 !text-sm !font-bold !text-ink max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.back_home') }}</flux:button>
+                    @else
+                        <flux:button href="{{ route('home') }}" class="!rounded-full !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.back_home') }}</flux:button>
+                    @endif
                 </div>
 
                 {{-- Aeroplanino di carta (XD "Tracciato 654", rotazione 135° già applicata al path) --}}
