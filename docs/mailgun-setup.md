@@ -323,6 +323,18 @@ dig +short NS mg.animalamo.it          # deve rispondere ns1/2/3.digitalocean.co
 dig +short TXT mg.animalamo.it
 ```
 
+> **Fatto il 29 lug 2026**: `mg.animalamo.it` creato su Mailgun EU (DKIM
+> selector `mta`), zona `mg.animalamo.it` creata su DigitalOcean via API con
+> tutti e cinque i record (SPF, DKIM, CNAME tracking, due MX). I nameserver DO
+> rispondono già correttamente:
+>
+> ```bash
+> dig +short @ns1.digitalocean.com TXT mg.animalamo.it
+> ```
+>
+> Resta da fare **solo** la delega dei 3 NS su Register.it. Finché non c'è, la
+> zona esiste ma nessun resolver la interroga e Mailgun resta `unverified`.
+
 **Rotta C — zona intera su DO.** Sconsigliata qui: prima di cambiare gli NS al
 registrar vanno ricreati su DO **tutti** i record esistenti (A `195.110.124.133`,
 `www`, MX `mail.register.it` priorità 10, TXT `v=spf1 include:spf.webapps.net ~all`),
