@@ -16,10 +16,21 @@ class MailgunConfigurationTest extends TestCase
         $this->assertSame('mailgun', config('mail.mailers.mailgun.transport'));
     }
 
-    public function test_mailgun_defaults_to_the_european_region(): void
+    public function test_mailgun_always_talks_https(): void
     {
-        $this->assertSame('api.eu.mailgun.net', config('services.mailgun.endpoint'));
         $this->assertSame('https', config('services.mailgun.scheme'));
+    }
+
+    /**
+     * Senza MAILGUN_ENDPOINT nel .env si deve finire in EU, non in US: è la
+     * regione dei domini custom del progetto (e quella coerente col GDPR).
+     */
+    public function test_mailgun_falls_back_to_the_european_region(): void
+    {
+        $this->assertStringContainsString(
+            "env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net')",
+            file_get_contents(config_path('services.php')),
+        );
     }
 
     public function test_the_smtp_mailer_always_has_a_timeout(): void

@@ -7,6 +7,22 @@ Lato codice è già tutto pronto: restano solo le credenziali e i record DNS.
 
 ---
 
+## 0bis. Stato al 29 lug 2026
+
+Riverificato: nulla è cambiato sul fronte DNS, `animalamo.com` resta NXDOMAIN.
+Sull'account Mailgun risultano solo `sandbox…9.mailgun.org` (US, `active`) e
+`mg.animalamo.com` (EU, `unverified`). Invio sandbox riprovato: consegnato.
+
+Deciso il dominio di produzione: **`mg.animalamo.it`, regione EU**. Due blocchi
+aperti, entrambi di credenziali/accessi, non di codice:
+
+1. **Creazione del dominio su Mailgun.** La chiave in `.env` è una *sending key*
+   (scope singolo dominio): `POST /v3/domains` risponde
+   `API key does not have sufficient permissions`. Serve una **Private API key**
+   (Settings → API keys) o che il dominio venga creato dalla dashboard.
+2. **Pubblicazione dei record DNS.** Vedi §8.3bis: l'autorità di `animalamo.it`
+   è Register.it, quindi l'accesso a DigitalOcean da solo non basta.
+
 ## 0. Stato al 28 lug 2026
 
 L'account Mailgun esiste ed è raggiungibile, ma **nessun dominio custom è
@@ -260,6 +276,49 @@ Verifica da terminale prima ancora di guardare la dashboard:
 dig +short TXT mg.animalamo.it
 dig +short TXT <selector>._domainkey.mg.animalamo.it
 ```
+
+### 8.3bis Dove pubblicare i record: Register.it o DigitalOcean
+
+DigitalOcean può ospitare una zona, ma non può renderla autorevole: l'autorità
+la stabiliscono i record NS pubblicati dal registrar. Finché `animalamo.it`
+delega a `ns1/ns2.register.it`, qualunque record creato su DO è invisibile.
+Quindi **una modifica su Register.it serve in ogni caso**; cambia solo quanta.
+
+**Rotta A — record direttamente su Register.it.** Si aggiungono lì i TXT di SPF
+e DKIM. Nessun coinvolgimento di DO, nessun rischio per sito e posta. Limite: le
+rotazioni DKIM future ripassano da Register.it.
+
+**Rotta B — delega del solo sottodominio a DO (consigliata).** Su Register.it si
+aggiungono tre record NS per l'host `mg`:
+
+| Tipo | Host | Valore |
+|:--|:--|:--|
+| NS | `mg` | `ns1.digitalocean.com` |
+| NS | `mg` | `ns2.digitalocean.com` |
+| NS | `mg` | `ns3.digitalocean.com` |
+
+Poi su DigitalOcean si crea la zona `mg.animalamo.it` e ci si mettono i record
+Mailgun del §8.3 — **con host relativo alla nuova zona**: SPF su `@`, DKIM su
+`<selector>._domainkey`, non `<selector>._domainkey.mg.animalamo.it`. Il resto
+della zona `animalamo.it` (A del sito, MX `mail.register.it`, SPF
+`include:spf.webapps.net`) resta intoccato su Register.it.
+
+Verifica della delega prima di guardare Mailgun:
+
+```bash
+dig +short NS mg.animalamo.it          # deve rispondere ns1/2/3.digitalocean.com
+dig +short TXT mg.animalamo.it
+```
+
+**Rotta C — zona intera su DO.** Sconsigliata qui: prima di cambiare gli NS al
+registrar vanno ricreati su DO **tutti** i record esistenti (A `195.110.124.133`,
+`www`, MX `mail.register.it` priorità 10, TXT `v=spf1 include:spf.webapps.net ~all`),
+altrimenti sito ed email della cliente cadono durante la propagazione.
+
+> **DKIM a 2048 bit** supera i 255 caratteri di una singola stringa TXT: DO lo
+> gestisce, alcuni pannelli di registrar no. Se il pannello rifiuta il valore,
+> ricreare il dominio su Mailgun con chiave a 1024 bit invece di spezzare la
+> stringa a mano.
 
 ### 8.4 Configurazione applicativa
 

@@ -132,12 +132,44 @@ class MailTestCommand extends Command
             $warnings[] = 'MAILGUN_SECRET non impostata: la chiamata API verrà rifiutata.';
         }
 
+        if ($transport === 'mailgun' && ($mismatch = $this->regionMismatch()) !== null) {
+            $warnings[] = $mismatch;
+        }
+
         if (str_contains((string) config('mail.from.address'), 'example.com')) {
             $warnings[] = 'MAIL_FROM_ADDRESS è ancora un indirizzo di esempio: Mailgun accetta solo '
                 .'mittenti del dominio verificato.';
         }
 
         return $warnings;
+    }
+
+    /**
+     * I domini sandbox esistono solo in regione US, quelli custom del progetto
+     * in EU: con l'endpoint dell'altra regione Mailgun risponde "Domain not
+     * found" e nessuna mail parte, senza che la configurazione sembri sbagliata.
+     */
+    private function regionMismatch(): ?string
+    {
+        $domain = (string) config('services.mailgun.domain');
+        $endpoint = (string) config('services.mailgun.endpoint');
+
+        if (blank($domain) || blank($endpoint)) {
+            return null;
+        }
+
+        $expected = str_starts_with($domain, 'sandbox') ? 'api.mailgun.net' : 'api.eu.mailgun.net';
+
+        if ($endpoint === $expected) {
+            return null;
+        }
+
+        return sprintf(
+            'Regione incoerente: il dominio "%s" risponde su %s, non su %s. Correggi MAILGUN_ENDPOINT.',
+            $domain,
+            $expected,
+            $endpoint,
+        );
     }
 
     private function mask(?string $secret): string

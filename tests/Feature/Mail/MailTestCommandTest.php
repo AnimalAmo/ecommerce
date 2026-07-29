@@ -117,6 +117,48 @@ class MailTestCommandTest extends TestCase
             ->assertExitCode(Command::SUCCESS);
     }
 
+    public function test_it_warns_when_a_custom_domain_points_at_the_us_endpoint(): void
+    {
+        Mail::fake();
+
+        config([
+            'services.mailgun.domain' => 'mg.animalamo.it',
+            'services.mailgun.endpoint' => 'api.mailgun.net',
+        ]);
+
+        $this->artisan('mail:test', ['recipient' => 'ops@animalamo.it', '--mailer' => 'mailgun'])
+            ->expectsOutputToContain('Regione incoerente')
+            ->assertExitCode(Command::SUCCESS);
+    }
+
+    public function test_it_warns_when_a_sandbox_domain_points_at_the_eu_endpoint(): void
+    {
+        Mail::fake();
+
+        config([
+            'services.mailgun.domain' => 'sandboxb9ab51a50e0b4a03938857c0238c5bc9.mailgun.org',
+            'services.mailgun.endpoint' => 'api.eu.mailgun.net',
+        ]);
+
+        $this->artisan('mail:test', ['recipient' => 'ops@animalamo.it', '--mailer' => 'mailgun'])
+            ->expectsOutputToContain('Regione incoerente')
+            ->assertExitCode(Command::SUCCESS);
+    }
+
+    public function test_it_stays_quiet_when_domain_and_endpoint_agree(): void
+    {
+        Mail::fake();
+
+        config([
+            'services.mailgun.domain' => 'mg.animalamo.it',
+            'services.mailgun.endpoint' => 'api.eu.mailgun.net',
+        ]);
+
+        $this->artisan('mail:test', ['recipient' => 'ops@animalamo.it', '--mailer' => 'mailgun'])
+            ->doesntExpectOutputToContain('Regione incoerente')
+            ->assertExitCode(Command::SUCCESS);
+    }
+
     // ── Input non valido: si ferma prima di toccare il mailer ────────────────
 
     public function test_it_rejects_a_malformed_recipient(): void
