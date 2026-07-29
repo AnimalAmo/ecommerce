@@ -7,6 +7,40 @@ Lato codice è già tutto pronto: restano solo le credenziali e i record DNS.
 
 ---
 
+## 0ter. Stato al 29 lug 2026 (fine giornata) — invio funzionante
+
+`mg.animalamo.it` è **verificato e attivo** in regione EU, e le email partono e
+vengono consegnate. Il sandbox non serve più.
+
+| Cosa | Stato |
+|:--|:--|
+| Mailgun `mg.animalamo.it` (EU) | `active`, 5/5 record verificati, DKIM selector `mta` (2048 bit) |
+| Zona `mg.animalamo.it` | su DigitalOcean, creata via API |
+| Delega NS su Register.it | pubblicata: host `mg` → `ns1/2/3.digitalocean.com` |
+| Invio | `delivered` su Gmail, sia via API diretta sia via `php artisan mail:test` |
+| `mg.animalamo.com` | cancellato da Mailgun (resta una zona orfana su DO, innocua) |
+
+Configurazione in `.env` (locale e, da replicare, sui server):
+
+```dotenv
+MAIL_MAILER=mailgun
+MAILGUN_DOMAIN=mg.animalamo.it
+MAILGUN_ENDPOINT=api.eu.mailgun.net
+MAIL_FROM_ADDRESS="no-reply@mg.animalamo.it"
+MAIL_FROM_NAME="AnimalAmo"
+```
+
+> **Le sending key sono legate a un dominio.** Passando dal sandbox a
+> `mg.animalamo.it` la vecchia key continua a rispondere `HTTP 200` sulle
+> letture (`GET /v3/domains/…`) ma rifiuta l'invio con un laconico
+> `Forbidden (code 401)`. Va generata una sending key **per il nuovo dominio**
+> (Settings → API keys → Add new key → Sending key → domain) e sostituita in
+> `MAILGUN_SECRET`. Un permesso parziale è più insidioso di una key invalida:
+> tutto sembra configurato.
+
+Cosa resta prima del go-live: `queue:work` sotto supervisor sui server (§7),
+`.env` aggiornato su demo/produzione, e la valutazione del piano Mailgun (§7).
+
 ## 0bis. Stato al 29 lug 2026
 
 Riverificato: nulla è cambiato sul fronte DNS, `animalamo.com` resta NXDOMAIN.
@@ -131,7 +165,12 @@ MAILGUN_ENDPOINT=api.eu.mailgun.net
 Dipendenze già installate: `symfony/mailgun-mailer` + `symfony/http-client`.
 Il passaggio SMTP ⇄ API non richiede modifiche al codice.
 
-## 5b. Demo su Forge con il dominio sandbox
+## 5b. Demo su Forge con il dominio sandbox *(superato — vedi §0ter)*
+
+> Dal 29 lug 2026 esiste `mg.animalamo.it` verificato: il sandbox non va più
+> usato, né per il demo. Questa sezione resta come cronaca dei vincoli
+> incontrati (authorized recipients, regione US, mittente non modificabile).
+
 
 Configurazione da usare sul demo (`ecommerce-0tepvdzv.on-forge.com`) finché non
 esiste un dominio verificato. Va nel `.env` **sul server**, mai committata:
