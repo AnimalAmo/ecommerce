@@ -168,6 +168,19 @@ Configurazione provata end-to-end il 28 lug 2026: `mail:test animalamo24@gmail.c
 autorizzato del sandbox (è l'indirizzo di apertura dell'account, quindi lo era
 già senza configurarlo). Verso qualsiasi altro indirizzo l'invio resta 403.
 
+> **Il sandbox non recapita più su Gmail (verificato 29 lug 2026).** Lo stesso
+> `mail:test animalamo24@gmail.com` che il 28 lug risultava `delivered`, il
+> giorno dopo produce `accepted` seguito da `failed` con
+> `550 5.7.1 … likely unsolicited mail … blocked` (severity `espblock`). Causa:
+> il sandbox invia da IP condivisi e senza SPF/DKIM sul dominio del mittente.
+> Non è aggirabile lato applicazione — è l'argomento definitivo per creare il
+> dominio verificato prima di qualsiasi collaudo con la cliente.
+>
+> Attenzione a non fidarsi dell'output di `mail:test`: stampa successo appena
+> Mailgun accetta il messaggio (HTTP 200), cioè prima della consegna. La prova
+> vera è `./docs/mailgun-logs.sh`, che mostra l'evento finale. I log del piano
+> free vengono trattenuti solo per **1 giorno**.
+
 ### Come collaudare il demo
 
 La cliente prova il demo usando `animalamo24@gmail.com`. Il vincolo dei recipient
