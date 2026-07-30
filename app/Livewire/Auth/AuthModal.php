@@ -31,6 +31,16 @@ class AuthModal extends Component
         $this->form->email = $email;
     }
 
+    /**
+     * "Password dimenticata": la modale del reset apre e chiude da sé (sa
+     * quale delle due login richiuderà con "Torna al login"); qui passiamo
+     * solo l'email eventualmente già digitata, così non va riscritta.
+     */
+    public function openForgotPassword(): void
+    {
+        $this->dispatch('open-forgot-password', email: $this->form->email, origin: 'login');
+    }
+
     public function openRegister(): void
     {
         Flux::modal('login')->close();

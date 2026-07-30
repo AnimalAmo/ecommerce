@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LocaleSwitchController;
+use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Catalog\ActivityDetail;
 use App\Livewire\Catalog\AnimalHoliday;
 use App\Livewire\Catalog\AnimalHolidayRegion;
@@ -112,6 +113,10 @@ Route::group([
         Route::get(LaravelLocalization::transRoute('routes.profilo.ordini.riepilogo'), ProfileOrderSummary::class)->name('profilo.ordini.riepilogo');
         Route::get(LaravelLocalization::transRoute('routes.profilo.eventi'), ProfileEvents::class)->name('profilo.eventi');
     });
+
+    // Reimposta password: pubblica, il token nell'URL è la sola credenziale
+    // (la richiesta del link parte dalla modale, non da una rotta dedicata).
+    Route::get(LaravelLocalization::transRoute('routes.password.reset'), ResetPassword::class)->name('password.reset');
 
     Route::get(LaravelLocalization::transRoute('routes.news'), News::class)->name('news');
     Route::get(LaravelLocalization::transRoute('routes.news.detail'), NewsDetail::class)->name('news.detail');

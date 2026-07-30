@@ -7,6 +7,7 @@ use App\Models\Favorite\Favorite;
 use App\Models\Partner\PartnerApplication;
 use App\Models\Partner\PartnerProfile;
 use App\Models\Pet\Pet;
+use App\Services\PasswordResetService;
 use App\Support\Phone;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -66,6 +67,16 @@ class User extends Authenticatable
     protected function name(): Attribute
     {
         return Attribute::get(fn (): string => trim($this->first_name.' '.$this->last_name));
+    }
+
+    /**
+     * Seam del broker: Password::sendResetLink() chiama qui dopo aver creato
+     * il token. Al posto della notifica inglese del framework spediamo la mail
+     * AnimalAmo; la costruzione del link e l'invio restano nel service.
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        app(PasswordResetService::class)->mailResetLink($this, $token);
     }
 
     /**

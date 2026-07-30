@@ -34,6 +34,7 @@ class LangParityTest extends TestCase
                 'news',
                 'orders',
                 'partner',
+                'passwords',
                 'payment',
                 'product-type',
                 'profile',

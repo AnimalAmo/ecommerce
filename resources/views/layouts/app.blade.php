@@ -20,6 +20,7 @@
         <livewire:auth.auth-modal />
         <livewire:auth.register-modal />
         <livewire:auth.partner-login-modal />
+        <livewire:auth.forgot-password-modal />
         <flux:toast />
 
         @livewireScripts

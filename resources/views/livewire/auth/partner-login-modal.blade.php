@@ -20,7 +20,7 @@
             </flux:field>
         </div>
         <div class="mt-2 text-right">
-            <flux:link href="#" variant="ghost" class="!text-[13px] !font-normal !text-[#555555]">{{ __('auth-modal.forgot_password') }}</flux:link>
+            <flux:link as="button" wire:click="openForgotPassword" variant="ghost" class="!text-[13px] !font-normal !text-[#555555]">{{ __('auth-modal.forgot_password') }}</flux:link>
         </div>
 
         <div class="mt-6 flex justify-center">

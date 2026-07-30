@@ -48,8 +48,9 @@
 
                     {{-- Link e testi privacy come da XD (y321..533): magenta 13px, copy 15px (vuota, in attesa della cliente), elimina #EA2E68.
                          App: "Reimposta Password" allineato a destra e in ciano --}}
-                    {{-- TODO: flussi reimposta password / impostazioni privacy / elimina account — flussi non presenti nel design, da segnalare al cliente --}}
-                    <a href="#" class="mt-4 block text-[13px] leading-none text-brand-magenta max-lg:mt-[29px] max-lg:text-right max-lg:text-brand-cyan">{{ __('profile.reset_password') }}</a>
+                    {{-- TODO: flussi impostazioni privacy / elimina account — non presenti nel design, da segnalare al cliente --}}
+                    {{-- "Reimposta password" apre la modale del reset via email (chi non ricorda la password attuale non può usare il form qui sopra) --}}
+                    <flux:link as="button" wire:click="openForgotPassword" variant="ghost" class="mt-4 !block !w-full !text-left !text-[13px] !font-normal !leading-none !text-brand-magenta max-lg:!mt-[29px] max-lg:!text-right max-lg:!text-brand-cyan">{{ __('profile.reset_password') }}</flux:link>
 
                     @if (filled($privacyPlaceholder))
                         <p class="mt-[30px] max-w-[964px] text-[15px] leading-[21px] text-[#0D171A] max-lg:mt-[37px] max-lg:leading-[19px]">{{ $privacyPlaceholder }}</p>

@@ -23,6 +23,12 @@ class PartnerLoginModal extends Component
         $this->finishAuthentication('partner-login');
     }
 
+    /** Stesso flusso di reset del client: cambia solo la modale a cui si torna. */
+    public function openForgotPassword(): void
+    {
+        $this->dispatch('open-forgot-password', email: $this->form->email, origin: 'partner-login');
+    }
+
     public function backToLogin(): void
     {
         Flux::modal('partner-login')->close();

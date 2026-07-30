@@ -35,6 +35,46 @@ return [
         'request_access' => 'Richiedi gli accessi',
     ],
 
+    // Modale "Password dimenticata" (richiesta del link)
+    'forgot' => [
+        'title' => 'Password dimenticata',
+        'intro' => 'Inserisci l’indirizzo email con cui ti sei registrato: ti invieremo il link per creare una nuova password.',
+        'send_link' => 'Invia il link',
+        'sent_title' => 'Controlla la tua email',
+        'sent_text' => 'Se :email è associata a un account AnimalAmo, tra pochi minuti riceverai il link per reimpostare la password.',
+        'sent_validity' => 'Il link resta valido per 60 minuti.',
+        'sent_spam_hint' => 'Non trovi l’email? Controlla anche la cartella spam.',
+        'back_to_login' => 'Torna al login',
+    ],
+
+    // Pagina di reimpostazione (link dell’email)
+    'reset' => [
+        'title' => 'Crea una nuova password',
+        'intro' => 'Scegli una nuova password per l’account :email.',
+        'new_password' => 'Nuova password',
+        'repeat_password' => 'Ripeti la nuova password',
+        'submit' => 'Salva la password',
+        'done_title' => 'Password aggiornata',
+        'done_text' => 'Da ora puoi accedere ad AnimalAmo con la tua nuova password.',
+        'done_cta' => 'Accedi',
+        'invalid_title' => 'Link non più valido',
+        'invalid_text' => 'Il link per reimpostare la password è scaduto o è già stato usato. Richiedine uno nuovo: bastano pochi secondi.',
+        'invalid_cta' => 'Richiedi un nuovo link',
+        'back_home' => 'Torna alla home',
+        'title_page' => 'Reimposta la password',
+    ],
+
+    // Email con il link di reimpostazione (nessun design XD: markdown Laravel)
+    'reset_mail' => [
+        'subject' => 'Reimposta la tua password AnimalAmo',
+        'heading' => 'Ciao :name,',
+        'intro' => 'Abbiamo ricevuto una richiesta di reimpostazione della password per l’account AnimalAmo collegato a questo indirizzo email.',
+        'cta' => 'Reimposta la password',
+        'expiry' => 'Il link è valido per :count minuti.',
+        'ignore' => 'Se non hai richiesto tu il cambio password puoi ignorare questa email: la tua password resta invariata.',
+        'signature' => 'A presto,',
+    ],
+
     // Modale registrazione a step
     'register' => [
         'personal_info' => 'Informazioni personali',

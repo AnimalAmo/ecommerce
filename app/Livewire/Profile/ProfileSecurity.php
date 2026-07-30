@@ -57,6 +57,18 @@ class ProfileSecurity extends Component
         Flux::toast(text: __('profile.saved'), variant: 'success');
     }
 
+    /**
+     * "Reimposta password": chi non ricorda la password attuale non può usare
+     * il form qui sopra (richiede la ri-autenticazione), e passa dal link via
+     * email come un ospite. L'indirizzo è quello dell'account, già noto.
+     */
+    public function openForgotPassword(): void
+    {
+        // Nessuna origin: siamo dentro l'area autenticata, riaprire la modale
+        // di login chiudendo questa non avrebbe senso.
+        $this->dispatch('open-forgot-password', email: Auth::user()->email, origin: 'none');
+    }
+
     public function render()
     {
         return view('livewire.profile.profile-security', [
