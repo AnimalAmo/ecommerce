@@ -12,9 +12,19 @@ class PartnerRegisterStep2 extends Component
     /** Tipo di servizio scelto (radio, scelta singola): struttura | attivita | servizi. */
     public string $service = '';
 
+    /**
+     * L'account è disattivato: l'iscrizione non si chiude, e si dice al
+     * caricamento invece che dopo il click (vedi PartnerRegisterStep1).
+     */
+    public bool $accountInactive = false;
+
     /** Tornando qui dopo un conflitto email la scelta è già fatta: si ritrova. */
     public function mount(): void
     {
+        $user = Auth::user();
+
+        $this->accountInactive = $user !== null && ! $user->is_active;
+
         $this->service = (string) session('partner_registration.service', '');
     }
 
@@ -44,6 +54,18 @@ class PartnerRegisterStep2 extends Component
         }
 
         $account = Auth::user();
+
+        // Account disattivato: `promote()` non riattiva nessuno e l'area partner
+        // risponderebbe 403, quindi l'iscrizione si ferma qui. Dati E tipologia
+        // restano in sessione: riattivato l'account si riprende davvero da dove
+        // si era arrivati, senza riscegliere il servizio.
+        if ($account !== null && ! $account->is_active) {
+            $this->accountInactive = true;
+
+            session(['partner_registration.service' => $this->service]);
+
+            return;
+        }
 
         // L'email dello step 1 è bloccata sull'account di chi è loggato: una
         // sessione di registrazione iniziata da sloggati non la scavalca.

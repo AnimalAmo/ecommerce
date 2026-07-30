@@ -246,7 +246,9 @@ return [
         'back' => 'Indietro',
         'next' => 'Prosegui',
         'error_email_taken' => 'Esiste già un account con questa email: accedi per continuare l’iscrizione con quell’account.',
+        'error_account_inactive' => 'Il tuo account è disattivato: scrivi all’assistenza per riattivarlo e completare l’iscrizione.',
         'login_and_continue' => 'Accedi e continua',
+        'contact_support' => 'Contatta l’assistenza',
     ],
 
     /*

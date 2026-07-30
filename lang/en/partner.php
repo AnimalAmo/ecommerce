@@ -246,7 +246,9 @@ return [
         'back' => 'Back',
         'next' => 'Continue',
         'error_email_taken' => 'An account with this email already exists: log in to continue the registration with that account.',
+        'error_account_inactive' => 'Your account is disabled: contact support to have it re-enabled and finish the registration.',
         'login_and_continue' => 'Log in and continue',
+        'contact_support' => 'Contact support',
     ],
 
     /*

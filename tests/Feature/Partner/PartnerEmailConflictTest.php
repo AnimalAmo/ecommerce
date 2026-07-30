@@ -82,6 +82,7 @@ class PartnerEmailConflictTest extends TestCase
 
     public function test_step_1_shows_the_conflict_on_the_email_field_with_the_login_cta(): void
     {
+        User::factory()->create(['email' => 'susanna@example.com']);
         session([
             'partner_registration.step1' => $this->step1Data(),
             'partner_registration.email_conflict' => 'susanna@example.com',

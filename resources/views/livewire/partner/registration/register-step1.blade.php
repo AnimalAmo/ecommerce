@@ -22,6 +22,15 @@
 
                 <h2 class="mt-4 text-lg font-medium text-[#0D171A] max-lg:mt-3 max-lg:text-[15px]">{{ __('partner.register.section_personal') }}</h2>
 
+                {{-- Account disattivato: l'iscrizione non parte (né qui né allo step 2),
+                     l'unica via è l'assistenza. Detto prima dei 12 campi, non dopo. --}}
+                @if ($accountInactive)
+                    <div class="mt-4 rounded-[5px] border border-red-200 bg-red-50 px-4 py-3">
+                        <p class="text-sm text-red-500">{{ __('partner.register.error_account_inactive') }}</p>
+                        <flux:link href="{{ route('contact') }}" variant="ghost" class="!mt-1 !inline-block !text-xs !font-bold !text-[#68CDEB] hover:!text-ink">{{ __('partner.register.contact_support') }}</flux:link>
+                    </div>
+                @endif
+
                 <form wire:submit="submit" class="mt-8 max-lg:mt-6">
                     {{-- items-start: l'errore email (+ CTA di accesso) non deve stirare la riga --}}
                     <div class="grid grid-cols-1 items-start gap-x-4 gap-y-5 md:grid-cols-2">
@@ -108,7 +117,7 @@
                     {{-- Su mobile: CTA a tutta larghezza sopra, "Indietro" centrato sotto (pattern work-with-us) --}}
                     <div class="mt-12 flex items-center justify-end gap-6 max-lg:mt-8 max-lg:flex-col-reverse max-lg:items-stretch max-lg:gap-3">
                         <flux:button href="{{ route('home') }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.register.back') }}</flux:button>
-                        <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C] max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.register.next') }}</flux:button>
+                        <flux:button type="submit" :disabled="$accountInactive" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C] max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.register.next') }}</flux:button>
                     </div>
                 </form>
             </div>

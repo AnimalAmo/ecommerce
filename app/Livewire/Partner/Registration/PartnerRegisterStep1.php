@@ -29,6 +29,13 @@ class PartnerRegisterStep1 extends Component
     public bool $emailConflict = false;
 
     /**
+     * L'account con cui si sta compilando è disattivato: l'iscrizione non parte.
+     * `promote()` non riattiva nessuno e l'area partner risponde 403, quindi si
+     * dice subito com'è, invece di far compilare due step per finire su un 403.
+     */
+    public bool $accountInactive = false;
+
+    /**
      * Tre modi di arrivare qui, in ordine di precedenza:
      *   1. ritorno dallo step 2 → si ripristina quanto già inserito (sessione);
      *   2. link firmato dell'email di invito → prefill dalla candidatura;
@@ -65,7 +72,12 @@ class PartnerRegisterStep1 extends Component
             $this->form->email = $user->email;
         }
 
-        $this->resolveEmailConflict($user);
+        $this->accountInactive = $user !== null && ! $user->is_active;
+
+        // Account disattivato: niente rimando allo step 2, la sola via è l'assistenza.
+        if (! $this->accountInactive) {
+            $this->resolveEmailConflict($user);
+        }
     }
 
     /**
@@ -94,6 +106,17 @@ class PartnerRegisterStep1 extends Component
             return;
         }
 
+        // Sparito nel frattempo: non c'è più niente da segnalare.
+        if (! User::where('email', $conflict)->exists()) {
+            session()->forget('partner_registration.email_conflict');
+
+            return;
+        }
+
+        // Sempre lo stesso messaggio, anche se quell'account è disattivato: a un
+        // anonimo si dice solo che l'email è presa (già rivelato dallo step 2).
+        // Lo stato dell'account lo scopre dopo il login, cioè dopo aver provato
+        // di esserne il titolare — vedi il banner di `$accountInactive`.
         $this->emailConflict = true;
         $this->form->email = $conflict;
 
@@ -135,6 +158,13 @@ class PartnerRegisterStep1 extends Component
     {
         if ($user = Auth::user()) {
             $this->form->email = $user->email;
+        }
+
+        // Ricalcolato dalla sessione, non dalla proprietà pubblica (manomettibile).
+        $this->accountInactive = $user !== null && ! $user->is_active;
+
+        if ($this->accountInactive) {
+            return;
         }
 
         $this->form->validate();
