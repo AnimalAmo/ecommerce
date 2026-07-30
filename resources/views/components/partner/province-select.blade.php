@@ -9,4 +9,8 @@
             <flux:select.option value="{{ $province->short_name }}">{{ $province->name }} ({{ $province->short_name }})</flux:select.option>
         @endforeach
     </flux:select>
+    {{-- Il field è composto a mano: Flux inietta lo slot d'errore solo quando
+         `label` è una PROP del controllo, quindi qui va messo esplicitamente.
+         Senza, una provincia non scelta blocca il submit in silenzio. --}}
+    <flux:error :name="$model" />
 </flux:field>

@@ -28,16 +28,19 @@
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.first_name') }} *</flux:label>
                             <flux:input wire:model="form.firstName" class="{{ $fieldClass }}" />
+                            <flux:error name="form.firstName" />
                         </flux:field>
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.last_name') }} *</flux:label>
                             <flux:input wire:model="form.lastName" class="{{ $fieldClass }}" />
+                            <flux:error name="form.lastName" />
                         </flux:field>
 
                         {{-- Ragione Sociale | Email --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.business_name') }} *</flux:label>
                             <flux:input wire:model="form.businessName" class="{{ $fieldClass }}" />
+                            <flux:error name="form.businessName" />
                         </flux:field>
                         {{-- Loggato: l'email è bloccata sull'account da promuovere a partner --}}
                         <flux:field>
@@ -46,18 +49,21 @@
                             @if ($emailLocked)
                                 <flux:text class="!mt-1 !text-xs !text-[#555555]">{{ __('partner.email_account_hint') }}</flux:text>
                             @endif
+                            <flux:error name="form.email" />
                         </flux:field>
 
                         {{-- Indirizzo | (Provincia + Cap) --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.address') }} *</flux:label>
                             <flux:input wire:model="form.address" class="{{ $fieldClass }}" />
+                            <flux:error name="form.address" />
                         </flux:field>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-2 items-start gap-4">
                             <x-partner.province-select :provinces="$provinces" model="form.province" :label="__('partner.register.province')" />
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.zip') }} *</flux:label>
                                 <flux:input wire:model="form.zip" inputmode="numeric" class="{{ $fieldClass }}" />
+                                <flux:error name="form.zip" />
                             </flux:field>
                         </div>
 
@@ -65,26 +71,31 @@
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.phone') }} *</flux:label>
                             <x-phone-input model="form.phone" :value="$form->phone" :input-class="$fieldClass" :select-class="$selectClass" />
+                            <flux:error name="form.phone" />
                         </flux:field>
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.vat') }} *</flux:label>
                             <flux:input wire:model="form.vat" class="{{ $fieldClass }}" />
+                            <flux:error name="form.vat" />
                         </flux:field>
 
                         {{-- Codice Fiscale | PEC --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.tax_code') }} *</flux:label>
                             <flux:input wire:model="form.taxCode" class="{{ $fieldClass }}" />
+                            <flux:error name="form.taxCode" />
                         </flux:field>
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.pec') }} *</flux:label>
                             <flux:input type="email" wire:model="form.pec" class="{{ $fieldClass }}" />
+                            <flux:error name="form.pec" />
                         </flux:field>
 
                         {{-- SDI | (vuoto) --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.sdi') }} *</flux:label>
                             <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
+                            <flux:error name="form.sdi" />
                         </flux:field>
                     </div>
 

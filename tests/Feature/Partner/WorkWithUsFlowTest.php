@@ -105,6 +105,24 @@ class WorkWithUsFlowTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    /** Stessa regressione dello step 1: senza slot d'errore il tasto sembra morto. */
+    public function test_the_application_shows_the_validation_messages(): void
+    {
+        Mail::fake();
+
+        Livewire::test(WorkWithUs::class)
+            ->call('submit')
+            ->assertSee([
+                'Inserisci il nome.',
+                'Inserisci il cognome.',
+                'Inserisci la città.',
+                'Inserisci la ragione sociale.',
+                'Inserisci il tuo ruolo.',
+                'Inserisci il tipo di offerta.',
+                'Inserisci una descrizione.',
+            ]);
+    }
+
     public function test_the_signed_invitation_link_prefills_step_1(): void
     {
         Mail::fake();
