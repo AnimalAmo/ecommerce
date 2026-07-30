@@ -192,6 +192,7 @@ class WorkWithUsFlowTest extends TestCase
         $this->assertSame(0, User::count());
     }
 
+    /** Il dettaglio del rimbalzo e del recupero sta in PartnerEmailConflictTest. */
     public function test_step_2_rejects_an_email_already_registered(): void
     {
         $this->seed(RoleSeeder::class);
@@ -201,9 +202,10 @@ class WorkWithUsFlowTest extends TestCase
         Livewire::test(PartnerRegisterStep2::class)
             ->set('service', 'struttura')
             ->call('createAccount')
-            ->assertHasErrors('service');
+            ->assertRedirect(route('partner.register'));
 
         $this->assertSame(1, User::count());
+        $this->assertSame('susanna@example.com', session('partner_registration.email_conflict'));
     }
 
     public function test_step_1_keeps_the_entered_data_when_coming_back(): void

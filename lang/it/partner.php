@@ -245,6 +245,8 @@ return [
         'sdi' => 'SDI',
         'back' => 'Indietro',
         'next' => 'Prosegui',
+        'error_email_taken' => 'Esiste già un account con questa email: accedi per continuare l’iscrizione con quell’account.',
+        'login_and_continue' => 'Accedi e continua',
     ],
 
     /*
@@ -263,7 +265,6 @@ return [
         'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
         'submit' => 'Crea un account',
         'error_required' => 'Seleziona almeno un servizio.',
-        'error_email_taken' => 'Esiste già un account con questa email: accedi dall’area riservata partner.',
     ],
 
     /*

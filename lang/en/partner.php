@@ -245,6 +245,8 @@ return [
         'sdi' => 'SDI',
         'back' => 'Back',
         'next' => 'Continue',
+        'error_email_taken' => 'An account with this email already exists: log in to continue the registration with that account.',
+        'login_and_continue' => 'Log in and continue',
     ],
 
     /*
@@ -263,7 +265,6 @@ return [
         'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
         'submit' => 'Create an account',
         'error_required' => 'Select at least one service.',
-        'error_email_taken' => 'An account with this email already exists: log in from the partner reserved area.',
     ],
 
     /*

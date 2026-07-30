@@ -12,6 +12,12 @@ class PartnerRegisterStep2 extends Component
     /** Tipo di servizio scelto (radio, scelta singola): struttura | attivita | servizi. */
     public string $service = '';
 
+    /** Tornando qui dopo un conflitto email la scelta è già fatta: si ritrova. */
+    public function mount(): void
+    {
+        $this->service = (string) session('partner_registration.service', '');
+    }
+
     /**
      * Chiude l'iscrizione B2B con i dati dello step 1 (in sessione):
      *
@@ -47,16 +53,29 @@ class PartnerRegisterStep2 extends Component
 
         $existing = User::where('email', $step1['email'])->first();
 
-        // Email di un ALTRO account: non si promuove né si duplica, si accede.
+        // Email di un ALTRO account: non si promuove né si duplica. L'errore
+        // torna sullo step 1, dov'è il campo che lo genera e c'è l'accesso per
+        // riprendere con quell'account; la tipologia scelta resta in sessione,
+        // così dopo il login non va riscelta.
         if ($existing !== null && ! $existing->is($account)) {
-            $this->addError('service', __('partner.register2.error_email_taken'));
+            session([
+                'partner_registration.email_conflict' => $step1['email'],
+                'partner_registration.service' => $this->service,
+            ]);
+
+            $this->redirectRoute('partner.register');
 
             return;
         }
 
         $user = $registrar->register($step1, $existing, session('partner_registration.application_id'));
 
-        session()->forget(['partner_registration.step1', 'partner_registration.application_id']);
+        session()->forget([
+            'partner_registration.step1',
+            'partner_registration.application_id',
+            'partner_registration.service',
+            'partner_registration.email_conflict',
+        ]);
 
         if ($account === null) {
             Auth::login($user);

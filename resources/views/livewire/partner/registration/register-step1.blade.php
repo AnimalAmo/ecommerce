@@ -23,7 +23,8 @@
                 <h2 class="mt-4 text-lg font-medium text-[#0D171A] max-lg:mt-3 max-lg:text-[15px]">{{ __('partner.register.section_personal') }}</h2>
 
                 <form wire:submit="submit" class="mt-8 max-lg:mt-6">
-                    <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
+                    {{-- items-start: l'errore email (+ CTA di accesso) non deve stirare la riga --}}
+                    <div class="grid grid-cols-1 items-start gap-x-4 gap-y-5 md:grid-cols-2">
                         {{-- Nome | Cognome --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.first_name') }} *</flux:label>
@@ -50,6 +51,10 @@
                                 <flux:text class="!mt-1 !text-xs !text-[#555555]">{{ __('partner.email_account_hint') }}</flux:text>
                             @endif
                             <flux:error name="form.email" />
+                            {{-- Email di un altro account: si riprende accedendo, senza ricompilare --}}
+                            @if ($emailConflict)
+                                <flux:button wire:click="loginToContinue" variant="ghost" size="sm" class="!mt-1 !h-auto !justify-start !self-start !px-0 !text-xs !font-bold !text-[#68CDEB] hover:!text-[#0D171A]">{{ __('partner.register.login_and_continue') }}</flux:button>
+                            @endif
                         </flux:field>
 
                         {{-- Indirizzo | (Provincia + Cap) --}}

@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use App\Livewire\Concerns\RedirectsAfterAuth;
 use App\Livewire\Forms\LoginForm;
 use Flux\Flux;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class AuthModal extends Component
@@ -18,6 +19,16 @@ class AuthModal extends Component
         $this->form->authenticate();
 
         $this->finishAuthentication('login');
+    }
+
+    /**
+     * L'iscrizione B2B manda qui l'email che risulta già di un altro account:
+     * chi accede da lì trova il campo compilato e mette solo la password.
+     */
+    #[On('prefill-login-email')]
+    public function prefillEmail(string $email): void
+    {
+        $this->form->email = $email;
     }
 
     public function openRegister(): void
