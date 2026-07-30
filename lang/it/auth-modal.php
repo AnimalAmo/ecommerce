@@ -19,7 +19,7 @@ return [
 
     // Card cliente (modale login)
     'client' => [
-        'title' => 'Accedi come Client',
+        'title' => 'Accedi come Cliente',
         'no_account' => 'Non hai un account?',
         'register_free' => 'Registrati gratuitamente',
     ],

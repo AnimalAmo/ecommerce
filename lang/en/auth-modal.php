@@ -19,7 +19,7 @@ return [
 
     // Client card (login modal)
     'client' => [
-        'title' => 'Log in as Client',
+        'title' => 'Log in as Customer',
         'no_account' => 'Don\'t have an account?',
         'register_free' => 'Sign up for free',
     ],
