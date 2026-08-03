@@ -18,7 +18,7 @@ return [
 
     // Heading
     'heading' => 'List your property or a pet-friendly business',
-    'intro' => 'We are always open to expanding the options for the people who choose Animal-amo. Propose your business and partner with us!',
+    'intro' => '🐾 Registration is free! We are looking for properties, activities and events that share our pet-friendly philosophy. Accommodation providers must welcome dogs both in the rooms and in the common areas, to guarantee a truly pet-friendly experience.',
 
     // Form fields
     'first_name' => 'First name',

@@ -18,7 +18,7 @@ return [
 
     // Intestazione
     'heading' => 'Iscrivi la tua struttura o un’attività pet friendly',
-    'intro' => 'Siamo sempre aperti ad ampliare le possibilità per le persone che scelgono Animal-amo. Proponi la tua realtà e collabora con noi!',
+    'intro' => '🐾 L’iscrizione è gratuita! Cerchiamo strutture, attività ed eventi che condividano la nostra filosofia pet friendly. Per le strutture ricettive è richiesto che i cani siano i benvenuti sia nelle camere sia nelle aree comuni, così da garantire un’esperienza davvero pet friendly.',
 
     // Campi form
     'first_name' => 'Nome',
