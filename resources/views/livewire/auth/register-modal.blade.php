@@ -3,6 +3,8 @@
     // Campo XD app: box 343x45, radius 5, bordo #C8C8C8, testo 14 (#0D171A, placeholder #959595); label 12 #555555.
     $labelClass = '!text-xs !text-[#555555]';
     $inputClass = 'max-lg:!h-[45px] max-lg:!rounded-[5px] max-lg:!border-[#C8C8C8] max-lg:!text-sm max-lg:!text-[#0D171A] max-lg:placeholder:!text-[#959595]';
+    // Il select del prefisso (<x-phone-input>) segue la stessa geometria dell'input.
+    $selectClass = 'max-lg:!h-[45px] max-lg:!rounded-[5px] max-lg:!border-[#C8C8C8] max-lg:!text-sm max-lg:!text-[#0D171A]';
     // Il date-picker espone un bottone come trigger: stessa geometria degli input.
     $datePickerClass = '[&_button]:!border-[#C8C8C8] max-lg:[&_button]:!h-[45px] max-lg:[&_button]:!rounded-[5px] max-lg:[&_button]:!text-sm';
     // Checkbox XD: cerchio 20px, acceso #6CD1EF con spunta bianca.
@@ -33,6 +35,11 @@
     </div>
 
     <form wire:submit="next" class="mt-6 max-lg:mt-8">
+        {{-- La chiave DEVE cambiare a ogni step: gli step occupano la stessa posizione
+             nel form, quindi senza chiave il morph di Livewire ricicla gli <input> e
+             ogni campo resta legato anche alla property dello step precedente
+             (la tipologia animale finiva nell'indirizzo). --}}
+        <div wire:key="register-step-{{ $step }}">
         @if ($step === 1)
             <div class="space-y-4">
                 <flux:field>
@@ -60,7 +67,7 @@
             <div class="space-y-4">
                 <flux:field>
                     <flux:label class="{{ $labelClass }}">{{ __('auth-modal.register.phone') }}</flux:label>
-                    <flux:input type="tel" wire:model="form.phone" placeholder="{{ __('auth-modal.register.phone') }}" class="{{ $inputClass }}" />
+                    <x-phone-input model="form.phone" :value="$form->phone" :number-placeholder="__('auth-modal.register.phone')" :input-class="$inputClass" :select-class="$selectClass" />
                     <flux:error name="form.phone" class="!mt-1 !text-xs" />
                 </flux:field>
                 <flux:field>
@@ -114,6 +121,7 @@
                 </flux:field>
             </div>
         @endif
+        </div>
 
         {{-- Bottone XD app: 343x39, radius 19, #6CD1EF, testo 15 SemiBold bianco --}}
         <div class="mt-8 flex justify-center">

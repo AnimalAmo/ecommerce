@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\URL;
  *
  * MVP: chiamato subito al submit di "Lavora con noi". Quando arriverà la
  * moderazione superadmin, questo service resterà l'azione di accettazione.
+ *
+ * L'invio è asincrono (PartnerInvitationMail è ShouldQueue): lo stato passa a
+ * INVITED appena il job è accodato, non a consegna avvenuta. Esito reale nei
+ * log Mailgun e nella coda dei failed_jobs.
  */
 class SendPartnerInvitation
 {

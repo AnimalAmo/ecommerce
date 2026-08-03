@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -51,7 +52,7 @@ class RegisterForm extends Form
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             ],
             2 => [
-                'phone' => ['required', 'string', 'max:30'],
+                'phone' => ['required', ...Phone::rules()],
                 'password' => ['required', 'string', 'min:8'],
                 'passwordConfirmation' => ['required', 'same:password'],
             ],

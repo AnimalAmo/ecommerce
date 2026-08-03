@@ -18,7 +18,7 @@ return [
 
     // Heading
     'heading' => 'List your property or a pet-friendly business',
-    'intro' => 'We are always open to expanding the options for the people who choose Animal-amo. Propose your business and partner with us!',
+    'intro' => '🐾 Registration is free! We are looking for properties, activities and events that share our pet-friendly philosophy. Accommodation providers must welcome dogs both in the rooms and in the common areas, to guarantee a truly pet-friendly experience.',
 
     // Form fields
     'first_name' => 'First name',
@@ -33,6 +33,7 @@ return [
     'description' => 'Description',
     'description_placeholder' => 'Describe the service you would like to offer, the location and a few details',
     'select_placeholder' => 'Select a type',
+    'email_account_hint' => 'This is your AnimalAmo account email: the request stays linked to this profile.',
 
     // Roles
     'role_owner' => 'Owner',
@@ -55,6 +56,7 @@ return [
     'thanks_line_1' => 'Your request has been submitted successfully.',
     'thanks_line_2' => 'We will get back to you as soon as possible.',
     'back_home' => 'Back to Home',
+    'thanks_continue' => 'Complete the registration',
 
     /*
     |--------------------------------------------------------------------------
@@ -243,6 +245,10 @@ return [
         'sdi' => 'SDI',
         'back' => 'Back',
         'next' => 'Continue',
+        'error_email_taken' => 'An account with this email already exists: log in to continue the registration with that account.',
+        'error_account_inactive' => 'Your account is disabled: contact support to have it re-enabled and finish the registration.',
+        'login_and_continue' => 'Log in and continue',
+        'contact_support' => 'Contact support',
     ],
 
     /*
@@ -261,7 +267,6 @@ return [
         'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
         'submit' => 'Create an account',
         'error_required' => 'Select at least one service.',
-        'error_email_taken' => 'An account with this email already exists: log in from the partner reserved area.',
     ],
 
     /*

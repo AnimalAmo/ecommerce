@@ -18,7 +18,7 @@ return [
 
     // Intestazione
     'heading' => 'Iscrivi la tua struttura o un’attività pet friendly',
-    'intro' => 'Siamo sempre aperti ad ampliare le possibilità per le persone che scelgono Animal-amo. Proponi la tua realtà e collabora con noi!',
+    'intro' => '🐾 L’iscrizione è gratuita! Cerchiamo strutture, attività ed eventi che condividano la nostra filosofia pet friendly. Per le strutture ricettive è richiesto che i cani siano i benvenuti sia nelle camere sia nelle aree comuni, così da garantire un’esperienza davvero pet friendly.',
 
     // Campi form
     'first_name' => 'Nome',
@@ -33,6 +33,7 @@ return [
     'description' => 'Descrizione',
     'description_placeholder' => 'Descrivi il servizio che vorresti offrire, il luogo e alcune caratteristiche',
     'select_placeholder' => 'Seleziona tipologia',
+    'email_account_hint' => 'È l’email del tuo account AnimalAmo: la richiesta resta collegata a questo profilo.',
 
     // Ruoli
     'role_owner' => 'Proprietario',
@@ -55,6 +56,7 @@ return [
     'thanks_line_1' => 'La tua richiesta è stata inoltrata correttamente.',
     'thanks_line_2' => 'Ti risponderemo il prima possibile.',
     'back_home' => 'Torna alla Home',
+    'thanks_continue' => 'Completa l’iscrizione',
 
     /*
     |--------------------------------------------------------------------------
@@ -243,6 +245,10 @@ return [
         'sdi' => 'SDI',
         'back' => 'Indietro',
         'next' => 'Prosegui',
+        'error_email_taken' => 'Esiste già un account con questa email: accedi per continuare l’iscrizione con quell’account.',
+        'error_account_inactive' => 'Il tuo account è disattivato: scrivi all’assistenza per riattivarlo e completare l’iscrizione.',
+        'login_and_continue' => 'Accedi e continua',
+        'contact_support' => 'Contatta l’assistenza',
     ],
 
     /*
@@ -261,7 +267,6 @@ return [
         'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
         'submit' => 'Crea un account',
         'error_required' => 'Seleziona almeno un servizio.',
-        'error_email_taken' => 'Esiste già un account con questa email: accedi dall’area riservata partner.',
     ],
 
     /*

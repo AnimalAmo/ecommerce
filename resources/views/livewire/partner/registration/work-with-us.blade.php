@@ -29,36 +29,48 @@
                 x-init="$wire.$set('confirmInPlace', window.innerWidth < 1024, false)"
                 @resize.window="$wire.$set('confirmInPlace', window.innerWidth < 1024, false)"
                 class="mt-10 rounded-[3px] border border-gray-150 bg-white/50 px-6 pb-8 pt-8 max-lg:mt-7 max-lg:rounded-none max-lg:border-0 max-lg:bg-transparent max-lg:p-0 max-lg:[&_[data-flux-label]]:!mb-1">
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div class="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.first_name') }}</flux:label>
                         <flux:input wire:model="form.firstName" placeholder="{{ __('partner.first_name') }}" class="{{ $inputClass }}" />
+                        <flux:error name="form.firstName" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.last_name') }}</flux:label>
                         <flux:input wire:model="form.lastName" placeholder="{{ __('partner.last_name') }}" class="{{ $inputClass }}" />
+                        <flux:error name="form.lastName" />
                     </flux:field>
+                    {{-- Utente ecommerce loggato: l'email è quella del suo account (è ciò che
+                         a fine iscrizione decide quale utente promuovere a partner) --}}
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.email') }}</flux:label>
-                        <flux:input type="email" wire:model="form.email" placeholder="{{ __('partner.email') }}" class="{{ $inputClass }}" />
+                        <flux:input type="email" wire:model="form.email" placeholder="{{ __('partner.email') }}" :readonly="auth()->check()" class="{{ $inputClass }}" />
+                        @auth
+                            <flux:text class="!mt-1 !text-xs !text-[#555555]">{{ __('partner.email_account_hint') }}</flux:text>
+                        @endauth
+                        <flux:error name="form.email" />
                     </flux:field>
 
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.phone') }}</flux:label>
-                        <flux:input type="tel" wire:model="form.phone" placeholder="{{ __('partner.phone') }}" class="{{ $inputClass }}" />
+                        <x-phone-input model="form.phone" :value="$form->phone" :number-placeholder="__('partner.phone')" :input-class="$inputClass" :select-class="$selectClass" />
+                        <flux:error name="form.phone" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.website') }}</flux:label>
                         <flux:input wire:model="form.website" placeholder="{{ __('partner.website') }}" class="{{ $inputClass }}" />
+                        <flux:error name="form.website" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.city') }}</flux:label>
                         <flux:input wire:model="form.city" placeholder="{{ __('partner.city') }}" class="{{ $inputClass }}" />
+                        <flux:error name="form.city" />
                     </flux:field>
 
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.business_name') }}</flux:label>
                         <flux:input wire:model="form.businessName" placeholder="{{ __('partner.business_name') }}" class="{{ $inputClass }}" />
+                        <flux:error name="form.businessName" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.role') }}</flux:label>
@@ -68,6 +80,7 @@
                             <flux:select.option>{{ __('partner.role_employee') }}</flux:select.option>
                             <flux:select.option>{{ __('partner.role_other') }}</flux:select.option>
                         </flux:select>
+                        <flux:error name="form.role" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.offer_type') }}</flux:label>
@@ -78,6 +91,7 @@
                             <flux:select.option>{{ __('partner.offer_pet_services') }}</flux:select.option>
                             <flux:select.option>{{ __('partner.offer_other') }}</flux:select.option>
                         </flux:select>
+                        <flux:error name="form.offerType" />
                     </flux:field>
                 </div>
 
@@ -85,6 +99,7 @@
                 <flux:field class="mt-4">
                     <flux:label class="{{ $labelClass }}">{{ __('partner.description') }}</flux:label>
                     <flux:textarea wire:model="form.description" rows="4" placeholder="{{ __('partner.description_placeholder') }}" class="!h-[117px] !border-[#C8C8C8] placeholder:!italic placeholder:!text-[#555555] max-lg:!h-[219px] max-lg:!rounded-[5px] max-lg:!text-sm max-lg:!text-[#0D171A] max-lg:placeholder:!not-italic max-lg:placeholder:!text-[#959595]" />
+                    <flux:error name="form.description" />
                 </flux:field>
 
                 {{-- CTA: pill gialla a destra su desktop, 327x39 centrata su mobile (XD app) --}}

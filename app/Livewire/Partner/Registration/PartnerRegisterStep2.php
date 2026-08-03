@@ -2,11 +2,9 @@
 
 namespace App\Livewire\Partner\Registration;
 
-use App\Models\Partner\PartnerApplication;
 use App\Models\User;
+use App\Services\Partner\RegisterPartnerAccount;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class PartnerRegisterStep2 extends Component
@@ -15,13 +13,31 @@ class PartnerRegisterStep2 extends Component
     public string $service = '';
 
     /**
-     * Crea l'account partner reale dai dati dello step 1 (in sessione):
-     * utente attivo con ruolo partner + profilo fiscale, login immediato e
-     * atterraggio in dashboard. Password casuale: il mockup non prevede il
-     * campo — l'accesso post-logout arriverà col flusso "imposta password"
-     * (TODO, non ancora disegnato).
+     * L'account è disattivato: l'iscrizione non si chiude, e si dice al
+     * caricamento invece che dopo il click (vedi PartnerRegisterStep1).
      */
-    public function createAccount(): void
+    public bool $accountInactive = false;
+
+    /** Tornando qui dopo un conflitto email la scelta è già fatta: si ritrova. */
+    public function mount(): void
+    {
+        $user = Auth::user();
+
+        $this->accountInactive = $user !== null && ! $user->is_active;
+
+        $this->service = (string) session('partner_registration.service', '');
+    }
+
+    /**
+     * Chiude l'iscrizione B2B con i dati dello step 1 (in sessione):
+     *
+     *  - visitatore → nasce un account partner nuovo, con login immediato;
+     *  - utente ecommerce loggato → il SUO account viene promosso a partner
+     *    (resta anche cliente) e la sessione non cambia.
+     *
+     * In entrambi i casi si atterra in dashboard partner.
+     */
+    public function createAccount(RegisterPartnerAccount $registrar): void
     {
         $this->validate(
             ['service' => ['required', 'string', 'in:struttura,attivita,servizi']],
@@ -37,48 +53,56 @@ class PartnerRegisterStep2 extends Component
             return;
         }
 
-        if (User::where('email', $step1['email'])->exists()) {
-            $this->addError('service', __('partner.register2.error_email_taken'));
+        $account = Auth::user();
+
+        // Account disattivato: `promote()` non riattiva nessuno e l'area partner
+        // risponderebbe 403, quindi l'iscrizione si ferma qui. Dati E tipologia
+        // restano in sessione: riattivato l'account si riprende davvero da dove
+        // si era arrivati, senza riscegliere il servizio.
+        if ($account !== null && ! $account->is_active) {
+            $this->accountInactive = true;
+
+            session(['partner_registration.service' => $this->service]);
 
             return;
         }
 
-        $user = DB::transaction(function () use ($step1): User {
-            $user = User::create([
-                'first_name' => $step1['firstName'],
-                'last_name' => $step1['lastName'],
-                'email' => $step1['email'],
-                'phone' => $step1['phone'],
-                'password' => Str::password(32),
-                'is_active' => true,
-            ]);
-            $user->syncRoles(['partner']);
+        // L'email dello step 1 è bloccata sull'account di chi è loggato: una
+        // sessione di registrazione iniziata da sloggati non la scavalca.
+        if ($account !== null) {
+            $step1['email'] = $account->email;
+        }
 
-            $user->partnerProfile()->create([
-                'business_name' => $step1['businessName'],
-                'vat' => $step1['vat'],
-                'tax_code' => $step1['taxCode'],
-                'pec' => $step1['pec'],
-                'sdi' => $step1['sdi'],
-                'address' => $step1['address'],
-                'province' => $step1['province'],
-                'zip' => $step1['zip'],
+        $existing = User::where('email', $step1['email'])->first();
+
+        // Email di un ALTRO account: non si promuove né si duplica. L'errore
+        // torna sullo step 1, dov'è il campo che lo genera e c'è l'accesso per
+        // riprendere con quell'account; la tipologia scelta resta in sessione,
+        // così dopo il login non va riscelta.
+        if ($existing !== null && ! $existing->is($account)) {
+            session([
+                'partner_registration.email_conflict' => $step1['email'],
+                'partner_registration.service' => $this->service,
             ]);
 
-            if ($applicationId = session('partner_registration.application_id')) {
-                PartnerApplication::whereKey($applicationId)->update([
-                    'status' => PartnerApplication::STATUS_REGISTERED,
-                    'registered_at' => now(),
-                ]);
-            }
+            $this->redirectRoute('partner.register');
 
-            return $user;
-        });
+            return;
+        }
 
-        session()->forget(['partner_registration.step1', 'partner_registration.application_id']);
+        $user = $registrar->register($step1, $existing, session('partner_registration.application_id'));
 
-        Auth::login($user);
-        session()->regenerate();
+        session()->forget([
+            'partner_registration.step1',
+            'partner_registration.application_id',
+            'partner_registration.service',
+            'partner_registration.email_conflict',
+        ]);
+
+        if ($account === null) {
+            Auth::login($user);
+            session()->regenerate();
+        }
 
         $this->redirectRoute('partner.dashboard');
     }

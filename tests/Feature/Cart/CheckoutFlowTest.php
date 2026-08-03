@@ -91,7 +91,7 @@ class CheckoutFlowTest extends TestCase
             ->assertSet('firstName', 'Giulia')
             ->assertSet('lastName', 'Rossi')
             ->assertSet('email', 'giulia.rossi@gmail.com')
-            ->assertSet('phone', '340 5738920')
+            ->assertSet('phone', '+393405738920')
             // Paese statico: nessuna colonna a db (fatturazione = step 4).
             ->assertSet('country', 'Italia');
     }

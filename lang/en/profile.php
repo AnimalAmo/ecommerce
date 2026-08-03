@@ -45,6 +45,11 @@ return [
     'nav_personal_data' => 'Personal details',
     'nav_payment_data' => 'Payment details',
 
+    // "Become a partner" request: the entry disappears once the user is a partner
+    'nav_become_partner' => 'Become a partner',
+    'nav_partner_request_sent' => 'Partner request sent',
+    'nav_partner_area' => 'Partner area',
+
     // Card headings
     'personal_info_title' => 'Personal information',
     'orders_title' => 'My orders',

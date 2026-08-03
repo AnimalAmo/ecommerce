@@ -45,6 +45,11 @@ return [
     'nav_personal_data' => 'Dati anagrafici',
     'nav_payment_data' => 'Dati pagamento',
 
+    // Richiesta "diventa partner": la voce sparisce quando l'utente è già partner
+    'nav_become_partner' => 'Diventa partner',
+    'nav_partner_request_sent' => 'Richiesta partner inviata',
+    'nav_partner_area' => 'Area partner',
+
     // Heading delle card
     'personal_info_title' => 'Informazioni personali',
     'orders_title' => 'I miei ordini',

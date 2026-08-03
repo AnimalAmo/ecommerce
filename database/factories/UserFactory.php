@@ -31,7 +31,19 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            // Esplicito, non lasciato al default della colonna: il modello
+            // restituito da create() non lo rileggerebbe, e i controlli
+            // `! $user->is_active` vedrebbero null (= disattivato).
+            'is_active' => true,
         ];
+    }
+
+    /** Account sospeso: legge/scrive come cliente ma non entra nell'area partner. */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
     }
 
     /**

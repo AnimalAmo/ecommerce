@@ -5,6 +5,8 @@
     $card = 'rounded-[3px] border border-[#E9E9E9] bg-white shadow-[0px_1px_10px_#0000001A]';
     // Input 606/295 x40 con bordo sottile #C8C8C8 (0.5px XD → 1px al 70%) e spazio a destra per la spunta
     $inputClasses = '!min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!pr-10 [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0';
+    // Il select del prefisso (<x-phone-input>) riceve la classe sul <select>, non sul wrapper.
+    $selectClasses = '!h-10 !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !text-[15px] !text-[#0D171A] !shadow-none !ring-0';
 @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -48,7 +50,12 @@
                                         <div wire:key="field-{{ $field['model'] }}">
                                             <flux:label class="!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555]">{{ $field['label'] }}</flux:label>
                                             <div class="relative mt-[11px]">
-                                                <flux:input type="{{ $field['type'] }}" wire:model.live="{{ $field['model'] }}" class="{{ $inputClasses }}" />
+                                                @if ($field['model'] === 'phone')
+                                                    {{-- live: la spunta ciano si accende sul campo pieno, quindi il numero deve arrivare al server subito --}}
+                                                    <x-phone-input model="phone" :value="$phone" live :input-class="$inputClasses" :select-class="$selectClasses" />
+                                                @else
+                                                    <flux:input type="{{ $field['type'] }}" wire:model.live="{{ $field['model'] }}" class="{{ $inputClasses }}" />
+                                                @endif
                                                 @if ($this->{$field['model']} !== '')
                                                     <flux:icon.check class="pointer-events-none absolute right-5 top-1/2 !h-[14px] !w-[14px] -translate-y-1/2 text-[#68CDEB]" />
                                                 @endif

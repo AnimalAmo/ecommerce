@@ -1,8 +1,9 @@
 {{-- Footer B2B: tre colonne di link (Azienda / Help & Support / Sicurezza). Richiede $px definito dalla pagina. --}}
 <footer class="bg-white shadow-[1px_1px_10px_#0000001A]">
-    <div class="{{ $px }} py-14">
-        {{-- Colonne come blocco centrato nel container; testo/link allineati a sinistra (come footer ecommerce) --}}
-        <div class="flex flex-col items-center gap-10 sm:flex-row sm:items-start sm:justify-center sm:gap-24 lg:gap-32">
+    <div class="{{ $px }} py-14 max-lg:py-10">
+        {{-- Colonne come blocco centrato nel container; testo/link allineati a sinistra (come footer ecommerce).
+             Su mobile: griglia a 2 colonne allineata a sinistra, come il site-footer. --}}
+        <div class="grid grid-cols-2 gap-8 sm:flex sm:items-start sm:justify-center sm:gap-24 lg:gap-32">
             <div>
                 <h3 class="text-[15px] font-semibold text-[#2B2B2B]">{{ __('partner.footer_company') }}</h3>
                 <ul class="mt-6 space-y-4 text-sm text-[#2B2B2B]">

@@ -9,6 +9,8 @@
     $card = 'rounded-[3px] border border-[#E9E9E9] bg-white shadow-[0px_1px_10px_#0000001A] max-lg:rounded-none max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none';
     // Input 472x40 stile checkout, senza spunta (i campi profilo non la prevedono); app: r5, testo 14
     $inputClasses = '!min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 max-lg:[&_input]:!rounded-[5px] max-lg:[&_input]:!px-4 max-lg:[&_input]:!text-sm';
+    // Il select del prefisso (<x-phone-input>) riceve la classe sul <select>, non sul wrapper.
+    $selectClasses = '!h-10 !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !text-[15px] !text-[#0D171A] !shadow-none !ring-0 max-lg:!rounded-[5px] max-lg:!text-sm';
     $labelClasses = '!block !pl-[15px] !text-xs !font-normal !leading-none !text-[#555555] max-lg:!pl-[7px]';
     // Ordine dei campi dell'artboard app "Profilo – dati anagrafici": il cellulare risale
     // in quinta posizione e la tipologia animale scende in fondo (classi letterali: Tailwind le deve vedere)
@@ -53,7 +55,11 @@
                                     <div wire:key="field-{{ $model }}" class="{{ $mobileOrder[$model] }}">
                                         <flux:label class="{{ $labelClasses }}">{{ $label }}</flux:label>
                                         <div class="mt-[11px] max-lg:mt-1">
-                                            <flux:input type="text" wire:model="{{ $model }}" class="{{ $inputClasses }}" />
+                                            @if ($model === 'phone')
+                                                <x-phone-input model="phone" :value="$phone" :input-class="$inputClasses" :select-class="$selectClasses" />
+                                            @else
+                                                <flux:input type="text" wire:model="{{ $model }}" class="{{ $inputClasses }}" />
+                                            @endif
                                         </div>
                                         <flux:error name="{{ $model }}" class="!mt-1 !pl-[15px] !text-xs max-lg:!pl-[7px]" />
                                     </div>

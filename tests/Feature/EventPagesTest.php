@@ -53,6 +53,24 @@ class EventPagesTest extends TestCase
         $this->assertCount(0, $pastPaid, 'Eventi a pagamento con data passata: '.$pastPaid->implode(', '));
     }
 
+    public function test_events_desktop_type_pill_restricts_the_grid_via_wire_model(): void
+    {
+        // La pill dropdown desktop scrive activeTypes via wire:model (non i toggle del modal).
+        Livewire::test(Events::class)
+            ->set('activeTypes', ['eventi'])
+            ->assertSee('Brunch Pet Friendly')
+            ->assertDontSee('Weekend di escursioni');
+    }
+
+    public function test_events_desktop_type_pill_ignores_unknown_types_and_restores_defaults(): void
+    {
+        Livewire::test(Events::class)
+            ->set('activeTypes', ['xyz'])
+            ->assertSet('activeTypes', ['attivita', 'eventi'])
+            ->assertSee('Brunch Pet Friendly')
+            ->assertSee('Weekend di escursioni');
+    }
+
     public function test_events_grid_paginates_home_events_on_page_two(): void
     {
         // 17 eventi seminati: 12 con position (griglia XD, pagina 1) + 5 solo-home.

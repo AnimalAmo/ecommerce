@@ -74,7 +74,7 @@ class PlaceOrderActionTest extends TestCase
         $this->assertSame('Giulia', $order->first_name);
         $this->assertSame('Rossi', $order->last_name);
         $this->assertSame('giulia.rossi@gmail.com', $order->email);
-        $this->assertSame('340 5738920', $order->phone);
+        $this->assertSame('+393405738920', $order->phone);
         $this->assertSame('Italia', $order->country);
         $this->assertSame(50000, $order->total_cents);
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Profile;
 
+use App\Support\Phone;
 use Flux\Flux;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -76,7 +77,7 @@ class Profile extends Component
             'address' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
             'zip' => ['required', 'string', 'max:10'],
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => ['required', ...Phone::rules()],
         ];
 
         // Cambiare l'email consente il takeover permanente (recupero password

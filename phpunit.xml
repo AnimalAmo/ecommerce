@@ -37,5 +37,7 @@
         <env name="STRIPE_SECRET" value=""/>
         <env name="STRIPE_WEBHOOK_SECRET" value=""/>
         <env name="GOOGLE_MAPS_KEY" value=""/>
+        <env name="MAILGUN_DOMAIN" value=""/>
+        <env name="MAILGUN_SECRET" value=""/>
     </php>
 </phpunit>

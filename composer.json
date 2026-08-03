@@ -16,10 +16,13 @@
         "livewire/flux-pro": "*",
         "livewire/livewire": "^4.0",
         "mcamara/laravel-localization": "^2.3",
+        "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-data": "^4.23",
         "spatie/laravel-permission": "^8.3",
         "spatie/laravel-translatable": "^6.14",
-        "stripe/stripe-php": "^17.3"
+        "stripe/stripe-php": "^17.3",
+        "symfony/http-client": "^7.4",
+        "symfony/mailgun-mailer": "^7.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

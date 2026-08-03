@@ -65,7 +65,9 @@ class WorkWithUsFlowTest extends TestCase
         $this->assertSame(PartnerApplication::STATUS_INVITED, $application->status);
         $this->assertNotNull($application->invited_at);
 
-        Mail::assertSent(PartnerInvitationMail::class, function (PartnerInvitationMail $mail) use ($application): bool {
+        // assertQueued, non assertSent: il mailable è ShouldQueue, quindi
+        // Mail::to()->send() lo accoda invece di consegnarlo in-process.
+        Mail::assertQueued(PartnerInvitationMail::class, function (PartnerInvitationMail $mail) use ($application): bool {
             return $mail->hasTo('susanna@example.com')
                 && $mail->application->is($application)
                 && str_contains($mail->link, 'application='.$application->id)
@@ -101,6 +103,24 @@ class WorkWithUsFlowTest extends TestCase
 
         $this->assertSame(0, PartnerApplication::count());
         Mail::assertNothingSent();
+    }
+
+    /** Stessa regressione dello step 1: senza slot d'errore il tasto sembra morto. */
+    public function test_the_application_shows_the_validation_messages(): void
+    {
+        Mail::fake();
+
+        Livewire::test(WorkWithUs::class)
+            ->call('submit')
+            ->assertSee([
+                'Inserisci il nome.',
+                'Inserisci il cognome.',
+                'Inserisci la città.',
+                'Inserisci la ragione sociale.',
+                'Inserisci il tuo ruolo.',
+                'Inserisci il tipo di offerta.',
+                'Inserisci una descrizione.',
+            ]);
     }
 
     public function test_the_signed_invitation_link_prefills_step_1(): void
@@ -172,6 +192,7 @@ class WorkWithUsFlowTest extends TestCase
         $this->assertSame(0, User::count());
     }
 
+    /** Il dettaglio del rimbalzo e del recupero sta in PartnerEmailConflictTest. */
     public function test_step_2_rejects_an_email_already_registered(): void
     {
         $this->seed(RoleSeeder::class);
@@ -181,9 +202,10 @@ class WorkWithUsFlowTest extends TestCase
         Livewire::test(PartnerRegisterStep2::class)
             ->set('service', 'struttura')
             ->call('createAccount')
-            ->assertHasErrors('service');
+            ->assertRedirect(route('partner.register'));
 
         $this->assertSame(1, User::count());
+        $this->assertSame('susanna@example.com', session('partner_registration.email_conflict'));
     }
 
     public function test_step_1_keeps_the_entered_data_when_coming_back(): void

@@ -6,6 +6,10 @@
 
         <title>{{ $title ?? config('app.name') }}</title>
 
+        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="48x48">
+        <link rel="icon" type="image/png" href="{{ asset('favicon-32.png') }}" sizes="32x32">
+        <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+
         {{ \Illuminate\Support\Facades\Vite::fonts() }}
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -20,9 +24,12 @@
         <livewire:auth.auth-modal />
         <livewire:auth.register-modal />
         <livewire:auth.partner-login-modal />
+        <livewire:auth.forgot-password-modal />
         <flux:toast />
 
         @livewireScripts
         @fluxScripts
+
+        <script src="//code.tidio.co/lxyeqk5ehbrcahqlghaaeqmsdxzo9ztn.js" async></script>
     </body>
 </html>

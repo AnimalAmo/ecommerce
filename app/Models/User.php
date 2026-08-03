@@ -4,8 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Favorite\Favorite;
+use App\Models\Partner\PartnerApplication;
 use App\Models\Partner\PartnerProfile;
 use App\Models\Pet\Pet;
+use App\Services\PasswordResetService;
+use App\Support\Phone;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -54,10 +57,26 @@ class User extends Authenticatable
         ];
     }
 
+    /** Il numero arriva da form, seeder e factory: la normalizzazione E.164 vive qui, non nei form. */
+    protected function phone(): Attribute
+    {
+        return Attribute::set(fn (?string $value): ?string => Phone::toE164($value));
+    }
+
     /** Nome completo: compatibilità con i punti che usavano la colonna 'name'. */
     protected function name(): Attribute
     {
         return Attribute::get(fn (): string => trim($this->first_name.' '.$this->last_name));
+    }
+
+    /**
+     * Seam del broker: Password::sendResetLink() chiama qui dopo aver creato
+     * il token. Al posto della notifica inglese del framework spediamo la mail
+     * AnimalAmo; la costruzione del link e l'invio restano nel service.
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        app(PasswordResetService::class)->mailResetLink($this, $token);
     }
 
     /**
@@ -92,5 +111,20 @@ class User extends Authenticatable
     public function partnerProfile(): HasOne
     {
         return $this->hasOne(PartnerProfile::class);
+    }
+
+    /** Richieste "diventa partner" inviate dall'area ecommerce. */
+    public function partnerApplications(): HasMany
+    {
+        return $this->hasMany(PartnerApplication::class);
+    }
+
+    /**
+     * La richiesta ancora aperta (inviata ma non ancora diventata account
+     * partner): è quella che riapre il form e precompila l'iscrizione B2B.
+     */
+    public function openPartnerApplication(): ?PartnerApplication
+    {
+        return $this->partnerApplications()->open()->latest('id')->first();
     }
 }

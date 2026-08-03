@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Catalog\AnimalHolidayRegion;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class HolidayPagesTest extends TestCase
@@ -54,6 +56,26 @@ class HolidayPagesTest extends TestCase
     public function test_region_page_404_for_unknown_region(): void
     {
         $this->get('/animal-holiday/atlantide')->assertNotFound();
+    }
+
+    public function test_region_desktop_type_pill_extends_the_catalog_via_wire_model(): void
+    {
+        // La pill dropdown desktop scrive activeTypes via wire:model: accendere
+        // Smartbox aggiunge i cofanetti sotto le strutture di default.
+        Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+            ->assertSee('Hotel Brescia')
+            ->assertDontSee('Weekend di relax in Lombardia')
+            ->set('activeTypes', ['hotel', 'servizi', 'smartbox'])
+            ->assertSee('Hotel Brescia')
+            ->assertSee('Weekend di relax in Lombardia');
+    }
+
+    public function test_region_desktop_type_pill_ignores_unknown_types_and_restores_defaults(): void
+    {
+        Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+            ->set('activeTypes', ['xyz'])
+            ->assertSet('activeTypes', ['hotel', 'servizi'])
+            ->assertSee('Hotel Brescia');
     }
 
     public function test_structure_detail_shows_prices_faq_and_reviews_from_db(): void

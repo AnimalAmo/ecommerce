@@ -8,6 +8,7 @@ return [
     'boolean' => 'Valore non valido.',
     'date' => 'Inserisci una data valida.',
     'date_format' => 'Usa il formato :format.',
+    'digits' => ':Attribute deve avere :digits cifre.',
     'email' => 'Inserisci un indirizzo email valido.',
     'max' => [
         'string' => 'Valore troppo lungo.',
@@ -15,6 +16,7 @@ return [
     'min' => [
         'string' => ':Attribute deve contenere almeno :min caratteri.',
     ],
+    'phone' => 'Inserisci un numero di telefono valido.',
     'required' => 'Inserisci :attribute.',
     'same' => ':Attribute non coincide con :other.',
     'string' => 'Valore non valido.',
@@ -37,21 +39,44 @@ return [
             'required' => 'Conferma la nuova password.',
             'same' => 'Le password non coincidono.',
         ],
+        // Dati fiscali del partner: "Valore troppo lungo." non dice quanto.
+        'pec' => [
+            'email' => 'Inserisci un indirizzo PEC valido.',
+        ],
+        'sdi' => [
+            'max' => 'Il codice SDI è di 7 caratteri.',
+        ],
+        'taxCode' => [
+            'max' => 'Il codice fiscale non può superare i 16 caratteri.',
+        ],
+        'vat' => [
+            'max' => 'La partita IVA non può superare i 13 caratteri.',
+        ],
     ],
 
     // Nomi campo con articolo, così "Inserisci :attribute." resta naturale.
     'attributes' => [
         'address' => 'l\'indirizzo',
         'birthDate' => 'la data di nascita',
+        'businessName' => 'la ragione sociale',
         'city' => 'la città',
+        'description' => 'una descrizione',
         'email' => 'l\'email',
         'firstName' => 'il nome',
         'lastName' => 'il cognome',
+        'offerType' => 'il tipo di offerta',
         'password' => 'la password',
+        'pec' => 'la PEC',
         'petType' => 'la tipologia di animale',
         'phone' => 'il numero di cellulare',
         'postalCode' => 'il CAP',
+        'province' => 'la provincia',
         'recipientEmail' => 'l\'email del destinatario',
+        'role' => 'il tuo ruolo',
+        'sdi' => 'il codice SDI',
+        'taxCode' => 'il codice fiscale',
+        'vat' => 'la partita IVA',
+        'website' => 'il sito web',
         'zip' => 'il CAP',
     ],
 ];

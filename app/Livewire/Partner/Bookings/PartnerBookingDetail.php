@@ -6,6 +6,7 @@ use App\Enums\ProductType;
 use App\Models\OrderItem\OrderItem;
 use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
+use App\Support\Phone;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -37,7 +38,8 @@ class PartnerBookingDetail extends Component
                 'detail_first_name' => $this->booking->order->first_name,
                 'detail_last_name' => $this->booking->order->last_name,
                 'detail_email' => $this->booking->order->email,
-                'detail_phone' => $this->booking->order->phone,
+                // A DB il numero è E.164: al partner si mostra spaziato ("+39 333 123 4567").
+                'detail_phone' => Phone::format($this->booking->order->phone),
             ],
             'left' => array_filter($this->leftRows(), fn ($value) => filled($value)),
             'right' => array_filter($this->rightRows(), fn ($value) => filled($value)),

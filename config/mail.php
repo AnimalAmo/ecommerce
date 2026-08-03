@@ -45,8 +45,19 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            // Mai null con un SMTP reale: senza timeout un handshake che non
+            // risponde tiene appesa la richiesta/worker a tempo indefinito.
+            'timeout' => (int) env('MAIL_TIMEOUT', 10),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
+        /*
+         | Alternativa via API HTTP a "smtp": stesse credenziali Mailgun ma
+         | niente porte SMTP (spesso filtrate in uscita dagli hosting) e
+         | risposte d'errore leggibili. Credenziali in config/services.php.
+         */
+        'mailgun' => [
+            'transport' => 'mailgun',
         ],
 
         'ses' => [

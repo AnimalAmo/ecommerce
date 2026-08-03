@@ -82,17 +82,43 @@
 
                 @include('partials.catalog.filter-chips', ['priceFloor' => $this::PRICE_MIN, 'priceCeil' => $this::PRICE_MAX])
 
-                {{-- Filtri (XD: due pill dropdown "Componente 20"; comportamento dropdown TODO) --}}
+                {{-- Filtri desktop (XD: due pill dropdown "Componente 20"), collegati agli stessi
+                     stati del modal mobile: Tipologia accende attività/eventi, Prezzo filtra
+                     sugli input min/max condivisi. --}}
+                @php
+                    $pill = '!h-[30px] !gap-2 !rounded-full !border !bg-white !px-3.5 !text-sm !font-normal !shadow-none';
+                    $pillOff = '!border-[#C8C8C8] !text-[#555555]';
+                    $pillOn = '!border-brand-cyan !text-brand-cyan';
+                    $typesMoved = array_values(array_intersect(['attivita', 'eventi'], $activeTypes)) !== ['attivita', 'eventi'];
+                    $priceMoved = $priceMin !== $this::PRICE_MIN || $priceMax !== $this::PRICE_MAX;
+                @endphp
                 <p class="mt-10 text-lg font-semibold leading-6 text-black max-lg:hidden">{{ __('events.filter_your_search') }}</p>
                 <div class="mt-[17px] flex items-center gap-[13px] max-lg:hidden">
-                    <flux:button class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
-                        {{ __('events.filter_type') }}
-                        <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
-                    </flux:button>
-                    <flux:button class="!h-[30px] !gap-2 !rounded-full !border !border-[#C8C8C8] !bg-white !px-3.5 !text-sm !font-normal !text-[#555555] !shadow-none">
-                        {{ __('events.filter_price') }}
-                        <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
-                    </flux:button>
+                    <flux:dropdown>
+                        <flux:button class="{{ $pill }} {{ $typesMoved ? $pillOn : $pillOff }}">
+                            {{ __('events.filter_type') }}
+                            <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
+                        </flux:button>
+                        <flux:menu>
+                            <flux:menu.checkbox.group wire:model.live="activeTypes">
+                                @foreach (['attivita', 'eventi'] as $type)
+                                    <flux:menu.checkbox wire:key="pill-type-{{ $type }}" value="{{ $type }}">{{ __('catalog.filter_types.'.$type) }}</flux:menu.checkbox>
+                                @endforeach
+                            </flux:menu.checkbox.group>
+                        </flux:menu>
+                    </flux:dropdown>
+                    <flux:dropdown>
+                        <flux:button class="{{ $pill }} {{ $priceMoved ? $pillOn : $pillOff }}">
+                            {{ __('events.filter_price') }}@if ($priceMoved) ({{ $priceMin }}–{{ $priceMax }} €)@endif
+                            <flux:icon.arrow-down class="h-3 w-3 shrink-0" />
+                        </flux:button>
+                        <flux:popover class="w-64 !p-4">
+                            <div class="flex items-end gap-3">
+                                <flux:input type="number" min="{{ $this::PRICE_MIN }}" max="{{ $this::PRICE_MAX }}" wire:model.live.debounce.500ms="priceMin" label="{{ __('catalog.filter_price_min') }}" size="sm" />
+                                <flux:input type="number" min="{{ $this::PRICE_MIN }}" max="{{ $this::PRICE_MAX }}" wire:model.live.debounce.500ms="priceMax" label="{{ __('catalog.filter_price_max') }}" size="sm" />
+                            </div>
+                        </flux:popover>
+                    </flux:dropdown>
                 </div>
 
                 {{-- Nessun risultato (XD app "Nessun risultato"): al posto della griglia vuota

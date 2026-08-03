@@ -24,6 +24,7 @@ return [
     'profilo.ordini' => 'profile/my-orders',
     'profilo.ordini.riepilogo' => 'profile/my-orders/{order}',
     'profilo.eventi' => 'profile/my-events',
+    'password.reset' => 'reset-password/{token}',
     'news' => 'news',
     'news.detail' => 'news/{article}',
     'work-with-us' => 'work-with-us',
