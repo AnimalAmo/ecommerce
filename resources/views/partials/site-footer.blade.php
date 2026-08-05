@@ -28,16 +28,13 @@
             <div>
                 <h4 class="mb-[18px] text-base font-extrabold capitalize tracking-wide text-[#2B2B2B]">{{ __('nav.footer.help_support') }}</h4>
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.how_it_works') }}</a></li>
                     {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
                     <li><a href="{{ route('contact') }}" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
                 </ul>
             </div>
         </div>
         <div class="mt-10 flex items-center justify-end gap-5 max-lg:justify-center">
-            <a href="#" aria-label="YouTube" class="text-black transition hover:text-brand-cyan"><flux:icon.youtube class="h-4 w-auto" /></a>
             <a href="#" aria-label="Instagram" class="text-black transition hover:text-brand-cyan"><flux:icon.instagram class="h-4 w-auto" /></a>
-            <a href="#" aria-label="Facebook" class="text-black transition hover:text-brand-cyan"><flux:icon.facebook class="h-4 w-auto" /></a>
         </div>
     </div>
     <div class="{{ $px }} flex items-center justify-center gap-4 py-6 text-xs font-light text-[#8D8D8D] max-lg:flex-wrap max-lg:gap-x-4 max-lg:gap-y-2">
