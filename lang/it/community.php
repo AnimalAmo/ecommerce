@@ -4,6 +4,9 @@ return [
     'page_title' => 'Animal Network — AnimalAmo',
     'hero_alt' => 'Animal Network AnimalAmo',
     'hero_title' => 'Animal Network',
+    // Sottotitolo richiesto dalla cliente (ago 2026): vale sia per la hero desktop
+    // ("Animal Network") sia per il titolo mobile ("Community").
+    'subtitle' => 'Uno spazio dedicato agli amanti degli animali',
     'composer_heading' => 'Inizia una conversazione, fai una domanda!',
     'composer_placeholder' => 'Scrivi qualcosa …',
     'login_to_post' => 'Accedi per pubblicare e rispondere nella community.',

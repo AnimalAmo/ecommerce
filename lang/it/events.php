@@ -6,6 +6,7 @@ return [
 
     // Listing
     'title' => 'Attività ed Eventi',
+    'subtitle' => 'Scopri eventi ed esperienze da vivere con il tuo animale',
     'search_where' => 'Dove',
     'search_when' => 'Quando',
     'search_guests' => 'Aggiungi ospiti',

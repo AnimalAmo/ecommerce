@@ -4,6 +4,7 @@ return [
     'page_title' => 'AnimalAmo — Animal Times',
     'detail_page_title' => 'AnimalAmo — :title',
     'title' => 'Animal Times',
+    'subtitle' => 'News, curiosità e approfondimenti sul mondo animale',
     'read_more' => 'Continua a leggere…',
     'load_more' => 'Carica altro',
     'back' => 'Indietro',

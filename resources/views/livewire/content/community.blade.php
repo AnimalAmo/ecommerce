@@ -53,6 +53,7 @@
             <div class="{{ $px }} relative h-full">
                 <div class="mx-auto w-full max-w-[1062px] pt-[102px]">
                     <h1 class="text-4xl font-bold leading-none text-white">{{ __('community.hero_title') }}</h1>
+                    <p class="mt-3 text-[18px] text-white/85">{{ __('community.subtitle') }}</p>
 
                     {{-- Solo gli utenti loggati possono scrivere; gli ospiti leggono e vedono la CTA di accesso. --}}
                     @guest
@@ -192,6 +193,7 @@
              dettaglio post, che la card apre. --}}
         <div class="px-4 pb-[120px] pt-4 lg:hidden">
             <h1 class="text-lg font-bold leading-none text-[#0D171A]">{{ __('community.title_mobile') }}</h1>
+            <p class="mt-2 text-[15px] text-[#555555]">{{ __('community.subtitle') }}</p>
 
             {{-- Banner 343x93 #FFF5DD: invito + tondo giallo 40px che apre il composer.
                  Come nella hero desktop, scrivere è riservato ai loggati: l'ospite trova

@@ -13,6 +13,7 @@
                 {{-- Titolo resta quello desktop anche su mobile (l'artboard app
                      "Cerca - risultati" è la pagina dei risultati di ricerca, non questa index) --}}
                 <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ __('events.title') }}</h1>
+                <p class="mt-2 text-[15px] text-[#555555] lg:mt-3 lg:text-[18px]">{{ __('events.subtitle') }}</p>
 
                 {{-- Barra ricerca mobile (XD app, simbolo "Box ricerca"): pill 287x56, raggio 28,
                      bordo #E2EAEB e nessuna ombra; destinazione sulla prima riga, riepilogo
