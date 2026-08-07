@@ -905,7 +905,9 @@ return [
     */
     'dashboard' => [
         'title' => 'AnimalAmo — Dashboard partner',
-        'welcome' => 'Benvenuta :name',
+        // Neutro: su `users` non c'è il genere, e il "Benvenuta" del mockup
+        // salutava al femminile anche i partner uomini.
+        'welcome' => 'Ti diamo il benvenuto, :name',
         'intro' => 'Crea il tuo primo prodotto e condividi esperienze indimenticabili con milioni di viaggiatori.',
         'cta' => 'Crea il tuo primo servizio',
         'stat_sold' => 'Esperienze vendute',
