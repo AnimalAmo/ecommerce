@@ -10,7 +10,8 @@
         <div class="{{ $px }} pt-10 pb-[120px] max-lg:pt-6 max-lg:pb-10">
             {{-- Titolo resta quello desktop anche su mobile (l'artboard app
                  "Cerca - risultati" è la pagina dei risultati di ricerca, non questa index) --}}
-            <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">Smartbox</h1>
+            <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ __('smartbox.title') }}</h1>
+            <p class="mt-2 text-[15px] text-[#555555] lg:mt-3 lg:text-[18px]">{{ __('smartbox.subtitle') }}</p>
 
             {{-- Barra ricerca mobile (XD app, simbolo "Box ricerca"): pill 56px alta, raggio 28,
                  bordo #E2EAEB e nessuna ombra; termine sulla prima riga, riepilogo

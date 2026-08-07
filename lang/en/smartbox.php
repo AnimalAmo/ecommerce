@@ -4,6 +4,10 @@ return [
     // Browser tab title — brand only
     'meta_title' => 'AnimalAmo — Smartbox',
 
+    // Page heading
+    'title' => 'Smartbox',
+    'subtitle' => 'Discover and gift pet-friendly experiences',
+
     // Mobile search bar (app XD, "Box ricerca" symbol)
     'search_where' => 'Where',
     'search_when' => 'When',

@@ -10,6 +10,7 @@
         <div class="{{ $px }} pt-10 pb-[120px] max-lg:pt-5 max-lg:pb-8">
             <div class="mx-auto w-full max-w-[1498px]">
                 <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ __('news.title') }}</h1>
+                <p class="mt-2 text-[15px] text-[#555555] lg:mt-3 lg:text-[18px]">{{ __('news.subtitle') }}</p>
 
                 {{-- Griglia news (XD: simbolo "Box News" 480x482, 3 colonne × 2 righe; ombra 0 1 5 #0000001A, senza bordo).
                      App: colonna singola di card 343x309 con bordo #E9E9E9 e senza ombra, foto 327x136. --}}

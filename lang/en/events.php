@@ -6,6 +6,7 @@ return [
 
     // Listing
     'title' => 'Activities and Events',
+    'subtitle' => 'Discover events and experiences to enjoy with your pet',
     'search_where' => 'Where',
     'search_when' => 'When',
     'search_guests' => 'Add guests',

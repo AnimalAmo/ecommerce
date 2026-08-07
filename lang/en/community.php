@@ -4,6 +4,7 @@ return [
     'page_title' => 'Animal Network — AnimalAmo',
     'hero_alt' => 'AnimalAmo Animal Network',
     'hero_title' => 'Animal Network',
+    'subtitle' => 'A space for animal lovers',
     'composer_heading' => 'Start a conversation, ask a question!',
     'composer_placeholder' => 'Write something …',
     'login_to_post' => 'Log in to post and reply in the community.',
