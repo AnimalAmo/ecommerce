@@ -13,7 +13,7 @@
                 <div class="relative overflow-hidden rounded-[10px] border border-gray-150 bg-white px-6 py-8">
                     <h1 class="text-[25px] font-bold text-[#0D171A]">{{ __('partner.dashboard.welcome', ['name' => $partnerName]) }}</h1>
                     <p class="mt-3 max-w-[640px] text-[15px] leading-relaxed text-[#1E2E33]">{{ __('partner.dashboard.intro') }}</p>
-                    <flux:button href="#" class="!mt-8 !h-10 !rounded-full !border-0 !bg-[#232A2C] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('partner.dashboard.cta') }}</flux:button>
+                    <flux:button href="{{ route('partner.service.create') }}" class="!mt-8 !h-10 !rounded-full !border-0 !bg-[#232A2C] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('partner.dashboard.cta') }}</flux:button>
 
                     {{-- Scia di zampe decorativa (XD: 5 zampe cyan in diagonale, angolo alto-destra) --}}
                     <div class="pointer-events-none absolute inset-0 hidden origin-bottom-right rotate-6 text-brand-cyan sm:block" aria-hidden="true">

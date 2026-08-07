@@ -7,8 +7,8 @@
             <div>
                 <h3 class="text-[15px] font-semibold text-[#2B2B2B]">{{ __('partner.footer_company') }}</h3>
                 <ul class="mt-6 space-y-4 text-sm text-[#2B2B2B]">
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.footer_about') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.footer_website') }}</a></li>
+                    <li><a href="{{ route('about') }}" class="hover:text-brand-cyan">{{ __('partner.footer_about') }}</a></li>
+                    <li><a href="{{ route('home') }}" class="hover:text-brand-cyan">{{ __('partner.footer_website') }}</a></li>
                 </ul>
             </div>
             <div>

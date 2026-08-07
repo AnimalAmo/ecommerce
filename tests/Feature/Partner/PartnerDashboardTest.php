@@ -40,4 +40,24 @@ class PartnerDashboardTest extends TestCase
 
         $this->assertSame('Marco', $partner->first_name);
     }
+
+    /**
+     * Il CTA della card di benvenuto porta alla scelta del tipo di servizio.
+     * Nasceva come `href="#"` copiato dal mockup XD: cliccabile, ma inerte.
+     */
+    public function test_welcome_cta_links_to_service_creation(): void
+    {
+        $this->actingAsActivePartner();
+
+        $html = $this->get(route('partner.dashboard'))->assertOk()->getContent();
+
+        // Il link va cercato sull'ancora che porta l'etichetta del CTA: quella
+        // rotta esiste già nella nav dell'header, quindi un assertSee sull'href
+        // passerebbe anche con il bottone ancora inerte.
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+href="'.preg_quote(route('partner.service.create'), '/').'"[^>]*>(?:(?!<\/a>).)*'
+                .preg_quote(__('partner.dashboard.cta'), '/').'/s',
+            $html
+        );
+    }
 }
