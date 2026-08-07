@@ -34,7 +34,7 @@
             </div>
         </div>
         <div class="mt-10 flex items-center justify-end gap-5 max-lg:justify-center">
-            <a href="#" aria-label="Instagram" class="text-black transition hover:text-brand-cyan"><flux:icon.instagram class="h-4 w-auto" /></a>
+            <a href="https://www.instagram.com/animal___amo" target="_blank" aria-label="Instagram" class="text-black transition hover:text-brand-cyan"><flux:icon.instagram class="h-4 w-auto" /></a>
         </div>
     </div>
     <div class="{{ $px }} flex items-center justify-center gap-4 py-6 text-xs font-light text-[#8D8D8D] max-lg:flex-wrap max-lg:gap-x-4 max-lg:gap-y-2">

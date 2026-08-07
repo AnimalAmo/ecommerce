@@ -182,6 +182,31 @@ class WorkWithUsFlowTest extends TestCase
         $this->assertNull(session('partner_registration.step1'));
     }
 
+    /**
+     * La segnalazione del cliente: chiusa l'iscrizione, la dashboard salutava
+     * tutti con il nome del mockup. Qui ci si iscrive con un nome diverso da
+     * quello dei fixture e si SEGUE il redirect fino in dashboard.
+     */
+    public function test_the_dashboard_after_registration_greets_the_new_partner(): void
+    {
+        $this->seed(RoleSeeder::class);
+        session(['partner_registration.step1' => array_merge($this->step1Data(), [
+            'firstName' => 'Marco',
+            'lastName' => 'Verdi',
+            'email' => 'marco@example.com',
+        ])]);
+
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->call('createAccount')
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->get(route('partner.dashboard'))
+            ->assertOk()
+            ->assertSee(__('partner.dashboard.welcome', ['name' => 'Marco']))
+            ->assertDontSee('Susanna');
+    }
+
     public function test_step_2_without_step_1_data_returns_to_step_1(): void
     {
         Livewire::test(PartnerRegisterStep2::class)
