@@ -825,6 +825,15 @@ return [
         'back' => 'Indietro',
         'next' => 'Avanti',
         'error_required' => 'Compila le informazioni sulle stanze e gli orari di check-in/out.',
+
+        // Variante "casa vacanza": si affitta l'alloggio intero, quindi niente
+        // righe stanza ripetibili — una sola unità, posti letto e prezzo.
+        'whole_heading' => 'Informazioni sull’alloggio',
+        'whole_section' => 'Aggiungi le informazioni che descrivono l’alloggio che offri',
+        'whole_helper' => 'La casa viene affittata per intero: indica quante persone ospita e il prezzo a notte.',
+        'beds' => 'Posti letto',
+        'whole_price' => 'Prezzo a notte',
+        'beds_error' => 'Indica quanti posti letto ha l’alloggio.',
     ],
 
     /*
@@ -893,6 +902,9 @@ return [
         'hotel' => 'Hotel',
         'bb' => 'B&B',
         'agriturismo' => 'Agriturismo',
+        // Chi affitta l'alloggio intero e non le singole camere: lo step 5
+        // cambia di conseguenza (posti letto al posto delle righe stanza).
+        'casa_vacanza' => 'Casa vacanza',
         'back' => 'Indietro',
         'next' => 'Avanti',
         'error_required' => 'Seleziona una tipologia di struttura.',

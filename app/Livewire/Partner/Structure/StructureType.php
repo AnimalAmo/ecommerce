@@ -9,7 +9,7 @@ class StructureType extends Component
 {
     use InteractsWithStructureDraft;
 
-    /** Tipologia struttura ricettiva scelta: hotel | bb | agriturismo. */
+    /** Tipologia struttura ricettiva scelta: hotel | bb | agriturismo | casa_vacanza. */
     public string $type = '';
 
     public function mount(): void
@@ -20,7 +20,7 @@ class StructureType extends Component
     public function next(): void
     {
         $this->validate(
-            ['type' => ['required', 'string', 'in:hotel,bb,agriturismo']],
+            ['type' => ['required', 'string', 'in:hotel,bb,agriturismo,casa_vacanza']],
             ['type.required' => __('partner.structure_type.error_required'), 'type.in' => __('partner.structure_type.error_required')],
         );
 

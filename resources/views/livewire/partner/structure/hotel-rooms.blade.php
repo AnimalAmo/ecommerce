@@ -4,6 +4,8 @@
     $inputClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]';
     $selectClass = '[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]';
     $labelClass = '!text-xs !font-normal !text-[#555555]';
+    // Casa vacanza: lo step descrive l'alloggio intero, non le singole camere.
+    $whole = $form->wholeProperty;
 @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -17,14 +19,29 @@
 
                 {{-- Testata: titolo + "Step 5 di 11" --}}
                 <div class="flex items-start justify-between gap-4">
-                    <h1 class="text-2xl font-bold text-[#0D171A]">{{ __('partner.hotel_rooms.heading') }}</h1>
+                    <h1 class="text-2xl font-bold text-[#0D171A]">{{ __($whole ? 'partner.hotel_rooms.whole_heading' : 'partner.hotel_rooms.heading') }}</h1>
                     <span class="mt-1 shrink-0 text-[15px] font-semibold text-[#C8C8C8]">{{ __('partner.hotel_rooms.step') }}</span>
                 </div>
 
-                <p class="mt-4 text-[15px] font-medium text-black">{{ __('partner.hotel_rooms.section') }}</p>
-                <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.hotel_rooms.helper') }}</p>
+                <p class="mt-4 text-[15px] font-medium text-black">{{ __($whole ? 'partner.hotel_rooms.whole_section' : 'partner.hotel_rooms.section') }}</p>
+                <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __($whole ? 'partner.hotel_rooms.whole_helper' : 'partner.hotel_rooms.helper') }}</p>
 
                 <form wire:submit="next" class="mt-6">
+                    {{-- Casa vacanza: unità sola, posti letto + prezzo a notte. --}}
+                    @if ($whole)
+                        <div class="mb-5 grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
+                            <flux:field>
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.beds') }} *</flux:label>
+                                <flux:input type="number" min="1" max="50" wire:model="form.rooms.0.beds" class="{{ $inputClass }}" />
+                                <flux:error name="form.rooms.0.beds" />
+                            </flux:field>
+                            <flux:field>
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.hotel_rooms.whole_price') }} *</flux:label>
+                                <flux:input type="number" min="0" wire:model="form.rooms.0.price" class="{{ $inputClass }}" />
+                                <flux:error name="form.rooms.0.price" />
+                            </flux:field>
+                        </div>
+                    @else
                     {{-- Righe stanza (ripetibili) --}}
                     @foreach ($form->rooms as $i => $room)
                         <div class="mb-5 grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2" wire:key="room-{{ $i }}">
@@ -59,6 +76,7 @@
 
                     {{-- + Aggiungi stanze (link cyan) --}}
                     <flux:button type="button" wire:click="addRoom" variant="ghost" icon="plus" class="!-ml-1 !px-1 !text-[16px] !font-bold !text-brand-cyan hover:!bg-transparent [&_svg]:!text-brand-cyan">{{ __('partner.hotel_rooms.add_rooms') }}</flux:button>
+                    @endif
 
                     {{-- Check in / Check out --}}
                     <div class="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">

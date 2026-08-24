@@ -17,13 +17,26 @@ class HotelRooms extends Component
         $this->form->setFromDraft($this->draft());
     }
 
+    /**
+     * I tre controlli del repeater sono inerti sulla casa vacanza: l'alloggio
+     * è uno solo. Il guard sta qui e non solo nel blade perché i pulsanti
+     * spariscono dalla vista ma le action restano richiamabili dal client.
+     */
     public function addRoom(): void
     {
-        $this->form->rooms[] = ['type' => '', 'count' => 0, 'price' => ''];
+        if ($this->form->wholeProperty) {
+            return;
+        }
+
+        $this->form->rooms[] = $this->form->blankRow();
     }
 
     public function incrementRoom(int $i): void
     {
+        if ($this->form->wholeProperty) {
+            return;
+        }
+
         if (isset($this->form->rooms[$i])) {
             $this->form->rooms[$i]['count']++;
         }
@@ -31,6 +44,10 @@ class HotelRooms extends Component
 
     public function decrementRoom(int $i): void
     {
+        if ($this->form->wholeProperty) {
+            return;
+        }
+
         if (isset($this->form->rooms[$i]) && $this->form->rooms[$i]['count'] > 0) {
             $this->form->rooms[$i]['count']--;
         }
