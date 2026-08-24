@@ -25,6 +25,17 @@ class DatabaseSeeder extends Seeder
             SmartboxPackageSeeder::class,
             PaymentGatewaySeeder::class,
             RoleSeeder::class,
+        ]);
+
+        // Le persone del mock XD portano password note e il proprio nome nei
+        // flussi che le toccano (il prefill di "Lavora con noi" finisce nella
+        // mail di invito). Fuori da locale/test si seminano solo su richiesta
+        // esplicita: vedi config/app.php → seed_demo_data.
+        if (! config('app.seed_demo_data')) {
+            return;
+        }
+
+        $this->call([
             DemoUserSeeder::class,
             DemoOrderSeeder::class,
             CommunitySeeder::class, // dopo gli utenti demo: "I miei post" è di Giulia

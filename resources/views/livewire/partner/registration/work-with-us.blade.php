@@ -32,12 +32,12 @@
                 <div class="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.first_name') }}</flux:label>
-                        <flux:input wire:model="form.firstName" placeholder="{{ __('partner.first_name') }}" class="{{ $inputClass }}" />
+                        <flux:input wire:model="form.firstName" placeholder="{{ __('partner.first_name') }}" :readonly="auth()->check()" class="{{ $inputClass }}" />
                         <flux:error name="form.firstName" />
                     </flux:field>
                     <flux:field>
                         <flux:label class="{{ $labelClass }}">{{ __('partner.last_name') }}</flux:label>
-                        <flux:input wire:model="form.lastName" placeholder="{{ __('partner.last_name') }}" class="{{ $inputClass }}" />
+                        <flux:input wire:model="form.lastName" placeholder="{{ __('partner.last_name') }}" :readonly="auth()->check()" class="{{ $inputClass }}" />
                         <flux:error name="form.lastName" />
                     </flux:field>
                     {{-- Utente ecommerce loggato: l'email è quella del suo account (è ciò che

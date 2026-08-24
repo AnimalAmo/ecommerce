@@ -43,6 +43,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Demo Personas
+    |--------------------------------------------------------------------------
+    |
+    | Le persone del mock XD (Giulia Rossi, Susanna Rossi) hanno password
+    | "password" e ruoli attivi: comode in locale, un accesso noto all'area
+    | B2B su qualunque istanza raggiungibile. Il seeder le crea solo se questo
+    | flag è acceso — di default ovunque tranne che in produzione. Un server
+    | demo che le vuole davvero deve chiederle con SEED_DEMO_DATA=true.
+    |
+    */
+
+    'seed_demo_data' => (bool) env('SEED_DEMO_DATA', env('APP_ENV', 'production') !== 'production'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |
