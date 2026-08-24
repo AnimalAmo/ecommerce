@@ -825,6 +825,13 @@ return [
         'back' => 'Back',
         'next' => 'Next',
         'error_required' => 'Fill in the room information and the check-in/out times.',
+
+        'whole_heading' => 'Accommodation information',
+        'whole_section' => 'Add the information that describes the accommodation you offer',
+        'whole_helper' => 'The home is rented as a whole: state how many people it sleeps and the price per night.',
+        'beds' => 'Sleeps',
+        'whole_price' => 'Price per night',
+        'beds_error' => 'State how many people the accommodation sleeps.',
     ],
 
     /*
@@ -893,6 +900,7 @@ return [
         'hotel' => 'Hotel',
         'bb' => 'B&B',
         'agriturismo' => 'Farm stay',
+        'casa_vacanza' => 'Holiday home',
         'back' => 'Back',
         'next' => 'Next',
         'error_required' => 'Select a structure type.',

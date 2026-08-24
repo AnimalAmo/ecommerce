@@ -5,6 +5,7 @@
         'hotel' => ['icon' => 'structure-hotel', 'label' => 'partner.structure_type.hotel'],
         'bb' => ['icon' => 'structure-bb', 'label' => 'partner.structure_type.bb'],
         'agriturismo' => ['icon' => 'structure-farmhouse', 'label' => 'partner.structure_type.agriturismo'],
+        'casa_vacanza' => ['icon' => 'home', 'label' => 'partner.structure_type.casa_vacanza'],
     ];
 @endphp
 
