@@ -1090,22 +1090,94 @@ git commit -m "feat(content): publish the customer and supplier terms pages"
 
 ---
 
-### Task 5: Versione inglese
+### Task 5: Versione inglese (conversione dei documenti forniti dal cliente)
+
+> **Riscritto il 2026-08-26 durante l'esecuzione.** Il piano originale prevedeva
+> che la traduzione la producessi io. Il cliente ha poi caricato in `storage/` i
+> due documenti già tradotti: questo task è quindi una **seconda conversione**,
+> non una traduzione. Il vantaggio non è solo di lavoro: sparisce il rischio di
+> un testo contrattuale tradotto senza validazione legale.
 
 **Files:**
+- Modify: `database/seeders/content/docx-to-html.py`
 - Create: `database/seeders/content/termini-e-condizioni.en.html`
 - Create: `database/seeders/content/termini-e-condizioni-fornitori.en.html`
+- Test: `tests/Feature/Content/LegalContentTest.php` (generalizzazione + un caso nuovo)
 - Test: `tests/Feature/Content/LegalPagesTest.php` (aggiunta di casi)
 
 **Interfaces:**
-- Consumes: i file `*.it.html` (Task 2), il `PageSeeder` che già legge il locale `en` se il file esiste (Task 3).
-- Produces: due file HTML con **la stessa identica struttura di tag e gli stessi `id`** dei corrispettivi italiani, contenuto tradotto.
+- Consumes: i file `*.it.html` (Task 2) come **sorgente degli `id`**; il `PageSeeder` che già legge il locale `en` se il file esiste (Task 3).
+- Produces: due file `*.en.html` con gli stessi heading, nello stesso ordine e con gli stessi `id` dei corrispettivi italiani; e un `docx-to-html.py` che accetta `--ids-from <file.it.html>`.
 
-Vincolo di lavorazione: la traduzione è di ~62.000 caratteri di testo contrattuale. Va fatta capitolo per capitolo, mantenendo intatti tag, attributi `id` e la numerazione delle clausole (`1.1`, `22.2.21`): cambia solo il testo. I termini definiti nei documenti (Utente/User, Fornitore/Supplier, Gestore/Operator, Piattaforma/Platform, Servizi/Services) vanno tradotti in modo coerente ovunque, perché sono definizioni contrattuali.
+**Fatti accertati sui due documenti inglesi** (non riderivarli):
 
-- [ ] **Step 1: Scrivi il test che fallisce**
+| | `storage/Animal amo inglese 1.docx` | `storage/Animal amo inglese 2.docx` |
+| --- | --- | --- |
+| Corrisponde a | **fornitori** (`termini-e-condizioni-fornitori`) | **clienti** (`termini-e-condizioni`) |
+| Heading attesi | 17 `<h3>`, nessun `<h2>` | 24 `<h3>` + 2 `<h2>` (Section A / Section B) |
+| Stili Word | `Heading1` (sezioni e capitoli), `ListBullet` (elenchi), `Normal` | idem |
 
-Aggiungi a `tests/Feature/Content/LegalPagesTest.php`:
+- **L'indice usa lo stesso stile `Heading1` del corpo**, quindi non è distinguibile per stile: sta in testa e il corpo comincia alla **seconda occorrenza del primo heading dell'indice**. Nel documento fornitori è `1. Recitals`, in quello clienti `Section A: Terms Common to All Services`.
+- Sezione o capitolo: il testo che comincia con `N.` è un capitolo (`<h3>`), il resto è una sezione (`<h2>`).
+- Nessun `numPr`, nessun hyperlink, nessuna immagine, nessuna tabella.
+- La numerazione delle clausole (`8.1`, `22.2.21`) è testo letterale, come negli italiani.
+- I due documenti inglesi **non contengono link**, mentre l'italiano dei clienti ne ha due (booking.com e `ec.europa.eu/odr`). È una divergenza voluta dal cliente, riferita a lui: **non aggiungere link che nel sorgente inglese non ci sono**, nemmeno auto-linkando URL scritti in chiaro.
+
+**Decisione sugli `id`:** gli heading inglesi **non** generano il proprio slug. Prendono per posizione l'`id` dell'heading italiano corrispondente, così un'ancora a un capitolo funziona in entrambe le lingue. Da qui l'opzione `--ids-from`.
+
+**Decisione sul test di specularità:** l'originale confrontava la sequenza di tag byte per byte. Non regge più: i due documenti sono redazioni indipendenti, con paragrafi e liste spezzati diversamente (l'italiano dei clienti ha un `<ol>` che l'inglese non ha, perché lì è un `ListBullet`). Quello che deve combaciare è l'ossatura: **stessi livelli di heading, stesso ordine, stessi `id`**.
+
+- [ ] **Step 1: Scrivi i test che falliscono**
+
+In `tests/Feature/Content/LegalContentTest.php` aggiungi il provider per lingua:
+
+```php
+    /** @return array<int, array{0: string, 1: string}> slug e lingua */
+    public static function localeFileProvider(): array
+    {
+        return [
+            [Page::TERMS_CUSTOMERS, 'it'],
+            [Page::TERMS_CUSTOMERS, 'en'],
+            [Page::TERMS_SUPPLIERS, 'it'],
+            [Page::TERMS_SUPPLIERS, 'en'],
+        ];
+    }
+```
+
+e **generalizza su questo provider** i due test che oggi guardano solo l'italiano — quello di pulizia del markup e quello di buona formazione delle liste — invece di duplicarli per l'inglese: prendono `(string $slug, string $locale)` e leggono `{$slug}.{$locale}.html`. Il test di pulizia deve rifiutare anche `CONTENTS`, che è la parola con cui i documenti inglesi aprono l'indice, così come già rifiuta `Sommario`.
+
+Poi il caso nuovo:
+
+```php
+    #[DataProvider('fileProvider')]
+    public function test_the_english_headings_mirror_the_italian_ones(string $slug, int $chapters): void
+    {
+        $italian = file_get_contents(database_path("seeders/content/{$slug}.it.html"));
+        $english = file_get_contents(database_path("seeders/content/{$slug}.en.html"));
+
+        // I due documenti sono redazioni indipendenti: paragrafi e liste sono
+        // spezzati diversamente. A combaciare dev'essere l'ossatura — stessi
+        // capitoli, stesso ordine, stessi id, perché gli id sono ancore che
+        // devono valere in entrambe le lingue.
+        preg_match_all('/<(h2|h3) id="([^"]+)">/', $italian, $itHeadings);
+        preg_match_all('/<(h2|h3) id="([^"]+)">/', $english, $enHeadings);
+
+        $this->assertSame($itHeadings[1], $enHeadings[1], "Livelli di heading diversi in {$slug}");
+        $this->assertSame($itHeadings[2], $enHeadings[2], "Id degli heading diversi in {$slug}");
+        $this->assertSame($chapters, substr_count($english, '<h3 id='));
+    }
+
+    public function test_the_english_supplier_chapters_keep_their_numbers(): void
+    {
+        $html = file_get_contents(database_path('seeders/content/'.Page::TERMS_SUPPLIERS.'.en.html'));
+
+        $this->assertStringContainsString('1. Recitals', $html);
+        $this->assertStringContainsString('2. Definitions', $html);
+        $this->assertStringContainsString('17. Jurisdiction and Applicable Law', $html);
+    }
+```
+
+E in `tests/Feature/Content/LegalPagesTest.php`:
 
 ```php
     public function test_the_english_page_renders_the_english_body(): void
@@ -1124,28 +1196,6 @@ Aggiungi a `tests/Feature/Content/LegalPagesTest.php`:
     }
 ```
 
-E a `tests/Feature/Content/LegalContentTest.php`:
-
-```php
-    #[DataProvider('fileProvider')]
-    public function test_the_english_html_mirrors_the_italian_structure(string $slug, int $chapters): void
-    {
-        $italian = file_get_contents(database_path("seeders/content/{$slug}.it.html"));
-        $english = file_get_contents(database_path("seeders/content/{$slug}.en.html"));
-
-        // Stessa sequenza di tag: la traduzione cambia il testo, non la struttura.
-        $this->assertSame(
-            preg_replace('/>[^<]*</', '><', $italian),
-            preg_replace('/>[^<]*</', '><', $english),
-            "La struttura HTML di {$slug}.en.html non combacia con quella italiana",
-        );
-    }
-```
-
-> L'asserzione confronta anche gli `id` degli heading, che restano quelli
-> italiani: sono ancore, non testo visibile, e tenerli uguali fa sì che un link
-> a un capitolo funzioni in entrambe le lingue.
-
 - [ ] **Step 2: Esegui i test e verifica che falliscano**
 
 ```bash
@@ -1154,29 +1204,117 @@ ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce &
 
 Atteso: FAIL — `file_get_contents(...termini-e-condizioni.en.html): Failed to open stream`.
 
-- [ ] **Step 3: Traduci il documento clienti**
+- [ ] **Step 3: Estendi il convertitore**
 
-Copia `termini-e-condizioni.it.html` in `termini-e-condizioni.en.html` e traduci il **solo testo** fra i tag, procedendo per blocchi (una `<h2>`/`<h3>` e i suoi paragrafi alla volta). Non toccare: nomi dei tag, attributi `id`, `href`, `target`, `rel`, i numeri di clausola.
+`docx-to-html.py` guadagna il dialetto inglese e l'opzione `--ids-from`. Il dialetto si riconosce da solo: se il documento contiene paragrafi con stile `Heading1`, è inglese.
 
-- [ ] **Step 4: Traduci il documento fornitori**
+```python
+def heading_ids(path):
+    """Gli id degli heading del file italiano, nell'ordine. La versione inglese
+    li riusa per posizione: un'ancora a un capitolo deve valere in entrambe le
+    lingue, quindi gli id restano quelli italiani anche in inglese."""
+    with open(path, encoding='utf-8') as source:
+        return re.findall(r'<h[23] id="([^"]+)">', source.read())
 
-Stessa procedura su `termini-e-condizioni-fornitori.en.html`. I 17 titoli di capitolo mantengono il numero: `1. Premesse` → `1. Recitals`.
 
-- [ ] **Step 5: Esegui i test e verifica che passino**
+def is_english_dialect(body):
+    """I documenti tradotti usano gli stili inglesi di Word (Heading1,
+    ListBullet) invece di quelli italiani (Titolo1/Titolo2/Paragrafoelenco)."""
+    return any(style_of(p) == 'Heading1' for p in body.iter(W + 'p'))
+
+
+def convert_english(body, rels, ids):
+    paragraphs = [p for p in body.iter(W + 'p') if inline_html(p, rels)]
+    headings = [i for i, p in enumerate(paragraphs) if style_of(p) == 'Heading1']
+
+    # L'indice è in testa e usa lo stesso stile del corpo: il corpo comincia
+    # alla seconda occorrenza del primo heading dell'indice.
+    first = plain(inline_html(paragraphs[headings[0]], rels))
+    start = next(
+        i for i in headings[1:]
+        if plain(inline_html(paragraphs[i], rels)) == first
+    )
+
+    out, in_list, index = [], False, 0
+
+    for paragraph in paragraphs[start:]:
+        inner = inline_html(paragraph, rels)
+        style = style_of(paragraph)
+
+        if style == 'Heading1':
+            if in_list:
+                out.append('</ul>')
+                in_list = False
+            text = plain(inner)
+            tag = 'h3' if re.match(r'\d+\.', text) else 'h2'
+            out.append(f'<{tag} id="{ids[index]}">{text}</{tag}>')
+            index += 1
+            continue
+
+        if style == 'ListBullet':
+            if not in_list:
+                out.append('<ul>')
+                in_list = True
+            out.append(f'<li>{inner}</li>')
+            continue
+
+        if in_list:
+            out.append('</ul>')
+            in_list = False
+        out.append(f'<p>{inner}</p>')
+
+    if in_list:
+        out.append('</ul>')
+
+    return '\n'.join(out) + '\n'
+```
+
+`convert()` accetta un parametro `ids=None` e smista: se `is_english_dialect(body)` chiama `convert_english`, altrimenti resta la logica italiana attuale. Se il dialetto è inglese e `ids` è `None`, o se gli heading trovati sono più degli `id` disponibili, **solleva un errore esplicito** invece di produrre HTML con `id` mancanti o sbagliati — un `id` sballato manda l'ancora sul capitolo sbagliato, ed è un difetto silenzioso.
+
+Il `__main__` accetta la forma `docx-to-html.py <src.docx> <dest.html> [--ids-from <file.it.html>]`, e il docstring in testa al file va aggiornato di conseguenza.
+
+- [ ] **Step 4: Genera i due file inglesi**
+
+```bash
+python3 database/seeders/content/docx-to-html.py \
+  "storage/Animal amo inglese 2.docx" \
+  database/seeders/content/termini-e-condizioni.en.html \
+  --ids-from database/seeders/content/termini-e-condizioni.it.html
+python3 database/seeders/content/docx-to-html.py \
+  "storage/Animal amo inglese 1.docx" \
+  database/seeders/content/termini-e-condizioni-fornitori.en.html \
+  --ids-from database/seeders/content/termini-e-condizioni-fornitori.it.html
+```
+
+Attenzione all'incrocio: **inglese 2 → clienti**, **inglese 1 → fornitori**. È l'inverso di quello che suggerirebbero i numeri.
+
+- [ ] **Step 5: Ispeziona l'output e itera finché i test passano**
+
+Da guardare a occhio prima di fidarsi dei test:
+
+- il file clienti apre con `<h2 id="sezione-a-condizioni-comuni-a-tutti-i-servizi">Section A: …</h2>`: id italiano, testo inglese. È voluto;
+- l'indice inglese (la sequenza di heading in testa, e le parole `CONTENTS` / `CUSTOMERS`) non deve comparire nell'output;
+- le clausole `8.1`, `10.3`, … sono testo dentro i `<p>`;
+- le definizioni ("User:", "Supplier:", …) sono `<li>` dentro un `<ul>`;
+- nessun `<a>`: nei documenti inglesi non ce ne sono, e non li inventiamo.
+
+- [ ] **Step 6: Esegui i test e verifica che passino**
 
 ```bash
 ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test --filter="LegalPagesTest|LegalContentTest"'
 ```
 
-Atteso: PASS. Se il confronto di struttura fallisce, la diagnosi è quasi sempre un tag chiuso male durante la traduzione: confronta i due file con `diff <(sed 's/>[^<]*</></g' it) <(sed 's/>[^<]*</></g' en)`.
+Atteso: PASS. Se `test_the_english_headings_mirror_the_italian_ones` fallisce sui livelli, la causa quasi certa è il riconoscimento sezione/capitolo (`^\d+\.`); se fallisce sul conteggio, è l'indice non scartato del tutto.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Pint e commit**
 
 ```bash
-git add database/seeders/content/termini-e-condizioni.en.html \
+vendor/bin/pint tests/Feature/Content/LegalContentTest.php tests/Feature/Content/LegalPagesTest.php
+git add database/seeders/content/docx-to-html.py \
+        database/seeders/content/termini-e-condizioni.en.html \
         database/seeders/content/termini-e-condizioni-fornitori.en.html \
         tests/Feature/Content/LegalPagesTest.php tests/Feature/Content/LegalContentTest.php
-git commit -m "feat(content): add the English translation of both terms documents"
+git commit -m "feat(content): convert the client-provided English terms documents"
 ```
 
 ---
@@ -1266,4 +1404,7 @@ git commit -m "feat(content): point the footer terms links at the new pages"
 
 - `php artisan migrate --seed` sugli ambienti dove il DB esiste già; in produzione basta `php artisan db:seed --class=PageSeeder` dopo la migrazione.
 - `npm run build` prima del deploy: `.legal-content` è CSS nuovo.
-- La traduzione inglese va fatta rileggere da un legale prima della messa online.
+- La versione inglese è quella fornita dal cliente, non una traduzione nostra:
+  non serve una rilettura legale da parte nostra. Restano da riferire al cliente
+  le divergenze fra le due redazioni (link mancanti in inglese, il rimando
+  "Feedback e rating" nell'italiano).

@@ -194,12 +194,36 @@ ma è la ragione per cui il CRUD non va aggiunto senza pensarci.
 
 ## Versione inglese
 
-Traduzione integrale dei due testi nel campo `en`. Il documento clienti contiene
-già una clausola propria secondo cui la versione italiana è l'originale e
-prevale: viene ripresa in apertura della versione inglese come nota esplicita.
+> Aggiornato il 2026-08-26: la decisione iniziale era che la traduzione la
+> producessi io, con l'avvertenza di farla rileggere da un legale. Il cliente ha
+> poi fornito i due documenti già tradotti — `storage/Animal amo inglese 1.docx`
+> (fornitori) e `Animal amo inglese 2.docx` (clienti) — quindi l'inglese nasce da
+> una seconda conversione, non da una traduzione nostra, e il rischio legale
+> sparisce.
 
-**La traduzione va riletta da un legale prima della messa online.** È testo
-contrattuale: una resa imprecisa può creare obblighi diversi dall'originale.
+I due documenti inglesi usano stili Word diversi dagli italiani (`Heading1` e
+`ListBullet` invece di `Titolo1`/`Titolo2`/`Paragrafoelenco`) e mettono l'indice
+in testa senza uno stile dedicato: il convertitore riconosce il dialetto e
+scarta l'indice individuando la seconda occorrenza del primo heading.
+
+Gli `id` degli heading inglesi **non** derivano dal testo inglese: sono presi per
+posizione dal file italiano, così un'ancora a un capitolo funziona in entrambe le
+lingue.
+
+Entrambi i documenti contengono la clausola secondo cui la versione italiana è
+l'originale e prevale (punto 2.4): il banner mostrato fuori dall'italiano dice la
+stessa cosa in forma visibile.
+
+Tre divergenze fra le due redazioni, tutte contenuto del cliente, da riferire a
+lui e non da correggere in codice:
+
+- l'italiano dei clienti linka la privacy policy di **booking.com** (URL con
+  `gclid` e `aid` affiliato) al punto 8.1; l'inglese dice "the relevant Privacy
+  and Cookie Policy" senza link, correggendo di fatto l'errore;
+- il link alla piattaforma ODR della Commissione europea è cliccabile in
+  italiano e testo semplice in inglese;
+- nell'italiano il capitolo 24 si intitola "Recensioni e rating" ma la clausola
+  finale ex art. 1341 c.c. lo richiama come "Feedback e rating".
 
 ## Link nel footer
 
