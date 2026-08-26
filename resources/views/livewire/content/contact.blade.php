@@ -25,7 +25,7 @@
         @endif
         <div class="{{ $px }} pt-[60px] pb-20 max-lg:pt-[54px] max-lg:pb-10">
             <h1 class="text-4xl font-bold text-black max-lg:text-[18px] max-lg:leading-[21px] max-lg:text-[#0D171A]">{{ __('contact.heading') }}</h1>
-            <p class="mt-4 max-w-4xl text-lg text-black max-lg:mt-[10px] max-lg:text-[15px] max-lg:leading-5 max-lg:text-[#2B2B2B]">{{ __('contact.intro') }}</p>
+            <p class="mt-4 max-w-4xl text-lg text-black max-lg:mt-[10px] max-lg:text-[15px] max-lg:leading-5 max-lg:text-ink-700">{{ __('contact.intro') }}</p>
 
             <div class="mt-10 flex items-start gap-6 max-lg:mt-7 max-lg:flex-col">
                 {{-- Card form (stessa card del form partner; su mobile campi a tutta pagina) --}}

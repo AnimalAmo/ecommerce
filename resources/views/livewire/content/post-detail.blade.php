@@ -38,12 +38,12 @@
                     </div>
 
                     <p class="mt-[29px] text-[15px] font-bold leading-[21px] text-[#959595]">{{ $post['author'] }}</p>
-                    <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $post['body'] }}</p>
+                    <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $post['body'] }}</p>
 
                     @foreach ($post['replies'] as $reply)
                         <div wire:key="reply-{{ $loop->index }}" class="mt-[22px]">
                             <p class="text-[15px] font-bold leading-[21px] text-[#959595]">{{ $reply['author'] }}</p>
-                            <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $reply['body'] }}</p>
+                            <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $reply['body'] }}</p>
                         </div>
                     @endforeach
 
@@ -69,12 +69,12 @@
 
             <h1 class="mt-3 text-lg font-bold leading-none text-black">{{ $post['title'] }}</h1>
             <p class="mt-[14px] text-[15px] font-semibold leading-none text-[#C8C8C8]">{{ $post['author'] }}</p>
-            <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $post['body'] }}</p>
+            <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $post['body'] }}</p>
 
             @foreach ($post['replies'] as $reply)
                 <div wire:key="reply-mobile-{{ $loop->index }}" class="mt-[21px]">
                     <p class="text-[15px] font-semibold leading-none text-[#C8C8C8]">{{ $reply['author'] }}</p>
-                    <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $reply['body'] }}</p>
+                    <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $reply['body'] }}</p>
                 </div>
             @endforeach
         </div>
