@@ -2,9 +2,9 @@
 """
 Converte i .docx delle condizioni generali in HTML semantico per il PageSeeder.
 
-    python3 database/seeders/content/docx-to-html.py <sorgente.docx> <destinazione.html>
+    python3 database/seeders/content/docx-to-html.py <sorgente.docx> <destinazione.html> [--ids-from <file.it.html>]
 
-Cosa fa:
+Cosa fa (dialetto italiano, stili Titolo1/Titolo2/Paragrafoelenco):
   * Titolo1 -> <h2>, Titolo2 -> <h3>, con id ricavato dal testo;
   * nel documento fornitori i Paragrafoelenco di primo livello tutti in
     grassetto sono i capitoli: diventano <h3> numerati 1..N;
@@ -12,11 +12,22 @@ Cosa fa:
   * gli hyperlink esterni diventano <a target="_blank" rel="noopener">;
   * il Sommario di Word viene scartato.
 
+Cosa fa (dialetto inglese, riconosciuto da solo dallo stile Heading1 —
+documenti già tradotti dal cliente, non prodotti da questo script):
+  * Heading1 -> <h2> o <h3> a seconda che il testo cominci con "N.";
+  * gli id NON si generano dal testo inglese: si riusano per posizione
+    quelli del file italiano corrispondente, passato con --ids-from, così
+    un'ancora a un capitolo vale in entrambe le lingue;
+  * l'indice, in testa e con lo stesso stile del corpo, viene scartato fino
+    alla seconda occorrenza del primo heading dell'indice;
+  * ListBullet -> <li> dentro <ul>;
+  * nessun auto-link: i documenti inglesi non ne contengono.
+
 Cosa NON fa: toccare la numerazione delle clausole (1.1, 22.2.21), che nei
 documenti è già testo letterale.
 
-Nota: usa xml.etree della stdlib. È uno script one-shot che gira in locale su
-due file forniti dal cliente, non un parser esposto a input non fidato; se un
+Nota: usa xml.etree della stdlib. È uno script one-shot che gira in locale sui
+documenti forniti dal cliente, non un parser esposto a input non fidato; se un
 giorno dovesse leggere docx di provenienza ignota, passare a defusedxml.
 """
 
@@ -153,8 +164,95 @@ def slugify(text):
     return slug[:60].strip('-') or 'sezione'
 
 
-def convert(source):
+def heading_ids(path):
+    """Gli id degli heading del file italiano, nell'ordine. La versione inglese
+    li riusa per posizione: un'ancora a un capitolo deve valere in entrambe le
+    lingue, quindi gli id restano quelli italiani anche in inglese."""
+    with open(path, encoding='utf-8') as source:
+        return re.findall(r'<h[23] id="([^"]+)">', source.read())
+
+
+def is_english_dialect(body):
+    """I documenti tradotti usano gli stili inglesi di Word (Heading1,
+    ListBullet) invece di quelli italiani (Titolo1/Titolo2/Paragrafoelenco)."""
+    return any(style_of(p) == 'Heading1' for p in body.iter(W + 'p'))
+
+
+def convert_english(body, rels, ids):
+    paragraphs = [p for p in body.iter(W + 'p') if inline_html(p, rels)]
+    headings = [i for i, p in enumerate(paragraphs) if style_of(p) == 'Heading1']
+
+    # L'indice è in testa e usa lo stesso stile del corpo: il corpo comincia
+    # alla seconda occorrenza del primo heading dell'indice.
+    first = plain(inline_html(paragraphs[headings[0]], rels))
+    start = next(
+        i for i in headings[1:]
+        if plain(inline_html(paragraphs[i], rels)) == first
+    )
+
+    out, in_list, index, seen = [], False, 0, set()
+
+    for paragraph in paragraphs[start:]:
+        inner = inline_html(paragraph, rels)
+        style = style_of(paragraph)
+        text = plain(inner)
+
+        # Il documento clienti chiude con l'elenco delle clausole da
+        # approvare specificamente ex art. 1341 c.c., che cita alla lettera
+        # il testo di capitoli già apparsi — ma Word applica loro lo stesso
+        # stile Heading1 delle intestazioni vere. Un capitolo genuino compare
+        # una sola volta dopo l'indice: un secondo Heading1 con testo già
+        # visto è quella citazione, non una nuova sezione, e va trattato come
+        # paragrafo normale (esattamente come nell'italiano, dove lo stesso
+        # elenco non ha mai avuto stile di intestazione).
+        if style == 'Heading1' and text in seen:
+            style = None
+
+        if style == 'Heading1':
+            if in_list:
+                out.append('</ul>')
+                in_list = False
+            if index >= len(ids):
+                raise ValueError(
+                    f'English document has {len(headings)} headings but only '
+                    f'{len(ids)} ids are available from the Italian source '
+                    f'(offending heading: "{text}")'
+                )
+            tag = 'h3' if re.match(r'\d+\.', text) else 'h2'
+            out.append(f'<{tag} id="{ids[index]}">{text}</{tag}>')
+            index += 1
+            seen.add(text)
+            continue
+
+        if style == 'ListBullet':
+            if not in_list:
+                out.append('<ul>')
+                in_list = True
+            out.append(f'<li>{inner}</li>')
+            continue
+
+        if in_list:
+            out.append('</ul>')
+            in_list = False
+        out.append(f'<p>{inner}</p>')
+
+    if in_list:
+        out.append('</ul>')
+
+    return '\n'.join(out) + '\n'
+
+
+def convert(source, ids=None):
     body, rels, formats = load(source)
+
+    if is_english_dialect(body):
+        if ids is None:
+            raise ValueError(
+                'English documents require --ids-from <file.it.html>: their '
+                'headings reuse the Italian ids by position.'
+            )
+        return convert_english(body, rels, ids)
+
     out, stack, chapter = [], [], 0
 
     def close_lists():
@@ -222,8 +320,18 @@ def convert(source):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    ids_path = None
+    if '--ids-from' in args:
+        flag_index = args.index('--ids-from')
+        ids_path = args[flag_index + 1]
+        del args[flag_index:flag_index + 2]
+
+    if len(args) != 2:
         raise SystemExit(__doc__)
 
-    with open(sys.argv[2], 'w', encoding='utf-8') as destination:
-        destination.write(convert(sys.argv[1]))
+    source, destination = args
+    converted = convert(source, heading_ids(ids_path) if ids_path else None)
+
+    with open(destination, 'w', encoding='utf-8') as out:
+        out.write(converted)

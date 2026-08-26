@@ -25,29 +25,31 @@ class LegalContentTest extends TestCase
         ];
     }
 
-    /** @return array<int, array{0: string}> slug dei due documenti */
-    public static function slugProvider(): array
+    /** @return array<int, array{0: string, 1: string}> slug e lingua */
+    public static function localeFileProvider(): array
     {
         return [
-            [Page::TERMS_CUSTOMERS],
-            [Page::TERMS_SUPPLIERS],
+            [Page::TERMS_CUSTOMERS, 'it'],
+            [Page::TERMS_CUSTOMERS, 'en'],
+            [Page::TERMS_SUPPLIERS, 'it'],
+            [Page::TERMS_SUPPLIERS, 'en'],
         ];
     }
 
-    #[DataProvider('fileProvider')]
-    public function test_the_italian_html_is_clean_and_complete(string $slug, int $chapters): void
+    #[DataProvider('localeFileProvider')]
+    public function test_the_html_is_clean_and_complete(string $slug, string $locale): void
     {
-        $path = database_path("seeders/content/{$slug}.it.html");
+        $path = database_path("seeders/content/{$slug}.{$locale}.html");
         $this->assertFileExists($path);
 
         $html = file_get_contents($path);
 
-        $this->assertSame($chapters, substr_count($html, '<h3 id='), 'Capitoli mancanti o duplicati');
         $this->assertStringNotContainsString('<span', $html);
         $this->assertStringNotContainsString('style=', $html);
         $this->assertStringNotContainsString('class=', $html);
         $this->assertStringNotContainsString('<h1', $html, "L'h1 è del blade, non del corpo");
         $this->assertStringNotContainsString('Sommario', $html, 'Il sommario di Word va scartato');
+        $this->assertStringNotContainsString('CONTENTS', $html, "L'indice inglese va scartato");
         $this->assertMatchesRegularExpression('/<h3 id="[a-z0-9-]+">/', $html);
     }
 
@@ -67,6 +69,33 @@ class LegalContentTest extends TestCase
         $this->assertStringContainsString('1. Premesse', $html);
         $this->assertStringContainsString('2. Definizioni', $html);
         $this->assertStringContainsString('17. Foro competente', $html);
+    }
+
+    #[DataProvider('fileProvider')]
+    public function test_the_english_headings_mirror_the_italian_ones(string $slug, int $chapters): void
+    {
+        $italian = file_get_contents(database_path("seeders/content/{$slug}.it.html"));
+        $english = file_get_contents(database_path("seeders/content/{$slug}.en.html"));
+
+        // I due documenti sono redazioni indipendenti: paragrafi e liste sono
+        // spezzati diversamente. A combaciare dev'essere l'ossatura — stessi
+        // capitoli, stesso ordine, stessi id, perché gli id sono ancore che
+        // devono valere in entrambe le lingue.
+        preg_match_all('/<(h2|h3) id="([^"]+)">/', $italian, $itHeadings);
+        preg_match_all('/<(h2|h3) id="([^"]+)">/', $english, $enHeadings);
+
+        $this->assertSame($itHeadings[1], $enHeadings[1], "Livelli di heading diversi in {$slug}");
+        $this->assertSame($itHeadings[2], $enHeadings[2], "Id degli heading diversi in {$slug}");
+        $this->assertSame($chapters, substr_count($english, '<h3 id='));
+    }
+
+    public function test_the_english_supplier_chapters_keep_their_numbers(): void
+    {
+        $html = file_get_contents(database_path('seeders/content/'.Page::TERMS_SUPPLIERS.'.en.html'));
+
+        $this->assertStringContainsString('1. Recitals', $html);
+        $this->assertStringContainsString('2. Definitions', $html);
+        $this->assertStringContainsString('17. Jurisdiction and Applicable Law', $html);
     }
 
     public function test_external_links_open_safely(): void
@@ -90,10 +119,10 @@ class LegalContentTest extends TestCase
      * "chiuso"). Il conteggio di stringhe non lo intercetta: qui il file
      * viene caricato come frammento XML e la struttura viene ispezionata.
      */
-    #[DataProvider('slugProvider')]
-    public function test_the_lists_are_well_formed(string $slug): void
+    #[DataProvider('localeFileProvider')]
+    public function test_the_lists_are_well_formed(string $slug, string $locale): void
     {
-        $html = file_get_contents(database_path("seeders/content/{$slug}.it.html"));
+        $html = file_get_contents(database_path("seeders/content/{$slug}.{$locale}.html"));
 
         $fragment = str_replace('<br>', '<br/>', $html);
 
@@ -105,7 +134,7 @@ class LegalContentTest extends TestCase
 
         $this->assertTrue(
             $loaded,
-            "HTML non ben formato in {$slug}: ".implode('; ', array_map(
+            "HTML non ben formato in {$slug}.{$locale}: ".implode('; ', array_map(
                 fn (\LibXMLError $error): string => trim($error->message), $errors
             ))
         );
@@ -114,7 +143,7 @@ class LegalContentTest extends TestCase
             $this->assertContains(
                 $li->parentNode?->nodeName,
                 ['ul', 'ol'],
-                "<li> fuori da <ul>/<ol> in {$slug}: \"{$li->textContent}\""
+                "<li> fuori da <ul>/<ol> in {$slug}.{$locale}: \"{$li->textContent}\""
             );
         }
 
@@ -123,7 +152,7 @@ class LegalContentTest extends TestCase
                 $this->assertNotContains(
                     $list->parentNode?->nodeName,
                     ['ul', 'ol'],
-                    "<{$tag}> annidato direttamente in <{$list->parentNode?->nodeName}> senza <li> di mezzo, in {$slug}"
+                    "<{$tag}> annidato direttamente in <{$list->parentNode?->nodeName}> senza <li> di mezzo, in {$slug}.{$locale}"
                 );
             }
         }
