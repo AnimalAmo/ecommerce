@@ -18,6 +18,7 @@ use App\Livewire\Commerce\Favorites;
 use App\Livewire\Content\AboutUs;
 use App\Livewire\Content\Community;
 use App\Livewire\Content\Contact;
+use App\Livewire\Content\LegalPage;
 use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
 use App\Livewire\Content\PostDetail;
@@ -73,6 +74,7 @@ use App\Livewire\Profile\ProfileOrders;
 use App\Livewire\Profile\ProfileOrderSummary;
 use App\Livewire\Profile\ProfilePayment;
 use App\Livewire\Profile\ProfileSecurity;
+use App\Models\Page\Page;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +100,11 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.contact'), Contact::class)->name('contact');
     Route::get(LaravelLocalization::transRoute('routes.community'), Community::class)->name('community');
     Route::get(LaravelLocalization::transRoute('routes.community.post'), PostDetail::class)->name('community.post');
+    // Pagine legali: stesso componente, distinte dallo slug del contenuto.
+    Route::get(LaravelLocalization::transRoute('routes.terms.customers'), LegalPage::class)
+        ->defaults('slug', Page::TERMS_CUSTOMERS)->name('terms.customers');
+    Route::get(LaravelLocalization::transRoute('routes.terms.suppliers'), LegalPage::class)
+        ->defaults('slug', Page::TERMS_SUPPLIERS)->name('terms.suppliers');
     Route::get(LaravelLocalization::transRoute('routes.preferiti'), Favorites::class)->name('preferiti');
     Route::get(LaravelLocalization::transRoute('routes.carrello'), Cart::class)->name('carrello');
     Route::get(LaravelLocalization::transRoute('routes.checkout'), Checkout::class)->name('checkout');

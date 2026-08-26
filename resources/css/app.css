@@ -92,3 +92,58 @@ textarea[data-flux-control] {
 [x-cloak] {
     display: none !important;
 }
+
+/* Corpo delle pagine legali: HTML dal DB, quindi senza classi Tailwind sui tag.
+   Colonna di lettura stretta, gerarchia h2/h3, liste numerate annidate. */
+.legal-content {
+    color: #2b2b2b;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+.legal-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.legal-content h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.legal-content p {
+    margin-bottom: 0.875rem;
+}
+
+.legal-content ol,
+.legal-content ul {
+    margin: 0 0 0.875rem 1.5rem;
+}
+
+.legal-content ol {
+    list-style: decimal;
+}
+
+.legal-content ul {
+    list-style: disc;
+}
+
+.legal-content li {
+    margin-bottom: 0.375rem;
+}
+
+.legal-content a {
+    color: var(--color-brand-cyan);
+    text-decoration: underline;
+}
+
+.legal-content strong {
+    font-weight: 700;
+    color: var(--color-ink);
+}
