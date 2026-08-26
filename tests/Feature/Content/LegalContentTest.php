@@ -21,6 +21,15 @@ class LegalContentTest extends TestCase
         ];
     }
 
+    /** @return array<int, array{0: string}> slug dei due documenti */
+    public static function slugProvider(): array
+    {
+        return [
+            [Page::TERMS_CUSTOMERS],
+            [Page::TERMS_SUPPLIERS],
+        ];
+    }
+
     #[DataProvider('fileProvider')]
     public function test_the_italian_html_is_clean_and_complete(string $slug, int $chapters): void
     {
@@ -65,6 +74,53 @@ class LegalContentTest extends TestCase
 
             foreach ($matches[0] as $anchor) {
                 $this->assertStringContainsString('rel="noopener"', $anchor);
+            }
+        }
+    }
+
+    /**
+     * Guardia contro la classe di difetto emersa durante lo sviluppo di
+     * docx-to-html.py: uno stack di liste basato sulla profondità assoluta
+     * di Word può produrre un `<ul>`/`<ol>` figlio diretto di un altro senza
+     * un `<li>` di mezzo (HTML non valido, anche se ogni tag risulta
+     * "chiuso"). Il conteggio di stringhe non lo intercetta: qui il file
+     * viene caricato come frammento XML e la struttura viene ispezionata.
+     */
+    #[DataProvider('slugProvider')]
+    public function test_the_lists_are_well_formed(string $slug): void
+    {
+        $html = file_get_contents(database_path("seeders/content/{$slug}.it.html"));
+
+        $fragment = str_replace('<br>', '<br/>', $html);
+
+        libxml_use_internal_errors(true);
+        $document = new \DOMDocument;
+        $loaded = $document->loadXML("<root>{$fragment}</root>");
+        $errors = libxml_get_errors();
+        libxml_clear_errors();
+
+        $this->assertTrue(
+            $loaded,
+            "HTML non ben formato in {$slug}: ".implode('; ', array_map(
+                fn (\LibXMLError $error): string => trim($error->message), $errors
+            ))
+        );
+
+        foreach (iterator_to_array($document->getElementsByTagName('li')) as $li) {
+            $this->assertContains(
+                $li->parentNode?->nodeName,
+                ['ul', 'ol'],
+                "<li> fuori da <ul>/<ol> in {$slug}: \"{$li->textContent}\""
+            );
+        }
+
+        foreach (['ul', 'ol'] as $tag) {
+            foreach (iterator_to_array($document->getElementsByTagName($tag)) as $list) {
+                $this->assertNotContains(
+                    $list->parentNode?->nodeName,
+                    ['ul', 'ol'],
+                    "<{$tag}> annidato direttamente in <{$list->parentNode?->nodeName}> senza <li> di mezzo, in {$slug}"
+                );
             }
         }
     }
