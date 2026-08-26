@@ -200,12 +200,25 @@ def convert_english(body, rels, ids):
         # Il documento clienti chiude con l'elenco delle clausole da
         # approvare specificamente ex art. 1341 c.c., che cita alla lettera
         # il testo di capitoli già apparsi — ma Word applica loro lo stesso
-        # stile Heading1 delle intestazioni vere. Un capitolo genuino compare
-        # una sola volta dopo l'indice: un secondo Heading1 con testo già
-        # visto è quella citazione, non una nuova sezione, e va trattato come
-        # paragrafo normale (esattamente come nell'italiano, dove lo stesso
-        # elenco non ha mai avuto stile di intestazione).
+        # stile Heading1 delle intestazioni vere. Quell'elenco sta per
+        # costruzione in coda al documento, a id ormai esauriti (tutti i
+        # capitoli numerati sono già stati emessi): per questo la
+        # deduplica è vincolata a `index >= len(ids)` e non scatta prima.
+        # Un Heading1 duplicato mentre ci sono ancora capitoli da numerare
+        # non è un caso che sappiamo interpretare — non lo degradiamo in
+        # silenzio, solleviamo un errore. Ogni degradazione effettiva viene
+        # comunque stampata su stderr, così chi rielabora il documento la
+        # vede invece di scoprirla per caso.
         if style == 'Heading1' and text in seen:
+            if index < len(ids):
+                raise ValueError(
+                    f'Duplicate Heading1 "{text}" found before all {len(ids)} '
+                    'ids from the Italian source were assigned: this is not '
+                    'the closing art. 1341 c.c. citation block the dedupe '
+                    'rule expects, so it cannot be safely downgraded to a '
+                    'paragraph.'
+                )
+            print(f'docx-to-html: downgrading duplicate heading to a paragraph: "{text}"', file=sys.stderr)
             style = None
 
         if style == 'Heading1':

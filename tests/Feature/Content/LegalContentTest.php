@@ -98,6 +98,26 @@ class LegalContentTest extends TestCase
         $this->assertStringContainsString('17. Jurisdiction and Applicable Law', $html);
     }
 
+    /**
+     * Il documento clienti chiude con l'elenco delle clausole da approvare
+     * specificamente ex art. 1341 c.c., che ripete alla lettera il testo di
+     * capitoli già apparsi ma con lo stesso stile Heading1 delle intestazioni
+     * vere. docx-to-html.py lo degrada a paragrafo (vedi convert_english):
+     * qui verifichiamo che sia degradato, non perso, e che non sia diventato
+     * una seconda intestazione duplicata con lo stesso id.
+     */
+    public function test_the_customer_article_1341_citation_block_is_downgraded_not_lost(): void
+    {
+        $html = file_get_contents(database_path('seeders/content/'.Page::TERMS_CUSTOMERS.'.en.html'));
+
+        $this->assertStringContainsString(
+            'requiring specific and separate written approval by the User',
+            $html,
+        );
+        $this->assertStringContainsString('<p>3. Information about the Platform</p>', $html);
+        $this->assertSame(1, substr_count($html, '<h3 id="3-informazioni-sulla-piattaforma">'));
+    }
+
     public function test_external_links_open_safely(): void
     {
         foreach ([Page::TERMS_CUSTOMERS, Page::TERMS_SUPPLIERS] as $slug) {
