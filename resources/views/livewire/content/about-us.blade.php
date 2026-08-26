@@ -19,7 +19,7 @@
 
                 {{-- 2. Chi siamo (XD: titolo Nunito Bold 36 a y660, paragrafi 18 regular a y725; app: 18 / 15-22 #2B2B2B) --}}
                 <h1 class="text-lg font-bold text-[#0D171A] max-lg:order-1 lg:text-4xl lg:text-black">{{ __('about.heading') }}</h1>
-                <div class="mt-4 space-y-[22px] text-[15px] leading-[22px] text-[#2B2B2B] max-lg:order-1 lg:mt-[29px] lg:space-y-6 lg:text-lg lg:leading-7 lg:text-black">
+                <div class="mt-4 space-y-[22px] text-[15px] leading-[22px] text-ink-700 max-lg:order-1 lg:mt-[29px] lg:space-y-6 lg:text-lg lg:leading-7 lg:text-black">
                     @foreach (__('about.body') as $paragraph)
                         <p>{{ $paragraph }}</p>
                     @endforeach
@@ -44,14 +44,14 @@
 
                 {{-- 4. Blocchi testo (XD: Nunito Bold 28 a y1385 / y1559, paragrafi 18 regular; app: 18 / 15-22) --}}
                 <h2 class="mt-[47px] text-lg font-bold text-[#0D171A] max-lg:order-3 max-lg:mt-7 lg:text-[28px] lg:text-black">{{ __('about.block1_heading') }}</h2>
-                <div class="mt-[18px] space-y-[22px] text-[15px] leading-[22px] text-[#2B2B2B] max-lg:order-3 max-lg:mt-1.5 lg:space-y-6 lg:text-lg lg:leading-7 lg:text-black">
+                <div class="mt-[18px] space-y-[22px] text-[15px] leading-[22px] text-ink-700 max-lg:order-3 max-lg:mt-1.5 lg:space-y-6 lg:text-lg lg:leading-7 lg:text-black">
                     @foreach (__('about.block1_body') as $paragraph)
                         <p>{{ $paragraph }}</p>
                     @endforeach
                 </div>
 
                 <h2 class="mt-[46px] text-lg font-bold text-[#0D171A] max-lg:order-5 max-lg:mt-7 lg:text-[28px] lg:text-black">{{ __('about.block2_heading') }}</h2>
-                <div class="mt-[18px] space-y-[22px] text-[15px] leading-[22px] text-[#2B2B2B] max-lg:order-5 max-lg:mt-1.5 lg:space-y-6 lg:text-lg lg:leading-7 lg:text-black">
+                <div class="mt-[18px] space-y-[22px] text-[15px] leading-[22px] text-ink-700 max-lg:order-5 max-lg:mt-1.5 lg:space-y-6 lg:text-lg lg:leading-7 lg:text-black">
                     @foreach (__('about.block2_body') as $paragraph)
                         <p>{{ $paragraph }}</p>
                     @endforeach

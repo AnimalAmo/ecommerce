@@ -28,7 +28,7 @@
                                 </p>
                                 <h3 class="mt-1 max-w-[369px] text-base font-semibold leading-[22px] text-[#0D171A] lg:mt-4 lg:text-[20px] lg:leading-[25px] lg:text-black">{{ $article['title'] }}</h3>
                                 @if (filled($article['excerpt']))
-                                    <p class="mt-3 line-clamp-2 max-w-[428px] text-[15px] leading-[22px] font-normal text-[#2B2B2B] lg:mt-[18px] lg:line-clamp-4 lg:text-sm lg:leading-[23px] lg:text-[#555555]">{{ $article['excerpt'] }}</p>
+                                    <p class="mt-3 line-clamp-2 max-w-[428px] text-[15px] leading-[22px] font-normal text-ink-700 lg:mt-[18px] lg:line-clamp-4 lg:text-sm lg:leading-[23px] lg:text-[#555555]">{{ $article['excerpt'] }}</p>
                                 @endif
                                 {{-- App: link in corsivo allineato a sinistra; desktop resta centrato e in tondo --}}
                                 <a href="{{ route('news.detail', $article['slug']) }}" class="relative z-[2] mt-2.5 mr-auto text-sm font-normal italic text-[#959595] lg:mx-auto lg:mt-auto lg:pt-5 lg:not-italic lg:text-[#242C2C]">{{ __('news.read_more') }}</a>

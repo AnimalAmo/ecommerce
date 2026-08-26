@@ -19,7 +19,7 @@
                 @endif
 
                 @if (app()->getLocale() !== \App\Models\Page\Page::SOURCE_LOCALE)
-                    <p class="mt-4 rounded-[3px] bg-gray-100 px-4 py-3 text-sm text-[#2B2B2B]">
+                    <p class="mt-4 rounded-[3px] bg-gray-100 px-4 py-3 text-sm text-ink-700">
                         {{ __('legal.binding_language') }}
                     </p>
                 @endif

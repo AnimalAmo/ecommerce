@@ -92,16 +92,16 @@
             <div class="mx-auto w-full max-w-[1062px]">
                 {{-- 2. Tab Tutti i post / I miei post (switch Livewire, deep-link ?tab=miei) --}}
                 <nav class="flex items-end gap-[41px] border-b border-[#DEDEDE]" aria-label="{{ __('community.sections_aria') }}">
-                    <flux:button variant="ghost" wire:click="switchTab('tutti')" :aria-current="$tab === 'tutti' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'tutti' ? '!text-[#2B2B2B] hover:!text-[#2B2B2B]' : '!text-[#959595]' }}">
+                    <flux:button variant="ghost" wire:click="switchTab('tutti')" :aria-current="$tab === 'tutti' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'tutti' ? '!text-ink-700 hover:!text-ink-700' : '!text-[#959595]' }}">
                         {{ __('community.tab_all') }}
                         @if ($tab === 'tutti')
-                            <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#2B2B2B]" aria-hidden="true"></span>
+                            <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-ink-700" aria-hidden="true"></span>
                         @endif
                     </flux:button>
-                    <flux:button variant="ghost" wire:click="switchTab('miei')" :aria-current="$tab === 'miei' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'miei' ? '!text-[#2B2B2B] hover:!text-[#2B2B2B]' : '!text-[#959595]' }}">
+                    <flux:button variant="ghost" wire:click="switchTab('miei')" :aria-current="$tab === 'miei' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'miei' ? '!text-ink-700 hover:!text-ink-700' : '!text-[#959595]' }}">
                         {{ __('community.tab_mine') }}
                         @if ($tab === 'miei')
-                            <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#2B2B2B]" aria-hidden="true"></span>
+                            <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-ink-700" aria-hidden="true"></span>
                         @endif
                     </flux:button>
                 </nav>
@@ -155,12 +155,12 @@
                             </div>
 
                             <p class="mt-[29px] text-[15px] font-bold leading-[21px] text-[#959595]">{{ $post['author'] }}</p>
-                            <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $post['body'] }}</p>
+                            <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $post['body'] }}</p>
 
                             @foreach ($post['replies'] as $reply)
                                 <div wire:key="post-{{ $post['id'] }}-reply-{{ $loop->index }}" class="mt-[22px]">
                                     <p class="text-[15px] font-bold leading-[21px] text-[#959595]">{{ $reply['author'] }}</p>
-                                    <p class="mt-[13px] text-[15px] leading-[21px] text-[#2B2B2B]">{{ $reply['body'] }}</p>
+                                    <p class="mt-[13px] text-[15px] leading-[21px] text-ink-700">{{ $reply['body'] }}</p>
                                 </div>
                             @endforeach
 
@@ -260,7 +260,7 @@
 
                             <h2 class="mt-3 text-lg font-bold leading-none text-black">{{ $post['title'] }}</h2>
                             <p class="mt-[14px] text-[15px] font-semibold leading-none text-[#C8C8C8]">{{ $post['author'] }}</p>
-                            <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-[#2B2B2B]">{{ $post['body'] }}</p>
+                            <p class="mt-[9px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $post['body'] }}</p>
                         </article>
                     </a>
                 @empty
