@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             SmartboxPackageSeeder::class,
             PaymentGatewaySeeder::class,
             RoleSeeder::class,
+            PageSeeder::class, // contenuto istituzionale: serve anche in produzione
         ]);
 
         // Le persone del mock XD portano password note e il proprio nome nei

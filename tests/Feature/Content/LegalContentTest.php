@@ -3,6 +3,8 @@
 namespace Tests\Feature\Content;
 
 use App\Models\Page\Page;
+use Database\Seeders\PageSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -12,6 +14,8 @@ use Tests\TestCase;
  */
 class LegalContentTest extends TestCase
 {
+    use RefreshDatabase;
+
     /** @return array<int, array{0: string, 1: int}> slug e numero atteso di capitoli */
     public static function fileProvider(): array
     {
@@ -123,5 +127,25 @@ class LegalContentTest extends TestCase
                 );
             }
         }
+    }
+
+    public function test_the_seeder_loads_both_pages(): void
+    {
+        $this->seed(PageSeeder::class);
+
+        $this->assertSame(2, Page::count());
+
+        $customers = Page::where('slug', Page::TERMS_CUSTOMERS)->sole();
+        $this->assertSame('Termini e condizioni', $customers->titleFor('it'));
+        $this->assertStringContainsString('<h3 id=', $customers->bodyFor('it'));
+        $this->assertNotNull($customers->last_updated_at);
+    }
+
+    public function test_the_seeder_is_idempotent(): void
+    {
+        $this->seed(PageSeeder::class);
+        $this->seed(PageSeeder::class);
+
+        $this->assertSame(2, Page::count());
     }
 }
