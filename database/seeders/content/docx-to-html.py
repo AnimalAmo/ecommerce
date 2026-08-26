@@ -25,11 +25,19 @@ import re
 import sys
 import unicodedata
 import zipfile
+from urllib.parse import urlparse
 from xml.etree import ElementTree as ET
 
 W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 R = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
 TOC_STYLES = {'Titolosommario', 'Sommario1', 'Sommario2', 'Sommario3'}
+
+# Il documento clienti nasconde, dietro le parole "Informativa sulla privacy e
+# sui cookie" del punto 8.1, un link alla privacy policy di Booking.com — URL
+# con gclid e ID affiliato, cioè copiato dalla barra del browser. La redazione
+# inglese dello stesso punto non ha alcun link. Tolto su richiesta del
+# committente: sparisce il collegamento, il testo resta.
+UNLINKED_HOSTS = ('booking.com',)
 
 
 def load(path):
@@ -109,7 +117,8 @@ def inline_html(paragraph, rels):
         elif child.tag == W + 'hyperlink':
             inner = ''.join(run_html(run) for run in child.findall(W + 'r'))
             target = rels.get(child.get(R + 'id'), '')
-            if target.startswith('http'):
+            host = urlparse(target).hostname or ''
+            if target.startswith('http') and not host.endswith(UNLINKED_HOSTS):
                 href = html.escape(target, quote=True)
                 parts.append(f'<a href="{href}" target="_blank" rel="noopener">{inner}</a>')
             else:

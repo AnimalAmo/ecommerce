@@ -148,4 +148,18 @@ class LegalContentTest extends TestCase
 
         $this->assertSame(2, Page::count());
     }
+
+    public function test_the_booking_privacy_link_is_dropped(): void
+    {
+        $html = file_get_contents(database_path('seeders/content/'.Page::TERMS_CUSTOMERS.'.it.html'));
+
+        // Il cliente linkava la privacy policy di Booking.com dal punto 8.1:
+        // rimosso su sua richiesta. Il testo resta, il collegamento no.
+        $this->assertStringNotContainsString('booking.com', $html);
+        $this->assertStringContainsString(
+            'Informativa sulla privacy e sui cookie',
+            $html,
+            'Doveva sparire il link, non il testo',
+        );
+    }
 }
