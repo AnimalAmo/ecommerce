@@ -87,6 +87,31 @@ class LegalContentTest extends TestCase
         $this->assertSame($itHeadings[1], $enHeadings[1], "Livelli di heading diversi in {$slug}");
         $this->assertSame($itHeadings[2], $enHeadings[2], "Id degli heading diversi in {$slug}");
         $this->assertSame($chapters, substr_count($english, '<h3 id='));
+
+        // L'assertSame sopra confronta due liste di id costruite con lo
+        // stesso meccanismo (convert_english copia gli id italiani per
+        // posizione): un capitolo inglese che ricevesse per errore l'id di un
+        // capitolo italiano diverso passerebbe comunque, perché entrambe le
+        // liste verrebbero shiftate allo stesso modo. Qui verifichiamo invece
+        // che il numero del capitolo nell'id (es. "21-obblighi...") combaci
+        // col numero scritto nel testo dell'heading stesso (es. "21. User
+        // Obligations"): è l'unica asserzione che una riconversione futura
+        // sfasata di uno farebbe davvero fallire.
+        preg_match_all('/<h3 id="([^"]+)">([^<]*)<\/h3>/', $english, $enChapters, PREG_SET_ORDER);
+        $this->assertNotEmpty($enChapters, "Nessun <h3> trovato in {$slug}.en.html");
+
+        foreach ($enChapters as [$fullMatch, $id, $text]) {
+            preg_match('/^(\d+)-/', $id, $idNumber);
+            preg_match('/^(\d+)\./', $text, $textNumber);
+
+            $this->assertNotEmpty($idNumber, "Id senza numero iniziale: \"{$id}\" in {$slug}.en.html");
+            $this->assertNotEmpty($textNumber, "Heading senza numero iniziale: \"{$text}\" in {$slug}.en.html");
+            $this->assertSame(
+                $textNumber[1],
+                $idNumber[1],
+                "L'id \"{$id}\" non corrisponde al numero del capitolo \"{$text}\" in {$slug}.en.html",
+            );
+        }
     }
 
     public function test_the_english_supplier_chapters_keep_their_numbers(): void
