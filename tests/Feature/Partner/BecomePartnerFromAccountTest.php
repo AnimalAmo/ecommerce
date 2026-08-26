@@ -113,6 +113,50 @@ class BecomePartnerFromAccountTest extends TestCase
         $this->assertSame($user->email, PartnerApplication::firstOrFail()->email);
     }
 
+    /**
+     * mount() gira una volta sola: se la sessione cambia mentre il form è
+     * aperto, il prefill resta quello del vecchio account. L'email era già
+     * forzata sull'account, il nome no — e la mail di invito arrivava
+     * all'indirizzo giusto salutando l'altra persona.
+     */
+    public function test_the_name_cannot_survive_a_session_change(): void
+    {
+        Mail::fake();
+
+        $demo = $this->client(['first_name' => 'Susanna', 'last_name' => 'Bianchi', 'email' => 'demo@example.com']);
+        $real = $this->client(['first_name' => 'Matteo', 'last_name' => 'De Prezzo', 'email' => 'matteo@example.com']);
+
+        $component = $this->fillApplication(Livewire::actingAs($demo)->test(WorkWithUs::class))
+            ->assertSet('form.firstName', 'Susanna');
+
+        // Stessa tab, account diverso: il componente non rifà mount().
+        $this->actingAs($real);
+
+        $component->call('submit')->assertHasNoErrors();
+
+        $application = PartnerApplication::firstOrFail();
+
+        $this->assertSame('matteo@example.com', $application->email);
+        $this->assertSame('Matteo', $application->first_name);
+        $this->assertSame('De Prezzo', $application->last_name);
+        $this->assertSame($real->id, $application->user_id);
+    }
+
+    /** Il nome nella mail è quello dell'account che la riceve, sempre. */
+    public function test_the_invitation_greets_the_account_holder(): void
+    {
+        Mail::fake();
+
+        $user = $this->client(['first_name' => 'Matteo', 'last_name' => 'De Prezzo']);
+
+        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))
+            ->set('form.firstName', 'Susanna')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Matteo', PartnerApplication::firstOrFail()->first_name);
+    }
+
     public function test_sending_the_request_twice_updates_the_open_one(): void
     {
         Mail::fake();

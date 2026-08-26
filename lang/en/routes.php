@@ -12,6 +12,8 @@ return [
     'smartbox.detail' => 'smartbox/{box}',
     'about' => 'about-us',
     'contact' => 'contact-us',
+    'terms.customers' => 'terms-and-conditions',
+    'terms.suppliers' => 'supplier-terms-and-conditions',
     'community' => 'community',
     'community.post' => 'community/{post}',
     'preferiti' => 'favourites',

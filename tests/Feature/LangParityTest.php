@@ -30,6 +30,7 @@ class LangParityTest extends TestCase
                 'format',
                 'holiday',
                 'home',
+                'legal',
                 'nav',
                 'news',
                 'orders',
