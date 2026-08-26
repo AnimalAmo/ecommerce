@@ -107,6 +107,7 @@ textarea[data-flux-control] {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--color-ink);
+    scroll-margin-top: 6rem;
 }
 
 .legal-content h3 {
@@ -115,6 +116,7 @@ textarea[data-flux-control] {
     font-size: 1.125rem;
     font-weight: 700;
     color: var(--color-ink);
+    scroll-margin-top: 6rem;
 }
 
 .legal-content p {
@@ -128,6 +130,13 @@ textarea[data-flux-control] {
 
 .legal-content ol {
     list-style: decimal;
+}
+
+/* word/numbering.xml del documento clienti dà alla lista dell'art. 22.2 un
+   numFmt=lowerLetter (a) b) c)): il convertitore la marca con type="a" perché
+   il CSS non forzi comunque il decimal di default. */
+.legal-content ol[type="a"] {
+    list-style: lower-alpha;
 }
 
 .legal-content ul {

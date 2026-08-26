@@ -53,7 +53,11 @@ class LegalPagesTest extends TestCase
         $this->get(route('terms.customers'))
             ->assertOk()
             ->assertSee('Termini e condizioni', false)
-            ->assertSee('Definizioni', false);
+            ->assertSee('Definizioni', false)
+            // Guardia contro `{!! !!}` che diventasse `{{ }}`: se il corpo
+            // venisse escapato, questo tag letterale sparirebbe pur restando
+            // vero (in forma escapata) tutto il resto dell'asserzione sopra.
+            ->assertSee('<h3 id="1-definizioni">', false);
     }
 
     public function test_the_supplier_terms_page_renders(): void
@@ -103,13 +107,27 @@ class LegalPagesTest extends TestCase
             ->assertSee('only the Italian version is legally binding', false);
     }
 
+    public function test_the_english_supplier_terms_page_renders(): void
+    {
+        $this->reloadRoutesFor('/en/supplier-terms-and-conditions');
+        $this->get('/en/supplier-terms-and-conditions')
+            ->assertOk()
+            ->assertSee('Supplier general terms of adhesion', false)
+            ->assertSee('Recitals', false)
+            ->assertDontSee('Premesse', false);
+    }
+
     public function test_the_storefront_footer_links_to_the_customer_terms(): void
     {
-        $this->get(route('home'))->assertSee(route('terms.customers'), false);
+        // assertSee su una sottostringa qualsiasi passerebbe anche se il
+        // footer puntasse ai fornitori: /termini-e-condizioni è prefisso di
+        // /termini-e-condizioni-fornitori. Verifichiamo l'attributo href per
+        // intero.
+        $this->get(route('home'))->assertSee('href="'.route('terms.customers').'"', false);
     }
 
     public function test_the_partner_footer_links_to_the_supplier_terms(): void
     {
-        $this->get(route('partner.register'))->assertSee(route('terms.suppliers'), false);
+        $this->get(route('partner.register'))->assertSee('href="'.route('terms.suppliers').'"', false);
     }
 }
