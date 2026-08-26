@@ -758,6 +758,114 @@ git commit -m "feat(content): seed the terms pages from the versioned HTML files
 
 ---
 
+### Task 3b: Togliere il link a Booking.com dal documento clienti
+
+> **Inserito il 2026-08-26 durante l'esecuzione, su richiesta del committente.**
+
+Al punto 8.1 del documento clienti le parole "Informativa sulla privacy e sui
+cookie" nascondono un collegamento alla **privacy policy di Booking.com**, con
+un URL che porta un `gclid` (identificativo di clic su un annuncio Google) e un
+`aid` affiliato: è un copia-incolla dalla barra del browser, non un link scelto.
+La redazione inglese dello stesso punto non ha alcun link. Il committente ha
+chiesto di toglierlo.
+
+**Cosa si toglie:** il collegamento, non il testo. La frase resta identica e si
+legge benissimo senza — esattamente come nella versione inglese.
+
+**Dove si toglie:** nel convertitore, non a mano nell'HTML generato. Un'ipotetica
+riconversione futura rimetterebbe il link, e la modifica manuale sparirebbe
+senza lasciare traccia.
+
+**Files:**
+- Modify: `database/seeders/content/docx-to-html.py`
+- Modify: `database/seeders/content/termini-e-condizioni.it.html` (rigenerato)
+- Test: `tests/Feature/Content/LegalContentTest.php`
+
+**Interfaces:**
+- Consumes: `docx-to-html.py` e i file `*.it.html` (Task 2).
+- Produces: nessuna interfaccia nuova. Dopo questo task l'unico `<a>` rimasto nei file generati è quello alla piattaforma ODR della Commissione europea.
+
+- [ ] **Step 1: Scrivi il test che fallisce**
+
+In `tests/Feature/Content/LegalContentTest.php`:
+
+```php
+    public function test_the_booking_privacy_link_is_dropped(): void
+    {
+        $html = file_get_contents(database_path('seeders/content/'.Page::TERMS_CUSTOMERS.'.it.html'));
+
+        // Il cliente linkava la privacy policy di Booking.com dal punto 8.1:
+        // rimosso su sua richiesta. Il testo resta, il collegamento no.
+        $this->assertStringNotContainsString('booking.com', $html);
+        $this->assertStringContainsString(
+            'Informativa sulla privacy e sui cookie',
+            $html,
+            'Doveva sparire il link, non il testo',
+        );
+    }
+```
+
+- [ ] **Step 2: Esegui il test e verifica che fallisca**
+
+```bash
+ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test --filter=LegalContentTest'
+```
+
+Atteso: FAIL — `Failed asserting that '<p>8.1. …booking.com…' does not contain "booking.com"`.
+
+- [ ] **Step 3: Aggiungi la regola al convertitore**
+
+In `docx-to-html.py`, accanto alle altre costanti in testa:
+
+```python
+# Il documento clienti nasconde, dietro le parole "Informativa sulla privacy e
+# sui cookie" del punto 8.1, un link alla privacy policy di Booking.com — URL
+# con gclid e ID affiliato, cioè copiato dalla barra del browser. La redazione
+# inglese dello stesso punto non ha alcun link. Tolto su richiesta del
+# committente: sparisce il collegamento, il testo resta.
+UNLINKED_HOSTS = ('booking.com',)
+```
+
+e in `inline_html()`, nel ramo che gestisce `w:hyperlink`, prima di costruire
+l'ancora: se il target è esterno ma il suo host finisce con uno degli
+`UNLINKED_HOSTS`, aggiungi il solo `inner` senza avvolgerlo in `<a>`.
+
+- [ ] **Step 4: Rigenera il file clienti**
+
+```bash
+python3 database/seeders/content/docx-to-html.py \
+  "storage/condizioni_generali_clienti_senza_frase_stripe.docx" \
+  database/seeders/content/termini-e-condizioni.it.html
+```
+
+Poi verifica col diff che sia cambiata **solo** la riga 8.1, e che sia cambiata
+togliendo l'ancora e non il testo:
+
+```bash
+git diff --word-diff database/seeders/content/termini-e-condizioni.it.html
+```
+
+- [ ] **Step 5: Esegui i test e verifica che passino**
+
+```bash
+ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test --filter=LegalContentTest'
+```
+
+Atteso: PASS. `test_external_links_open_safely` continua a passare: resta un solo
+link esterno, quello a `ec.europa.eu/odr`, che ha già `rel="noopener"`.
+
+- [ ] **Step 6: Pint e commit**
+
+```bash
+vendor/bin/pint tests/Feature/Content/LegalContentTest.php
+git add database/seeders/content/docx-to-html.py \
+        database/seeders/content/termini-e-condizioni.it.html \
+        tests/Feature/Content/LegalContentTest.php
+git commit -m "fix(content): drop the Booking.com privacy link from the customer terms"
+```
+
+---
+
 ### Task 4: Rotte, componente, vista e tipografia
 
 **Files:**
