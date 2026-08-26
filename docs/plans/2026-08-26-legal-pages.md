@@ -830,16 +830,21 @@ class LegalPagesTest extends TestCase
 
     public function test_the_italian_route_has_no_locale_prefix_and_the_english_one_does(): void
     {
+        // APP_LOCALE=it, quindi l'italiano è senza prefisso e l'inglese sotto /en.
         $this->assertStringEndsWith('/termini-e-condizioni', route('terms.customers'));
-        $this->assertStringContainsString('/en/terms-and-conditions', route('terms.customers', [], true, 'en') ?: '');
+
+        $this->assertStringContainsString(
+            '/en/terms-and-conditions',
+            LaravelLocalization::getLocalizedURL('en', route('terms.customers')),
+        );
     }
 }
 ```
 
-> Se `route()` non accetta il quarto argomento di lingua in questa versione di
-> mcamara, sostituisci l'ultimo test con
-> `LaravelLocalization::getLocalizedURL('en', route('terms.customers'))` e
-> asserisci su quello.
+Il test importa `use Mcamara\LaravelLocalization\Facades\LaravelLocalization;`.
+`route()` di Laravel non accetta un argomento di lingua: il prefisso lo mette
+il gruppo di rotte, e per costruire l'URL in un'altra lingua serve l'helper di
+mcamara.
 
 - [ ] **Step 2: Esegui il test e verifica che fallisca**
 
