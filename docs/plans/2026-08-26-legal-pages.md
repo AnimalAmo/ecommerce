@@ -1508,6 +1508,103 @@ git commit -m "feat(content): point the footer terms links at the new pages"
 
 ---
 
+### Task 7: Token `ink-700` al posto dell'hex nelle pagine di contenuto
+
+> **Inserito il 2026-08-26 durante l'esecuzione.** La review del Task 4 ha
+> segnalato che il CSS delle pagine legali scrive `#2b2b2b` mentre esiste il
+> token `--color-ink-700` con esattamente quel valore — violazione della regola
+> "design token, non hex grezzi" del CLAUDE.md. Il finding era plan-mandated (lo
+> imponeva il piano stesso), e il committente ha deciso di chiudere il debito su
+> **tutte** le viste del namespace `content/`, non solo sulle pagine legali.
+
+**Perché la sostituzione è sicura:** `resources/css/app.css:55` definisce
+`--color-ink-700: #2b2b2b;`. Tailwind 4 espone quel token come utility
+`text-ink-700` / `border-ink-700` / `bg-ink-700`. Il colore reso è lo stesso byte
+per byte: cambia il nome, non il pixel.
+
+**Files:**
+- Modify: `resources/views/livewire/content/community.blade.php` (7 occorrenze)
+- Modify: `resources/views/livewire/content/post-detail.blade.php` (4)
+- Modify: `resources/views/livewire/content/about-us.blade.php` (4)
+- Modify: `resources/views/livewire/content/news-detail.blade.php` (2)
+- Modify: `resources/views/livewire/content/news.blade.php` (1)
+- Modify: `resources/views/livewire/content/contact.blade.php` (1)
+- Modify: `resources/views/livewire/content/legal-page.blade.php` (1)
+- Modify: `resources/css/app.css` (il blocco `.legal-content`)
+
+**Fuori scope, di proposito:** le altre 26 viste del progetto che hanno lo stesso
+hex (catalog, commerce, partner, profile, partials) e le icone Flux, dove
+`#2B2B2B` compare come `fill=` dentro path SVG. Il committente ha scelto il solo
+namespace `content/`.
+
+- [ ] **Step 1: Censisci le occorrenze**
+
+```bash
+grep -rn "#2[bB]2[bB]2[bB]" resources/views/livewire/content resources/css/app.css
+```
+
+Annota per ognuna **che proprietà** sta colorando: `text-[#2B2B2B]` diventa
+`text-ink-700`, `border-[#2B2B2B]` diventa `border-ink-700`, `bg-[#2B2B2B]`
+diventa `bg-ink-700`. Nel CSS, `color: #2b2b2b` diventa `color: var(--color-ink-700)`.
+Le varianti responsive vanno mantenute: `max-lg:text-[#2B2B2B]` diventa
+`max-lg:text-ink-700`.
+
+Se trovi un'occorrenza che **non** è nessuno di questi casi, non inventare:
+riportala nel report e lasciala com'è.
+
+- [ ] **Step 2: Sostituisci**
+
+Una vista alla volta. Non usare un `sed` cieco su tutto: le utility arbitrarie
+di Tailwind hanno forme diverse (`text-[#2B2B2B]`, `[&_p]:text-[#2B2B2B]`,
+`max-lg:text-[#2B2B2B]`) e una sostituzione meccanica del solo colore
+produrrebbe `text-[ink-700]`, che non è una classe valida e fallisce in
+silenzio: il testo resterebbe nero di default senza nessun errore.
+
+- [ ] **Step 3: Verifica che non sia rimasto niente**
+
+```bash
+grep -rn "#2[bB]2[bB]2[bB]" resources/views/livewire/content resources/css/app.css
+```
+
+Atteso: nessun risultato. E nessuna classe malformata:
+
+```bash
+grep -rn "text-\[ink\|\[--color-ink\|text-\[var(" resources/views/livewire/content
+```
+
+Atteso: nessun risultato.
+
+- [ ] **Step 4: Ricostruisci gli asset e guarda le pagine**
+
+```bash
+npm run build
+```
+
+`text-ink-700` è una classe che nel progetto non era mai stata usata: **senza
+build non esiste nel CSS compilato**, e le pagine si vedrebbero col testo nero
+invece che grigio scuro. Poi apri e confronta a occhio:
+`http://animalamo.test/termini-e-condizioni`, `/chi-siamo`, `/contattaci`,
+`/community`, `/news`. Il testo dei paragrafi deve restare grigio scuro come
+prima, non nero.
+
+- [ ] **Step 5: Esegui la suite**
+
+```bash
+ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test'
+```
+
+Atteso: verde. Se un test fallisce citando `#2B2B2B`, c'è un test che asserisce
+sul markup: aggiornalo alla classe nuova e dillo nel report.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add resources/views/livewire/content resources/css/app.css
+git commit -m "refactor(content): use the ink-700 token instead of the raw hex"
+```
+
+---
+
 ## Dopo il piano
 
 - `php artisan migrate --seed` sugli ambienti dove il DB esiste già; in produzione basta `php artisan db:seed --class=PageSeeder` dopo la migrazione.
