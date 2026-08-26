@@ -263,8 +263,44 @@ I test girano solo dentro la VM (host PHP 8.2, app ≥8.3), come da CLAUDE.md.
 - Indice ancorato/sticky dei capitoli in pagina: gli `id` sugli heading vengono
   generati, il widget di navigazione no.
 
+## Debito noto
+
+Cose viste, valutate e lasciate com'erano. Nessuna è un difetto attivo: sono
+scritte qui perché la prossima persona che tocca queste pagine non debba
+riscoprirle.
+
+- `Page::translationOr()` dichiara `: string` ma restituirebbe `null` se
+  mancasse anche l'italiano, e il suo `?:` tratta una traduzione vuota come
+  mancante. Impossibile oggi: il seeder scrive sempre l'italiano. Da chiudere
+  col CRUD di backoffice, quando un editor potrà svuotare un campo.
+- `slugify()` tronca gli `id` a 60 caratteri a metà parola. Verificato: zero
+  collisioni sui 43 heading dei quattro documenti.
+- `test_the_seeder_is_idempotent` asserisce solo il numero di righe, quindi
+  passerebbe identico con `firstOrCreate`. Va rafforzato quando il seeder
+  diventerà create-only, non prima.
+- `host.endswith(UNLINKED_HOSTS)` in `docx-to-html.py` è un suffisso di stringa,
+  non un confine di dominio: può solo bloccare in eccesso.
+- Lo stack delle liste del convertitore traccia `(tag, ilvl)` ma non `numFmt`:
+  due `<ol>` adiacenti con formati diversi allo stesso livello condividerebbero
+  un `type`. Oggi impossibile — c'è un solo `<ol>` in tutti e quattro i file.
+- `--ids-from` senza valore solleva `IndexError` invece di un errore pulito.
+- `reloadRoutesFor()` in `LegalPagesTest` è copiato da `LocalizationTest`: due
+  copie di codice d'infrastruttura delicato che col tempo divergeranno.
+- I link dentro `.legal-content` usano `brand-cyan` su bianco, contrasto ~1.75:1,
+  sotto la soglia WCAG AA. La sottolineatura li rende comunque riconoscibili e
+  nel corpus sopravvive un solo link.
+- `last_updated_at` è scritto a mano nel `PageSeeder`, senza niente che lo leghi
+  al contenuto: una revisione futura che aggiorna l'HTML e dimentica la data
+  pubblicherebbe condizioni nuove datate 26/08/2026.
+
 ## Nota operativa
 
-I due `.docx` in `storage/` non sono gitignorati e risultano untracked: un
-`git add .` li spedirebbe sul remoto. Vanno aggiunti di proposito o lasciati
-fuori di proposito, non per distrazione.
+I sei `.docx` in `storage/` non sono gitignorati e risultano untracked: un
+`git add .` li spedirebbe sul remoto. **Decisione del committente (26/08/2026):
+restano così**, né committati né ignorati — il rischio è stato posto e accettato.
+
+Conseguenza da tenere presente: da un clone pulito il convertitore
+`database/seeders/content/docx-to-html.py` non ha niente su cui girare. I quattro
+documenti autoritativi (due italiani, due inglesi) vivono solo sulla macchina di
+sviluppo; le due copie con il suffisso `(1)` sono byte-identiche agli originali,
+rimandate dal cliente per errore.

@@ -9,8 +9,12 @@ Cosa fa (dialetto italiano, stili Titolo1/Titolo2/Paragrafoelenco):
   * nel documento fornitori i Paragrafoelenco di primo livello tutti in
     grassetto sono i capitoli: diventano <h3> numerati 1..N;
   * le liste numPr diventano <ol>/<ul> secondo il numFmt di numbering.xml;
+    una lista numFmt=lowerLetter (a) b) c)) emette <ol type="a">, non il
+    semplice <ol> che il CSS renderizza come 1./2./3.;
   * gli hyperlink esterni diventano <a target="_blank" rel="noopener">;
-  * il Sommario di Word viene scartato.
+  * il Sommario di Word viene scartato;
+  * i paragrafi che precedono il primo heading (titolo di copertina) vengono
+    scartati: il blade rende già il proprio <h1>.
 
 Cosa fa (dialetto inglese, riconosciuto da solo dallo stile Heading1 —
 documenti già tradotti dal cliente, non prodotti da questo script):
@@ -266,7 +270,7 @@ def convert(source, ids=None):
             )
         return convert_english(body, rels, ids)
 
-    out, stack, chapter = [], [], 0
+    out, stack, chapter, started = [], [], 0, False
 
     def close_lists():
         while stack:
@@ -284,11 +288,13 @@ def convert(source, ids=None):
         if style == 'Titolo1':
             close_lists()
             out.append(f'<h2 id="{slugify(inner)}">{plain(inner)}</h2>')
+            started = True
             continue
 
         if style == 'Titolo2':
             close_lists()
             out.append(f'<h3 id="{slugify(inner)}">{plain(inner)}</h3>')
+            started = True
             continue
 
         numbering = numbering_of(paragraph)
@@ -298,11 +304,22 @@ def convert(source, ids=None):
             chapter += 1
             label = f'{chapter}. {plain(inner)}'
             out.append(f'<h3 id="{slugify(label)}">{label}</h3>')
+            started = True
+            continue
+
+        # I due documenti italiani cominciano con paragrafi della copertina di
+        # Word (titolo del documento, e nel file clienti la parola "clienti"
+        # isolata): il blade rende già un <h1>, quindi vanno scartati. Non
+        # sono un caso interno a un elenco o a un capitolo, per cui basta
+        # ignorare tutto ciò che precede il primo heading vero.
+        if not started:
             continue
 
         if numbering:
             num_id, ilvl = numbering
-            tag = 'ul' if formats.get(num_id) == 'bullet' else 'ol'
+            fmt = formats.get(num_id)
+            tag = 'ul' if fmt == 'bullet' else 'ol'
+            opening = '<ol type="a">' if tag == 'ol' and fmt == 'lowerLetter' else f'<{tag}>'
 
             # In entrambi i documenti un elenco è sempre piatto al suo interno
             # (l'ilvl non cambia mai tra un item e il successivo dello stesso
@@ -316,11 +333,11 @@ def convert(source, ids=None):
 
             if not stack or stack[-1][1] < ilvl:
                 stack.append((tag, ilvl))
-                out.append(f'<{tag}>')
+                out.append(opening)
             elif stack[-1][0] != tag:
                 out.append(f'</{stack.pop()[0]}>')
                 stack.append((tag, ilvl))
-                out.append(f'<{tag}>')
+                out.append(opening)
 
             out.append(f'<li>{inner}</li>')
             continue
