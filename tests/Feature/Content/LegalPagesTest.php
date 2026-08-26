@@ -102,4 +102,14 @@ class LegalPagesTest extends TestCase
         $this->get('/en/terms-and-conditions')
             ->assertSee('only the Italian version is legally binding', false);
     }
+
+    public function test_the_storefront_footer_links_to_the_customer_terms(): void
+    {
+        $this->get(route('home'))->assertSee(route('terms.customers'), false);
+    }
+
+    public function test_the_partner_footer_links_to_the_supplier_terms(): void
+    {
+        $this->get(route('partner.register'))->assertSee(route('terms.suppliers'), false);
+    }
 }
