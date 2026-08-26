@@ -22,7 +22,7 @@
             {{-- Corpo (frame 978x486, Nunito-Regular 16/24; app: 15/22 #2B2B2B) + foto hero mascherata 620x451 r4 a destra --}}
             <div class="mt-2 flex items-start gap-10 lg:mt-4">
                 @if (filled($body))
-                    <div class="min-w-0 max-w-[978px] flex-1 space-y-[22px] text-[15px] font-normal leading-[22px] text-[#2B2B2B] lg:space-y-6 lg:text-base lg:leading-6 lg:text-black">
+                    <div class="min-w-0 max-w-[978px] flex-1 space-y-[22px] text-[15px] font-normal leading-[22px] text-ink-700 lg:space-y-6 lg:text-base lg:leading-6 lg:text-black">
                         @foreach ($body as $paragraph)
                             <p>{{ $paragraph }}</p>
                         @endforeach

@@ -96,7 +96,7 @@ textarea[data-flux-control] {
 /* Corpo delle pagine legali: HTML dal DB, quindi senza classi Tailwind sui tag.
    Colonna di lettura stretta, gerarchia h2/h3, liste numerate annidate. */
 .legal-content {
-    color: #2b2b2b;
+    color: var(--color-ink-700);
     font-size: 0.9375rem;
     line-height: 1.6;
 }
