@@ -12,6 +12,8 @@ return [
     'smartbox.detail' => 'smartbox/{box}',
     'about' => 'chi-siamo',
     'contact' => 'contattaci',
+    'terms.customers' => 'termini-e-condizioni',
+    'terms.suppliers' => 'termini-e-condizioni-fornitori',
     'community' => 'community',
     'community.post' => 'community/{post}',
     'preferiti' => 'preferiti',

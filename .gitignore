@@ -30,5 +30,8 @@ Thumbs.db
 /design/*.png
 /design/*.jpg
 .playwright-mcp/
+/.superpowers/
+# lo script di conversione docx→HTML è python: non committare i suoi bytecode
+__pycache__/
 # note: /public/img/xd/ holds optimized web assets — tracked in git
 docs/analisi-entita-dinamiche.md

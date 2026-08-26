@@ -65,8 +65,17 @@ class WorkWithUs extends Component
     {
         $user = Auth::user();
 
-        // Nessuna scelta all'utente loggato: l'email è quella dell'account.
+        // Nessuna scelta all'utente loggato: l'identità è quella dell'account.
+        //
+        // Il nome va riallineato qui e non solo nel prefill: mount() gira una
+        // volta sola, mentre le request successive reidratano lo snapshot. Se
+        // la sessione cambia a form aperto (logout dal demo e login col
+        // proprio account nella stessa tab), il form conserva il nome del
+        // vecchio account mentre l'email segue quello nuovo — e la mail di
+        // invito arriva all'indirizzo giusto salutando un'altra persona.
         if ($user !== null) {
+            $this->form->firstName = $user->first_name;
+            $this->form->lastName = $user->last_name;
             $this->form->email = $user->email;
         }
 

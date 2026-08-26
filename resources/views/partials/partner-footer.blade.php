@@ -24,7 +24,7 @@
                 <ul class="mt-6 space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.footer_privacy') }}</a></li>
                     <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.footer_cookie') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.footer_terms') }}</a></li>
+                    <li><a href="{{ route('terms.suppliers') }}" class="hover:text-brand-cyan">{{ __('partner.footer_terms') }}</a></li>
                 </ul>
             </div>
         </div>

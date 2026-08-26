@@ -53,6 +53,25 @@ class UserSeedTest extends TestCase
         );
     }
 
+    /**
+     * Le persone del mock XD (Susanna Rossi, Giulia Rossi) hanno password
+     * "password" e ruoli attivi: su un server pubblico sono un account
+     * partner ad accesso noto, e il loro nome finisce nelle mail di chi prova
+     * il flusso. Il catalogo invece serve anche in demo, quindi resta.
+     */
+    public function test_demo_personas_are_skipped_when_the_flag_is_off(): void
+    {
+        config(['app.seed_demo_data' => false]);
+
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertSame(0, User::count());
+
+        // Ruoli e catalogo restano: servono anche su un'istanza pubblica.
+        $this->assertSame(3, Role::count());
+        $this->assertGreaterThan(0, Event::count());
+    }
+
     public function test_seeder_is_idempotent(): void
     {
         $this->seed(DatabaseSeeder::class);
