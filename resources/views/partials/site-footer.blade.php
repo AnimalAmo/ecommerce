@@ -42,7 +42,7 @@
         {{-- Dati societari (non tradotti: denominazione e dati fiscali) --}}
         <span>Animal Amo Srl — P.IVA 02746270228 — Capitale sociale 10.000,00 €</span>
         <a href="{{ route('terms.customers') }}" class="hover:text-brand-cyan">{{ __('nav.footer.terms') }}</a>
-        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.privacy') }}</a>
+        <a href="{{ route('privacy') }}" class="hover:text-brand-cyan">{{ __('nav.footer.privacy') }}</a>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.cookie_policy') }}</a>
         <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.manage_cookies') }}</a>
     </div>

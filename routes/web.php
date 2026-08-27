@@ -105,6 +105,8 @@ Route::group([
         ->defaults('slug', Page::TERMS_CUSTOMERS)->name('terms.customers');
     Route::get(LaravelLocalization::transRoute('routes.terms.suppliers'), LegalPage::class)
         ->defaults('slug', Page::TERMS_SUPPLIERS)->name('terms.suppliers');
+    Route::get(LaravelLocalization::transRoute('routes.privacy'), LegalPage::class)
+        ->defaults('slug', Page::PRIVACY)->name('privacy');
     Route::get(LaravelLocalization::transRoute('routes.preferiti'), Favorites::class)->name('preferiti');
     Route::get(LaravelLocalization::transRoute('routes.carrello'), Cart::class)->name('carrello');
     Route::get(LaravelLocalization::transRoute('routes.checkout'), Checkout::class)->name('checkout');
