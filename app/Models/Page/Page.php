@@ -18,6 +18,9 @@ class Page extends Model
 
     public const TERMS_SUPPLIERS = 'termini-e-condizioni-fornitori';
 
+    /** Una sola informativa per utenti e strutture: il documento copre entrambi. */
+    public const PRIVACY = 'privacy-policy';
+
     /** Lingua in cui i documenti sono redatti: è lei a fare da rete. */
     public const SOURCE_LOCALE = 'it';
 
