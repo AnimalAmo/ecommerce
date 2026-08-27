@@ -26,6 +26,12 @@ class PageSeeder extends Seeder
             'title' => ['it' => 'Condizioni generali di adesione fornitore', 'en' => 'Supplier general terms of adhesion'],
             'last_updated_at' => '2026-08-26',
         ],
+        // Il documento non porta una data propria: questa è quella di consegna
+        // dei testi da parte del cliente.
+        Page::PRIVACY => [
+            'title' => ['it' => 'Privacy Policy', 'en' => 'Privacy Policy'],
+            'last_updated_at' => '2026-08-27',
+        ],
     ];
 
     private const LOCALES = ['it', 'en'];

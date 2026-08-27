@@ -33,6 +33,8 @@ class LegalContentTest extends TestCase
             [Page::TERMS_CUSTOMERS, 'en'],
             [Page::TERMS_SUPPLIERS, 'it'],
             [Page::TERMS_SUPPLIERS, 'en'],
+            [Page::PRIVACY, 'it'],
+            [Page::PRIVACY, 'en'],
         ];
     }
 
@@ -203,11 +205,11 @@ class LegalContentTest extends TestCase
         }
     }
 
-    public function test_the_seeder_loads_both_pages(): void
+    public function test_the_seeder_loads_every_page(): void
     {
         $this->seed(PageSeeder::class);
 
-        $this->assertSame(2, Page::count());
+        $this->assertSame(3, Page::count());
 
         $customers = Page::where('slug', Page::TERMS_CUSTOMERS)->sole();
         $this->assertSame('Termini e condizioni', $customers->titleFor('it'));
@@ -220,7 +222,78 @@ class LegalContentTest extends TestCase
         $this->seed(PageSeeder::class);
         $this->seed(PageSeeder::class);
 
-        $this->assertSame(2, Page::count());
+        $this->assertSame(3, Page::count());
+    }
+
+    public function test_the_privacy_chapters_are_numbered_like_the_source(): void
+    {
+        $html = file_get_contents(database_path('seeders/content/'.Page::PRIVACY.'.it.html'));
+
+        // Qui i capitoli sono <h2> — il documento non ha le sezioni che nei
+        // termini occupano quel livello — e le <h3> sono le etichette interne
+        // ai capitoli 2 e 3.
+        $this->assertSame(18, substr_count($html, '<h2 id='));
+        $this->assertStringContainsString('1. Titolare del trattamento', $html);
+        $this->assertStringContainsString('18. Contatti', $html);
+    }
+
+    /**
+     * L'inglese non è convertibile da solo: ha perso i marcatori di lista del
+     * markdown. md-to-html.py gli proietta addosso la struttura italiana riga
+     * per riga, quindi l'ossatura deve combaciare esattamente — non "a grandi
+     * linee" come per i termini, che sono due redazioni indipendenti.
+     */
+    public function test_the_privacy_english_structure_mirrors_the_italian_one(): void
+    {
+        $italian = file_get_contents(database_path('seeders/content/'.Page::PRIVACY.'.it.html'));
+        $english = file_get_contents(database_path('seeders/content/'.Page::PRIVACY.'.en.html'));
+
+        preg_match_all('/<(h2|h3) id="([^"]+)">/', $italian, $itHeadings);
+        preg_match_all('/<(h2|h3) id="([^"]+)">/', $english, $enHeadings);
+
+        $this->assertSame($itHeadings[1], $enHeadings[1], 'Livelli di heading diversi');
+        $this->assertSame($itHeadings[2], $enHeadings[2], 'Id degli heading diversi');
+
+        foreach (['<li>', '<p>', '<ul>'] as $tag) {
+            $this->assertSame(
+                substr_count($italian, $tag),
+                substr_count($english, $tag),
+                "Numero di {$tag} diverso fra le due lingue: la proiezione è sfasata",
+            );
+        }
+
+        // Come per i termini: il confronto fra due liste costruite con lo
+        // stesso meccanismo passerebbe anche se fossero shiftate insieme. Il
+        // numero dentro l'id deve combaciare con quello scritto nell'heading.
+        preg_match_all('/<h2 id="([^"]+)">([^<]*)<\/h2>/', $english, $chapters, PREG_SET_ORDER);
+        $this->assertCount(18, $chapters);
+
+        foreach ($chapters as [, $id, $text]) {
+            preg_match('/^(\d+)-/', $id, $idNumber);
+            preg_match('/^(\d+)\./', $text, $textNumber);
+
+            $this->assertSame(
+                $textNumber[1] ?? null,
+                $idNumber[1] ?? null,
+                "L'id \"{$id}\" non corrisponde al numero del capitolo \"{$text}\"",
+            );
+        }
+    }
+
+    /**
+     * Il marcatore '*' del markdown deve essere consumato dal convertitore,
+     * non finire dentro il <li>: è il difetto che la prima conversione aveva.
+     */
+    public function test_the_privacy_markdown_markers_are_consumed(): void
+    {
+        foreach (['it', 'en'] as $locale) {
+            $html = file_get_contents(database_path('seeders/content/'.Page::PRIVACY.".{$locale}.html"));
+
+            $this->assertStringNotContainsString('<li>*', $html);
+            $this->assertSame(89, substr_count($html, '<li>'), "Voci di elenco mancanti in {$locale}");
+            $this->assertStringContainsString('<strong>DigitalOcean</strong>', $html);
+            $this->assertStringContainsString('<strong>Stripe</strong>', $html);
+        }
     }
 
     public function test_the_booking_privacy_link_is_dropped(): void

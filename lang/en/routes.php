@@ -14,6 +14,7 @@ return [
     'contact' => 'contact-us',
     'terms.customers' => 'terms-and-conditions',
     'terms.suppliers' => 'supplier-terms-and-conditions',
+    'privacy' => 'privacy-policy',
     'community' => 'community',
     'community.post' => 'community/{post}',
     'preferiti' => 'favourites',

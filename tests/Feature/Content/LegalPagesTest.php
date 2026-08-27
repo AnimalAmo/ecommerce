@@ -130,4 +130,46 @@ class LegalPagesTest extends TestCase
     {
         $this->get(route('partner.register'))->assertSee('href="'.route('terms.suppliers').'"', false);
     }
+
+    public function test_the_privacy_page_renders(): void
+    {
+        $this->get(route('privacy'))
+            ->assertOk()
+            ->assertSee('Privacy Policy', false)
+            ->assertSee('Titolare del trattamento', false)
+            // Stessa guardia del test sui termini: se il corpo venisse
+            // escapato, il tag letterale sparirebbe.
+            ->assertSee('<h2 id="1-titolare-del-trattamento">', false)
+            ->assertSee('27/08/2026', false);
+    }
+
+    public function test_the_english_privacy_page_renders_the_english_body(): void
+    {
+        $this->reloadRoutesFor('/en/privacy-policy');
+        $this->get('/en/privacy-policy')
+            ->assertOk()
+            ->assertSee('Data Controller', false)
+            ->assertSee('only the Italian version is legally binding', false)
+            ->assertDontSee('Titolare del trattamento', false);
+    }
+
+    /**
+     * Tre footer diversi espongono la voce Privacy: quello dello storefront,
+     * quello dell'area partner e il minimal delle pagine secondarie — che è
+     * poi quello sotto la pagina legale stessa. Il primo giro di modifica ne
+     * aveva mancato uno: qui sono elencati tutti e tre.
+     */
+    public function test_every_footer_links_to_the_privacy_page(): void
+    {
+        foreach ([route('home'), route('partner.register'), route('contact')] as $url) {
+            $this->get($url)->assertSee('href="'.route('privacy').'"', false);
+        }
+    }
+
+    public function test_the_privacy_page_returns_404_without_its_row(): void
+    {
+        Page::where('slug', Page::PRIVACY)->delete();
+
+        $this->get(route('privacy'))->assertNotFound();
+    }
 }
