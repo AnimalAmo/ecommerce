@@ -19,8 +19,10 @@
 
         <div class="{{ $px }} lg:hidden">
             <p class="mt-3 flex items-center gap-2 text-[13px] font-semibold text-[#555555]">
-                <flux:icon.star-fill class="h-4 w-[17px] shrink-0" />
-                @if ($structure->rating !== null)
+                {{-- Senza recensioni non c'è media da mostrare: stella piena e "(0 recensioni)"
+                     sarebbero un voto che nessuno ha dato. --}}
+                @if ($structure->rating !== null && $reviewsCount > 0)
+                    <flux:icon.star-fill class="h-4 w-[17px] shrink-0" />
                     {{ __('holiday.rating_with_reviews', ['rating' => \App\Support\Format::rating($structure->rating), 'count' => $reviewsCount]) }}
                 @else
                     {{ __('holiday.new') }}
@@ -178,13 +180,16 @@
                     {{-- 7. Recensioni dei clienti --}}
                     <section class="mt-14 max-lg:mt-10">
                         <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.reviews') }}</h2>
-                        @if ($structure->rating !== null)
+                        {{-- Media voti solo se le recensioni esistono: un rating senza recensioni
+                             è un numero che nessuno ha dato. --}}
+                        @if ($structure->rating !== null && $reviewsCount > 0)
                             <p class="mt-2 flex items-center gap-2.5">
                                 <span class="text-lg font-semibold leading-[22px] text-brand-cyan">{{ \App\Support\Format::rating($structure->rating) }}</span>
                                 <span class="flex items-center gap-[3px]">
-                                    @foreach (range(1, (int) floor($structure->rating)) as $i)
+                                    {{-- @for e non range(): range(1, 0) torna [1, 0] e disegnerebbe DUE stelle a rating 0. --}}
+                                    @for ($i = 1; $i <= (int) floor($structure->rating); $i++)
                                         <flux:icon.star-fill wire:key="sum-star-{{ $i }}" class="h-4 w-[17px]" />
-                                    @endforeach
+                                    @endfor
                                     @if ($structure->rating > floor($structure->rating))
                                         <flux:icon.star-mid class="h-4 w-[17px]" />
                                     @endif
@@ -194,19 +199,23 @@
                             {{-- Struttura partner senza recensioni: stato "Nuovo" al posto delle stelle --}}
                             <p class="mt-2 text-lg font-semibold leading-[22px] text-brand-cyan">{{ __('holiday.new') }}</p>
                         @endif
-                        <p class="mt-1.5 flex items-baseline gap-3">
-                            <span class="text-lg font-semibold text-black">{{ $reviewsCount }}</span>
-                            <span class="text-[15px] text-black">{{ __('holiday.reviews_count_label') }}</span>
-                        </p>
+                        {{-- "0 Recensioni" sopra una lista vuota non dice niente: il conteggio compare da 1 in su --}}
+                        @if ($reviewsCount > 0)
+                            <p class="mt-1.5 flex items-baseline gap-3">
+                                <span class="text-lg font-semibold text-black">{{ $reviewsCount }}</span>
+                                <span class="text-[15px] text-black">{{ __('holiday.reviews_count_label') }}</span>
+                            </p>
+                        @endif
 
                         <div class="mt-6">
-                            @foreach ($reviews as $index => $review)
+                            @forelse ($reviews as $index => $review)
                                 <article wire:key="review-{{ $review->id }}" class="border-b border-[#E2EAEB] pb-6 {{ $loop->first ? '' : 'pt-5' }}">
                                     <p class="text-[13px] leading-[22px] text-[#627277]">{{ \App\Support\Format::dateSentence($review->reviewed_at) }}</p>
                                     <p class="mt-1 flex items-center gap-[3px]">
-                                        @foreach (range(1, (int) floor($review->rating)) as $i)
+                                        {{-- @for e non range(): range(1, 0) torna [1, 0] e disegnerebbe DUE stelle a rating 0. --}}
+                                        @for ($i = 1; $i <= (int) floor($review->rating); $i++)
                                             <flux:icon.star-fill wire:key="review-{{ $review->id }}-star-{{ $i }}" class="h-4 w-[17px]" />
-                                        @endforeach
+                                        @endfor
                                         @if ($review->rating > floor($review->rating))
                                             <flux:icon.star-mid class="h-4 w-[17px]" />
                                         @endif
@@ -224,7 +233,10 @@
                                         </span>
                                     </div>
                                 </article>
-                            @endforeach
+                            @empty
+                                {{-- Nessuna recensione: dirlo, invece di lasciare la lista vuota sotto un contatore --}}
+                                <p class="text-[15px] leading-[22px] text-[#627277]">{{ __('holiday.no_reviews') }}</p>
+                            @endforelse
                         </div>
 
                         @if ($reviewsCount > count($reviews))

@@ -12,6 +12,19 @@ return [
     'search_cta' => 'Cerca',
     'no_location' => 'Nessuna località trovata',
 
+    // Badge sulla card regione: conta le strutture davvero pubblicate lì
+    // (a zero il badge non si disegna, quindi la forma {0} non compare mai).
+    'structures_count' => '{0} :count Strutture|{1} :count Struttura|[2,*] :count Strutture',
+
+    // Catalogo ancora vuoto: nessun partner ha pubblicato (giorno 1 su animalamo.it).
+    // Non è una ricerca andata male, quindi niente rosso e niente "cambia i filtri".
+    'empty_catalogue_title' => 'Non ci sono ancora strutture pubblicate',
+    'empty_catalogue_body' => 'Le strutture e i servizi li pubblicano i partner AnimalAmo: appena arrivano, li trovi qui.',
+    'empty_catalogue_region_title' => 'In :region non c’è ancora niente da prenotare',
+    'empty_catalogue_region_body' => 'Nessun partner ha ancora pubblicato in questa regione: appena succede, i risultati compaiono qui.',
+    'empty_catalogue_news_cta' => 'Leggi Animal Times',
+    'empty_catalogue_partner_cta' => 'Pubblica la tua struttura',
+
     // Filtri
     'filter_your_search' => 'Filtra la tua ricerca:',
     'filter_type' => 'Tipologia',
@@ -19,12 +32,6 @@ return [
 
     // Card risultati
     'from_price_label' => 'A partire da',
-
-    // Paginazione
-    'load_more' => 'Carica altro',
-    'pagination' => 'Paginazione',
-    'prev_page' => 'Pagina precedente',
-    'next_page' => 'Pagina successiva',
 
     // Hero dettaglio
     'back' => 'Indietro',
@@ -48,6 +55,7 @@ return [
     'rating_with_reviews' => ':rating (:count recensioni)',
     'reviewed_by' => 'Recensito da',
     'load_more_reviews' => 'Carica altre recensioni',
+    'no_reviews' => 'Non ci sono ancora recensioni.',
 
     // Card prenotazione
     'checkin' => 'Check-in',

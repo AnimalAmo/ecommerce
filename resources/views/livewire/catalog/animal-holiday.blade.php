@@ -39,6 +39,20 @@
                 </flux:button>
             </form>
 
+            {{-- Catalogo vuoto: le regioni restano (sono dati veri e portano alla pagina
+                 regione), ma senza una riga di contesto le 20 card prometterebbero un
+                 catalogo che non c'è. Niente rosso: non è una ricerca andata male. --}}
+            @if ($catalogueEmpty)
+                <div class="mt-8 rounded-[4px] border border-[#E9E9E9] bg-gray-100 px-6 py-5">
+                    <p class="text-lg font-semibold text-ink">{{ __('holiday.empty_catalogue_title') }}</p>
+                    <p class="mt-1.5 text-[15px] leading-[22px] text-[#555555]">{{ __('holiday.empty_catalogue_body') }}</p>
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
+                        <flux:button href="{{ route('work-with-us') }}" class="!h-10 !rounded-full !border-0 !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink !shadow-none">{{ __('holiday.empty_catalogue_partner_cta') }}</flux:button>
+                        <flux:button href="{{ route('news') }}" variant="ghost" class="!h-10 !rounded-full !px-6 !text-sm !font-bold !text-ink">{{ __('holiday.empty_catalogue_news_cta') }}</flux:button>
+                    </div>
+                </div>
+            @endif
+
             {{-- Griglia regioni (stesse card Box Holiday della home) --}}
             @if ($regions->isEmpty())
                 {{-- Zero risultati per "Dove": il fallback con alternative simili arriva allo step 6. --}}
@@ -50,7 +64,12 @@
                         <div class="relative overflow-hidden">
                             <img src="{{ asset('img/xd/'.$region->img.'.jpg') }}" alt="{{ __('catalog.region_title', ['region' => $region->name]) }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105">
                             <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
-                            <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ __('catalog.structures_count', ['count' => $region->structures_count]) }}</flux:badge>
+                            {{-- Badge solo se in regione c'è davvero qualcosa: a zero un
+                                 "0 Strutture" sarebbe rumore, e il vecchio conteggio veniva
+                                 dalla colonna congelata del mock XD. --}}
+                            @if ($region->published_structures_count > 0)
+                                <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ trans_choice('holiday.structures_count', $region->published_structures_count, ['count' => $region->published_structures_count]) }}</flux:badge>
+                            @endif
                             <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white">{{ __('catalog.region_title', ['region' => $region->name]) }}</h3>
                         </div>
                     </a>

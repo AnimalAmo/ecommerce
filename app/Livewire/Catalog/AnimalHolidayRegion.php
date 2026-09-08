@@ -10,6 +10,7 @@ use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -58,9 +59,15 @@ class AnimalHolidayRegion extends Component
     {
         $term = trim($this->where);
 
-        // Il mock XD mostra gli stessi 12 risultati per ogni regione: se "Dove" è vuoto o
-        // coincide col nome della regione (pre-compilato in mount) manteniamo quel comportamento;
-        // se l'utente cambia il testo, filtriamo per nome OR location (LIKE %dove%, case-insensitive).
+        // regionSlug è una proprietà pubblica: il client può riscriverla nel payload,
+        // quindi la regione si rilegge dal database invece di fidarsi dello stato.
+        $regionId = Region::where('slug', $this->regionSlug)->value('id');
+
+        abort_unless($regionId !== null, 404);
+
+        // "Dove" vuoto o uguale al nome della regione (pre-compilato in mount) = nessun
+        // filtro testuale; se l'utente cambia il testo, filtriamo per nome OR location
+        // (LIKE %dove%, case-insensitive).
         $showAll = $term === '' || mb_strtolower($term) === mb_strtolower($this->regionName);
 
         // Hotel/servizi mappano sulle strutture; con una sola delle due attiva
@@ -69,7 +76,7 @@ class AnimalHolidayRegion extends Component
 
         $results = $productTypes === []
             ? Structure::query()->whereRaw('1 = 0')->get()
-            : Structure::query()
+            : $this->regionStructures($regionId)
                 ->when(! $showAll, function ($query) use ($term): void {
                     $like = self::like($term);
                     // name è JSON translatable: LIKE sul path del locale corrente,
@@ -124,9 +131,11 @@ class AnimalHolidayRegion extends Component
         $empty = $results->isEmpty() && $events->isEmpty() && $boxes->isEmpty();
 
         // "Nessun risultato trovato": l'XD app non lascia la pagina vuota ma propone card
-        // simili, cioè lo stesso catalogo senza i filtri (tipologia e prezzo) che l'hanno svuotato.
+        // simili, cioè il catalogo DELLA REGIONE senza i filtri (tipologia e prezzo) che
+        // l'hanno svuotato. Se anche così non c'è niente, la collection resta vuota e il
+        // template non disegna il titolo "Risultati simili" sopra una griglia senza card.
         $similar = $empty
-            ? Structure::query()->orderBy('position')->limit(self::SIMILAR_LIMIT)->get()
+            ? $this->regionStructures($regionId)->orderBy('position')->limit(self::SIMILAR_LIMIT)->get()
             : $results;
 
         return view('livewire.catalog.animal-holiday-region', [
@@ -134,7 +143,56 @@ class AnimalHolidayRegion extends Component
             'events' => $events,
             'boxes' => $boxes,
             'empty' => $empty,
+            // Griglia vuota per due motivi opposti: filtri troppo stretti oppure catalogo
+            // ancora vuoto. Il rosso "prova a modificare i filtri" si mostra solo nel primo
+            // caso: dare la colpa a filtri che il visitatore non ha toccato, quando nessun
+            // filtro produrrebbe risultati, è una bugia.
+            'filtersCanHelp' => $empty && $this->filtersCanStillHelp($showAll),
             'similar' => $similar,
         ])->title('AnimalAmo — '.__('catalog.region_title', ['region' => $this->regionName]));
+    }
+
+    /**
+     * Base delle query strutture: solo quelle della regione aperta.
+     *
+     * Prima la query girava su tutto Structure senza filtro (il mock XD mostrava le
+     * stesse 12 card in ogni regione): con un catalogo vero, una struttura pubblicata
+     * in Sicilia sarebbe comparsa anche su /animal-holiday/liguria. Le strutture dei
+     * partner hanno sempre region_id (StructurePublisher lo deriva dalla provincia).
+     * Le 12 righe del mock XD non ce l'hanno: restano visibili solo dove il catalogo
+     * finto è seminato (locale e test), mai su animalamo.it dove il flag è spento.
+     */
+    private function regionStructures(int $regionId): Builder
+    {
+        // reviews_count: la card mostra il voto solo se qualcuno l'ha davvero dato.
+        return Structure::query()->withCount('reviews')->where(function (Builder $query) use ($regionId): void {
+            $query->where('region_id', $regionId);
+
+            if (config('app.seed_demo_data')) {
+                $query->orWhereNull('region_id');
+            }
+        });
+    }
+
+    /**
+     * Suggerire di allargare i filtri è onesto solo se allargarli può cambiare qualcosa:
+     * o li ha ristretti il visitatore, o esiste dell'altro catalogo (eventi, cofanetti)
+     * che le tipologie di default — hotel e servizi — tengono fuori dalla griglia.
+     * Le due exists() girano solo a griglia vuota e senza filtri del visitatore.
+     */
+    private function filtersCanStillHelp(bool $showAll): bool
+    {
+        return $this->userNarrowedTheSearch($showAll)
+            || Event::query()->exists()
+            || SmartboxPackage::query()->exists();
+    }
+
+    /** Il visitatore ha ristretto qualcosa? Tipologie, fascia di prezzo, sotto-sezioni Smartbox o "Dove". */
+    private function userNarrowedTheSearch(bool $showAll): bool
+    {
+        return ! $showAll
+            || $this->priceFiltered()
+            || $this->smartboxTypes !== []
+            || array_values(array_intersect(self::FILTER_TYPES, $this->activeTypes)) !== $this->defaultFilterTypes();
     }
 }
