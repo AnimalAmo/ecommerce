@@ -14,6 +14,49 @@ decisioni prese lo stesso giorno:
 4. **Rinomina del sito Forge di staging**: si porta dietro database, storage e
    dati già inseriti — quindi il DB va ripulito, non ricreato (vedi § 3).
 
+## 0. Dove siamo — sera dell'08/09/2026
+
+Il sito è **pronto e non ancora pubblico**: `animalamo.it` risponde ancora
+dall'hosting Register. Manca solo il cambio dei record A.
+
+**Fatto:**
+
+- codice su `main`, catalogo mock rimosso dal seeder, contenuti finti tolti dal
+  codice, SEO aggiunta (982 test verdi). Ultimi commit SEO **da pushare e
+  deployare**.
+- **Certificato Let's Encrypt già emesso** con verifica DNS-01. I due CNAME su
+  Register **non vanno mai rimossi**, servono a ogni rinnovo:
+  `_acme-challenge` → `verify-zsx6epqk.ssl.on-forge.com`
+  `_acme-challenge.www` → `verify-a2czylyi.ssl.on-forge.com`
+- dominio aggiunto in Forge (wildcard off, redirect from www), dominio primario
+  lasciato su `ecommerce-0tepvdzv.on-forge.com` per non rinominare la directory.
+- **Prova a vuoto riuscita**: forzando `animalamo.it` sull'IP di Forge il sito
+  risponde `200` con certificato valido, e `www` fa `301` verso il dominio.
+- database ripulito: catalogo a zero, utenti demo eliminati, dump di sicurezza
+  in `~/animalamo-pre-purge-2026-09-08-1710.sql`.
+- coda: `database`, zero arretrato, `failed_jobs` svuotata, daemon attivo.
+- `.env` di produzione e `config:cache` già applicati.
+
+**Restano in piedi, da decidere con la cliente:** 5 account registrati su
+staging (fra cui `info@residenzailpalazzetto.it`, che sembra un partner vero
+rimasto a metà iscrizione), 4 bozze con IBAN e dati fiscali, 14 candidature
+"Lavora con noi" mai lavorate.
+
+### Il passo che manca, su Register
+
+| Tipo | Nome | Valore | Adesso |
+|---|---|---|---|
+| A | `@` | `64.226.67.198` | `195.110.124.133` (Register) |
+| A | `www` | `64.226.67.198` | CNAME verso il dominio |
+| NS | `mg` | `ns1/ns2/ns3.digitalocean.com` | assente — SPF e DKIM invisibili |
+
+Da **non** toccare: l'MX su `mail.register.it` (la posta della cliente) e i due
+CNAME `_acme-challenge`. TTL della zona: 900 secondi, quindi lo switch si vede
+in un quarto d'ora.
+
+Ordine consigliato per riprendere: push e deploy della SEO → record A → verifica
+con `dig` e a browser → poi Iubenda, Stripe e le verifiche del § 5.
+
 ## 1. Prima dello switch — cose che deve fare il cliente
 
 Nessuna di queste è codice: senza, il sito va online sbagliato.
