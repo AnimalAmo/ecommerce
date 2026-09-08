@@ -16,34 +16,36 @@
                      App: colonna singola di card 343x309 con bordo #E9E9E9 e senza ombra, foto 327x136. --}}
                 <div class="mt-6 grid grid-cols-1 gap-3 lg:mt-10 lg:grid-cols-3 lg:gap-x-[29px] lg:gap-y-5">
                     @foreach ($articles as $article)
-                        <article wire:key="news-{{ $loop->index }}" class="group relative flex flex-col rounded-[3px] border border-gray-150 bg-white p-2 lg:border-0 lg:p-[10px] lg:pt-2 lg:shadow-[0_1px_5px_#0000001A]">
+                        <article wire:key="news-{{ $article->slug }}" class="group relative flex flex-col rounded-[3px] border border-gray-150 bg-white p-2 lg:border-0 lg:p-[10px] lg:pt-2 lg:shadow-[0_1px_5px_#0000001A]">
                             <div class="overflow-hidden rounded-t-[3px]">
-                                <img src="{{ asset('img/xd/'.$article['img'].'.jpg') }}" alt="{{ $article['title'] }}" class="h-[136px] w-full object-cover transition duration-500 group-hover:scale-105 lg:h-[237px]">
+                                <img src="{{ asset($article->cardImage()) }}" alt="{{ $article->titleFor() }}" class="h-[136px] w-full object-cover transition duration-500 group-hover:scale-105 lg:h-[237px]">
                             </div>
                             <div class="flex flex-1 flex-col lg:px-4 lg:pb-1.5">
                                 {{-- Data: XD usa Roboto-Regular, font non caricato nel progetto → fallback sans di sistema (come home) --}}
                                 <p class="mt-2.5 flex items-center gap-1.5 font-[Roboto,sans-serif] text-xs text-[#959595] lg:mt-3.5 lg:gap-2 lg:text-sm">
                                     <flux:icon.calendar class="h-4 w-4 shrink-0 text-[#959595] lg:h-[19px] lg:w-[19px]" />
-                                    {{ $article['date'] }}
+                                    {{ $article->formattedDate() }}
                                 </p>
-                                <h3 class="mt-1 max-w-[369px] text-base font-semibold leading-[22px] text-[#0D171A] lg:mt-4 lg:text-[20px] lg:leading-[25px] lg:text-black">{{ $article['title'] }}</h3>
-                                @if (filled($article['excerpt']))
-                                    <p class="mt-3 line-clamp-2 max-w-[428px] text-[15px] leading-[22px] font-normal text-ink-700 lg:mt-[18px] lg:line-clamp-4 lg:text-sm lg:leading-[23px] lg:text-[#555555]">{{ $article['excerpt'] }}</p>
+                                <h3 class="mt-1 max-w-[369px] text-base font-semibold leading-[22px] text-[#0D171A] lg:mt-4 lg:text-[20px] lg:leading-[25px] lg:text-black">{{ $article->titleFor() }}</h3>
+                                @if (filled($article->excerptFor()))
+                                    <p class="mt-3 line-clamp-2 max-w-[428px] text-[15px] leading-[22px] font-normal text-ink-700 lg:mt-[18px] lg:line-clamp-4 lg:text-sm lg:leading-[23px] lg:text-[#555555]">{{ $article->excerptFor() }}</p>
                                 @endif
                                 {{-- App: link in corsivo allineato a sinistra; desktop resta centrato e in tondo --}}
-                                <a href="{{ route('news.detail', $article['slug']) }}" class="relative z-[2] mt-2.5 mr-auto text-sm font-normal italic text-[#959595] lg:mx-auto lg:mt-auto lg:pt-5 lg:not-italic lg:text-[#242C2C]">{{ __('news.read_more') }}</a>
+                                <a href="{{ route('news.detail', $article->slug) }}" class="relative z-[2] mt-2.5 mr-auto text-sm font-normal italic text-[#959595] lg:mx-auto lg:mt-auto lg:pt-5 lg:not-italic lg:text-[#242C2C]">{{ __('news.read_more') }}</a>
                             </div>
                             {{-- Link overlay all'articolo --}}
-                            <a href="{{ route('news.detail', $article['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $article['title'] }}"></a>
+                            <a href="{{ route('news.detail', $article->slug) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $article->titleFor() }}"></a>
                         </article>
                     @endforeach
                 </div>
 
-                {{-- Bottone "Carica altro" (XD: simbolo "Button vedi tutto" 145x40 r20 #0D171A, label override; app: 140x39, label 14) --}}
-                <div class="mt-6 flex justify-center lg:mt-10">
-                    {{-- TODO: azione Carica altro --}}
-                    <flux:button class="!h-[39px] !rounded-full !border-0 !bg-[#0D171A] !px-[33px] !text-sm !font-bold !text-white !shadow-none hover:!bg-[#232A2C] lg:!h-10 lg:!px-8 lg:!text-[15px]">{{ __('news.load_more') }}</flux:button>
-                </div>
+                {{-- Bottone "Carica altro" (XD: simbolo "Button vedi tutto" 145x40 r20 #0D171A, label override; app: 140x39, label 14).
+                     Fuori quando gli articoli sono già tutti in pagina: non avrebbe nulla da caricare. --}}
+                @if ($hasMore)
+                    <div class="mt-6 flex justify-center lg:mt-10">
+                        <flux:button wire:click="loadMore" class="!h-[39px] !rounded-full !border-0 !bg-[#0D171A] !px-[33px] !text-sm !font-bold !text-white !shadow-none hover:!bg-[#232A2C] lg:!h-10 lg:!px-8 lg:!text-[15px]">{{ __('news.load_more') }}</flux:button>
+                    </div>
+                @endif
             </div>
         </div>
     </main>

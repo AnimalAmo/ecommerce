@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             PaymentGatewaySeeder::class,
             RoleSeeder::class,
             PageSeeder::class, // contenuto istituzionale: serve anche in produzione
+            ArticleSeeder::class, // Animal Times: articoli della cliente, servono anche in produzione
         ]);
 
         // Le persone del mock XD portano password note e il proprio nome nei

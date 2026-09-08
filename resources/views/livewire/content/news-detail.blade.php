@@ -14,26 +14,17 @@
             </a>
 
             {{-- Foto hero mobile (XD app: 343x136 mascherata r3, sopra il titolo) --}}
-            <img src="{{ asset($hero) }}" alt="{{ $article['title'] }}" class="mt-4 h-[136px] w-full rounded-[3px] object-cover lg:hidden">
+            <img src="{{ asset($article->heroImage()) }}" alt="{{ $article->titleFor() }}" class="mt-4 h-[136px] w-full rounded-[3px] object-cover lg:hidden">
 
             {{-- Titolo articolo (XD: Nunito-Bold 36px nero, frame 709px; app: 18px #0D171A) --}}
-            <h1 class="mt-6 max-w-[709px] text-lg font-bold text-[#0D171A] lg:mt-8 lg:text-4xl lg:text-black">{{ $article['title'] }}</h1>
+            <h1 class="mt-6 max-w-[709px] text-lg font-bold text-[#0D171A] lg:mt-8 lg:text-4xl lg:text-black">{{ $article->titleFor() }}</h1>
 
-            {{-- Corpo (frame 978x486, Nunito-Regular 16/24; app: 15/22 #2B2B2B) + foto hero mascherata 620x451 r4 a destra --}}
+            {{-- Corpo (frame 978x486, Nunito-Regular 16/24; app: 15/22 #2B2B2B) + foto hero mascherata 620x451 r4 a destra.
+                 Il corpo è HTML dal DB, senza classi sui tag: la tipografia sta in .article-content (app.css). --}}
             <div class="mt-2 flex items-start gap-10 lg:mt-4">
-                @if (filled($body))
-                    <div class="min-w-0 max-w-[978px] flex-1 space-y-[22px] text-[15px] font-normal leading-[22px] text-ink-700 lg:space-y-6 lg:text-base lg:leading-6 lg:text-black">
-                        @foreach ($body as $paragraph)
-                            <p>{{ $paragraph }}</p>
-                        @endforeach
-                    </div>
-                    {{-- XD "Gruppo di maschere 12": clip 620x451 r=[4], foto scaleBehavior=fill → object-cover --}}
-                    <img src="{{ asset($hero) }}" alt="{{ $article['title'] }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover xl:block">
-                @else
-                    {{-- Corpo vuoto (copy in attesa della cliente): resta la sola hero, da lg in su
-                         (senza colonna vuota che la spinge a destra; sotto lg c'è già la hero mobile) --}}
-                    <img src="{{ asset($hero) }}" alt="{{ $article['title'] }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover lg:block">
-                @endif
+                <div class="article-content min-w-0 max-w-[978px] flex-1">{!! $article->bodyFor() !!}</div>
+                {{-- XD "Gruppo di maschere 12": clip 620x451 r=[4], foto scaleBehavior=fill → object-cover --}}
+                <img src="{{ asset($article->heroImage()) }}" alt="{{ $article->titleFor() }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover xl:block">
             </div>
 
             {{-- Articoli correlati (XD: colonna x211..1711 → 1500px centrati; 4 card 354x482, gap 28) --}}
@@ -44,13 +35,13 @@
                        foto 264x184 r3 con sfumatura nera in basso e titolo bianco 15px sopra). --}}
                 <div class="-mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 lg:hidden">
                     @foreach ($related as $item)
-                        <a href="{{ route('news.detail', $item['slug']) }}" wire:key="related-mobile-{{ $item['slug'] }}" class="block h-[200px] w-[280px] shrink-0 snap-start rounded-[3px] border border-gray-150 bg-white p-2">
+                        <a href="{{ route('news.detail', $item->slug) }}" wire:key="related-mobile-{{ $item->slug }}" class="block h-[200px] w-[280px] shrink-0 snap-start rounded-[3px] border border-gray-150 bg-white p-2">
                             <div class="relative h-full w-full overflow-hidden rounded-[3px]">
-                                <img src="{{ asset('img/xd/'.$item['img'].'.jpg') }}" alt="{{ $item['title'] }}" class="h-full w-full object-cover">
+                                <img src="{{ asset($item->cardImage()) }}" alt="{{ $item->titleFor() }}" class="h-full w-full object-cover">
                                 {{-- Sfumatura XD "Rettangolo 32": 141px dal basso, #000 80% → trasparente --}}
                                 <div class="absolute inset-x-0 bottom-0 h-[141px] bg-gradient-to-t from-black/80 via-[#121212]/55 to-transparent" aria-hidden="true"></div>
                                 {{-- XD ancora il titolo a 115px dal bordo alto della foto: vale sia a una riga sia a due --}}
-                                <h3 class="absolute left-2 top-[115px] w-[218px] text-[15px] font-bold leading-5 text-white">{{ $item['title'] }}</h3>
+                                <h3 class="absolute left-2 top-[115px] w-[218px] text-[15px] font-bold leading-5 text-white">{{ $item->titleFor() }}</h3>
                             </div>
                         </a>
                     @endforeach
@@ -58,24 +49,24 @@
 
                 <div class="mt-5 hidden grid-cols-4 gap-[28px] lg:grid">
                     @foreach ($related as $item)
-                        <article wire:key="related-{{ $item['slug'] }}" class="group relative flex h-[482px] flex-col rounded-[3px] border border-gray-150 bg-white p-[10px]">
+                        <article wire:key="related-{{ $item->slug }}" class="group relative flex h-[482px] flex-col rounded-[3px] border border-gray-150 bg-white p-[10px]">
                             <div class="overflow-hidden rounded-t-[3px]">
-                                <img src="{{ asset('img/xd/'.$item['img'].'.jpg') }}" alt="{{ $item['title'] }}" class="h-[223px] w-full object-cover transition duration-500 group-hover:scale-105">
+                                <img src="{{ asset($item->cardImage()) }}" alt="{{ $item->titleFor() }}" class="h-[223px] w-full object-cover transition duration-500 group-hover:scale-105">
                             </div>
                             <div class="flex flex-1 flex-col px-2.5 pb-2">
                                 {{-- Data: XD usa Roboto-Regular, font non caricato nel progetto → fallback sans di sistema (come /news) --}}
                                 <p class="mt-[26px] flex items-center gap-2 font-[Roboto,sans-serif] text-sm text-[#959595]">
                                     <flux:icon.calendar class="h-[19px] w-[19px] shrink-0 text-[#959595]" />
-                                    {{ $item['date'] }}
+                                    {{ $item->formattedDate() }}
                                 </p>
-                                <h3 class="mt-4 max-w-[314px] text-base font-semibold leading-[21px] text-black">{{ $item['title'] }}</h3>
-                                @if (filled($item['excerpt']))
-                                    <p class="mt-2.5 line-clamp-4 max-w-[314px] text-sm font-normal leading-[23px] text-[#555555]">{{ $item['excerpt'] }}</p>
+                                <h3 class="mt-4 max-w-[314px] text-base font-semibold leading-[21px] text-black">{{ $item->titleFor() }}</h3>
+                                @if (filled($item->excerptFor()))
+                                    <p class="mt-2.5 line-clamp-4 max-w-[314px] text-sm font-normal leading-[23px] text-[#555555]">{{ $item->excerptFor() }}</p>
                                 @endif
-                                <a href="{{ route('news.detail', $item['slug']) }}" class="relative z-[2] mx-auto mt-auto pt-4 text-sm font-normal text-[#242C2C]">{{ __('news.read_more') }}</a>
+                                <a href="{{ route('news.detail', $item->slug) }}" class="relative z-[2] mx-auto mt-auto pt-4 text-sm font-normal text-[#242C2C]">{{ __('news.read_more') }}</a>
                             </div>
                             {{-- Link overlay all'articolo correlato --}}
-                            <a href="{{ route('news.detail', $item['slug']) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $item['title'] }}"></a>
+                            <a href="{{ route('news.detail', $item->slug) }}" class="absolute inset-0 z-[1] rounded-[3px]" aria-label="{{ $item->titleFor() }}"></a>
                         </article>
                     @endforeach
                 </div>

@@ -156,3 +156,45 @@ textarea[data-flux-control] {
     font-weight: 700;
     color: var(--color-ink);
 }
+
+/* Corpo degli articoli di Animal Times: come le pagine legali è HTML dal DB,
+   senza classi sui tag. Misure dell'XD "News – dettaglio": 16/24 nero da lg,
+   15/22 ink-700 sull'app. */
+.article-content {
+    color: var(--color-ink-700);
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+}
+
+@media (min-width: 64rem) {
+    .article-content {
+        color: #000;
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+}
+
+.article-content h2 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.article-content h2:first-child {
+    margin-top: 0;
+}
+
+.article-content p {
+    margin-bottom: 1.375rem;
+}
+
+.article-content ul {
+    margin: 0 0 1.375rem 1.5rem;
+    list-style: disc;
+}
+
+.article-content li {
+    margin-bottom: 0.375rem;
+}

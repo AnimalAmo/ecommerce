@@ -3,6 +3,7 @@
 namespace App\Livewire\Catalog;
 
 use App\Livewire\Concerns\HasBookingCalendar;
+use App\Models\Article\Article;
 use App\Models\Event\Event;
 use App\Models\Region\Region;
 use Livewire\Component;
@@ -28,13 +29,8 @@ class HomePage extends Component
         $this->editAnimals = ['cane' => 0, 'gatto' => 0];
     }
 
-    // News ancora mock: il backend news arriva con lo step 5 della roadmap.
-    // Excerpt vuoti: copy in attesa della cliente (la card degrada a foto+data+titolo+link).
-    public array $news = [
-        ['img' => 'news-trenitalia', 'date' => '20 Ottobre 2023', 'title' => 'Novità Trenitalia trasporto animali', 'excerpt' => ''],
-        ['img' => 'news-easyjet', 'date' => '3 Ottobre 2023', 'title' => 'Novità EasyJet trasporto animali', 'excerpt' => ''],
-        ['img' => 'event-cavallo', 'date' => '5 Ottobre 2025', 'title' => 'Viaggiare in montagna con il cane', 'excerpt' => ''],
-    ];
+    /** Card news della home: le tre più recenti di Animal Times, come da XD. */
+    private const HOME_NEWS = 3;
 
     /** Tap su un suggerimento del pannello Destinazione (modal filtri mobile). */
     public function selectDestination(string $name): void
@@ -83,6 +79,7 @@ class HomePage extends Component
                 ->limit(6)
                 ->pluck('name'),
             'events' => Event::whereNotNull('home_position')->orderBy('home_position')->get(),
+            'news' => Article::published()->take(self::HOME_NEWS)->get(),
             // Datepicker "Quando" nella hero: calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),
             'calendarLabel' => $this->calendarLabel(),

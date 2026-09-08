@@ -266,21 +266,19 @@
             {{-- Mobile (XD app): card 300px a scroll orizzontale --}}
             <div class="mt-10 grid grid-cols-3 gap-6 max-lg:-mx-4 max-lg:mt-6 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
                 @foreach ($news as $article)
-                    <div wire:key="news-{{ $loop->index }}" class="rounded-[3px] bg-white px-[10px] py-2 max-lg:w-[300px] max-lg:shrink-0 max-lg:snap-start">
-                        <img src="{{ asset('img/xd/'.$article['img'].'.jpg') }}" alt="{{ $article['title'] }}" class="h-[237px] w-full object-cover">
+                    <div wire:key="news-{{ $article->slug }}" class="rounded-[3px] bg-white px-[10px] py-2 max-lg:w-[300px] max-lg:shrink-0 max-lg:snap-start">
+                        <img src="{{ asset($article->cardImage()) }}" alt="{{ $article->titleFor() }}" class="h-[237px] w-full object-cover">
                         <div class="p-2">
                             <p class="flex items-center gap-1.5 font-[Roboto,sans-serif] text-sm text-[#959595]">
                                 <flux:icon.calendar class="h-4 w-4 shrink-0 text-[#959595]" />
-                                {{ $article['date'] }}
+                                {{ $article->formattedDate() }}
                             </p>
-                            <h3 class="my-4 text-[20px] font-semibold text-black">{{ $article['title'] }}</h3>
-                            @if (filled($article['excerpt']))
-                                <p class="mb-4 text-sm font-normal text-[#555555]">{{ $article['excerpt'] }}</p>
+                            <h3 class="my-4 text-[20px] font-semibold text-black">{{ $article->titleFor() }}</h3>
+                            @if (filled($article->excerptFor()))
+                                <p class="mb-4 text-sm font-normal text-[#555555]">{{ $article->excerptFor() }}</p>
                             @endif
                             <div class="flex justify-center">
-                                {{-- Le card home non hanno slug proprio: si risolve per immagine su News::ARTICLES (la card fuori elenco rimanda a /news) --}}
-                                @php $newsSlug = collect(\App\Livewire\Content\News::ARTICLES)->firstWhere('img', $article['img'])['slug'] ?? null; @endphp
-                                <flux:button variant="ghost" :href="$newsSlug ? route('news.detail', $newsSlug) : route('news')" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">{{ __('home.news_read_more') }}</flux:button>
+                                <flux:button variant="ghost" :href="route('news.detail', $article->slug)" class="!text-sm !font-normal !text-[#242C2C] hover:!bg-transparent">{{ __('home.news_read_more') }}</flux:button>
                             </div>
                         </div>
                     </div>
