@@ -10,6 +10,10 @@
         <link rel="icon" type="image/png" href="{{ asset('favicon-32.png') }}" sizes="32x32">
         <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 
+        {{-- Widget Iubenda (privacy e cookie): in <head> e prima degli altri
+             script, così può bloccare i cookie non essenziali fino al consenso. --}}
+        <script type="text/javascript" src="https://embeds.iubenda.com/widgets/f982b4fa-cef8-48b4-86c6-a9d12f07b263.js"></script>
+
         {{ \Illuminate\Support\Facades\Vite::fonts() }}
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
