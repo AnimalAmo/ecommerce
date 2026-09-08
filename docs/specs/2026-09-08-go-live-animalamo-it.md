@@ -258,7 +258,11 @@ In alternativa, se preferisci la storia che il repo ha già: aprire la PR
 - **Cookie policy solo in italiano** finché il cliente non pubblica il
   documento inglese (vedi § 1).
 - **Tidio** si carica prima del consenso, fuori dal blocco di Iubenda, mentre
-  la cookie policy lo classifica come soggetto a consenso.
+  la cookie policy lo classifica come soggetto a consenso. Scelta confermata
+  dal committente l'08/09/2026: si va online così. Resta uno scarto fra quanto
+  il sito dichiara e quanto fa, ed è il tipo di scarto su cui si fondano i
+  reclami al Garante; per chiuderlo basta marcare lo script
+  `type="text/plain" class="_iub_cs_activate"` e lasciarlo all'autoblocco.
 - Le password richiedono solo 8 caratteri e la registrazione non chiede
   l'accettazione esplicita di privacy e termini.
 - IBAN, partita IVA, codice fiscale e PEC dei partner sono in chiaro nel DB.
