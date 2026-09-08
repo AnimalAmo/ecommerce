@@ -1,5 +1,59 @@
+# AnimalAmo — regole di scansione.
+# Il sito è bilingue con slug tradotti (lang/it/routes.php, lang/en/routes.php):
+# l'italiano non ha prefisso, l'inglese vive sotto /en. Ogni path privato va
+# quindi elencato DUE volte, una per lingua — vietare "/carrello" senza
+# "/en/cart" lascia scoperta metà del sito. Presidiato da tests/Feature/Seo/RobotsTest.php.
+# Tutto ciò che non compare qui sotto è crawlabile: la vetrina pubblica (home,
+# animal-holiday, eventi, smartbox, community, Animal Times, pagine legali) è aperta.
+
 User-agent: *
+
+# Carrello e checkout: pagine di sessione, contenuto diverso a ogni visita e
+# nessun valore in SERP. Il checkout apre anche PaymentIntent su Stripe.
+Disallow: /carrello
+Disallow: /checkout
+Disallow: /en/cart
+Disallow: /en/checkout
+
+# Area personale e preferiti: dati del singolo utente loggato. Da ospite le
+# rotte sotto auth rimandano alla home, quindi per un crawler sono redirect a vuoto.
+Disallow: /profilo
+Disallow: /preferiti
+Disallow: /en/profile
+Disallow: /en/favourites
+
+# Reimposta password: il token nell'URL è la sola credenziale della pagina.
+# Non deve finire in nessun indice né essere consumato da un fetch del crawler.
+Disallow: /reimposta-password/
+Disallow: /en/reset-password/
+
+# Endpoint applicativi, non pagine: il webhook Stripe (POST /webhooks/stripe,
+# registrato da PaymentServiceProvider), il logout, il cambio lingua — un
+# redirect puro che moltiplica i path — le chiamate interne di Livewire e
+# l'health check di Laravel, che altrimenti finisce indicizzato come pagina.
+Disallow: /webhooks/
+Disallow: /logout
+Disallow: /locale/
+Disallow: /livewire/
+Disallow: /up
+
+# Area riservata partner: dietro auth+partner, da ospite risponde solo con un
+# redirect alla home. Nessun contenuto da proteggere, quindi il divieto qui è
+# puro risparmio di crawl budget e non ha controindicazioni.
 Disallow: /partner/
 Disallow: /en/partner/
-Disallow: /iscrizione-partner
-Disallow: /en/partner-registration
+
+# ATTENZIONE — le pagine PUBBLICHE del funnel partner (/iscrizione-partner e
+# /en/partner-registration, con i rispettivi step 2) NON vanno vietate qui, ed è
+# una scelta, non una dimenticanza: NoIndexPartnerPages manda
+# "X-Robots-Tag: noindex, nofollow" su tutte le route partner.*, e un header si
+# legge solo se il crawler può scaricare la pagina. Un Disallow otterrebbe
+# l'effetto opposto — Google non leggerebbe mai il noindex e potrebbe tenere in
+# indice il solo URL, senza titolo né descrizione. Lasciarle scansionare è
+# l'unico modo perché il noindex le tolga davvero.
+
+# La sitemap va indicata con un URL ASSOLUTO: un path relativo viene ignorato.
+# Questo file è statico e non passa da PHP, quindi è l'unico punto del lavoro
+# SEO che non può leggere config('app.url'): al cambio di dominio questa riga
+# va aggiornata a mano (RobotsTest la presidia e va rosso se resta indietro).
+Sitemap: https://animalamo.it/sitemap.xml

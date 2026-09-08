@@ -39,6 +39,7 @@ class LangParityTest extends TestCase
                 'payment',
                 'product-type',
                 'profile',
+                'seo',
                 'smartbox',
                 'validation',
             ],
