@@ -26,4 +26,18 @@ return [
     'info_heading' => 'I nostri contatti',
     'info_email_title' => 'Email informazioni',
     'info_instagram_title' => 'Instagram',
+
+    // Copy della notifica interna (ContactMessageMail): la legge la cliente,
+    // non l'utente finale, ma passa comunque da __() come tutto il resto.
+    'notification_mail' => [
+        'subject' => 'Nuovo messaggio da Contattaci — :reason',
+        'title' => 'Nuovo messaggio dal sito',
+        'intro' => 'Qualcuno ha compilato il form Contattaci scegliendo ":reason".',
+        'field_name' => 'Nome',
+        'field_email' => 'Email',
+        'field_reason' => 'Motivo',
+        'field_message' => 'Messaggio',
+        'outro' => 'Rispondi pure a questa email: la risposta arriva direttamente a chi ha scritto.',
+        'signature' => 'AnimalAmo',
+    ],
 ];

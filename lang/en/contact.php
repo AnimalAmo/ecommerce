@@ -26,4 +26,18 @@ return [
     'info_heading' => 'Our contacts',
     'info_email_title' => 'Email',
     'info_instagram_title' => 'Instagram',
+
+    // Internal notification copy (ContactMessageMail) — read by the client,
+    // not by the visitor, but it goes through __() like everything else.
+    'notification_mail' => [
+        'subject' => 'New message from the contact form — :reason',
+        'title' => 'New message from the website',
+        'intro' => 'Someone filled in the contact form choosing ":reason".',
+        'field_name' => 'Name',
+        'field_email' => 'Email',
+        'field_reason' => 'Reason',
+        'field_message' => 'Message',
+        'outro' => 'Just reply to this email: your answer goes straight to the person who wrote in.',
+        'signature' => 'AnimalAmo',
+    ],
 ];

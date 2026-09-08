@@ -3,8 +3,12 @@
 namespace App\Livewire\Content;
 
 use App\Livewire\Forms\ContactForm;
+use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage\ContactMessage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
+use Throwable;
 
 /**
  * Contattaci: unifica i vecchi link "Contattaci" e "Assistenza" (footer B2C,
@@ -16,12 +20,14 @@ class Contact extends Component
 
     public bool $showConfirmation = false;
 
-    /** Salva il messaggio; l'inoltro alla casella informazioni arriverà con la configurazione mail. */
+    /** Salva il messaggio e notifica la casella informazioni. */
     public function submit(): void
     {
         $this->form->validate();
 
-        ContactMessage::create($this->form->toMessage());
+        $message = ContactMessage::create($this->form->toMessage());
+
+        $this->notifySite($message);
 
         $this->showConfirmation = true;
     }
@@ -37,5 +43,37 @@ class Contact extends Component
     public function render()
     {
         return view('livewire.content.contact')->title(__('contact.page_title'));
+    }
+
+    /**
+     * Notifica non bloccante, stessa scelta di SendOrderPaidMails::sendSilently():
+     * la riga contact_messages è già scritta e resta la fonte di verità, quindi
+     * un destinatario non configurato o un mailer che esplode (SMTP giù, Mailgun
+     * in errore) deve finire nei log, non in una schermata di errore su una
+     * richiesta d'informazioni che abbiamo già preso in carico.
+     */
+    private function notifySite(ContactMessage $message): void
+    {
+        $recipient = config('mail.contact_recipient');
+
+        if (blank($recipient)) {
+            Log::warning('CONTACT_RECIPIENT non configurato: messaggio salvato ma non notificato', [
+                'contact_message_id' => $message->id,
+            ]);
+
+            return;
+        }
+
+        try {
+            Mail::to($recipient)->send(new ContactMessageMail($message));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Log::warning('Notifica Contattaci non inviata, il messaggio resta a db', [
+                'contact_message_id' => $message->id,
+                'recipient' => $recipient,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 }
