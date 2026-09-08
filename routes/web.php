@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LocaleSwitchController;
+use App\Http\Controllers\SitemapController;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Catalog\ActivityDetail;
 use App\Livewire\Catalog\AnimalHoliday;
@@ -208,3 +209,9 @@ Route::post('/logout', function (Request $request) {
 })->name('logout');
 
 Route::get('locale/{locale}', LocaleSwitchController::class)->name('locale.switch');
+
+// Sitemap: FUORI dal gruppo localizzato. I motori la cercano in /sitemap.xml
+// sulla radice del dominio (è l'URL assoluto dichiarato in robots.txt) e un
+// prefisso di lingua la renderebbe irraggiungibile; le due lingue stanno DENTRO
+// il documento, come <xhtml:link rel="alternate">.
+Route::get('sitemap.xml', SitemapController::class)->name('sitemap');

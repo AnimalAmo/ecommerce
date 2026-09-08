@@ -116,6 +116,24 @@ class SitemapTest extends TestCase
         }
     }
 
+    /**
+     * La sitemap sta FUORI dal gruppo localizzato, quindi la lingua attiva
+     * dipende da chi passa (una sessione, un cookie) e non dall'URL. Il
+     * documento però è uno solo per tutti: se un domani gli URL li costruisse
+     * route() invece del locale esplicito, un crawler con sessione inglese si
+     * porterebbe a casa metà sitemap sbagliata, in silenzio.
+     */
+    public function test_the_document_does_not_depend_on_the_visitor_locale(): void
+    {
+        $this->seedCatalogue();
+
+        $italian = $this->get('/sitemap.xml')->getContent();
+
+        app()->setLocale('en');
+
+        $this->assertSame($italian, $this->get('/sitemap.xml')->getContent());
+    }
+
     /** Le pagine statiche sono tradotte anche loro: stesso trattamento delle schede. */
     public function test_the_static_pages_carry_their_alternates_too(): void
     {
@@ -278,7 +296,12 @@ class SitemapTest extends TestCase
             $alternates = [];
 
             foreach ($url->children(self::XHTML)->link as $link) {
-                $alternates[(string) $link['hreflang']] = $this->pathOf((string) $link['href']);
+                // $link['hreflang'] qui torna VUOTO: dopo children($ns) SimpleXML
+                // cerca l'attributo nel namespace xhtml, mentre rel/hreflang/href
+                // non hanno prefisso. attributes() rilegge quelli senza namespace.
+                $attributes = $link->attributes();
+
+                $alternates[(string) $attributes['hreflang']] = $this->pathOf((string) $attributes['href']);
             }
 
             return $alternates;
