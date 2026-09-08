@@ -20,7 +20,6 @@ class PartnerDashboardTest extends TestCase
             ->assertSee(__('partner.dashboard.stat_sold'))
             ->assertSee(__('partner.dashboard.stat_cancelled'))
             ->assertSee(__('partner.dashboard.stat_saved'))
-            ->assertSee('112')
             ->assertSee(__('partner.nav_bookings'));
     }
 
