@@ -57,19 +57,21 @@ class UserSeedTest extends TestCase
      * Le persone del mock XD (Susanna Rossi, Giulia Rossi) hanno password
      * "password" e ruoli attivi: su un server pubblico sono un account
      * partner ad accesso noto, e il loro nome finisce nelle mail di chi prova
-     * il flusso. Il catalogo invece serve anche in demo, quindi resta.
+     * il flusso. Dal go-live su animalamo.it lo stesso vale per il catalogo
+     * XD — strutture ed eventi inventati sarebbero offerte acquistabili —
+     * quindi il flag spegne entrambi. Restano solo i dati di piattaforma.
      */
-    public function test_demo_personas_are_skipped_when_the_flag_is_off(): void
+    public function test_demo_personas_and_mock_catalog_are_skipped_when_the_flag_is_off(): void
     {
         config(['app.seed_demo_data' => false]);
 
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(0, User::count());
+        $this->assertSame(0, Event::count());
 
-        // Ruoli e catalogo restano: servono anche su un'istanza pubblica.
+        // I ruoli restano: senza, la registrazione esplode con RoleDoesNotExist.
         $this->assertSame(3, Role::count());
-        $this->assertGreaterThan(0, Event::count());
     }
 
     public function test_seeder_is_idempotent(): void
