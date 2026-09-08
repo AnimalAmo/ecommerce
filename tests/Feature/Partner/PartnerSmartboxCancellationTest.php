@@ -14,6 +14,9 @@ class PartnerSmartboxCancellationTest extends TestCase
 
     public function test_page_renders_the_timeline(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.smartbox.cancellation'))
             ->assertOk()
             ->assertSee(__('partner.smartbox_cancellation.heading'))

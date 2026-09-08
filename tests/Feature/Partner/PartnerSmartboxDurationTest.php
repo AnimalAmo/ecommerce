@@ -14,6 +14,9 @@ class PartnerSmartboxDurationTest extends TestCase
 
     public function test_page_renders_the_days_field(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.smartbox.duration'))
             ->assertOk()
             ->assertSee(__('partner.smartbox_duration.heading'))

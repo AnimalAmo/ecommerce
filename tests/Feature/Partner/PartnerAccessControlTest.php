@@ -45,12 +45,18 @@ class PartnerAccessControlTest extends TestCase
         $this->get(route('partner.profile.security'))->assertOk();
     }
 
-    public function test_form_step_routes_stay_public(): void
+    /**
+     * L'iscrizione resta pubblica — è il punto d'ingresso del partner — ma gli
+     * step del wizard no: da ospite creavano bozze con user_id null e
+     * accettavano foto. L'elenco completo degli step lo verifica WizardAuthTest
+     * leggendolo dal router; qui restano le tre teste come sentinella.
+     */
+    public function test_the_signup_is_public_but_the_wizard_is_not(): void
     {
-        // Gli step del wizard restano accessibili senza login (onboarding).
         $this->get(route('partner.register'))->assertOk();
-        $this->get(route('partner.structure.type'))->assertOk();
-        $this->get(route('partner.activity.type'))->assertOk();
-        $this->get(route('partner.smartbox.type'))->assertOk();
+
+        $this->get(route('partner.structure.type'))->assertRedirect(route('home'));
+        $this->get(route('partner.activity.type'))->assertRedirect(route('home'));
+        $this->get(route('partner.smartbox.type'))->assertRedirect(route('home'));
     }
 }

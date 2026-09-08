@@ -14,6 +14,9 @@ class PartnerActivityIncludedTest extends TestCase
 
     public function test_page_renders_the_sections(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.activity.included'))
             ->assertOk()
             ->assertSee(__('partner.activity_included.heading'))

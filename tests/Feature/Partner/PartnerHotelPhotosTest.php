@@ -3,6 +3,7 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Structure\HotelPhotos;
+use App\Models\Structure\StructureDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +23,9 @@ class PartnerHotelPhotosTest extends TestCase
 
     public function test_page_renders_the_dropzone(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.structure.hotel.photos'))
             ->assertOk()
             ->assertSee(__('partner.hotel_photos.heading'))
@@ -55,7 +59,7 @@ class PartnerHotelPhotosTest extends TestCase
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.structure.hotel.payment'));
 
-        $draft = \App\Models\Structure\StructureDraft::firstOrFail();
+        $draft = StructureDraft::firstOrFail();
         $this->assertCount(4, $draft->photos);
         Storage::disk('public')->assertExists($draft->photos[0]);
     }

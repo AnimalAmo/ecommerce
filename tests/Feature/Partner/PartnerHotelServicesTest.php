@@ -14,6 +14,9 @@ class PartnerHotelServicesTest extends TestCase
 
     public function test_page_renders_the_three_sections(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.structure.hotel.services'))
             ->assertOk()
             ->assertSee(__('partner.hotel_services.heading'))

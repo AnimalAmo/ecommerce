@@ -133,9 +133,18 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.work-with-us.thanks'), WorkWithUsThanks::class)->name('work-with-us.thanks');
     Route::get(LaravelLocalization::transRoute('routes.partner.register'), PartnerRegisterStep1::class)->name('partner.register');
     Route::get(LaravelLocalization::transRoute('routes.partner.register.step2'), PartnerRegisterStep2::class)->name('partner.register.step2');
-    // Area riservata partner: fuori dagli step del form (dashboard, crea servizio,
-    // profilo). Richiede login + account attivo con ruolo partner. Gli step del
-    // wizard (registrazione + creazione struttura/attività/smartbox) restano pubblici.
+    // Area riservata partner: richiede login + account attivo con ruolo partner.
+    // Ci stanno DENTRO anche i tre wizard di creazione servizio (struttura,
+    // attività, smartbox): ogni loro step scrive sulla bozza via
+    // InteractsWithStructureDraft, che salva `user_id` => Auth::id() — da ospite
+    // sarebbe null, cioè bozze orfane e foto caricate da anonimi.
+    //
+    // `partner` oltre ad `auth` non blocca chi si è appena iscritto: l'iscrizione
+    // (RegisterPartnerAccount) crea l'account già attivo e con ruolo partner, e
+    // lo step 2 atterra su partner.dashboard, che questo stesso gruppo protegge.
+    // Del resto ai wizard si arriva solo da "Crea servizio"/"I miei servizi",
+    // entrambe già qui dentro. Pubblici restano i soli ingressi del funnel:
+    // work-with-us, work-with-us.thanks, partner.register(.step2), sopra.
     Route::middleware(['auth', 'partner'])->group(function () {
         Route::get(LaravelLocalization::transRoute('routes.partner.dashboard'), PartnerDashboard::class)->name('partner.dashboard');
         Route::get(LaravelLocalization::transRoute('routes.partner.service.create'), PartnerCreateService::class)->name('partner.service.create');
@@ -146,40 +155,46 @@ Route::group([
         Route::get(LaravelLocalization::transRoute('routes.partner.profile'), PartnerProfileInfo::class)->name('partner.profile');
         Route::get(LaravelLocalization::transRoute('routes.partner.profile.payment'), PartnerProfilePayment::class)->name('partner.profile.payment');
         Route::get(LaravelLocalization::transRoute('routes.partner.profile.security'), PartnerProfileSecurity::class)->name('partner.profile.security');
+
+        // Wizard "crea servizio": struttura ricettiva.
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.type'), PartnerStructureType::class)->name('partner.structure.type');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.title'), PartnerHotelTitle::class)->name('partner.structure.hotel.title');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.location'), PartnerHotelLocation::class)->name('partner.structure.hotel.location');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.description'), PartnerHotelDescription::class)->name('partner.structure.hotel.description');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.rooms'), PartnerHotelRooms::class)->name('partner.structure.hotel.rooms');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.cancellation'), PartnerHotelCancellation::class)->name('partner.structure.hotel.cancellation');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.services'), PartnerHotelServices::class)->name('partner.structure.hotel.services');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.animal-services'), PartnerHotelAnimalServices::class)->name('partner.structure.hotel.animal-services');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.smartbox'), PartnerHotelSmartbox::class)->name('partner.structure.hotel.smartbox');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.photos'), PartnerHotelPhotos::class)->name('partner.structure.hotel.photos');
+        Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.payment'), PartnerHotelPayment::class)->name('partner.structure.hotel.payment');
+
+        // Wizard "crea servizio": attività ed eventi.
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.type'), PartnerActivityType::class)->name('partner.activity.type');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.name'), PartnerActivityName::class)->name('partner.activity.name');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.location'), PartnerActivityLocation::class)->name('partner.activity.location');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.description'), PartnerActivityDescription::class)->name('partner.activity.description');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.info'), PartnerActivityInfo::class)->name('partner.activity.info');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.included'), PartnerActivityIncluded::class)->name('partner.activity.included');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.animal-services'), PartnerActivityAnimalServices::class)->name('partner.activity.animal-services');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.cost'), PartnerActivityCost::class)->name('partner.activity.cost');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.photos'), PartnerActivityPhotos::class)->name('partner.activity.photos');
+        Route::get(LaravelLocalization::transRoute('routes.partner.activity.cancellation'), PartnerActivityCancellation::class)->name('partner.activity.cancellation');
+
+        // Wizard "crea servizio": smartbox.
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.type'), PartnerSmartboxType::class)->name('partner.smartbox.type');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.name'), PartnerSmartboxName::class)->name('partner.smartbox.name');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.description'), PartnerSmartboxDescription::class)->name('partner.smartbox.description');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.duration'), PartnerSmartboxDuration::class)->name('partner.smartbox.duration');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.cancellation'), PartnerSmartboxCancellation::class)->name('partner.smartbox.cancellation');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.meals'), PartnerSmartboxMeals::class)->name('partner.smartbox.meals');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.offers'), PartnerSmartboxOffers::class)->name('partner.smartbox.offers');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.included'), PartnerSmartboxIncluded::class)->name('partner.smartbox.included');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.included-animals'), PartnerSmartboxIncludedAnimals::class)->name('partner.smartbox.included-animals');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.structures'), PartnerSmartboxStructures::class)->name('partner.smartbox.structures');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.photos'), PartnerSmartboxPhotos::class)->name('partner.smartbox.photos');
+        Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.price'), PartnerSmartboxPrice::class)->name('partner.smartbox.price');
     });
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.type'), PartnerStructureType::class)->name('partner.structure.type');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.type'), PartnerActivityType::class)->name('partner.activity.type');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.type'), PartnerSmartboxType::class)->name('partner.smartbox.type');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.name'), PartnerSmartboxName::class)->name('partner.smartbox.name');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.description'), PartnerSmartboxDescription::class)->name('partner.smartbox.description');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.duration'), PartnerSmartboxDuration::class)->name('partner.smartbox.duration');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.cancellation'), PartnerSmartboxCancellation::class)->name('partner.smartbox.cancellation');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.meals'), PartnerSmartboxMeals::class)->name('partner.smartbox.meals');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.offers'), PartnerSmartboxOffers::class)->name('partner.smartbox.offers');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.included'), PartnerSmartboxIncluded::class)->name('partner.smartbox.included');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.included-animals'), PartnerSmartboxIncludedAnimals::class)->name('partner.smartbox.included-animals');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.structures'), PartnerSmartboxStructures::class)->name('partner.smartbox.structures');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.photos'), PartnerSmartboxPhotos::class)->name('partner.smartbox.photos');
-    Route::get(LaravelLocalization::transRoute('routes.partner.smartbox.price'), PartnerSmartboxPrice::class)->name('partner.smartbox.price');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.name'), PartnerActivityName::class)->name('partner.activity.name');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.location'), PartnerActivityLocation::class)->name('partner.activity.location');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.description'), PartnerActivityDescription::class)->name('partner.activity.description');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.info'), PartnerActivityInfo::class)->name('partner.activity.info');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.included'), PartnerActivityIncluded::class)->name('partner.activity.included');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.animal-services'), PartnerActivityAnimalServices::class)->name('partner.activity.animal-services');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.cost'), PartnerActivityCost::class)->name('partner.activity.cost');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.photos'), PartnerActivityPhotos::class)->name('partner.activity.photos');
-    Route::get(LaravelLocalization::transRoute('routes.partner.activity.cancellation'), PartnerActivityCancellation::class)->name('partner.activity.cancellation');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.title'), PartnerHotelTitle::class)->name('partner.structure.hotel.title');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.location'), PartnerHotelLocation::class)->name('partner.structure.hotel.location');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.description'), PartnerHotelDescription::class)->name('partner.structure.hotel.description');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.rooms'), PartnerHotelRooms::class)->name('partner.structure.hotel.rooms');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.cancellation'), PartnerHotelCancellation::class)->name('partner.structure.hotel.cancellation');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.services'), PartnerHotelServices::class)->name('partner.structure.hotel.services');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.animal-services'), PartnerHotelAnimalServices::class)->name('partner.structure.hotel.animal-services');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.smartbox'), PartnerHotelSmartbox::class)->name('partner.structure.hotel.smartbox');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.photos'), PartnerHotelPhotos::class)->name('partner.structure.hotel.photos');
-    Route::get(LaravelLocalization::transRoute('routes.partner.structure.hotel.payment'), PartnerHotelPayment::class)->name('partner.structure.hotel.payment');
 });
 
 // Non-localized routes (no language prefix).

@@ -14,6 +14,9 @@ class PartnerActivityInfoTest extends TestCase
 
     public function test_page_renders_the_date_fields(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.activity.info'))
             ->assertOk()
             ->assertSee(__('partner.activity_info.heading'))

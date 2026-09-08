@@ -14,6 +14,9 @@ class PartnerActivityNameTest extends TestCase
 
     public function test_page_renders_the_name_field(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.activity.name'))
             ->assertOk()
             ->assertSee(__('partner.activity_name.heading'))
