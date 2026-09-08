@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Cart\Cart;
+use App\Models\CartItem\CartItem;
 use App\Models\Community\CommunityPost;
 use App\Models\Event\Event;
+use App\Models\Faq\Faq;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\Page\Page;
@@ -11,7 +14,9 @@ use App\Models\Region\Region;
 use App\Models\Review\Review;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Models\Structure\StructureDraft;
 use App\Models\User;
+use App\Models\Venue\Venue;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -60,9 +65,126 @@ class PurgeMockCatalogTest extends TestCase
         // Le righe polimorfiche non hanno vincolo di chiave esterna: senza
         // pulizia esplicita resterebbero appese a id che non esistono più.
         $this->assertSame(0, DB::table('amenityables')->count());
-        $this->assertSame(0, DB::table('faqs')->count());
-        $this->assertSame(0, DB::table('cart_items')->count());
-        $this->assertSame(0, DB::table('favorites')->count());
+        $this->assertSame(0, DB::table('reviews')->count());
+    }
+
+    /**
+     * faqs, cart_items e favorites dopo il solo seed sono vuote, quindi
+     * asserirle a zero non proverebbe niente: qui le righe si creano apposta,
+     * agganciate a una struttura mock e a una vera, e si guarda quali restano.
+     */
+    public function test_it_only_unhooks_what_hangs_from_the_mock(): void
+    {
+        $this->seedWithMockCatalog();
+
+        $mock = Structure::whereNull('user_id')->whereNull('structure_draft_id')->firstOrFail();
+
+        $partner = User::factory()->create();
+        $real = Structure::factory()->create(['user_id' => $partner->id]);
+
+        $customer = User::factory()->create();
+        $cart = Cart::create(['user_id' => $customer->id]);
+
+        foreach ([$mock, $real] as $structure) {
+            Faq::factory()->create(['faqable_type' => 'structure', 'faqable_id' => $structure->id]);
+            CartItem::create([
+                'cart_id' => $cart->id,
+                'purchasable_type' => 'structure',
+                'purchasable_id' => $structure->id,
+                'price_cents' => 1000,
+            ]);
+            DB::table('favorites')->insert([
+                'user_id' => $customer->id,
+                'favoritable_type' => 'structure',
+                'favoritable_id' => $structure->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->artisan('animalamo:purge-mock-catalog --force')->assertSuccessful();
+
+        foreach (['faqs' => 'faqable', 'cart_items' => 'purchasable', 'favorites' => 'favoritable'] as $table => $morph) {
+            $this->assertSame(0, DB::table($table)->where($morph.'_id', $mock->id)->where($morph.'_type', 'structure')->count(), $table);
+            $this->assertSame(1, DB::table($table)->where($morph.'_id', $real->id)->where($morph.'_type', 'structure')->count(), $table);
+        }
+    }
+
+    /**
+     * Il difetto più pericoloso trovato in review: fino all'08/09/2026 il
+     * wizard partner era pubblico e salvava le bozze da ospite, quindi esiste
+     * contenuto vero con user_id nullo. A distinguerlo è la bozza dietro.
+     */
+    public function test_it_spares_content_published_before_the_wizard_required_a_login(): void
+    {
+        $this->seedWithMockCatalog();
+
+        $draft = StructureDraft::create([
+            'user_id' => null,
+            'status' => StructureDraft::STATUS_COMPLETED,
+            'service_category' => 'struttura',
+        ]);
+        $orphanButReal = Structure::factory()->create([
+            'user_id' => null,
+            'structure_draft_id' => $draft->id,
+        ]);
+
+        $this->artisan('animalamo:purge-mock-catalog --force')->assertSuccessful();
+
+        $this->assertDatabaseHas('structures', ['id' => $orphanButReal->id]);
+    }
+
+    /** La delete di massa non fa scattare l'hook di spatie: i ruoli resterebbero appesi. */
+    public function test_it_does_not_leave_orphan_roles_behind(): void
+    {
+        $this->seedWithMockCatalog();
+
+        $this->artisan('animalamo:purge-mock-catalog --force')->assertSuccessful();
+
+        $orphans = DB::table('model_has_roles')
+            ->where('model_type', 'user')
+            ->whereNotIn('model_id', User::pluck('id'))
+            ->count();
+
+        $this->assertSame(0, $orphans);
+    }
+
+    /** Gli ordini demo sono nullOnDelete: senza cancellarli resterebbero orfani, con dentro nome e mail della persona. */
+    public function test_it_removes_the_demo_orders_and_their_payments(): void
+    {
+        $this->seedWithMockCatalog();
+
+        $this->assertGreaterThan(0, DB::table('orders')->count());
+
+        $this->artisan('animalamo:purge-mock-catalog --force')->assertSuccessful();
+
+        $this->assertSame(0, DB::table('orders')->count());
+        $this->assertSame(0, DB::table('order_payments')->count());
+        $this->assertSame(0, DB::table('structure_drafts')->count());
+    }
+
+    /** I luoghi del mock non scendono in cascata con gli eventi: la FK va nel verso opposto. */
+    public function test_it_removes_the_mock_venues(): void
+    {
+        $this->seedWithMockCatalog();
+
+        $this->assertGreaterThan(0, Venue::count());
+
+        $this->artisan('animalamo:purge-mock-catalog --force')->assertSuccessful();
+
+        $this->assertSame(0, Venue::count());
+    }
+
+    /** Un comando che si esegue una volta sola deve poter essere provato prima. */
+    public function test_the_dry_run_counts_without_deleting(): void
+    {
+        $this->seedWithMockCatalog();
+
+        $before = Structure::count();
+
+        $this->artisan('animalamo:purge-mock-catalog --dry-run')->assertSuccessful();
+
+        $this->assertSame($before, Structure::count());
     }
 
     public function test_it_keeps_the_platform_data(): void
