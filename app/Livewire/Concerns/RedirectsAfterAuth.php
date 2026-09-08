@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
 
 trait RedirectsAfterAuth
 {
@@ -23,9 +24,21 @@ trait RedirectsAfterAuth
     /**
      * URL di ritorno dopo il login: la pagina corrente (nel round-trip Livewire
      * il Referer è la pagina ospite), con fallback sicuro sulla home.
+     *
+     * Eccezione: il partner attivo va nella sua area. Tornando "dov'era"
+     * restava sulla pagina pubblica da cui aveva aperto la modale, e il login
+     * sembrava non essere andato a buon fine. Il controllo su is_active non è
+     * pignoleria: senza, un partner sospeso finirebbe sul 403 di
+     * EnsureActivePartner invece che su una pagina qualsiasi.
      */
     protected function authRedirectUrl(): string
     {
+        $user = Auth::user();
+
+        if ($user !== null && $user->is_active && $user->hasRole('partner')) {
+            return route('partner.dashboard');
+        }
+
         $previous = url()->previous();
         $root = url('/');
 

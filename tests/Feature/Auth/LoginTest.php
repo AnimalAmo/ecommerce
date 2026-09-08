@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Livewire\Auth\AuthModal;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -24,6 +25,39 @@ class LoginTest extends TestCase
             ->assertRedirect();
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    /**
+     * Vale anche dalla modale cliente: chi ha il ruolo partner ha un'area sua,
+     * e lasciarlo sulla pagina pubblica di partenza sembrava un login fallito.
+     */
+    public function test_a_partner_logging_in_from_the_client_modal_lands_in_the_dashboard(): void
+    {
+        $this->seed(RoleSeeder::class);
+
+        $partner = User::factory()->create(['is_active' => true]);
+        $partner->assignRole('partner');
+
+        Livewire::test(AuthModal::class)
+            ->set('form.email', $partner->email)
+            ->set('form.password', 'password')
+            ->call('login')
+            ->assertRedirect(route('partner.dashboard'));
+    }
+
+    /** Il cliente resta dov'era: la dashboard partner gli risponderebbe 403. */
+    public function test_a_client_stays_on_the_page_they_came_from(): void
+    {
+        $this->seed(RoleSeeder::class);
+
+        $client = User::factory()->create();
+        $client->assignRole('client');
+
+        Livewire::test(AuthModal::class)
+            ->set('form.email', $client->email)
+            ->set('form.password', 'password')
+            ->call('login')
+            ->assertRedirect(route('home'));
     }
 
     public function test_users_cannot_authenticate_with_invalid_password(): void

@@ -35,6 +35,23 @@ class PartnerLoginTest extends TestCase
         $this->assertAuthenticatedAs($partner);
     }
 
+    /**
+     * Il login rimandava "dov'eri": aprendo la modale dalla home il partner
+     * tornava sulla home, con l'impressione che il login fosse fallito. Un
+     * partner attivo ha una sua area, e va lì.
+     */
+    public function test_an_active_partner_lands_in_the_dashboard(): void
+    {
+        $partner = User::factory()->create(['is_active' => true]);
+        $partner->assignRole('partner');
+
+        Livewire::test(PartnerLoginModal::class)
+            ->set('form.email', $partner->email)
+            ->set('form.password', 'password')
+            ->call('login')
+            ->assertRedirect(route('partner.dashboard'));
+    }
+
     public function test_clients_are_rejected_from_the_partner_modal_and_logged_out(): void
     {
         $client = User::factory()->create();
