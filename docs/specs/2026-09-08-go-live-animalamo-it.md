@@ -137,21 +137,76 @@ e tenere d'occhio `failed_jobs`: il listener degli ordini ingoia gli errori di
 invio per non far fallire l'acquisto, quindi un mailer rotto è invisibile
 dall'interfaccia.
 
+**Prima di avviare il daemon, svuotare la coda.** Su staging il worker non c'è
+mai stato, quindi ogni mail accodata in mesi di prove è ancora nella tabella
+`jobs`: al primo `queue:work` partirebbero tutte insieme, dal dominio nuovo,
+verso indirizzi veri — conferme di ordini che non esistono e inviti a diventare
+partner. È il singolo passo più rischioso dell'intera messa online.
+
+```bash
+php artisan queue:clear        # svuota jobs; poi si avvia il daemon
+```
+
 ### 3.4 Pulizia del database ereditato dallo staging
 
-Da fare una volta sola, dopo il primo deploy e prima di puntare il dominio:
+Una volta sola, **dopo** `db:seed --force` e prima di puntare il dominio.
+L'ordine conta: `RegionSeeder` gira sempre (sta sopra il guard demo) e riscrive
+`regions.structures_count` coi numeri del mock, quindi il seed va prima.
 
-- cancellare le 12 strutture mock e i loro eventi, smartbox, recensioni e FAQ;
-- cancellare gli utenti demo (`giulia.rossi@gmail.com`, `partner@animalamo.test`
-  e le altre persone dell'XD): hanno password `password`;
-- cancellare i post finti della community;
-- azzerare `regions.structures_count` (i badge ora contano davvero, ma la
-  colonna resta lì);
-- **tenere** regioni, province, servizi, gateway di pagamento, ruoli, pagine
-  legali e i 4 articoli di Animal Times.
+```bash
+php artisan animalamo:purge-mock-catalog --dry-run   # conta e non tocca niente
+php artisan animalamo:purge-mock-catalog             # chiede conferma in produzione
+```
 
-Verifica rapida dopo la pulizia: la home non deve contenere né «Sofia» né un
-badge «N Strutture», e `/animal-holiday` non deve promettere strutture.
+Il comando cancella solo ciò che è identificabile con certezza: catalogo senza
+bozza dietro e senza proprietario (o intestato alle persone demo), i due
+account demo con i loro ordini, pagamenti e bozze, i post della community
+seminati, i luoghi del mock, e azzera `regions.structures_count`. Il criterio
+è `structure_draft_id`: i publisher lo scrivono sempre, i seeder mai — serve
+perché il wizard partner è stato pubblico fino all'08/09/2026 e in quella
+finestra salvava bozze da ospite, quindi esiste contenuto vero con `user_id`
+nullo. Il `--dry-run` avverte se restano righe con una bozza dietro.
+
+**Quello che il comando NON tocca, di proposito**, perché ogni riga può
+appartenere a una persona vera e cancellarla è irreversibile. Va guardato a
+mano, riga per riga, prima dello switch:
+
+```sql
+-- account registrati su staging fuori dai due demo
+SELECT u.id, u.email, u.is_active, u.created_at, GROUP_CONCAT(r.name) ruoli
+FROM users u
+LEFT JOIN model_has_roles mhr ON mhr.model_id = u.id AND mhr.model_type = 'user'
+LEFT JOIN roles r ON r.id = mhr.role_id
+WHERE u.email NOT IN ('giulia.rossi@gmail.com','partner@animalamo.test')
+GROUP BY u.id ORDER BY u.created_at;
+
+-- catalogo pubblicato da chi ha provato il wizard (sopravvive alla pulizia)
+SELECT 'structures' t, id, user_id, structure_draft_id, created_at FROM structures WHERE structure_draft_id IS NOT NULL
+UNION ALL SELECT 'events', id, user_id, structure_draft_id, created_at FROM events WHERE structure_draft_id IS NOT NULL
+UNION ALL SELECT 'smartbox', id, user_id, structure_draft_id, created_at FROM smartbox_packages WHERE structure_draft_id IS NOT NULL;
+
+-- candidature "Lavora con noi", messaggi "Contattaci", post community
+SELECT id, first_name, last_name, email, status, created_at FROM partner_applications ORDER BY id;
+SELECT id, first_name, last_name, email, LEFT(message,60) messaggio, created_at FROM contact_messages ORDER BY id;
+SELECT id, user_id, author_name, title, created_at FROM community_posts ORDER BY id;
+
+-- bozze abbandonate: contengono IBAN e dati fiscali in chiaro
+SELECT id, user_id, status, current_step, city, iban, created_at FROM structure_drafts ORDER BY id;
+```
+
+Cancellare una bozza a cui punta una riga di catalogo viva rompe la modifica
+B2B di quel partner (`structure_draft_id` è nullOnDelete): escludere sempre le
+bozze referenziate.
+
+Igiene a rischio zero, da fare comunque: `TRUNCATE sessions;`,
+`TRUNCATE password_reset_tokens;`, `TRUNCATE cache;`, `TRUNCATE cache_locks;`.
+Le foto dei tester restano su disco in `storage/app/public/structure-photos` e
+`smartbox-photos`: vanno confrontate con le righe sopravvissute prima di
+cancellarle, e `livewire-tmp` si svuota senza condizioni.
+
+Verifica di chiusura: `SELECT reviewable_type, COUNT(*) FROM reviews GROUP BY 1;`
+deve tornare vuota, la home non deve contenere né «Sofia» né un badge
+«N Strutture», e `/animal-holiday` non deve promettere strutture.
 
 ## 4. Git — creare `main` sul repo cliente
 
