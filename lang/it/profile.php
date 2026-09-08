@@ -65,6 +65,11 @@ return [
     'back' => 'Indietro',
     'no_results' => 'Nessun risultato',
 
+    // Stato vuoto de "I miei ordini": la pagina di ogni utente appena registrato.
+    // Nessuna promessa di catalogo, la CTA porta su Animal Times (contenuto reale).
+    'orders_empty' => 'Qui compariranno i tuoi ordini, appena ne farai il primo.',
+    'orders_empty_cta' => 'Leggi le storie di Animal Times',
+
     // Tab (In programma / Passati)
     'tab_upcoming' => 'In programma',
     'tab_past' => 'Passati',
