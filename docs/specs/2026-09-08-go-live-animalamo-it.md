@@ -149,6 +149,14 @@ php artisan queue:clear        # svuota jobs; poi si avvia il daemon
 
 ### 3.4 Pulizia del database ereditato dallo staging
 
+**Prima di tutto, il dump.** Rinominare il sito di staging significa che non
+esiste un secondo ambiente su cui tornare: la pulizia è irreversibile e non c'è
+una copia del catalogo altrove. Il dump è l'unico modo di annullare un errore.
+
+```bash
+mysqldump -u forge -p animalamo > ~/animalamo-pre-purge-$(date +%F-%H%M).sql
+```
+
 Una volta sola, **dopo** `db:seed --force` e prima di puntare il dominio.
 L'ordine conta: `RegionSeeder` gira sempre (sta sopra il guard demo) e riscrive
 `regions.structures_count` coi numeri del mock, quindi il seed va prima.
