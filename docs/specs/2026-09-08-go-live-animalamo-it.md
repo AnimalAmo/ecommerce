@@ -155,21 +155,26 @@ badge «N Strutture», e `/animal-holiday` non deve promettere strutture.
 
 ## 4. Git — creare `main` sul repo cliente
 
-Due remote: `origin` (algomeraIT/animal_amo) e `animalamo` (AnimalAmo/ecommerce).
-Entrambi hanno già `develop` aggiornato; `main` è indietro dei commit di oggi.
+Due remote: `origin` (algomeraIT/animal_amo) e `animalamo` (AnimalAmo/ecommerce),
+entrambi con `develop` già aggiornato. `main` **non è semplicemente indietro**:
+ha 12 commit in meno di `develop` ma anche 24 che `develop` non ha — 23 sono
+merge di PR `develop → main` e uno è un `fix` fatto a mano sul footer. Quindi
+**non è un fast-forward**, è un merge vero. Provato a vuoto con `git merge-tree`:
+zero conflitti.
+
 Comandi (li esegui tu, come deciso):
 
 ```bash
 git fetch --all
 git checkout -B main animalamo/main
-git merge --ff-only develop
+git merge develop -m "Merge develop into main for the animalamo.it launch"
 git push animalamo main
 git push origin main
 git checkout develop
 ```
 
-Se il merge non è fast-forward, fermarsi e guardare cosa c'è su `main` che non
-è su `develop` prima di forzare.
+In alternativa, se preferisci la storia che il repo ha già: aprire la PR
+`develop → main` su GitHub, come le 23 precedenti.
 
 ## 5. Dopo lo switch
 
