@@ -65,6 +65,11 @@ return [
     'back' => 'Back',
     'no_results' => 'No results',
 
+    // "My orders" empty state: what every freshly registered user sees. It promises
+    // no catalogue, and the CTA leads to Animal Times (content that really exists).
+    'orders_empty' => 'Your orders will show up here, as soon as you place your first one.',
+    'orders_empty_cta' => 'Read the Animal Times stories',
+
     // Tabs (Upcoming / Past)
     'tab_upcoming' => 'Upcoming',
     'tab_past' => 'Past',

@@ -22,6 +22,9 @@ return [
         'empty_heading' => 'You haven’t booked any activities yet',
         'empty_text' => 'Get your four-legged friends ready: plan your next adventure together.',
         'empty_cta' => 'Experiences made for you',
+        // Second CTA: until partners publish, /eventi is empty too — Animal Times
+        // has real articles, so the empty state points there as well.
+        'empty_cta_news' => 'Read the Animal Times stories',
         'most_loved' => 'The most loved activities on Animal-amo',
         'prev_cards' => 'Previous cards',
         'next_cards' => 'Next cards',

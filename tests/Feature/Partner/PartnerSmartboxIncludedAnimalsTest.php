@@ -14,6 +14,9 @@ class PartnerSmartboxIncludedAnimalsTest extends TestCase
 
     public function test_page_renders_the_animal_service_options(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.smartbox.included-animals'))
             ->assertOk()
             ->assertSee(__('partner.smartbox_included_animals.heading'))

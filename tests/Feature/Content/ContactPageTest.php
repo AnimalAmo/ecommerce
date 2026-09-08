@@ -3,8 +3,10 @@
 namespace Tests\Feature\Content;
 
 use App\Livewire\Content\Contact;
+use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage\ContactMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -81,5 +83,54 @@ class ContactPageTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee(route('contact'));
+    }
+
+    public function test_submitting_the_form_queues_the_notification_to_the_configured_recipient(): void
+    {
+        Mail::fake();
+
+        config(['mail.contact_recipient' => 'informazioni@animalamo.it']);
+
+        Livewire::test(Contact::class)
+            ->set('form.firstName', 'Giulia')
+            ->set('form.lastName', 'Rossi')
+            ->set('form.email', 'giulia@example.com')
+            ->set('form.reason', 'Informazioni generali')
+            ->set('form.message', 'Vorrei sapere di più sulle smartbox.')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        // Reply-To sul mittente: rispondere alla notifica risponde alla cliente,
+        // non alla casella di sistema del MAIL_FROM_ADDRESS.
+        Mail::assertQueued(
+            ContactMessageMail::class,
+            fn (ContactMessageMail $mail): bool => $mail->hasTo('informazioni@animalamo.it')
+                && $mail->hasReplyTo('giulia@example.com')
+                && $mail->contactMessage->message === 'Vorrei sapere di più sulle smartbox.',
+        );
+    }
+
+    public function test_the_message_is_stored_and_confirmed_even_without_a_configured_recipient(): void
+    {
+        Mail::fake();
+
+        // Destinatario non configurato in produzione: l'enquiry non deve andare
+        // persa né trasformarsi in un 500 sulla faccia di chi scrive.
+        config(['mail.contact_recipient' => null]);
+
+        Livewire::test(Contact::class)
+            ->set('form.firstName', 'Giulia')
+            ->set('form.lastName', 'Rossi')
+            ->set('form.email', 'giulia@example.com')
+            ->set('form.reason', 'Altro')
+            ->set('form.message', 'Ciao!')
+            ->call('submit')
+            ->assertHasNoErrors()
+            ->assertSet('showConfirmation', true);
+
+        $this->assertSame(1, ContactMessage::count());
+        $this->assertSame('giulia@example.com', ContactMessage::first()->email);
+
+        Mail::assertNothingQueued();
     }
 }

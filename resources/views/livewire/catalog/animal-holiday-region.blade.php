@@ -116,19 +116,42 @@
             {{-- Nessun risultato (XD app "Nessun risultato"): al posto della griglia vuota
                  compare l'avviso e, sotto, le card proposte come alternativa. --}}
             @if ($empty)
-                <div class="mt-6 border-y border-[#E9E9E9] py-6 text-center">
-                    <p class="flex items-center justify-center gap-2 text-[15px] font-semibold text-[#EA2E68]">
-                        <flux:icon.exclamation-circle class="h-5 w-5 shrink-0" />
-                        {{ __('catalog.no_results_title') }}
-                    </p>
-                    <p class="mt-2 text-[15px] text-[#555555]">{{ __('catalog.no_results_hint') }}</p>
-                </div>
-                <p class="mt-6 text-[15px] font-semibold text-[#0D171A]">{{ __('catalog.similar_results_title') }}</p>
+                @if ($filtersCanHelp)
+                    <div class="mt-6 border-y border-[#E9E9E9] py-6 text-center">
+                        <p class="flex items-center justify-center gap-2 text-[15px] font-semibold text-[#EA2E68]">
+                            <flux:icon.exclamation-circle class="h-5 w-5 shrink-0" />
+                            {{ __('catalog.no_results_title') }}
+                        </p>
+                        <p class="mt-2 text-[15px] text-[#555555]">{{ __('catalog.no_results_hint') }}</p>
+                    </div>
+                @else
+                    {{-- Nessun filtro del visitatore e niente da mostrare cambiandoli: qui non
+                         c'è ancora niente pubblicato. Niente rosso d'errore e niente "prova a
+                         modificare i filtri", una riga onesta e due strade verso il contenuto
+                         che esiste davvero. --}}
+                    <div class="mt-6 rounded-[4px] border border-[#E9E9E9] bg-gray-100 px-6 py-6">
+                        <p class="text-lg font-semibold text-ink">{{ __('holiday.empty_catalogue_region_title', ['region' => $regionName]) }}</p>
+                        <p class="mt-1.5 text-[15px] leading-[22px] text-[#555555]">{{ __('holiday.empty_catalogue_region_body') }}</p>
+                        <div class="mt-4 flex flex-wrap items-center gap-3">
+                            <flux:button href="{{ route('work-with-us') }}" class="!h-10 !rounded-full !border-0 !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink !shadow-none">{{ __('holiday.empty_catalogue_partner_cta') }}</flux:button>
+                            <flux:button href="{{ route('news') }}" variant="ghost" class="!h-10 !rounded-full !px-6 !text-sm !font-bold !text-ink">{{ __('holiday.empty_catalogue_news_cta') }}</flux:button>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Il titolo "Risultati simili" solo se card simili ce ne sono davvero --}}
+                @if ($similar->isNotEmpty())
+                    <p class="mt-6 text-[15px] font-semibold text-[#0D171A]">{{ __('catalog.similar_results_title') }}</p>
+                @endif
             @endif
 
-            {{-- Griglia risultati (XD: simbolo "Box hotel", 4 colonne × 3 righe) --}}
+            @php $cards = $empty ? $similar : $results; @endphp
+
+            {{-- Griglia risultati (XD: simbolo "Box hotel", 4 colonne × 3 righe).
+                 Senza nemmeno una card la griglia sarebbe un guscio vuoto: meglio non disegnarla. --}}
+            @if ($cards->isNotEmpty() || $events->isNotEmpty() || $boxes->isNotEmpty())
             <div class="mt-10 grid grid-cols-4 gap-x-[27px] gap-y-4 max-lg:mt-5 max-lg:grid-cols-1 max-lg:gap-y-6">
-                @foreach ($empty ? $similar : $results as $result)
+                @foreach ($cards as $result)
                     <article wire:key="res-{{ $result->id }}" class="group relative flex flex-col rounded-[3px] border border-[#E9E9E9] bg-white">
                         <div class="relative m-2 overflow-hidden rounded-t-[3px]">
                             <img src="{{ $result->imageUrl() }}" alt="{{ $result->name }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105">
@@ -142,8 +165,8 @@
                             </p>
                             <p class="mt-1.5 flex items-center gap-1.5 text-[13px] font-semibold tracking-[0.025em] text-[#555555]">
                                 <flux:icon.star class="h-[15px] w-4 shrink-0" />
-                                {{-- Strutture partner senza recensioni: stato "Nuovo" --}}
-                                {{ $result->rating !== null ? \App\Support\Format::rating($result->rating) : __('holiday.new') }}
+                                {{-- Senza recensioni non c'è media: stato "Nuovo" invece di un voto inventato --}}
+                                {{ $result->rating !== null && $result->reviews_count > 0 ? \App\Support\Format::rating($result->rating) : __('holiday.new') }}
                             </p>
                             <h3 class="mt-2.5 text-[20px] font-semibold leading-[25px] text-black">{{ $result->name }}</h3>
                             <p class="mt-auto pt-4 text-right text-[15px] font-normal text-[#627277]">{{ __('holiday.from_price_label') }} <span class="whitespace-nowrap font-semibold tracking-[0.025em] text-[#0D171A]">{{ \App\Support\Format::money($result->price_from_cents) }}</span></p>
@@ -228,23 +251,15 @@
                     </article>
                 @endforeach
             </div>
+            @endif
 
-            {{-- Paginazione (statica; pagina 1 attiva, prev disabilitato) --}}
-            {{-- Mobile: "Carica altro" al posto della paginazione (XD app; statico come la paginazione) --}}
-            <div class="mt-8 flex justify-center lg:hidden">
-                <flux:button class="!h-[39px] !rounded-full !bg-[#0D171A] !px-8 !text-sm !font-bold !text-white hover:!bg-black">{{ __('holiday.load_more') }}</flux:button>
-            </div>
-            <nav class="mt-10 flex items-center justify-center gap-3 max-lg:hidden" aria-label="{{ __('holiday.pagination') }}">
-                <flux:button variant="ghost" square disabled aria-label="{{ __('holiday.prev_page') }}" class="!h-auto !w-auto !p-1 !text-[#C8C8C8]">
-                    <flux:icon.arrow-down class="h-4 w-4 rotate-90" />
-                </flux:button>
-                @foreach (range(1, 4) as $page)
-                    <flux:button wire:key="page-{{ $page }}" square :aria-current="$page === 1 ? 'page' : null" class="!h-8 !w-8 !rounded-full !border-0 !text-base !font-medium !shadow-none {{ $page === 1 ? '!bg-black !text-white' : '!bg-white !text-black' }}">{{ $page }}</flux:button>
-                @endforeach
-                <flux:button variant="ghost" square aria-label="{{ __('holiday.next_page') }}" class="!h-auto !w-auto !p-1 !text-black">
-                    <flux:icon.arrow-down class="h-4 w-4 -rotate-90" />
-                </flux:button>
-            </nav>
+            {{-- Niente paginazione né "Carica altro": erano finti (range(1, 4) con pagina 1
+                 sempre attiva e nessun wire:click, disegnati anche a zero risultati) e un
+                 controllo che mente è peggio di nessun controllo. Qui non c'è nulla da
+                 impaginare: le tre query prendono l'intero elenco della regione. Quando i
+                 volumi lo richiederanno, il paginator vero è quello della pagina Eventi
+                 (resources/views/livewire/catalog/events.blade.php) — serve però prima
+                 decidere come impaginare insieme strutture, eventi e cofanetti. --}}
         </div>
     </main>
 

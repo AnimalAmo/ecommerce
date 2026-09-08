@@ -3,7 +3,6 @@
 return [
     // Region cards and titles ('Hotels and services in Liguria')
     'region_title' => 'Hotels and services in :region',
-    'structures_count' => ':count Structures',
     // Region grid card badges (verbatim XD: 'Hotel' for structures, 'Services' for services)
     'results_title' => 'Here are the results:',
     'badge_hotel' => 'Hotel',
@@ -47,4 +46,6 @@ return [
         'gruppo' => 'Group (5+ people)',
     ],
     'show_results' => 'Show :count results',
+    // At zero the button cannot promise results: it says what it actually does.
+    'close_filters' => 'Close filters',
 ];

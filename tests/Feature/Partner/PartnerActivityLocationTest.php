@@ -14,6 +14,9 @@ class PartnerActivityLocationTest extends TestCase
 
     public function test_page_renders_the_location_fields(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.activity.location'))
             ->assertOk()
             ->assertSee(__('partner.activity_location.heading'))

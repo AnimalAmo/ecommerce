@@ -15,6 +15,9 @@ class PartnerHotelRoomsTest extends TestCase
 
     public function test_page_renders_the_room_fields(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.structure.hotel.rooms'))
             ->assertOk()
             ->assertSee(__('partner.hotel_rooms.heading'))
@@ -115,6 +118,9 @@ class PartnerHotelRoomsTest extends TestCase
 
     public function test_whole_property_page_swaps_the_room_copy_for_the_unit_copy(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->wholePropertyDraft();
 
         $this->get(route('partner.structure.hotel.rooms'))

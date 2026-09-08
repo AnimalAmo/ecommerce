@@ -12,6 +12,19 @@ return [
     'search_cta' => 'Search',
     'no_location' => 'No location found',
 
+    // Region card badge: counts the structures actually published there
+    // (hidden at zero, so the {0} form never shows up).
+    'structures_count' => '{0} :count Structures|{1} :count Structure|[2,*] :count Structures',
+
+    // Empty catalogue: no partner has published yet (day one on animalamo.it).
+    // It is not a failed search, so no red banner and no "change your filters".
+    'empty_catalogue_title' => 'No structures published yet',
+    'empty_catalogue_body' => 'Structures and services are published by AnimalAmo partners: as soon as they arrive, you will find them here.',
+    'empty_catalogue_region_title' => 'Nothing to book in :region yet',
+    'empty_catalogue_region_body' => 'No partner has published in this region yet: as soon as one does, the results show up here.',
+    'empty_catalogue_news_cta' => 'Read Animal Times',
+    'empty_catalogue_partner_cta' => 'Publish your business',
+
     // Filters
     'filter_your_search' => 'Filter your search:',
     'filter_type' => 'Type',
@@ -19,12 +32,6 @@ return [
 
     // Result cards
     'from_price_label' => 'From',
-
-    // Pagination
-    'load_more' => 'Load more',
-    'pagination' => 'Pagination',
-    'prev_page' => 'Previous page',
-    'next_page' => 'Next page',
 
     // Detail hero
     'back' => 'Back',
@@ -48,6 +55,7 @@ return [
     'rating_with_reviews' => ':rating (:count reviews)',
     'reviewed_by' => 'Reviewed by',
     'load_more_reviews' => 'Load more reviews',
+    'no_reviews' => 'No reviews yet.',
 
     // Booking card
     'checkin' => 'Check-in',

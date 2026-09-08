@@ -22,6 +22,9 @@ return [
         'empty_heading' => 'Non hai ancora prenotato attività',
         'empty_text' => 'Prepara i tuoi amici a quattro zampe: organizza la vostra prossima avventura.',
         'empty_cta' => 'Esperienze pensate per te',
+        // Seconda CTA: finché i partner non pubblicano, /eventi è a sua volta vuoto —
+        // Animal Times ha articoli veri, quindi lo stato vuoto porta anche lì.
+        'empty_cta_news' => 'Leggi le storie di Animal Times',
         'most_loved' => 'Le attività più amate su Animal-amo',
         'prev_cards' => 'Card precedenti',
         'next_cards' => 'Card successive',

@@ -126,4 +126,20 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Casella "Contattaci"
+    |--------------------------------------------------------------------------
+    |
+    | Dove arriva la notifica di ogni messaggio inviato dal form Contattaci.
+    | Default committato = la stessa casella pubblicata sulla pagina contatti,
+    | così anche senza CONTACT_RECIPIENT in .env le richieste raggiungono
+    | qualcuno. Il giorno che la cliente passa a una casella di dominio basta
+    | CONTACT_RECIPIENT=... senza toccare il codice. Se il valore è vuoto la
+    | notifica viene saltata: il messaggio resta comunque su contact_messages.
+    |
+    */
+
+    'contact_recipient' => env('CONTACT_RECIPIENT', 'animalamo24@gmail.com'),
+
 ];

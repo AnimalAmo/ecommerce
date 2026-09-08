@@ -24,6 +24,13 @@ return [
     'filter_place' => 'Luogo',
     'from_price_label' => 'A partire da',
 
+    // Catalogo vuoto: nessun partner ha ancora pubblicato un cofanetto.
+    // Non è un caso di filtri troppo stretti, quindi il copy non chiede di cambiarli.
+    'empty_catalogue_title' => 'Non ci sono ancora cofanetti',
+    'empty_catalogue_body' => 'I cofanetti li creano le strutture partner: appena ne pubblicano uno, lo trovi qui.',
+    'empty_catalogue_news_cta' => 'Leggi Animal Times',
+    'empty_catalogue_partner_cta' => 'Crea il tuo cofanetto',
+
     // Paginazione
     'pagination' => 'Paginazione',
     'prev_page' => 'Pagina precedente',

@@ -3,7 +3,6 @@
 return [
     // Card e titoli regione ('Hotel e servizi in Liguria')
     'region_title' => 'Hotel e servizi in :region',
-    'structures_count' => ':count Strutture',
     // Badge card griglia regione (verbatim XD: 'Hotel' per le strutture, 'Servizi' per i servizi)
     'results_title' => 'Ecco i risultati:',
     'badge_hotel' => 'Hotel',
@@ -47,4 +46,6 @@ return [
         'gruppo' => 'Gruppo (+5 persone)',
     ],
     'show_results' => 'Mostra :count risultati',
+    // A zero il bottone non può promettere risultati: dice cosa fa davvero.
+    'close_filters' => 'Chiudi i filtri',
 ];

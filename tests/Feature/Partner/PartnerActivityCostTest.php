@@ -14,6 +14,9 @@ class PartnerActivityCostTest extends TestCase
 
     public function test_page_renders_the_cost_options(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.activity.cost'))
             ->assertOk()
             ->assertSee(__('partner.activity_cost.heading'))

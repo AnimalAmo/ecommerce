@@ -15,6 +15,9 @@ class PartnerSmartboxTypeTest extends TestCase
 
     public function test_page_renders_the_three_types(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.smartbox.type'))
             ->assertOk()
             ->assertSee(__('partner.smartbox_type.heading'))

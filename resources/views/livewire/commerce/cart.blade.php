@@ -22,7 +22,13 @@
                     <div class="mx-auto mt-[37px] flex min-h-[305px] w-full max-w-[865px] flex-col items-center rounded-[3px] border border-[#E9E9E9] bg-white px-6 pt-14 text-center shadow-[0px_1px_10px_#0000001A] max-lg:hidden">
                         <h2 class="text-2xl font-bold leading-none text-[#68CDEB]">{{ __('cart.ui.empty_heading') }}</h2>
                         <p class="mt-10 text-lg font-medium leading-none text-black">{{ __('cart.ui.empty_text') }}</p>
-                        <flux:button href="{{ url('/eventi') }}" class="mt-[63px] !h-10 !w-[244px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.empty_cta') }}</flux:button>
+                        {{-- route() e non url(): mcamara antepone il prefisso del locale, un href fisso lo perde
+                             e il visitatore inglese finisce sulla pagina italiana. --}}
+                        <flux:button href="{{ route('eventi') }}" class="mt-[63px] !h-10 !w-[244px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.empty_cta') }}</flux:button>
+                        {{-- Seconda CTA: finché i partner non pubblicano, /eventi è vuoto quanto il carrello,
+                             e uno stato vuoto che rimanda a un altro stato vuoto non aiuta nessuno.
+                             Animal Times ha articoli reali: è l'unica destinazione con contenuto. --}}
+                        <flux:button variant="ghost" href="{{ route('news') }}" class="mt-4 !h-auto !p-0 !text-[15px] !font-bold !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">{{ __('cart.ui.empty_cta_news') }}</flux:button>
                     </div>
 
                     {{-- Stato vuoto mobile (artboard "Carrello vuoto"): card 343x267 allineata a sinistra
@@ -32,13 +38,22 @@
                     <div class="relative min-h-[267px] rounded-[3px] border border-[#E9E9E9] bg-white px-[17px] pb-[66px] pt-8 shadow-[0px_1px_5px_#0000001A] lg:hidden">
                         <h2 class="text-xl font-bold leading-[27px] text-[#68CDEB]">{{ __('cart.ui.empty_heading') }}</h2>
                         <p class="mt-[15px] text-[15px] font-medium leading-[22px] text-[#0D171A]">{{ __('cart.ui.empty_text') }}</p>
-                        <flux:button href="{{ url('/eventi') }}" class="relative !z-[1] !mt-[22px] !h-[39px] !rounded-full !border-0 !bg-brand-cyan !px-[33px] !text-sm !font-bold !text-white !shadow-[0px_1px_5px_#0000001A] hover:!bg-brand-cyan">{{ __('cart.ui.empty_cta') }}</flux:button>
+                        <flux:button href="{{ route('eventi') }}" class="relative !z-[1] !mt-[22px] !h-[39px] !rounded-full !border-0 !bg-brand-cyan !px-[33px] !text-sm !font-bold !text-white !shadow-[0px_1px_5px_#0000001A] hover:!bg-brand-cyan">{{ __('cart.ui.empty_cta') }}</flux:button>
+                        {{-- Wrapper: flux:button è inline-flex e senza blocco proprio starebbe in riga con la pill.
+                             z-[1] come la CTA sopra — il doodle è decorativo ma copre la stessa area. --}}
+                        <div class="relative z-[1] mt-3">
+                            <flux:button variant="ghost" href="{{ route('news') }}" class="!h-auto !p-0 !text-sm !font-bold !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">{{ __('cart.ui.empty_cta_news') }}</flux:button>
+                        </div>
 
                         @include('partials.cart-empty-doodle')
                     </div>
 
-                    {{-- Sezione "Le attività più amate" mobile: heading 15 bold e carosello orizzontale di card 280x200 --}}
+                    {{-- "Le attività più amate": UNA sola guardia per mobile e desktop.
+                         A catalogo vuoto topFavorited() torna [] e il blocco desktop, che stava
+                         fuori dalla guardia, disegnava titolo, riga, frecce e puntini sopra zero
+                         card: la cornice di un carosello che non esiste. --}}
                     @if ($suggestions !== [])
+                        {{-- Mobile: heading 15 bold e carosello orizzontale di card 280x200 --}}
                         <section class="lg:hidden">
                             <h2 class="mt-8 text-[15px] font-bold leading-none text-[#0D171A]">{{ __('cart.ui.most_loved') }}</h2>
 
@@ -53,44 +68,44 @@
                                 @endforeach
                             </div>
                         </section>
-                    @endif
 
-                    {{-- Sezione "Le attività più amate": heading + linea a tutta larghezza + card reali (top prodotti per numero di preferiti) --}}
-                    <h2 class="mt-[120px] text-2xl font-medium leading-none text-black max-lg:hidden">{{ __('cart.ui.most_loved') }}</h2>
-                    <div class="mt-[22px] h-px w-full bg-[#E9E9E9] max-lg:hidden" aria-hidden="true"></div>
+                        {{-- Sezione "Le attività più amate": heading + linea a tutta larghezza + card reali (top prodotti per numero di preferiti) --}}
+                        <h2 class="mt-[120px] text-2xl font-medium leading-none text-black max-lg:hidden">{{ __('cart.ui.most_loved') }}</h2>
+                        <div class="mt-[22px] h-px w-full bg-[#E9E9E9] max-lg:hidden" aria-hidden="true"></div>
 
-                    <div class="relative mt-[18px] max-lg:hidden">
-                        {{-- TODO: carosello reale — frecce e puntini per ora solo visivi come gli altri TODO --}}
-                        {{-- !absolute obbligatorio: flux:button porta già "relative" e in cascata vincerebbe su "absolute" --}}
-                        <flux:button variant="ghost" square aria-label="{{ __('cart.ui.prev_cards') }}" class="!absolute -left-[17px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                            <flux:icon.chevron-left class="!h-5 !w-5 text-[#2B2B2B]" />
-                        </flux:button>
-                        <flux:button variant="ghost" square aria-label="{{ __('cart.ui.next_cards') }}" class="!absolute -right-[9px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
-                            <flux:icon.chevron-right class="!h-5 !w-5 text-[#2B2B2B]" />
-                        </flux:button>
+                        <div class="relative mt-[18px] max-lg:hidden">
+                            {{-- TODO: carosello reale — frecce e puntini per ora solo visivi come gli altri TODO --}}
+                            {{-- !absolute obbligatorio: flux:button porta già "relative" e in cascata vincerebbe su "absolute" --}}
+                            <flux:button variant="ghost" square aria-label="{{ __('cart.ui.prev_cards') }}" class="!absolute -left-[17px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+                                <flux:icon.chevron-left class="!h-5 !w-5 text-[#2B2B2B]" />
+                            </flux:button>
+                            <flux:button variant="ghost" square aria-label="{{ __('cart.ui.next_cards') }}" class="!absolute -right-[9px] top-1/2 !h-8 !w-8 !min-w-0 -translate-y-1/2 !p-0 hover:!bg-transparent max-[87.5rem]:hidden [&>span]:flex [&>span]:items-center [&>span]:justify-center">
+                                <flux:icon.chevron-right class="!h-5 !w-5 text-[#2B2B2B]" />
+                            </flux:button>
 
-                        {{-- Fino a 3 card = top preferiti reali (stesso passo 490/card 468 di /preferiti, ma appoggiate direttamente sulla pagina) --}}
-                        <div class="grid grid-cols-1 gap-x-[22px] gap-y-4 md:grid-cols-2 min-[87.5rem]:mx-6 min-[87.5rem]:grid-cols-3">
-                            @foreach ($suggestions as $item)
-                                {{-- Cuore bianco che diventa giallo al click (stato locale, TODO backend reale) --}}
-                                @include('partials.favorite-card', [
-                                    'item' => $item,
-                                    'wireKey' => 'suggestion-' . $item['id'],
-                                    'heartActive' => in_array($item['id'], $suggestFavorites, true),
-                                    'heartAction' => "toggleSuggestionFavorite('" . $item['id'] . "')",
-                                    'bagActive' => in_array($item['id'], $suggestInCart, true),
-                                    'bagAction' => "toggleSuggestionCart('" . $item['id'] . "')",
-                                ])
+                            {{-- Fino a 3 card = top preferiti reali (stesso passo 490/card 468 di /preferiti, ma appoggiate direttamente sulla pagina) --}}
+                            <div class="grid grid-cols-1 gap-x-[22px] gap-y-4 md:grid-cols-2 min-[87.5rem]:mx-6 min-[87.5rem]:grid-cols-3">
+                                @foreach ($suggestions as $item)
+                                    {{-- Cuore bianco che diventa giallo al click (stato locale, TODO backend reale) --}}
+                                    @include('partials.favorite-card', [
+                                        'item' => $item,
+                                        'wireKey' => 'suggestion-' . $item['id'],
+                                        'heartActive' => in_array($item['id'], $suggestFavorites, true),
+                                        'heartAction' => "toggleSuggestionFavorite('" . $item['id'] . "')",
+                                        'bagActive' => in_array($item['id'], $suggestInCart, true),
+                                        'bagAction' => "toggleSuggestionCart('" . $item['id'] . "')",
+                                    ])
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Puntini paginazione 9px (uno per card reale): attivo #2B2B2B, inattivi #DEDEDE --}}
+                        <div class="mt-6 flex items-center justify-center gap-[10px] max-lg:hidden">
+                            @foreach ($suggestions as $index => $suggested)
+                                <flux:button variant="ghost" square wire:key="dot-{{ $index }}" aria-label="{{ __('cart.ui.page_number', ['number' => $index + 1]) }}" class="!h-[9px] !w-[9px] !min-w-0 !rounded-full !p-0 {{ $index === 0 ? '!bg-[#2B2B2B] hover:!bg-[#2B2B2B]' : '!bg-[#DEDEDE] hover:!bg-[#DEDEDE]' }}"></flux:button>
                             @endforeach
                         </div>
-                    </div>
-
-                    {{-- Puntini paginazione 9px (uno per card reale): attivo #2B2B2B, inattivi #DEDEDE --}}
-                    <div class="mt-6 flex items-center justify-center gap-[10px] max-lg:hidden">
-                        @foreach ($suggestions as $index => $suggested)
-                            <flux:button variant="ghost" square wire:key="dot-{{ $index }}" aria-label="{{ __('cart.ui.page_number', ['number' => $index + 1]) }}" class="!h-[9px] !w-[9px] !min-w-0 !rounded-full !p-0 {{ $index === 0 ? '!bg-[#2B2B2B] hover:!bg-[#2B2B2B]' : '!bg-[#DEDEDE] hover:!bg-[#DEDEDE]' }}"></flux:button>
-                        @endforeach
-                    </div>
+                    @endif
                 @else
                     {{-- Titolo 20px regular grigio (non un H1 bold) con conteggio dinamico e singolare/plurale;
                          su mobile scende a 14px (XD app: "Carrello (2 prodotto)") --}}

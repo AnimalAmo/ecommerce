@@ -14,6 +14,9 @@ class PartnerHotelSmartboxTest extends TestCase
 
     public function test_page_renders_the_consent_and_types(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.structure.hotel.smartbox'))
             ->assertOk()
             ->assertSee(__('partner.hotel_smartbox.heading'))

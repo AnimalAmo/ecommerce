@@ -14,6 +14,9 @@ class PartnerSmartboxDescriptionTest extends TestCase
 
     public function test_page_renders_the_two_description_fields(): void
     {
+        // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
+        $this->actingAsActivePartner();
+
         $this->get(route('partner.smartbox.description'))
             ->assertOk()
             ->assertSee(__('partner.smartbox_description.heading'))

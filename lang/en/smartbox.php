@@ -24,6 +24,13 @@ return [
     'filter_place' => 'Place',
     'from_price_label' => 'From',
 
+    // Empty catalogue: no partner has published a Smartbox package yet.
+    // This is not a too-narrow-filters case, so the copy never asks to change them.
+    'empty_catalogue_title' => 'No Smartbox packages yet',
+    'empty_catalogue_body' => 'Smartbox packages are created by our partner businesses: as soon as one is published, you will find it here.',
+    'empty_catalogue_news_cta' => 'Read Animal Times',
+    'empty_catalogue_partner_cta' => 'Create your Smartbox',
+
     // Pagination
     'pagination' => 'Pagination',
     'prev_page' => 'Previous page',

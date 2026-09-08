@@ -20,7 +20,12 @@
                     <div class="mx-auto mt-[53px] flex min-h-[358px] w-full max-w-[865px] flex-col items-center rounded-[3px] border border-[#E9E9E9] bg-white px-6 pt-[82px] shadow-[0px_1px_10px_#0000001A] text-center max-lg:hidden">
                         <h2 class="text-2xl font-bold leading-none text-[#68CDEB]">{{ __('favorites.empty_heading') }}</h2>
                         <p class="mt-[41px] text-lg font-medium leading-[25px] text-black">{{ __('favorites.empty_text_line1') }}<br>{{ __('favorites.empty_text_line2') }}</p>
-                        <flux:button href="{{ url('/animal-holiday') }}" class="mt-[34px] !h-10 !w-[174px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('favorites.empty_cta') }}</flux:button>
+                        {{-- route() e non url(): mcamara antepone il prefisso del locale, un href fisso lo perde
+                             e il visitatore inglese finisce sulla pagina italiana. --}}
+                        <flux:button href="{{ route('holiday') }}" class="mt-[34px] !h-10 !w-[174px] !rounded-full !border-0 !bg-brand-cyan !text-[15px] !font-bold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('favorites.empty_cta') }}</flux:button>
+                        {{-- Seconda CTA: finché i partner non pubblicano non c'è nessuna struttura da salvare,
+                             quindi /animal-holiday è vuoto quanto questa pagina. Animal Times ha articoli reali. --}}
+                        <flux:button variant="ghost" href="{{ route('news') }}" class="mt-4 !h-auto !p-0 !text-[15px] !font-bold !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">{{ __('favorites.empty_cta_news') }}</flux:button>
                     </div>
 
                     {{-- Stato vuoto mobile (artboard "Preferiti - vuoti"): card 343x330 allineata a sinistra,
@@ -31,7 +36,12 @@
                         <h2 class="text-xl font-bold leading-[27px] text-[#68CDEB]">{{ __('favorites.empty_heading') }}</h2>
                         <p class="mt-[26px] text-[15px] font-medium leading-[22px] text-[#0D171A]">{{ __('favorites.empty_text_line1') }}</p>
                         <p class="mt-[22px] text-[15px] font-medium leading-[22px] text-[#0D171A]">{{ __('favorites.empty_text_line2') }}</p>
-                        <flux:button href="{{ url('/animal-holiday') }}" class="relative !z-[1] !mt-[42px] !h-[39px] !rounded-full !border-0 !bg-brand-cyan !px-[33px] !text-sm !font-bold !text-white !shadow-[0px_1px_5px_#0000001A] hover:!bg-brand-cyan">{{ __('favorites.empty_cta') }}</flux:button>
+                        <flux:button href="{{ route('holiday') }}" class="relative !z-[1] !mt-[42px] !h-[39px] !rounded-full !border-0 !bg-brand-cyan !px-[33px] !text-sm !font-bold !text-white !shadow-[0px_1px_5px_#0000001A] hover:!bg-brand-cyan">{{ __('favorites.empty_cta') }}</flux:button>
+                        {{-- Wrapper: flux:button è inline-flex e senza blocco proprio starebbe in riga con la pill.
+                             z-[1] come la CTA sopra — il doodle è decorativo ma copre la stessa area. --}}
+                        <div class="relative z-[1] mt-3">
+                            <flux:button variant="ghost" href="{{ route('news') }}" class="!h-auto !p-0 !text-sm !font-bold !text-[#68CDEB] hover:!bg-transparent hover:!text-[#68CDEB]">{{ __('favorites.empty_cta_news') }}</flux:button>
+                        </div>
 
                         @include('partials.favorites-empty-doodle')
                     </div>
