@@ -86,6 +86,15 @@ class Events extends Component
 
         $empty = $events->isEmpty();
 
+        // Griglia vuota, due cause opposte: i filtri sono troppo stretti oppure il
+        // catalogo è ancora vuoto (giorno 1 su animalamo.it: nessun partner ha
+        // pubblicato). Nel secondo caso chiedere di allargare i filtri sarebbe una
+        // bugia — nessun filtro produrrebbe risultati — quindi la view cambia copy.
+        // Il conteggio gira solo a griglia vuota: sul caso normale non costa nulla.
+        $catalogueEmpty = $empty && Event::query()
+            ->whereIn('type', [ProductType::Activity, ProductType::Event])
+            ->doesntExist();
+
         // "Nessun risultato trovato": l'XD app non lascia la pagina vuota ma propone card
         // simili, cioè lo stesso catalogo senza i filtri (tipologia e prezzo) che l'hanno svuotato.
         $similar = $empty
@@ -101,6 +110,7 @@ class Events extends Component
         return view('livewire.catalog.events', [
             'events' => $events,
             'empty' => $empty,
+            'catalogueEmpty' => $catalogueEmpty,
             'similar' => $similar,
             // Datepicker "Quando": calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),

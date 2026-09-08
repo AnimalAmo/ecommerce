@@ -150,7 +150,10 @@
         </div>
     @endif
 
+    {{-- A zero il bottone non può dire "Mostra 0 risultati": prometterebbe una lista
+         che non esiste (e col catalogo vuoto non è nemmeno colpa dei filtri).
+         Dice invece cosa fa davvero, cioè chiudere il pannello. --}}
     <flux:modal.close>
-        <flux:button class="mx-auto mt-10 !flex !h-[39px] !rounded-full !bg-[#0D171A] !px-8 !text-sm !font-bold !text-white hover:!bg-black">{{ __('catalog.show_results', ['count' => $resultsCount]) }}</flux:button>
+        <flux:button class="mx-auto mt-10 !flex !h-[39px] !rounded-full !bg-[#0D171A] !px-8 !text-sm !font-bold !text-white hover:!bg-black">{{ $resultsCount > 0 ? __('catalog.show_results', ['count' => $resultsCount]) : __('catalog.close_filters') }}</flux:button>
     </flux:modal.close>
 </flux:modal>

@@ -18,6 +18,13 @@ return [
     'add_to_cart' => 'Add to cart',
     'join' => 'Join',
 
+    // Empty catalogue: no partner has published an activity or event yet.
+    // This is not a too-narrow-filters case, so the copy never asks to change them.
+    'empty_catalogue_title' => 'No activities or events yet',
+    'empty_catalogue_body' => 'Activities and events are published by our partner businesses: as soon as they arrive, you will find them here.',
+    'empty_catalogue_news_cta' => 'Read Animal Times',
+    'empty_catalogue_partner_cta' => 'Publish your activity',
+
     // Pagination
     'pagination' => 'Pagination',
     'prev_page' => 'Previous page',

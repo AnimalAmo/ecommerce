@@ -74,6 +74,13 @@ class Smartbox extends Component
 
         $empty = $boxes->isEmpty();
 
+        // Griglia vuota, due cause opposte: i filtri sono troppo stretti oppure il
+        // catalogo è ancora vuoto (giorno 1 su animalamo.it: nessun partner ha
+        // pubblicato un cofanetto). Nel secondo caso chiedere di allargare i filtri
+        // sarebbe una bugia — nessun filtro produrrebbe risultati — quindi la view
+        // cambia copy. Il conteggio gira solo a griglia vuota.
+        $catalogueEmpty = $empty && SmartboxPackage::query()->doesntExist();
+
         // "Nessun risultato trovato": l'XD app non lascia la pagina vuota ma propone card
         // simili, cioè lo stesso catalogo senza i filtri che l'hanno svuotato.
         $similar = $empty
@@ -83,6 +90,7 @@ class Smartbox extends Component
         return view('livewire.catalog.smartbox', [
             'boxes' => $boxes,
             'empty' => $empty,
+            'catalogueEmpty' => $catalogueEmpty,
             'similar' => $similar,
         ])->title(__('smartbox.meta_title'));
     }

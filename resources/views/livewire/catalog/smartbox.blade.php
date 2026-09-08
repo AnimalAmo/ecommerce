@@ -110,11 +110,24 @@
                 </flux:dropdown>
             </div>
 
-            {{-- Nessun risultato (XD app "Nessun risultato"): al posto della griglia vuota
-                 compare l'avviso e, sotto, le card proposte come alternativa.
-                 Caso tipico qui: nel modal è stata spenta la tipologia Smartbox, oppure la
-                 fascia di prezzo esclude tutti i cofanetti. --}}
-            @if ($empty)
+            {{-- Griglia vuota, due copy diversi.
+                 1) Catalogo ancora vuoto (nessun partner ha pubblicato un cofanetto): non c'è
+                    nessun filtro da allargare e nessuna card simile da proporre, quindi niente
+                    avviso rosso — una riga onesta e due strade che portano dove il contenuto
+                    c'è davvero (Animal Times, Lavora con noi).
+                 2) Filtri troppo stretti: resta l'avviso XD app "Nessun risultato" e, sotto, le
+                    card proposte come alternativa. Caso tipico qui: nel modal è stata spenta la
+                    tipologia Smartbox, oppure la fascia di prezzo esclude tutti i cofanetti. --}}
+            @if ($catalogueEmpty)
+                <div class="mt-6 border-y border-[#E9E9E9] py-10 text-center">
+                    <p class="text-[18px] font-semibold text-[#0D171A]">{{ __('smartbox.empty_catalogue_title') }}</p>
+                    <p class="mx-auto mt-2 max-w-[560px] text-[15px] text-[#555555]">{{ __('smartbox.empty_catalogue_body') }}</p>
+                    <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                        <flux:button :href="route('news')" class="!h-[39px] !rounded-full !border-0 !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink !shadow-none">{{ __('smartbox.empty_catalogue_news_cta') }}</flux:button>
+                        <flux:button :href="route('work-with-us')" class="!h-[39px] !rounded-full !border !border-[#C8C8C8] !bg-white !px-6 !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('smartbox.empty_catalogue_partner_cta') }}</flux:button>
+                    </div>
+                </div>
+            @elseif ($empty)
                 <div class="mt-6 border-y border-[#E9E9E9] py-6 text-center">
                     <p class="flex items-center justify-center gap-2 text-[15px] font-semibold text-[#EA2E68]">
                         <flux:icon.exclamation-circle class="h-5 w-5 shrink-0" />
@@ -122,13 +135,21 @@
                     </p>
                     <p class="mt-2 text-[15px] text-[#555555]">{{ __('catalog.no_results_hint') }}</p>
                 </div>
-                <p class="mt-6 text-[15px] font-semibold text-[#0D171A]">{{ __('catalog.similar_results_title') }}</p>
+                {{-- Il titolo solo se card simili ce ne sono: sopra una griglia vuota
+                     sarebbe una promessa non mantenuta. --}}
+                @if ($similar->isNotEmpty())
+                    <p class="mt-6 text-[15px] font-semibold text-[#0D171A]">{{ __('catalog.similar_results_title') }}</p>
+                @endif
             @endif
 
             {{-- Griglia cofanetti (XD: simbolo "Box smartbox" 354x391, 4 colonne × 3 righe;
-                 XD app: colonna singola a tutta larghezza, gap verticale 16) --}}
+                 XD app: colonna singola a tutta larghezza, gap verticale 16).
+                 Senza card (catalogo vuoto) la griglia non viene disegnata affatto:
+                 meglio niente che un contenitore vuoto. --}}
+            @php $cards = $empty ? $similar : $boxes; @endphp
+            @if ($cards->isNotEmpty())
             <div class="mt-[29px] grid grid-cols-4 gap-x-[27px] gap-y-6 max-lg:mt-4 max-lg:grid-cols-1 max-lg:gap-y-4">
-                @foreach ($empty ? $similar : $boxes as $box)
+                @foreach ($cards as $box)
                     <article wire:key="box-{{ $box->id }}" class="group relative flex min-h-[391px] flex-col rounded-[3px] border border-[#E9E9E9] bg-white max-lg:min-h-0">
                         <div class="relative m-2 overflow-hidden rounded-t-[3px]">
                             <img src="{{ $box->imageUrl() }}" alt="{{ $box->title }}" class="aspect-[338/237] w-full object-cover transition duration-500 group-hover:scale-105 max-lg:aspect-[327/218]">
@@ -151,6 +172,7 @@
                     </article>
                 @endforeach
             </div>
+            @endif
 
             {{-- Mobile: "Carica altro" al posto della paginazione (XD app: 140x39, r20, #0D171A) --}}
             @if (! $empty && $boxes->hasMorePages())

@@ -18,6 +18,13 @@ return [
     'add_to_cart' => 'Aggiungi al carrello',
     'join' => 'Partecipa',
 
+    // Catalogo vuoto: nessun partner ha ancora pubblicato attività o eventi.
+    // Non è un caso di filtri troppo stretti, quindi il copy non chiede di cambiarli.
+    'empty_catalogue_title' => 'Non ci sono ancora attività ed eventi',
+    'empty_catalogue_body' => 'Le attività e gli eventi li pubblicano le strutture partner: appena arrivano, li trovi qui.',
+    'empty_catalogue_news_cta' => 'Leggi Animal Times',
+    'empty_catalogue_partner_cta' => 'Pubblica la tua attività',
+
     // Paginazione
     'pagination' => 'Paginazione',
     'prev_page' => 'Pagina precedente',
