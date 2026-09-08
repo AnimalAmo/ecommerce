@@ -34,6 +34,11 @@
         @livewireScripts
         @fluxScripts
 
+        {{-- Loader Iubenda (snippet ufficiale): fa aprire l'informativa cookie dei
+             footer in un riquadro sopra il sito invece di portare fuori. Si carica
+             da solo sull'evento load, quindi non ritarda il primo render. --}}
+        <script type="text/javascript">(function (w,d) {var loader = function () {var s = d.createElement("script"), tag = d.getElementsByTagName("script")[0]; s.src="https://cdn.iubenda.com/iubenda.js"; tag.parentNode.insertBefore(s,tag);}; if(w.addEventListener){w.addEventListener("load", loader, false);}else if(w.attachEvent){w.attachEvent("onload", loader);}else{w.onload = loader;}})(window, document);</script>
+
         <script src="//code.tidio.co/lxyeqk5ehbrcahqlghaaeqmsdxzo9ztn.js" async></script>
     </body>
 </html>

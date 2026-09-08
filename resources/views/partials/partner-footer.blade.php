@@ -23,7 +23,7 @@
                 <h3 class="text-[15px] font-semibold text-[#2B2B2B]">{{ __('partner.footer_security') }}</h3>
                 <ul class="mt-6 space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('privacy') }}" class="hover:text-brand-cyan">{{ __('partner.footer_privacy') }}</a></li>
-                    <li><a href="#" class="hover:text-brand-cyan">{{ __('partner.footer_cookie') }}</a></li>
+                    <li><a href="{{ config('services.iubenda.cookie_policy_url') }}" class="iubenda-nostyle iubenda-embed hover:text-brand-cyan" target="_blank" rel="noopener">{{ __('partner.footer_cookie') }}</a></li>
                     <li><a href="{{ route('terms.suppliers') }}" class="hover:text-brand-cyan">{{ __('partner.footer_terms') }}</a></li>
                 </ul>
             </div>

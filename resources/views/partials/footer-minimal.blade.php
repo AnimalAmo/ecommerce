@@ -5,6 +5,6 @@
         <span>Animal Amo Srl — P.IVA 02746270228 — Capitale sociale 10.000,00 €</span>
         <a href="{{ route('privacy') }}" class="hover:text-brand-cyan">{{ __('nav.footer_minimal.privacy_policy') }}</a>
         <span aria-hidden="true">|</span>
-        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer_minimal.cookie_policy') }}</a>
+        <a href="{{ config('services.iubenda.cookie_policy_url') }}" class="iubenda-nostyle iubenda-embed hover:text-brand-cyan" target="_blank" rel="noopener">{{ __('nav.footer_minimal.cookie_policy') }}</a>
     </div>
 </footer>

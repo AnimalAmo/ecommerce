@@ -19,4 +19,15 @@ class LayoutScriptsTest extends TestCase
             ->assertOk()
             ->assertSee('https://embeds.iubenda.com/widgets/f982b4fa-cef8-48b4-86c6-a9d12f07b263.js', false);
     }
+
+    /**
+     * Loader degli embed Iubenda: senza di lui i link "Cookie Policy" dei
+     * footer restano link normali e portano fuori dal sito.
+     */
+    public function test_every_page_carries_the_iubenda_embed_loader(): void
+    {
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('https://cdn.iubenda.com/iubenda.js', false);
+    }
 }

@@ -166,6 +166,40 @@ class LegalPagesTest extends TestCase
         }
     }
 
+    /**
+     * L'informativa cookie non è una pagina nostra: la ospita Iubenda e i tre
+     * footer la citano tutti. Restavano tre `href="#"` — un link morto in ogni
+     * footer — quindi qui si verifica la destinazione, non la sola etichetta.
+     */
+    public function test_every_footer_links_to_the_cookie_policy(): void
+    {
+        // URL letterale, non config(): rileggere la chiave che leggono i blade
+        // proverebbe solo che il footer stampa la config, e passerebbe anche
+        // con l'id del documento sbagliato.
+        $url = 'https://www.iubenda.com/privacy-policy/99317099/cookie-policy';
+
+        $this->assertSame($url, config('services.iubenda.cookie_policy_url'));
+
+        foreach ([route('home'), route('partner.register'), route('contact')] as $page) {
+            $this->get($page)
+                // e(): il blade passa dalla escape di {{ }}, e una URL con query
+                // string uscirebbe con &amp;.
+                ->assertSee('href="'.e($url).'"', false)
+                // Senza la classe il link porta fuori dal sito invece di aprire
+                // il riquadro: è quella a legare l'anchor al loader Iubenda.
+                ->assertSee('iubenda-embed', false);
+        }
+    }
+
+    /**
+     * "Gestisci cookie" non è una pagina: la classe è l'aggancio al pannello
+     * preferenze del widget consenso. Senza, resta il link morto di prima.
+     */
+    public function test_the_storefront_footer_reopens_the_cookie_preferences(): void
+    {
+        $this->get(route('home'))->assertSee('iubenda-cs-preferences-link', false);
+    }
+
     public function test_the_privacy_page_returns_404_without_its_row(): void
     {
         Page::where('slug', Page::PRIVACY)->delete();

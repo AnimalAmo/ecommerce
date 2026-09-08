@@ -48,6 +48,15 @@ return [
         ],
     ],
 
+    // Iubenda — informativa cookie ospitata da loro, URL fornito dalla cliente
+    // (set 2026). Sta in config perché la citano tutti e tre i footer: un
+    // cambio di documento si fa in un punto solo.
+    'iubenda' => [
+        // `?:` e non il secondo argomento di env(): con la chiave presente ma
+        // vuota env() torna '', e un href vuoto rimanderebbe alla pagina stessa.
+        'cookie_policy_url' => env('IUBENDA_COOKIE_POLICY_URL') ?: 'https://www.iubenda.com/privacy-policy/99317099/cookie-policy',
+    ],
+
     // Maps Embed API — chiave fornita dalla cliente (lug 2026); mappa "Dove siamo" nei detail catalogo.
     'google' => [
         'maps_key' => env('GOOGLE_MAPS_KEY'),

@@ -43,8 +43,15 @@
         <span>Animal Amo Srl — P.IVA 02746270228 — Capitale sociale 10.000,00 €</span>
         <a href="{{ route('terms.customers') }}" class="hover:text-brand-cyan">{{ __('nav.footer.terms') }}</a>
         <a href="{{ route('privacy') }}" class="hover:text-brand-cyan">{{ __('nav.footer.privacy') }}</a>
-        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.cookie_policy') }}</a>
-        <a href="#" class="hover:text-brand-cyan">{{ __('nav.footer.manage_cookies') }}</a>
+        {{-- Informativa cookie: documento ospitato da Iubenda. `iubenda-embed` lega l'anchor
+             al loader (layouts/app.blade.php), che apre il documento in un riquadro sopra il
+             sito; `iubenda-nostyle` evita che Iubenda lo trasformi nel suo bottone bianco.
+             target/rel sono il ripiego finché lo script non è caricato (o se è bloccato). --}}
+        <a href="{{ config('services.iubenda.cookie_policy_url') }}" class="iubenda-nostyle iubenda-embed hover:text-brand-cyan" target="_blank" rel="noopener">{{ __('nav.footer.cookie_policy') }}</a>
+        {{-- "Gestisci cookie" riapre il pannello preferenze del widget consenso: la classe è
+             l'aggancio documentato da Iubenda, non c'è una pagina da raggiungere. L'href resta
+             "#" perché senza il widget il controllo non ha nulla da aprire. --}}
+        <a href="#" class="iubenda-cs-preferences-link hover:text-brand-cyan">{{ __('nav.footer.manage_cookies') }}</a>
     </div>
 
     {{-- Le schede di dettaglio sostituiscono la tabbar con la propria barra CTA (XD app): $hideMobileTabbar --}}
