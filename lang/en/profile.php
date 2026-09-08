@@ -123,4 +123,10 @@ return [
     // Events
     'attend' => 'Attend',
 
+    // Empty state of "Events I attend" (Upcoming tab): a made-up event used to live
+    // here, the same for everyone. The CTA points to Animal Times, not to the events
+    // catalogue, which stays empty until partners publish.
+    'events_empty' => 'The events you sign up for will show up here, as soon as you book your first one.',
+    'events_empty_cta' => 'Read the Animal Times stories',
+
 ];

@@ -123,4 +123,10 @@ return [
     // Eventi
     'attend' => 'Partecipa',
 
+    // Stato vuoto di "Eventi a cui partecipo" (tab In programma): prima qui viveva
+    // un evento inventato, uguale per tutti. La CTA porta su Animal Times, non sul
+    // catalogo eventi, che resta vuoto finché i partner non pubblicano.
+    'events_empty' => 'Qui compariranno gli eventi a cui parteciperai, appena ne prenoterai uno.',
+    'events_empty_cta' => 'Leggi le storie di Animal Times',
+
 ];
