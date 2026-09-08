@@ -25,18 +25,14 @@
                     </div>
                 </div>
 
-                {{-- Statistiche (XD: 3 card 294x105, r10, bordo #E9E9E9) --}}
+                {{-- Statistiche (XD: 3 card 294x105, r10, bordo #E9E9E9). Numeri reali del
+                     partner; senza il badge di variazione % del mockup, che non ha una
+                     fonte (nessuno storico da confrontare). --}}
                 <div class="mt-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
                     @foreach ($stats as $stat)
                         <div class="rounded-[10px] border border-gray-150 bg-white px-6 py-5" wire:key="stat-{{ $loop->index }}">
                             <p class="text-[15px] text-[#959595]">{{ __($stat['label']) }}</p>
-                            <div class="mt-2 flex items-end justify-between gap-2">
-                                <span class="text-[32px] font-semibold leading-none text-black">{{ $stat['value'] }}</span>
-                                <span class="inline-flex items-center gap-1 px-2 py-1 text-[15px] text-[#2B2B2B] {{ $stat['positive'] ? 'bg-[#E5FDE7]' : 'bg-[#FDE8E3]' }}">
-                                    <flux:icon.arrow-up-right class="h-3.5 w-3.5 {{ $stat['positive'] ? 'text-[#40E24E]' : 'rotate-90 text-[#F85933]' }}" />
-                                    {{ $stat['delta'] }}
-                                </span>
-                            </div>
+                            <p class="mt-2 text-[32px] leading-none font-semibold text-black">{{ $stat['value'] }}</p>
                         </div>
                     @endforeach
                 </div>

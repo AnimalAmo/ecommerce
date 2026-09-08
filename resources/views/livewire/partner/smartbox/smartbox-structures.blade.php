@@ -19,40 +19,50 @@
                 <p class="mt-4 text-[15px] font-medium text-black">{{ __('partner.smartbox_structures.section') }}</p>
 
                 <form wire:submit="next" class="mt-6">
-                    {{-- Griglia strutture selezionabili (card 226x175 circa, r10) --}}
-                    <div class="grid grid-cols-2 gap-5 sm:grid-cols-3">
-                        @foreach ($options as $key => $opt)
-                            <label wire:key="struct-{{ $key }}"
-                                @class([
-                                    'group relative flex cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-white transition',
-                                    'border-brand-cyan ring-2 ring-brand-cyan' => in_array($key, $structures, true),
-                                    'border-[#E2EAEB] hover:border-[#C8C8C8]' => !in_array($key, $structures, true),
-                                ])>
-                                {{-- Area foto (placeholder) --}}
-                                <div class="flex h-[110px] items-center justify-center bg-[#F4F4F4] text-[#C8C8C8]">
-                                    <flux:icon.photo class="h-8 w-8" />
-                                </div>
-                                {{-- Checkbox in overlay --}}
-                                <div class="absolute right-2 top-2 [--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full">
-                                    <flux:checkbox wire:model.live="structures" value="{{ $key }}" />
-                                </div>
-                                {{-- Nome + città --}}
-                                <div class="px-3 py-2">
-                                    <p class="text-[15px] font-semibold text-black">{{ $opt['name'] }}</p>
-                                    <p class="mt-1 text-[13px] font-semibold text-[#555555]">{{ $opt['city'] }}</p>
-                                </div>
-                            </label>
-                        @endforeach
-                    </div>
+                    @if ($options === [])
+                        {{-- Nessuna struttura pubblicata: il mockup riempiva la griglia con
+                             cinque hotel inventati. Meglio dirlo, e lasciar proseguire il
+                             wizard (le strutture si potranno aggiungere dopo, in modifica).
+                             Nessun CTA "crea struttura": aprirebbe l'altro wizard sulla
+                             STESSA bozza di sessione, sovrascrivendo la smartbox in corso. --}}
+                        <div class="rounded-[10px] border border-dashed border-gray-150 bg-gray-100 px-6 py-10 text-center">
+                            <p class="text-[15px] font-semibold text-black">{{ __('partner.smartbox_structures.empty_title') }}</p>
+                            <p class="mx-auto mt-2 max-w-[460px] text-[15px] text-[#555555]">{{ __('partner.smartbox_structures.empty_text') }}</p>
+                        </div>
+                    @else
+                        {{-- Griglia strutture selezionabili (card 226x175 circa, r10).
+                             Niente "Carica altro" del mockup: la lista è già completa
+                             (sono tutte e sole le strutture del partner) e il bottone
+                             non aveva alcuna azione collegata. --}}
+                        <div class="grid grid-cols-2 gap-5 sm:grid-cols-3">
+                            @foreach ($options as $key => $opt)
+                                <label wire:key="struct-{{ $key }}"
+                                    @class([
+                                        'group relative flex cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-white transition',
+                                        'border-brand-cyan ring-2 ring-brand-cyan' => in_array($key, $structures, true),
+                                        'border-[#E2EAEB] hover:border-[#C8C8C8]' => !in_array($key, $structures, true),
+                                    ])>
+                                    {{-- Area foto (placeholder) --}}
+                                    <div class="flex h-[110px] items-center justify-center bg-[#F4F4F4] text-[#C8C8C8]">
+                                        <flux:icon.photo class="h-8 w-8" />
+                                    </div>
+                                    {{-- Checkbox in overlay --}}
+                                    <div class="absolute top-2 right-2 [--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full">
+                                        <flux:checkbox wire:model.live="structures" value="{{ $key }}" />
+                                    </div>
+                                    {{-- Nome + città --}}
+                                    <div class="px-3 py-2">
+                                        <p class="text-[15px] font-semibold text-black">{{ $opt['name'] }}</p>
+                                        <p class="mt-1 text-[13px] font-semibold text-[#555555]">{{ $opt['city'] }}</p>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
 
                     @error('structures')
                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                     @enderror
-
-                    {{-- Carica altro (link cyan, visivo) --}}
-                    <div class="mt-6 text-center">
-                        <flux:button type="button" variant="ghost" class="!px-0 !text-[15px] !font-bold !text-brand-cyan hover:!bg-transparent hover:!text-[#4bb8d8]">{{ __('partner.smartbox_structures.load_more') }}</flux:button>
-                    </div>
 
                     {{-- Azioni: Indietro (a cosa è incluso animali) + Avanti (pill scuro) --}}
                     <div class="mt-6 flex items-center justify-end gap-6">
