@@ -36,6 +36,9 @@ return [
     'events_title' => 'Eventi pet friendly',
     'events_subtitle' => 'Scopri esperienze uniche da vivere insieme al tuo amico a quattro zampe',
     'events_cta' => 'Scopri gli eventi',
+    // Calendario vuoto: nessuna promessa di esperienze, la CTA porta all'area partner.
+    'events_empty' => 'Non ci sono ancora eventi in programma. Se organizzi esperienze pet friendly, puoi pubblicarle qui.',
+    'events_empty_cta' => 'Diventa partner',
     'join' => 'Partecipa',
     'from_price_label' => 'A partire da',
 
@@ -56,6 +59,5 @@ return [
     'community_title' => 'Una community che condivide la tua passione',
     'community_subtitle' => 'Incontra, condividi e vivi la tua passione per gli animali',
     'community_cta' => 'Scopri la community',
-    'community_replies' => '6 Risposte',
-    'community_quote' => '"Qualcuno ha consigli per un primo viaggio in treno con un cane di taglia media? Vorrei che fosse un\'esperienza tranquilla per entrambi 🐾"',
+    'community_replies_count' => ':count Risposta|:count Risposte',
 ];

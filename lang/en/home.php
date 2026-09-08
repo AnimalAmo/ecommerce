@@ -36,6 +36,8 @@ return [
     'events_title' => 'Pet-friendly events',
     'events_subtitle' => 'Discover unique experiences to enjoy together with your four-legged friend',
     'events_cta' => 'Discover the events',
+    'events_empty' => 'There are no events scheduled yet. If you run pet-friendly experiences, you can publish them here.',
+    'events_empty_cta' => 'Become a partner',
     'join' => 'Join',
     'from_price_label' => 'From',
 
@@ -56,6 +58,5 @@ return [
     'community_title' => 'A community that shares your passion',
     'community_subtitle' => 'Meet, share and live your passion for animals',
     'community_cta' => 'Discover the community',
-    'community_replies' => '6 Replies',
-    'community_quote' => '"Does anyone have tips for a first train trip with a medium-sized dog? I\'d like it to be a calm experience for both of us 🐾"',
+    'community_replies_count' => ':count Reply|:count Replies',
 ];

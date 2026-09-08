@@ -4,6 +4,7 @@ namespace App\Livewire\Catalog;
 
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Models\Article\Article;
+use App\Models\Community\CommunityPost;
 use App\Models\Event\Event;
 use App\Models\Region\Region;
 use Livewire\Component;
@@ -31,6 +32,9 @@ class HomePage extends Component
 
     /** Card news della home: le tre più recenti di Animal Times, come da XD. */
     private const HOME_NEWS = 3;
+
+    /** Card eventi della home: la griglia XD è a 5 colonne su una riga sola. */
+    private const HOME_EVENTS = 5;
 
     /** Tap su un suggerimento del pannello Destinazione (modal filtri mobile). */
     public function selectDestination(string $name): void
@@ -70,7 +74,16 @@ class HomePage extends Component
     public function render()
     {
         return view('livewire.catalog.home-page', [
-            'regions' => Region::whereNotNull('home_position')->orderBy('home_position')->get(),
+            // Conteggio VERO delle strutture pubblicate nella regione: la colonna
+            // regions.structures_count è ferma ai numeri dell'artboard XD (10/5/7) e
+            // col catalogo reale direbbe il falso. Alias esplicito perché withCount()
+            // userebbe di default proprio il nome della colonna congelata, e quale
+            // dei due valori sopravvive alla fetch dipenderebbe dall'ordine del SELECT.
+            'regions' => Region::query()
+                ->withCount(['structures as published_structures_count'])
+                ->whereNotNull('home_position')
+                ->orderBy('home_position')
+                ->get(),
             // Suggerimenti del pannello Destinazione (modal filtri mobile): stesso set
             // filtrabile della listing holiday (LIKE sul nome regione), max 6 voci come da XD.
             'destinations' => Region::query()
@@ -78,8 +91,30 @@ class HomePage extends Component
                 ->orderBy('position')
                 ->limit(6)
                 ->pluck('name'),
-            'events' => Event::whereNotNull('home_position')->orderBy('home_position')->get(),
+            // Eventi in vetrina. NON più filtrati su home_position: quella colonna la
+            // scrive solo l'EventSeeder del mock XD, EventPublisher (pubblicazione
+            // partner) valorizza `position` — quindi la fascia non si sarebbe mai
+            // potuta riempire con eventi veri. Regola: prima i più imminenti.
+            'events' => Event::query()
+                // Un evento già iniziato non è più proponibile; le attività senza data
+                // puntuale (starts_at null) restano valide, stessa regola di
+                // AvailabilityService::ensureEventAvailable().
+                ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '>=', now()))
+                // I più vicini per primi; le attività senza data chiudono la fila.
+                ->orderByRaw('starts_at is null')
+                ->orderBy('starts_at')
+                ->orderBy('position')
+                ->limit(self::HOME_EVENTS)
+                ->get(),
             'news' => Article::published()->take(self::HOME_NEWS)->get(),
+            // Fascia Animal Network: il post più recente davvero pubblicato. Il box
+            // XD mostrava un post inventato (Sofia, 25/11/23, 6 risposte) che a
+            // bacheca vuota era l'unico "post" visibile sul sito.
+            'communityPost' => CommunityPost::query()
+                ->withCount('replies')
+                ->latest('created_at')
+                ->latest('id')
+                ->first(),
             // Datepicker "Quando" nella hero: calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),
             'calendarLabel' => $this->calendarLabel(),

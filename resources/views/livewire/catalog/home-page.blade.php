@@ -176,7 +176,11 @@
                     <div class="relative overflow-hidden">
                         <img src="{{ asset('img/xd/'.$region->img.'.jpg') }}" alt="{{ __('catalog.region_title', ['region' => $region->name]) }}" class="h-80 w-full object-cover transition duration-500 group-hover:scale-105 max-lg:h-44">
                         <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
-                        <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ __('catalog.structures_count', ['count' => $region->structures_count]) }}</flux:badge>
+                        {{-- Badge solo con strutture davvero pubblicate: "0 Strutture" su una card
+                             che invita a partire sarebbe peggio di nessun badge. --}}
+                        @if ($region->published_structures_count > 0)
+                            <flux:badge class="absolute right-4 top-4 !rounded-[3px] !bg-brand-magenta !text-white">{{ trans_choice('holiday.structures_count', $region->published_structures_count, ['count' => $region->published_structures_count]) }}</flux:badge>
+                        @endif
                         <h3 class="absolute bottom-4 left-4 pr-4 text-[20px] font-bold text-white max-lg:text-[15px]">{{ __('catalog.region_title', ['region' => $region->name]) }}</h3>
                     </div>
                 </a>
@@ -195,10 +199,16 @@
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#00000099_0%,#71717100_100%)]"></div>
             <div class="{{ $px }} flex min-h-[660px] flex-col justify-end pb-10 pt-24 max-lg:min-h-[420px] max-lg:pt-16">
                 <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.events_title') }}</h2>
-                <p class="mt-3 max-w-xl text-lg text-white/85 max-lg:text-[15px]">{{ __('home.events_subtitle') }}</p>
-                <a href="{{ route('eventi') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.events_cta') }}</a>
+                {{-- Senza eventi in calendario la banda non promette esperienze che non ci sono:
+                     resta il titolo di sezione, ma copy e CTA portano dove c'è davvero qualcosa
+                     (l'area partner: sono i partner a pubblicare gli eventi). --}}
+                <p class="mt-3 max-w-xl text-lg text-white/85 max-lg:text-[15px]">{{ $events->isNotEmpty() ? __('home.events_subtitle') : __('home.events_empty') }}</p>
+                <a href="{{ $events->isNotEmpty() ? route('eventi') : route('work-with-us') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ $events->isNotEmpty() ? __('home.events_cta') : __('home.events_empty_cta') }}</a>
             </div>
         </div>
+        {{-- Griglia card + "Vedi tutto": interamente nascosta a calendario vuoto, altrimenti
+             sarebbe un guscio (titolo e pulsante su una fila di niente). --}}
+        @if ($events->isNotEmpty())
         <div class="{{ $px }} pb-16 pt-6">
             {{-- Mobile (XD app): card 280px a scroll orizzontale --}}
             <div class="grid grid-cols-5 gap-6 max-lg:-mx-4 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
@@ -208,10 +218,15 @@
                             <img src="{{ $event->imageUrl() }}" alt="{{ $event->title }}" class="max-h-[227px] w-full object-cover transition duration-500 group-hover:scale-105">
                         </div>
                         <div class="flex flex-1 flex-col p-2 pt-3">
-                            <p class="flex items-center gap-1.5 text-[13px] text-brand-purple-soft">
-                                <flux:icon.time class="h-4 w-4 shrink-0" />
-                                {{ \App\Support\Format::eventTimeSentence($event->starts_at) }}
-                            </p>
+                            {{-- starts_at può essere null: le attività pubblicate dai partner senza
+                                 data puntuale non hanno un orario da mostrare (e passarlo al
+                                 formatter sarebbe un TypeError, cioè un 500 in home). --}}
+                            @if ($event->starts_at !== null)
+                                <p class="flex items-center gap-1.5 text-[13px] text-brand-purple-soft">
+                                    <flux:icon.time class="h-4 w-4 shrink-0" />
+                                    {{ \App\Support\Format::eventTimeSentence($event->starts_at) }}
+                                </p>
+                            @endif
                             <p class="mt-1 flex items-center gap-1.5 text-[13px] text-[#555555]">
                                 <flux:icon.pin class="h-4 w-4 shrink-0 text-[#555555]" />
                                 {{ $event->location }}
@@ -238,6 +253,7 @@
                 <a href="{{ route('eventi') }}" class="rounded-full bg-[#0D171A] px-8 py-4 text-sm font-extrabold text-white transition hover:bg-[#232A2C] max-lg:py-2.5">{{ __('home.see_all') }}</a>
             </div>
         </div>
+        @endif
     </section>
 
     {{-- ============ SMARTBOX ============ --}}
@@ -303,15 +319,22 @@
                     <p class="mt-3 max-w-md text-lg text-white/85 max-lg:text-[15px]">{{ __('home.community_subtitle') }}</p>
                     <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.community_cta') }}</a>
                 </div>
-                {{-- Box recensione XD: glass bianco su foto, blur 7px --}}
-                <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px] max-lg:mt-8 max-lg:self-stretch">
-                    <div class="flex items-center justify-between gap-6">
-                        <p class="text-[13px] font-semibold text-brand-yellow">25/11/23</p>
-                        <p class="text-[13px] font-semibold text-brand-yellow">{{ __('home.community_replies') }}</p>
+                {{-- Box recensione XD: glass bianco su foto, blur 7px.
+                     Mostra il post più recente REALE della bacheca: a bacheca vuota il box
+                     sparisce, perché il testo del mock era l'unico "post" visibile sul sito. --}}
+                @if ($communityPost !== null)
+                    <div class="max-w-xl self-end rounded-[4px] border border-gray-150 bg-white/10 p-4 backdrop-blur-[7px] max-lg:mt-8 max-lg:self-stretch">
+                        <div class="flex items-center justify-between gap-6">
+                            <p class="text-[13px] font-semibold text-brand-yellow">{{ \App\Support\Format::dateShort($communityPost->created_at) }}</p>
+                            @if ($communityPost->replies_count > 0)
+                                <p class="text-[13px] font-semibold text-brand-yellow">{{ trans_choice('home.community_replies_count', $communityPost->replies_count) }}</p>
+                            @endif
+                        </div>
+                        {{-- Il box XD è alto una citazione: i post lunghi si troncano invece di sfondarlo. --}}
+                        <p class="mt-2 mb-2 text-lg text-white">{{ \Illuminate\Support\Str::limit($communityPost->body, 180) }}</p>
+                        <p class="text-lg italic text-white">- {{ $communityPost->author_name }}</p>
                     </div>
-                    <p class="mt-2 text-lg text-white mb-2">{{ __('home.community_quote') }}</p>
-                    <p class="text-lg italic text-white">- Sofia</p>
-                </div>
+                @endif
             </div>
         </div>
     </section>

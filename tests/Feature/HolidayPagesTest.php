@@ -24,7 +24,9 @@ class HolidayPagesTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('Hotel e servizi in Liguria')
-            ->assertSee('10 Strutture')
+            // Il badge "10 Strutture" era la colonna congelata dal mock XD: ora
+            // il conteggio è reale, e le strutture demo non hanno regione.
+            ->assertDontSee('10 Strutture')
             ->assertSee('Passeggiata a cavallo')
             ->assertSee('Esperienza con gli asini in fattoria')
             ->assertSee('Gratis')
