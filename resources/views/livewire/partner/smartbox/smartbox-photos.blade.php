@@ -20,20 +20,18 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.smartbox_photos.helper') }}</p>
 
                 <form wire:submit="next" class="mt-6">
-                    {{-- Dropzone (XD: 752x94, r2, #F4F4F4, senza bordo) --}}
-                    <label x-data="{ over: false }"
-                        x-on:dragover.prevent="over = true"
-                        x-on:dragleave.prevent="over = false"
-                        x-on:drop.prevent="over = false; const inp = $el.querySelector('input[type=file]'); if (inp) { inp.files = $event.dataTransfer.files; inp.dispatchEvent(new Event('change', { bubbles: true })); }"
-                        :class="over ? '!bg-brand-cyan/10' : ''"
-                        class="flex min-h-[94px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[2px] border-0 bg-[#F4F4F4] px-4 py-4 text-center">
-                        <flux:input type="file" multiple accept="image/*" wire:model="photos" class="sr-only" />
-                        <span class="text-[15px] font-bold text-brand-cyan">{{ __('partner.smartbox_photos.drop') }}</span>
-                        <span class="flex items-center gap-1 text-[13px] text-[#627277]">
-                            <flux:icon.exclamation-circle class="h-4 w-4" />
-                            {{ __('partner.smartbox_photos.hint') }}
-                        </span>
-                    </label>
+                    {{-- Dropzone: componente Flux (gestisce click, drag&drop e il file
+                         input nascosto). Prima era un <label> costruito a mano con dentro
+                         un flux:input sr-only e un handler Alpine per il drop. --}}
+                    <flux:file-upload wire:model="photos" multiple accept="image/*" class="w-full">
+                        <div class="flex min-h-[94px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[2px] bg-[#F4F4F4] px-4 py-4 text-center">
+                            <span class="text-[15px] font-bold text-brand-cyan">{{ __('partner.hotel_photos.drop') }}</span>
+                            <span class="flex items-center gap-1 text-[13px] text-[#627277]">
+                                <flux:icon.exclamation-circle class="h-4 w-4" />
+                                {{ __('partner.hotel_photos.hint') }}
+                            </span>
+                        </div>
+                    </flux:file-upload>
 
                     <div wire:loading wire:target="photos" class="mt-2 text-[13px] text-[#959595]">{{ __('partner.smartbox_photos.uploading') }}</div>
 

@@ -26,6 +26,21 @@ class PartnerActivityInfoTest extends TestCase
             ->assertSee(__('partner.activity_info.next'));
     }
 
+    /**
+     * L'input date nativo mostrava il calendario del browser, diverso su ogni
+     * sistema e fuori dalla grafica: al suo posto il date-picker di Flux, che è
+     * un bottone — per questo le misure dell'XD vanno su [&_button].
+     */
+    public function test_the_dates_use_the_flux_date_picker(): void
+    {
+        $this->actingAsActivePartner();
+
+        $this->get(route('partner.activity.info'))
+            ->assertOk()
+            ->assertSee('data-flux-date-picker', false)
+            ->assertDontSee('type="date"', false);
+    }
+
     public function test_activity_needs_only_the_dates(): void
     {
         $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 5, 'type' => 'attivita']);

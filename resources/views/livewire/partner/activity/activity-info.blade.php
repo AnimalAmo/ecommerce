@@ -1,7 +1,9 @@
 {{-- Dashboard B2B – tipologia attività/eventi - info generali (XD, artboard 1920x1080) --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
-    $inputClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]';
+    // Il date-picker Flux rende un bottone, non un input: le stesse misure
+    // dell'XD vanno applicate a quello (stesso idioma di partner/bookings).
+    $datePickerClass = '[&_button]:!h-10 [&_button]:!rounded-[3px] [&_button]:!border-[#C8C8C8]';
     $selectClass = '[&_select]:!h-10 [&_select]:!rounded-[3px] [&_select]:!border-[#C8C8C8]';
     $labelClass = '!text-xs !font-normal !text-[#555555]';
 @endphp
@@ -28,11 +30,11 @@
                         {{-- Data inizio / Data fine --}}
                         <flux:field class="w-full sm:w-[176px]">
                             <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.date_start') }}</flux:label>
-                            <flux:input type="date" wire:model="form.dateStart" class="{{ $inputClass }}" />
+                            <flux:date-picker wire:model="form.dateStart" placeholder="{{ __('partner.activity_info.date_start') }}" class="{{ $datePickerClass }}" />
                         </flux:field>
                         <flux:field class="w-full sm:w-[176px]">
                             <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.date_end') }}</flux:label>
-                            <flux:input type="date" wire:model="form.dateEnd" class="{{ $inputClass }}" />
+                            <flux:date-picker wire:model="form.dateEnd" placeholder="{{ __('partner.activity_info.date_end') }}" class="{{ $datePickerClass }}" />
                         </flux:field>
 
                         {{-- Ora inizio / Ora fine: solo Eventi --}}

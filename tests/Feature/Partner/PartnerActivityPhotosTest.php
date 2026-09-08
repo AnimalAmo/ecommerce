@@ -35,6 +35,19 @@ class PartnerActivityPhotosTest extends TestCase
             ->assertSee(__('partner.hotel_photos.next'));
     }
 
+    /**
+     * L'upload passa dal dropzone di Flux, non da un label costruito a mano:
+     * è lui a collegare click, drag&drop e input nascosto a wire:model.
+     */
+    public function test_the_upload_uses_the_flux_dropzone(): void
+    {
+        $this->actingAsActivePartner();
+
+        $this->get(route('partner.activity.photos'))
+            ->assertOk()
+            ->assertSee('data-flux-file-upload', false);
+    }
+
     public function test_next_requires_at_least_four_photos(): void
     {
         Livewire::test(ActivityPhotos::class)

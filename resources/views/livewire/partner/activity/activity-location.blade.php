@@ -32,8 +32,11 @@
                             <flux:input wire:model="form.city" class="{{ $fieldClass }}" />
                         </flux:field>
 
-                        {{-- (Provincia + Cap) | Punto d'incontro --}}
-                        <div class="grid grid-cols-2 gap-4">
+                        {{-- (Provincia + Cap) | Punto d'incontro.
+                             self-end: accanto, il punto d'incontro porta sopra di sé le tab
+                             it/en, che lo spingono giù di una riga; ancorando questa cella in
+                             basso i tre input tornano sulla stessa linea. --}}
+                        <div class="grid grid-cols-2 gap-4 md:self-end">
                             <x-partner.province-select :provinces="$provinces" model="form.province" :label="__('partner.activity_location.province')" />
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.zip') }} *</flux:label>
