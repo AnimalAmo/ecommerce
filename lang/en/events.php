@@ -37,11 +37,10 @@ return [
     'duration_short' => ':days d',
     'map_alt' => 'Area map — :name',
 
-    // Tabs and actions
-    'sections_nav_event' => 'Event sections',
-    'sections_nav_activity' => 'Activity sections',
+    // Section heading and actions.
+    // The "Discussion" tab (and the keys of its content) was removed: the threads were
+    // invented and the discussion feature does not exist yet.
     'tab_info' => 'Information',
-    'tab_discussion' => 'Discussion',
     'favorites' => 'Favourites',
     'interested' => "I'm interested",
 
@@ -54,11 +53,7 @@ return [
     'where_we_are' => 'Where we are',
     'faq' => 'Frequently asked questions',
 
-    // Discussion
-    'ask_question' => 'Ask a question',
-    'recent_activity' => 'Recent activity',
-    'write_placeholder' => 'Write something …',
-    'reply' => 'Reply',
+    // Listing grid
     'load_more' => 'Load more',
 
     // Booking card (activity)

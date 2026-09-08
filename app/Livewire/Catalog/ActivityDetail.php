@@ -12,7 +12,6 @@ use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ActivityDetail extends Component
@@ -23,10 +22,6 @@ class ActivityDetail extends Component
     /** Slug attività dalla rotta (es. "weekend-escursioni"); il nome differisce dal parametro {activity} per non collidere col binding Livewire. */
     public string $activitySlug = '';
 
-    /** Tab attiva ("informazioni" | "discussione"); deep-linkabile via ?tab=discussione. */
-    #[Url(except: 'informazioni')]
-    public string $tab = 'informazioni';
-
     /** Visibilità del pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa", condiviso col dettaglio evento). */
     public bool $joinPopupOpen = false;
 
@@ -36,7 +31,9 @@ class ActivityDetail extends Component
     /** Campo espanso nel widget: null | 'ospiti' | 'animali' (uno alla volta, come il pop-up del carrello). */
     public ?string $expandedField = null;
 
-    public const TABS = ['informazioni', 'discussione'];
+    // La tab "Discussione" è stata rimossa insieme a quella del dettaglio evento: i thread
+    // erano una costante PHP (mock XD) firmata da persone inventate, invisibile a qualsiasi
+    // pulizia del database. Le discussioni reali arrivano con lo step contenuti/social.
 
     /** Campi espandibili del widget (le date sono fisse: derivano dalla riga evento). */
     public const FIELDS = ['ospiti', 'animali'];
@@ -53,10 +50,6 @@ class ActivityDetail extends Component
         // Default del widget come da XD: 2 adulti e 1 animale (specie del primo pet dell'utente, altrimenti cane).
         $this->editGuests = ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0];
         $this->editAnimals = [self::defaultSpecies() => 1];
-
-        if (! in_array($this->tab, self::TABS, true)) {
-            $this->tab = 'informazioni';
-        }
     }
 
     /** Apre/chiude un campo del widget; aprirne uno collassa l'altro. */
@@ -98,13 +91,6 @@ class ActivityDetail extends Component
     public function closeCartPopup(): void
     {
         $this->cartPopupOpen = false;
-    }
-
-    public function switchTab(string $tab): void
-    {
-        if (in_array($tab, self::TABS, true)) {
-            $this->tab = $tab;
-        }
     }
 
     public function joinEvent(): void
@@ -199,7 +185,6 @@ class ActivityDetail extends Component
             'animalsAtMax' => $this->animalsAtMax(),
             'includedColumns' => [$activity->amenityRows('hotel'), $activity->amenityRows('animal')],
             'faqs' => $activity->faqs,
-            'threads' => EventDetail::THREADS,
         ])->title('AnimalAmo — '.$activity->title);
     }
 }

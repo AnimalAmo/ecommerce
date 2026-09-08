@@ -37,11 +37,10 @@ return [
     'duration_short' => ':days gg',
     'map_alt' => 'Mappa della zona — :name',
 
-    // Tab e azioni
-    'sections_nav_event' => 'Sezioni evento',
-    'sections_nav_activity' => 'Sezioni attività',
+    // Intestazione di sezione e azioni.
+    // La tab "Discussione" (e le voci del suo contenuto) è stata rimossa: i thread erano
+    // inventati e la funzione discussioni non esiste ancora.
     'tab_info' => 'Informazioni',
-    'tab_discussion' => 'Discussione',
     'favorites' => 'Preferiti',
     'interested' => 'Mi interessa',
 
@@ -54,11 +53,7 @@ return [
     'where_we_are' => 'Dove siamo',
     'faq' => 'Domande frequenti',
 
-    // Discussione
-    'ask_question' => 'Fai una domanda',
-    'recent_activity' => 'Attività recenti',
-    'write_placeholder' => 'Scrivi qualcosa …',
-    'reply' => 'Rispondi',
+    // Griglia listing
     'load_more' => 'Carica altro',
 
     // Card prenotazione (attività)

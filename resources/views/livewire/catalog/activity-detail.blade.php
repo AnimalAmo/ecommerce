@@ -1,4 +1,6 @@
-{{-- Attività – Dettaglio, tab Informazioni + Discussione (XD: "Attività - Dettaglio - informazioni" / "Attività - Dettaglio - discussione") --}}
+{{-- Attività – Dettaglio, sezione Informazioni (XD: "Attività - Dettaglio - informazioni").
+     La tab "Discussione" dell'XD non è più renderizzata: i thread erano inventati e la
+     funzione discussioni non esiste ancora; le sue FAQ restano in fondo alla pagina. --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -47,22 +49,14 @@
             {{-- 2. Testata: titolo (il prezzo vive nel box prenotazione a destra, come da XD) --}}
             <h1 class="text-[25px] font-bold leading-[30px] text-black">{{ $activity->title }}</h1>
 
-            {{-- 3. Tab bar (switch Livewire Informazioni / Discussione) + azione Preferiti --}}
+            {{-- 3. Intestazione di sezione + azione Preferiti.
+                 Rimossa la tab "Discussione" (thread inventati, funzione inesistente): resta una
+                 sola sezione, quindi la barra non è più navigazione ma l'etichetta della sezione. --}}
             <div class="mt-[13px] flex items-end justify-between gap-4 border-b border-[#DEDEDE]">
-                <nav class="flex items-end gap-[39px]" aria-label="{{ __('events.sections_nav_activity') }}">
-                    <flux:button variant="ghost" wire:click="switchTab('informazioni')" :aria-current="$tab === 'informazioni' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'informazioni' ? '!text-[#68CDEB] hover:!text-[#68CDEB]' : '!text-[#C8C8C8]' }}">
-                        {{ __('events.tab_info') }}
-                        @if ($tab === 'informazioni')
-                            <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#68CDEB]" aria-hidden="true"></span>
-                        @endif
-                    </flux:button>
-                    <flux:button variant="ghost" wire:click="switchTab('discussione')" :aria-current="$tab === 'discussione' ? 'page' : null" class="relative !h-auto !rounded-none !p-0 !pb-[11px] !text-lg !font-medium hover:!bg-transparent {{ $tab === 'discussione' ? '!text-[#68CDEB] hover:!text-[#68CDEB]' : '!text-[#C8C8C8]' }}">
-                        {{ __('events.tab_discussion') }}
-                        @if ($tab === 'discussione')
-                            <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#68CDEB]" aria-hidden="true"></span>
-                        @endif
-                    </flux:button>
-                </nav>
+                <h2 class="relative pb-[11px] text-lg font-medium text-[#68CDEB]">
+                    {{ __('events.tab_info') }}
+                    <span class="absolute inset-x-0 bottom-0 h-[2.5px] translate-y-[1.25px] bg-[#68CDEB]" aria-hidden="true"></span>
+                </h2>
                 <div class="flex shrink-0 items-center gap-4 pb-[10px]">
                     {{-- TODO: azione Preferiti --}}
                     <flux:button class="!h-[39px] !w-[128px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none">
@@ -73,9 +67,8 @@
             </div>
 
             <div class="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-                @if ($tab === 'informazioni')
                 {{-- Colonna sinistra: descrizione, informazioni generali, attività, cosa è incluso --}}
-                <div wire:key="tab-informazioni" class="min-w-0 flex-1 lg:max-w-[896px] lg:pt-[22px]">
+                <div class="min-w-0 flex-1 lg:max-w-[896px] lg:pt-[22px]">
                     {{-- 4a. Descrizione (nascosta senza copy) --}}
                     @if (filled($activity->description))
                         <section>
@@ -150,44 +143,8 @@
                         </div>
                     </section>
                 </div>
-                @else
-                {{-- Colonna sinistra: fai una domanda + attività recenti (XD: "Attività - Dettaglio - discussione") --}}
-                <div wire:key="tab-discussione" class="min-w-0 flex-1 lg:max-w-[896px] lg:pt-[22px]">
-                    {{-- 5a. Fai una domanda --}}
-                    <section>
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.ask_question') }}</h2>
-                        {{-- TODO: invio domanda --}}
-                        <flux:input type="text" placeholder="{{ __('events.write_placeholder') }}" class="mt-[13px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-[61px] [&_input]:!rounded-[4px] [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!px-[11px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
-                    </section>
 
-                    {{-- 5b. Attività recenti: card thread con risposta in linea --}}
-                    <section class="mt-[31px]">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.recent_activity') }}</h2>
-                        <div class="mt-[25px] space-y-6">
-                            @foreach ($threads as $thread)
-                                <article wire:key="thread-{{ $loop->index }}" class="rounded-[4px] bg-white pb-6 pl-[17px] pr-6 pt-6 shadow-[1px_1px_2.5px_rgba(0,0,0,0.10)]">
-                                    @foreach ($thread['messages'] as $message)
-                                        <div wire:key="thread-{{ $loop->parent->index }}-msg-{{ $loop->index }}" @class(['mt-4' => ! $loop->first])>
-                                            <p class="text-[15px] font-bold leading-[21px] text-[#68CDEB]">{{ $message['author'] }}</p>
-                                            <p class="mt-[7px] text-[15px] leading-[21px] text-[#2B2B2B]">{{ $message['body'] }}</p>
-                                        </div>
-                                    @endforeach
-                                    {{-- Riga risposta: input pill con bottone "Rispondi" sovrapposto al bordo destro (XD x887 su input 159→1014) --}}
-                                    <div class="relative mt-[23px]">
-                                        {{-- TODO: invio risposta --}}
-                                        <flux:input type="text" placeholder="{{ __('events.write_placeholder') }}" class="!border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!rounded-full [&_input]:!border [&_input]:!border-[#E9E9E9] [&_input]:!bg-white [&_input]:!pl-3 [&_input]:!pr-[135px] [&_input]:!text-[15px] [&_input]:!text-ink [&_input]:!shadow-none [&_input]:!ring-0 [&_input]:placeholder:italic [&_input]:placeholder:text-[#959595]" />
-                                        <flux:button class="!absolute !right-0 !top-0 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#68CDEB] !text-[15px] !font-bold !text-white !shadow-none">{{ __('events.reply') }}</flux:button>
-                                    </div>
-                                </article>
-                            @endforeach
-                        </div>
-                        {{-- TODO: caricamento di altri thread --}}
-                        <flux:button class="!mx-auto !mt-[34px] !flex !h-10 !w-[145px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-black">{{ __('events.load_more') }}</flux:button>
-                    </section>
-                </div>
-                @endif
-
-                {{-- 6. Colonna destra (entrambe le tab): box prenotazione (XD "Raggruppa 3019") --}}
+                {{-- 5. Colonna destra: box prenotazione (XD "Raggruppa 3019") --}}
                 <aside class="w-full shrink-0 lg:w-[453px]">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white px-[21px] pb-6 pt-[21px]">
                         @if ($isFree)
@@ -270,25 +227,27 @@
                 </aside>
             </div>
 
-            @if ($tab === 'informazioni' && $activity->venue?->hasMap())
-            {{-- 7. Dove siamo: banda mappa a tutta larghezza con pill località (XD "Gruppo di maschere 7" 1638x389 + "Raggruppa 842") — Google Maps con la chiave, screenshot XD come fallback --}}
-            <section wire:key="dove-siamo" class="mt-[57px]">
-                <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('events.where_we_are') }}</h2>
-                <div class="relative mt-4 h-[389px] w-full overflow-hidden rounded-[4px]">
-                    <x-google-map :query="$activity->venue->mapQuery()" :fallback="$activity->venue->mapFallbackUrl()" alt="Mappa della zona — {{ $activity->venue->name }}" class="h-full" />
-                    {{-- Pill puramente descrittiva: pointer-events-none per non rubare i click alla mappa --}}
-                    <flux:button class="!pointer-events-none !absolute !left-[715px] !top-[125px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
-                        <flux:icon.pin class="h-[15px] w-3 shrink-0" />
-                        {{ $activity->venue->name }}
-                    </flux:button>
-                </div>
-            </section>
-            @elseif ($tab !== 'informazioni')
-            {{-- 8. Domande frequenti a tutta larghezza sotto entrambe le colonne (XD "Raggruppa 3017" + "Linea 43"; sezione intera nascosta senza FAQ) --}}
+            {{-- 6. Dove siamo: banda mappa a tutta larghezza con pill località (XD "Gruppo di maschere 7" 1638x389 + "Raggruppa 842") — Google Maps con la chiave, screenshot XD come fallback --}}
+            @if ($activity->venue?->hasMap())
+                <section wire:key="dove-siamo" class="mt-[57px]">
+                    <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('events.where_we_are') }}</h2>
+                    <div class="relative mt-4 h-[389px] w-full overflow-hidden rounded-[4px]">
+                        <x-google-map :query="$activity->venue->mapQuery()" :fallback="$activity->venue->mapFallbackUrl()" alt="Mappa della zona — {{ $activity->venue->name }}" class="h-full" />
+                        {{-- Pill puramente descrittiva: pointer-events-none per non rubare i click alla mappa --}}
+                        <flux:button class="!pointer-events-none !absolute !left-[715px] !top-[125px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
+                            <flux:icon.pin class="h-[15px] w-3 shrink-0" />
+                            {{ $activity->venue->name }}
+                        </flux:button>
+                    </div>
+                </section>
+            @endif
+
+            {{-- 7. Domande frequenti a tutta larghezza sotto le colonne (XD "Raggruppa 3017" + "Linea 43"; sezione intera nascosta senza FAQ).
+                 Nell'XD stavano sotto la tab Discussione: rimossa quella tab, le FAQ del partner restano qui. --}}
             @if ($faqs->isNotEmpty())
-            <section wire:key="faq" class="mt-[60px] border-t border-[#DEDEDE]">
-                <div class="pl-[79px] pr-[71px] pt-10">
-                    <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">{{ __('events.faq') }}</h2>
+                <section wire:key="faq" class="mt-[60px] border-t border-[#DEDEDE]">
+                    <div class="pl-[79px] pr-[71px] pt-10">
+                        <h2 class="text-[22px] font-bold leading-[30px] text-[#68CDEB]">{{ __('events.faq') }}</h2>
                         {{-- Prima voce espansa (chevron verso l'alto + risposta visibile) — TODO: accordion --}}
                         <div class="mt-[31px] flex items-start justify-between gap-4">
                             <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $faqs->first()->question }}</p>
@@ -305,9 +264,8 @@
                             @endforeach
                             <div class="border-t border-[#E2EAEB]" aria-hidden="true"></div>
                         </div>
-                </div>
-            </section>
-            @endif
+                    </div>
+                </section>
             @endif
         </div>
     </main>
