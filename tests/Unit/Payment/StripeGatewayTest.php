@@ -6,17 +6,21 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Exceptions\PaymentConfigurationException;
 use App\Models\OrderPayment\OrderPayment;
+use App\Models\Partner\PartnerProfile;
 use App\Services\Payment\PaymentGatewayFactory;
+use App\Services\Payment\StripeConnectService;
 use App\Services\Payment\StripeGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Mockery;
 use Mockery\MockInterface;
+use Stripe\Account;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
 use Stripe\PaymentMethod as StripePaymentMethod;
 use Stripe\Refund;
+use Stripe\Service\AccountService;
 use Stripe\Service\PaymentIntentService;
 use Stripe\Service\PaymentMethodService;
 use Stripe\Service\RefundService;
@@ -38,6 +42,8 @@ class StripeGatewayTest extends TestCase
 
     private MockInterface $paymentMethods;
 
+    private MockInterface $accounts;
+
     private StripeGateway $gateway;
 
     protected function setUp(): void
@@ -47,12 +53,18 @@ class StripeGatewayTest extends TestCase
         $this->paymentIntents = Mockery::mock(PaymentIntentService::class);
         $this->refunds = Mockery::mock(RefundService::class);
         $this->paymentMethods = Mockery::mock(PaymentMethodService::class);
+        $this->accounts = Mockery::mock(AccountService::class);
 
         // StripeClient::__get delega a getService(): basta stubbare quello.
         $client = Mockery::mock(StripeClient::class);
         $client->shouldReceive('getService')->with('paymentIntents')->andReturn($this->paymentIntents);
         $client->shouldReceive('getService')->with('refunds')->andReturn($this->refunds);
         $client->shouldReceive('getService')->with('paymentMethods')->andReturn($this->paymentMethods);
+        $client->shouldReceive('getService')->with('accounts')->andReturn($this->accounts);
+
+        // Il gateway delega la sincronizzazione dell'account al servizio Connect,
+        // che condivide lo stesso StripeClient.
+        $this->app->instance(StripeConnectService::class, new StripeConnectService($client));
 
         $this->gateway = new StripeGateway($client);
 
@@ -329,6 +341,57 @@ class StripeGatewayTest extends TestCase
             'stripe-signature' => [$signature],
             'raw_body' => [$json],
         ]);
+    }
+
+    // ── webhook Connect ─────────────────────────────────────────────────
+
+    public function test_account_updated_allinea_i_flag_del_profilo(): void
+    {
+        $profile = PartnerProfile::factory()->create([
+            'stripe_account_id' => self::ACCOUNT,
+            'stripe_charges_enabled' => false,
+            'stripe_payouts_enabled' => false,
+        ]);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with(self::ACCOUNT)
+            ->andReturn(Account::constructFrom([
+                'id' => self::ACCOUNT,
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+            ]));
+
+        // Nessun OrderPayment coinvolto: l'evento riguarda l'account, non un incasso.
+        $this->assertNull($this->handleSignedWebhook([
+            'id' => 'evt_account',
+            'type' => 'account.updated',
+            'account' => self::ACCOUNT,
+            'data' => ['object' => ['id' => self::ACCOUNT]],
+        ]));
+
+        $profile->refresh();
+
+        $this->assertTrue($profile->stripe_charges_enabled);
+        $this->assertTrue($profile->stripe_payouts_enabled);
+        $this->assertSame([], $profile->stripe_requirements_due);
+    }
+
+    public function test_un_incasso_di_un_account_connesso_viene_riconciliato(): void
+    {
+        $payment = OrderPayment::factory()->create([
+            'gateway_session_id' => 'pi_connect',
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        // Con i direct charges l'evento nasce sull'account del partner: l'id
+        // del PaymentIntent resta l'aggancio, ed è unico.
+        $event = $this->succeededEvent('pi_connect');
+        $event['account'] = self::ACCOUNT;
+
+        $this->assertNotNull($this->handleSignedWebhook($event));
+        $this->assertSame(PaymentStatus::Completed, $payment->fresh()->status);
     }
 
     // ── direct charges ──────────────────────────────────────────────────

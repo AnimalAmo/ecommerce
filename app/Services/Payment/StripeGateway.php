@@ -208,8 +208,22 @@ class StripeGateway implements PaymentGatewayInterface
         return match ($event->type) {
             'payment_intent.succeeded' => $this->completeFromIntent($event->data->object),
             'payment_intent.payment_failed' => $this->failFromIntent($event->data->object),
+            // Evento dell'account connesso, non di un incasso: aggiorna
+            // l'anagrafica del partner e non tocca nessun OrderPayment.
+            'account.updated' => $this->syncConnectedAccount($event->data->object),
             default => null,
         };
+    }
+
+    /**
+     * Specchia su partner_profiles lo stato dell'account connesso. Torna null:
+     * nessun pagamento è coinvolto, e il controller risponde comunque 200.
+     */
+    private function syncConnectedAccount(StripeObject $account): ?OrderPayment
+    {
+        app(StripeConnectService::class)->syncAccountState((string) $account->id);
+
+        return null;
     }
 
     /** Riconciliazione idempotente: completa il pagamento solo se non lo è già. */
