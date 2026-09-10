@@ -20,6 +20,7 @@ class CartItem extends Model
         'cart_id',
         'purchasable_type',
         'purchasable_id',
+        'partner_user_id',
         'is_gift',
         'price_cents',
         'options',

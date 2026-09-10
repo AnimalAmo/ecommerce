@@ -4,7 +4,9 @@ namespace App\Services\Cart;
 
 use App\Data\Cart\CartData;
 use App\Data\Cart\CartItemData;
+use App\Exceptions\CartValidationException;
 use App\Services\Availability\AvailabilityService;
+use App\Services\Partner\PartnerOwnerResolver;
 use App\Services\Pricing\BookingPricingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -31,6 +33,7 @@ class CartManager implements CartStorageInterface
         private readonly DatabaseCartStorage $databaseStorage,
         private readonly AvailabilityService $availability,
         private readonly BookingPricingService $pricing,
+        private readonly PartnerOwnerResolver $owners,
     ) {}
 
     public function get(): CartData
@@ -43,10 +46,18 @@ class CartManager implements CartStorageInterface
         $purchasable = $this->resolvePurchasable($type, $id);
         $options = self::canonicalize($options);
 
+        // Senza proprietario non esiste un conto Stripe su cui far nascere
+        // l'incasso: il prodotto non è vendibile, e va fermato qui.
+        $partnerUserId = $this->owners->ownerIdFor($purchasable);
+
+        if ($partnerUserId === null) {
+            throw CartValidationException::productWithoutOwner();
+        }
+
         $this->availability->ensureAvailable($purchasable, $options);
         $priceCents = $this->pricing->quote($purchasable, $options);
 
-        return $this->driver()->addItem($purchasable, $options, $isGift, $priceCents);
+        return $this->driver()->addItem($purchasable, $options, $isGift, $priceCents, $partnerUserId);
     }
 
     /** Fonde le options nella riga (le chiavi non passate restano), poi rivalida e riprezza. */

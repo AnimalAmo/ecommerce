@@ -81,6 +81,36 @@ class DemoUserSeeder extends Seeder
         Structure::whereIn('slug', ['hotel-brescia', 'hotel-mantova-residence'])->update(['user_id' => $partner->id]);
         Event::whereIn('slug', ['weekend-escursioni', 'puppy-yoga-milano', 'puppy-yoga', 'vacanza-montagna'])->update(['user_id' => $partner->id]);
         SmartboxPackage::whereIn('slug', ['piemonte', 'relax-lombardia-2'])->update(['user_id' => $partner->id]);
+
+        $this->assignRemainingCatalogTo($this->catalogPartner());
+    }
+
+    /**
+     * Secondo partner, proprietario di tutto il resto del catalogo mock.
+     *
+     * Serve perché un prodotto senza proprietario non è vendibile: non esiste
+     * un conto connesso su cui far nascere l'incasso, e il CartManager lo
+     * rifiuta. Tenerlo distinto dal partner demo lascia intatto ciò che quello
+     * vede in "I miei servizi" e in "Prenotazioni".
+     */
+    private function catalogPartner(): User
+    {
+        $partner = User::updateOrCreate(['email' => 'catalogo@animalamo.test'], [
+            'first_name' => 'Catalogo',
+            'last_name' => 'Demo',
+            'password' => 'password',
+            'is_active' => true,
+        ]);
+        $partner->syncRoles(['partner']);
+
+        return $partner;
+    }
+
+    private function assignRemainingCatalogTo(User $owner): void
+    {
+        Structure::whereNull('user_id')->update(['user_id' => $owner->id]);
+        Event::whereNull('user_id')->update(['user_id' => $owner->id]);
+        SmartboxPackage::whereNull('user_id')->update(['user_id' => $owner->id]);
     }
 
     /** Servizi completati del partner demo (card XD "I miei servizi"). */

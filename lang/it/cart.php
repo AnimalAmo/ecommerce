@@ -9,6 +9,7 @@ return [
     'invalid_times' => 'L\'orario di fine deve essere successivo all\'inizio.',
     'sold_out' => 'Non ci sono abbastanza posti disponibili.',
     'not_purchasable' => 'Questo prodotto non è acquistabile.',
+    'product_without_owner' => 'Questo prodotto non è al momento acquistabile. Riprova più tardi.',
     'invalid_participants' => 'Il numero di partecipanti selezionato non è valido.',
     // Toast di conferma aggiunta
     'added' => 'Aggiunto al carrello.',

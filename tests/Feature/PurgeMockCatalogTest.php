@@ -77,7 +77,7 @@ class PurgeMockCatalogTest extends TestCase
     {
         $this->seedWithMockCatalog();
 
-        $mock = Structure::whereNull('user_id')->whereNull('structure_draft_id')->firstOrFail();
+        $mock = $this->mockStructure();
 
         $partner = User::factory()->create();
         $real = Structure::factory()->create(['user_id' => $partner->id]);
@@ -239,7 +239,7 @@ class PurgeMockCatalogTest extends TestCase
     {
         $this->seedWithMockCatalog();
 
-        $structure = Structure::whereNull('user_id')->firstOrFail();
+        $structure = $this->mockStructure();
         $order = Order::factory()->create();
         $item = OrderItem::factory()->create([
             'order_id' => $order->id,
@@ -270,5 +270,18 @@ class PurgeMockCatalogTest extends TestCase
             ->assertFailed();
 
         $this->assertGreaterThan(0, Structure::count());
+    }
+
+    /**
+     * Una struttura del catalogo campione. Il discrimine non è più user_id
+     * nullo: il seeder intesta il mock all'account demo 'catalogo@animalamo.test'
+     * perché un prodotto senza proprietario non è vendibile. Resta valido
+     * structure_draft_id nullo (i publisher lo scrivono sempre, i seeder mai).
+     */
+    private function mockStructure(): Structure
+    {
+        return Structure::whereNull('structure_draft_id')
+            ->whereHas('user', fn ($query) => $query->where('email', 'catalogo@animalamo.test'))
+            ->firstOrFail();
     }
 }

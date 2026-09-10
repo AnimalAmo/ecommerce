@@ -41,6 +41,7 @@ final class CartItemData extends Data
         public readonly ?array $dates,
         public readonly ?string $serviceSlot,
         public readonly ?string $giftValidity,
+        public readonly ?int $partnerUserId,
     ) {}
 
     /** Idrata dalla riga cart_items (purchasable eager-loaded e non null). */
@@ -53,6 +54,7 @@ final class CartItemData extends Data
             priceCents: $item->price_cents,
             options: $item->options ?? [],
             purchasable: $item->purchasable,
+            partnerUserId: $item->partner_user_id,
         );
     }
 
@@ -66,6 +68,7 @@ final class CartItemData extends Data
             priceCents: (int) $entry['price_cents'],
             options: $entry['options'] ?? [],
             purchasable: $purchasable,
+            partnerUserId: $entry['partner_user_id'] ?? null,
         );
     }
 
@@ -77,6 +80,7 @@ final class CartItemData extends Data
         int $priceCents,
         array $options,
         Model $purchasable,
+        ?int $partnerUserId,
     ): self {
         $family = BookingPricingService::family($purchasable);
 
@@ -99,6 +103,7 @@ final class CartItemData extends Data
             giftValidity: $purchasable instanceof SmartboxPackage
                 ? __('cart.gift_validity', ['validity' => Format::validity($purchasable->validity_months)])
                 : null,
+            partnerUserId: $partnerUserId,
         );
     }
 

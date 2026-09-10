@@ -58,6 +58,10 @@ class PurgeMockCatalog extends Command
     private const DEMO_EMAILS = [
         'giulia.rossi@gmail.com',
         'partner@animalamo.test',
+        // Proprietario del resto del catalogo mock: un prodotto senza
+        // proprietario non è vendibile (il CartManager lo rifiuta), quindi il
+        // seeder lo intesta a questo account demo invece di lasciarlo orfano.
+        'catalogo@animalamo.test',
     ];
 
     /** Partita IVA del profilo demo: ritrova l'account anche se su staging gli hanno cambiato email. */

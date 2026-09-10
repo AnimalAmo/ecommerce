@@ -79,7 +79,8 @@ class UserSeedTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(2, User::count());
+        // Tre: Giulia, il partner demo e il partner del catalogo mock.
+        $this->assertSame(3, User::count());
         $this->assertSame(3, Role::count());
 
         $giulia = User::where('email', 'giulia.rossi@gmail.com')->firstOrFail();

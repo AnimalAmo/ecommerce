@@ -53,6 +53,12 @@ class CartValidationException extends RuntimeException
         return new self(__('cart.not_purchasable'));
     }
 
+    /** Prodotto senza partner proprietario: non c'è un conto su cui incassare. */
+    public static function productWithoutOwner(): self
+    {
+        return new self(__('cart.product_without_owner'));
+    }
+
     /** Numero di partecipanti/ospiti non valido (negativo o totale nullo). */
     public static function invalidParticipants(): self
     {
