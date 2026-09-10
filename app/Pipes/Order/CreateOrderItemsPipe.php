@@ -26,6 +26,7 @@ class CreateOrderItemsPipe
             $data->orderItems->push($data->order->items()->create([
                 'purchasable_type' => $item->type,
                 'purchasable_id' => $item->purchasableId,
+                'partner_user_id' => $item->partnerUserId,
                 'title' => $item->title,
                 'photo_url' => $item->photoUrl,
                 'product_type' => $item->productType,

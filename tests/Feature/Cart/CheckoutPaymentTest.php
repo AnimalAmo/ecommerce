@@ -19,6 +19,7 @@ use App\Services\Payment\PaymentGatewayService;
 use App\Services\Payment\StripeGateway;
 use Database\Seeders\PaymentGatewaySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -35,6 +36,8 @@ use Tests\TestCase;
  */
 class CheckoutPaymentTest extends TestCase
 {
+    private ?User $seller = null;
+
     use RefreshDatabase;
 
     private FakePaymentGateway $gateway;
@@ -70,7 +73,8 @@ class CheckoutPaymentTest extends TestCase
         $buyer = $this->buyer();
         $this->actingAs($buyer);
 
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure); // 5 notti = 500 €
 
         Livewire::test(Checkout::class)
@@ -93,7 +97,7 @@ class CheckoutPaymentTest extends TestCase
 
         // Capture verificato con l'importo server-side (mai dal client).
         $this->assertSame(
-            [['payload' => ['payment_intent_id' => 'pi_fake_1'], 'expected_amount_cents' => 50000]],
+            [['payload' => ['payment_intent_id' => 'pi_fake_1'], 'expected_amount_cents' => 50000, 'stripe_account_id' => $this->sellerAccountId()]],
             $this->gateway->captureCalls,
         );
 
@@ -130,6 +134,7 @@ class CheckoutPaymentTest extends TestCase
         $this->actingAs($this->buyer());
 
         $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
@@ -152,8 +157,10 @@ class CheckoutPaymentTest extends TestCase
     {
         $this->actingAs($this->buyer());
 
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
         $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
@@ -174,7 +181,8 @@ class CheckoutPaymentTest extends TestCase
 
     public function test_guest_checkout_creates_an_order_without_user(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure); // carrello di sessione guest
 
         Livewire::test(Checkout::class)
@@ -206,9 +214,11 @@ class CheckoutPaymentTest extends TestCase
     {
         $this->actingAs($this->buyer());
 
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $normalKey = $this->addStructureLine($structure);
-        $box = SmartboxPackage::factory()->create(['price_cents' => 21500]);
+        $box = SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500]);
         $this->addGiftSmartboxLine($box);
 
         Livewire::withQueryParams(['regalo' => 1])->test(Checkout::class)
@@ -247,7 +257,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_failed_capture_keeps_the_user_at_step_two_without_an_order(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         $this->gateway->captureSucceeds = false;
 
@@ -271,6 +282,7 @@ class CheckoutPaymentTest extends TestCase
         $this->actingAs($this->buyer());
 
         $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
@@ -291,7 +303,7 @@ class CheckoutPaymentTest extends TestCase
 
         // Storno pieno col transaction id del capture (nessun OrderPayment esiste).
         $this->assertSame(
-            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 5000]],
+            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 5000, 'stripe_account_id' => $this->sellerAccountId()]],
             $this->gateway->refundCalls,
         );
 
@@ -310,7 +322,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_selecting_a_wallet_reuses_the_intent_and_orders_with_that_method(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -327,7 +340,7 @@ class CheckoutPaymentTest extends TestCase
         // Lo switch riusa il PI della sessione (update, mai un PI orfano).
         $this->assertCount(2, $this->gateway->initCalls);
         $this->assertSame('google_pay', $this->gateway->initCalls[1]['method']);
-        $this->assertSame(['payment_intent_id' => 'pi_fake_1'], $this->gateway->initCalls[1]['context']);
+        $this->assertSame(['payment_intent_id' => 'pi_fake_1'], $this->sessionContext(1));
 
         $order = Order::sole();
         $this->assertSame(PaymentMethod::GooglePay, $order->payment->payment_method);
@@ -338,7 +351,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_callback_with_a_null_session_still_goes_through_capture(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         // Errore API transitorio all'init: step 2 raggiunto con sessione nulla.
         $this->gateway->initThrows = true;
@@ -356,7 +370,7 @@ class CheckoutPaymentTest extends TestCase
             ->assertSet('step', 3);
 
         $this->assertSame(
-            [['payload' => ['payment_intent_id' => 'pi_fake_1'], 'expected_amount_cents' => 50000]],
+            [['payload' => ['payment_intent_id' => 'pi_fake_1'], 'expected_amount_cents' => 50000, 'stripe_account_id' => $this->sellerAccountId()]],
             $this->gateway->captureCalls,
         );
         $this->assertSame(1, Order::count());
@@ -367,7 +381,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_replaying_the_callback_with_the_same_intent_is_idempotent(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         $component = Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -394,7 +409,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_callback_with_a_foreign_payment_intent_is_rejected_before_capture(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         // Payload devtools con un PI diverso dalla sessione corrente: nessuna capture.
         Livewire::test(Checkout::class)
@@ -413,7 +429,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_amount_mismatch_capture_is_refunded_without_an_order(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         $this->gateway->captureAmountMismatch = true;
 
@@ -425,7 +442,7 @@ class CheckoutPaymentTest extends TestCase
 
         // Storno per l'importo REALMENTE incassato, non per il totale atteso.
         $this->assertSame(
-            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 12300]],
+            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 12300, 'stripe_account_id' => $this->sellerAccountId()]],
             $this->gateway->refundCalls,
         );
         $this->assertDatabaseCount('orders', 0);
@@ -439,7 +456,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_any_pipeline_error_after_capture_refunds_the_charge(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         $this->mock(PlaceOrderAction::class, function ($mock): void {
             $mock->shouldReceive('execute')->once()->andThrow(new RuntimeException('boom'));
@@ -453,7 +471,7 @@ class CheckoutPaymentTest extends TestCase
 
         // Mai un incasso orfano: storno pieno col transaction id del capture.
         $this->assertSame(
-            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 50000]],
+            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 50000, 'stripe_account_id' => $this->sellerAccountId()]],
             $this->gateway->refundCalls,
         );
         $this->assertDatabaseCount('orders', 0);
@@ -465,7 +483,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_deleted_purchasable_after_capture_is_refunded_without_an_order(): void
     {
         $this->actingAs($this->buyer());
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         $component = Livewire::test(Checkout::class)
@@ -484,7 +503,7 @@ class CheckoutPaymentTest extends TestCase
             ->assertSet('processing', false);
 
         $this->assertSame(
-            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 50000]],
+            [['transaction_id' => 'pi_fake_1', 'amount_cents' => 50000, 'stripe_account_id' => $this->sellerAccountId()]],
             $this->gateway->refundCalls,
         );
         $this->assertDatabaseCount('orders', 0);
@@ -496,14 +515,16 @@ class CheckoutPaymentTest extends TestCase
     public function test_cart_total_change_after_init_reinits_the_session_instead_of_paying(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         $component = Livewire::test(Checkout::class)
             ->call('goToStep', 2)
             ->assertSet('sessionAmountCents', 50000);
 
         // Carrello cambiato in un'altra tab dopo l'init della sessione.
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 4000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 4000]));
 
         $component->call('processPayment')
             ->assertNotDispatched('process-payment')
@@ -515,7 +536,7 @@ class CheckoutPaymentTest extends TestCase
         $this->assertSame(70000, $this->gateway->initCalls[1]['amount_cents']);
         // PI nuovo, non update: il client_secret cambia e il wire:key rimonta
         // l'Element (un update lascerebbe "Paga ora" spento per sempre).
-        $this->assertSame([], $this->gateway->initCalls[1]['context']);
+        $this->assertSame([], $this->sessionContext(1));
         $this->assertDatabaseCount('orders', 0);
     }
 
@@ -524,7 +545,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_failed_js_init_marks_the_payment_unavailable(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -547,7 +569,8 @@ class CheckoutPaymentTest extends TestCase
         app(PaymentGatewayService::class)->clearCache();
 
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -572,7 +595,8 @@ class CheckoutPaymentTest extends TestCase
         config(['payment.stripe.secret' => '']);
 
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -607,7 +631,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_a_saved_card_opens_the_session_with_the_customer_and_the_payment_method(): void
     {
         $this->actingAs($this->buyerWithSavedCard());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             // Carta salvata preselezionata: niente Element da compilare.
@@ -619,7 +644,7 @@ class CheckoutPaymentTest extends TestCase
 
         $this->assertSame(
             ['customer_id' => 'cus_test', 'payment_method_id' => 'pm_test'],
-            $this->gateway->initCalls[0]['context'],
+            $this->sessionContext(0),
         );
     }
 
@@ -627,7 +652,8 @@ class CheckoutPaymentTest extends TestCase
     {
         $buyer = $this->buyerWithSavedCard();
         $this->actingAs($buyer);
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -645,7 +671,8 @@ class CheckoutPaymentTest extends TestCase
     public function test_choosing_another_card_reopens_the_session_without_the_saved_one(): void
     {
         $this->actingAs($this->buyerWithSavedCard());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
@@ -655,39 +682,42 @@ class CheckoutPaymentTest extends TestCase
 
         // PI con payment method allegato non riusabile: sessione nuova, niente
         // payment_intent_id e nessun riferimento alla carta salvata.
-        $this->assertSame([], $this->gateway->initCalls[1]['context']);
+        $this->assertSame([], $this->sessionContext(1));
     }
 
     public function test_switching_to_a_wallet_drops_the_saved_card_session(): void
     {
         $this->actingAs($this->buyerWithSavedCard());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
             ->call('selectPayment', PaymentMethod::GooglePay->value)
             ->assertSet('paymentMethod', 'google_pay');
 
-        $this->assertSame([], $this->gateway->initCalls[1]['context']);
+        $this->assertSame([], $this->sessionContext(1));
     }
 
     public function test_a_buyer_without_a_saved_card_keeps_the_element_flow(): void
     {
         $this->actingAs($this->buyer());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         Livewire::test(Checkout::class)
             ->assertSet('useSavedCard', false)
             ->call('goToStep', 2)
             ->assertSet('step', 2);
 
-        $this->assertSame([], $this->gateway->initCalls[0]['context']);
+        $this->assertSame([], $this->sessionContext(0));
     }
 
     public function test_a_saved_card_broken_on_stripe_falls_back_to_a_new_card(): void
     {
         $this->actingAs($this->buyerWithSavedCard());
-        $this->addStructureLine(Structure::factory()->create(['price_cents' => 10000]));
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
 
         // pm staccato dalla dashboard: il checkout non deve restare bloccato.
         $this->gateway->initThrowsWithSavedCard = true;
@@ -738,5 +768,55 @@ class CheckoutPaymentTest extends TestCase
                 'message' => 'Tanti auguri!',
             ],
         ], true)->key;
+    }
+
+    /**
+     * Il venditore di tutto ciò che finisce in questi carrelli: un ordine ha un
+     * solo partner, quindi due prodotti di proprietari diversi non possono
+     * coesistere in un carrello (CartManager::guardSinglePartner).
+     */
+    public function test_la_sessione_nasce_sull_account_del_venditore_con_la_provvigione(): void
+    {
+        $this->actingAs($this->buyer());
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id,
+            'price_cents' => 10000,
+        ])); // 5 notti = 500 €
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSet('step', 2)
+            ->assertSet('sessionStripeAccountId', $this->seller()->partnerProfile->stripe_account_id);
+
+        $context = $this->gateway->initCalls[0]['context'];
+
+        $this->assertSame($this->seller()->partnerProfile->stripe_account_id, $context['stripe_account_id']);
+        // 10% di 500 €: sopra soglia la provvigione è dovuta.
+        $this->assertSame(5000, $context['application_fee_amount']);
+    }
+
+    /**
+     * Il contesto della sessione senza le due chiavi che con i direct charges
+     * ci sono sempre: le assert storiche parlano di carta salvata e di PI.
+     */
+    private function sessionContext(int $index): array
+    {
+        return Arr::except(
+            $this->gateway->initCalls[$index]['context'],
+            ['stripe_account_id', 'application_fee_amount'],
+        );
+    }
+
+    /** Account connesso del venditore: ogni addebito e ogni storno passano di lì. */
+    private function sellerAccountId(): string
+    {
+        return $this->seller()->partnerProfile->stripe_account_id;
+    }
+
+    private function seller(): User
+    {
+        // Collegato a Stripe: con i direct charges un venditore senza
+        // account connesso non può incassare, quindi non può nemmeno vendere.
+        return $this->seller ??= User::factory()->stripeConnected()->create();
     }
 }

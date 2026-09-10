@@ -2,6 +2,11 @@
 
 return [
 
+    // Errori del flusso partner (toast danger / eccezioni di dominio).
+    'errors' => [
+        'stripe_onboarding_required' => 'Before publishing a service you need to finish connecting your Stripe account.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Partner — Work with us
@@ -89,6 +94,15 @@ return [
     |--------------------------------------------------------------------------
     */
     'profile' => [
+        'stripe' => [
+            'connected' => 'Account connected',
+            'connected_help' => 'Your customers\' payments land straight in your Stripe account.',
+            'disconnected' => 'Connect your account to get paid',
+            'incomplete' => 'Connection not finished',
+            'help' => 'Customers pay you directly: the money lands in your Stripe account, and AnimalAmo only keeps its commission. Until the connection is complete you cannot publish your services.',
+            'connect' => 'Connect account',
+            'resume' => 'Resume connection',
+        ],
         'title' => 'Profile',
         'nav_profile' => 'Profile',
         'nav_payment' => 'Payment method',

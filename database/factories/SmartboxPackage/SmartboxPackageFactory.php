@@ -4,6 +4,7 @@ namespace Database\Factories\SmartboxPackage;
 
 use App\Enums\ProductType;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,8 @@ class SmartboxPackageFactory extends Factory
         $title = fake()->unique()->sentence(3);
 
         return [
+            // Ogni prodotto a catalogo ha un proprietario: senza non è vendibile.
+            'user_id' => User::factory(),
             'type' => fake()->randomElement([ProductType::Stay, ProductType::Wellness, ProductType::Adventure]),
             'title' => $title,
             'slug' => Str::slug($title),

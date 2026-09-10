@@ -2,6 +2,7 @@
 
 namespace App\Services\Partner\Publishing;
 
+use App\Exceptions\PartnerNotPayableException;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
@@ -24,11 +25,22 @@ class DraftPublisher
         private readonly SmartboxPublisher $smartboxes,
     ) {}
 
-    /** Null quando il draft non è pubblicabile (vedi isPublishable). */
+    /**
+     * Null quando il draft non è pubblicabile (vedi isPublishable).
+     *
+     * @throws PartnerNotPayableException onboarding Stripe del partner incompleto
+     */
     public function publish(StructureDraft $draft): ?Model
     {
         if (! $this->isPublishable($draft)) {
             return null;
+        }
+
+        // La bozza è pronta ma il partner non ha un account connesso: il
+        // prodotto sarebbe invendibile e il checkout esploderebbe invece di
+        // degradare a commissione zero. Meglio non pubblicare e dirlo.
+        if ($draft->user?->partnerProfile?->canBePaid() !== true) {
+            throw PartnerNotPayableException::onboardingIncomplete();
         }
 
         return match ($draft->family()) {

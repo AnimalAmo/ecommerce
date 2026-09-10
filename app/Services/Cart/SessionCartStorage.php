@@ -34,7 +34,7 @@ class SessionCartStorage
     }
 
     /** Aggiunge l'entry; chiave già presente (stesso contenuto) = aggiorna solo il prezzo. */
-    public function addItem(Model $purchasable, array $options, bool $isGift, int $priceCents): CartItemData
+    public function addItem(Model $purchasable, array $options, bool $isGift, int $priceCents, ?int $partnerUserId = null): CartItemData
     {
         $type = $purchasable->getMorphClass();
         $key = self::itemKey($type, $purchasable->getKey(), $isGift, $options);
@@ -48,6 +48,7 @@ class SessionCartStorage
             $cart[$key] = [
                 'type' => $type,
                 'id' => $purchasable->getKey(),
+                'partner_user_id' => $partnerUserId,
                 'is_gift' => $isGift,
                 'price_cents' => $priceCents,
                 'options' => $options,

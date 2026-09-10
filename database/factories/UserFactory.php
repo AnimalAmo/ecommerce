@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -39,6 +40,17 @@ class UserFactory extends Factory
     }
 
     /** Account sospeso: legge/scrive come cliente ma non entra nell'area partner. */
+    /**
+     * Partner con onboarding Stripe completato: può incassare ed essere
+     * bonificato, quindi i suoi servizi possono andare a catalogo.
+     */
+    public function stripeConnected(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            PartnerProfile::factory()->connected()->for($user)->create();
+        });
+    }
+
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [

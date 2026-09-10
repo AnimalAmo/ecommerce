@@ -4,6 +4,7 @@ namespace Database\Factories\Structure;
 
 use App\Enums\ProductType;
 use App\Models\Structure\Structure;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,8 @@ class StructureFactory extends Factory
         $name = fake()->unique()->company();
 
         return [
+            // Ogni prodotto a catalogo ha un proprietario: senza non è vendibile.
+            'user_id' => User::factory(),
             'type' => ProductType::Structure,
             'name' => $name,
             'slug' => Str::slug($name),

@@ -6,16 +6,23 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Exceptions\PaymentConfigurationException;
 use App\Models\OrderPayment\OrderPayment;
+use App\Models\Partner\PartnerProfile;
 use App\Services\Payment\PaymentGatewayFactory;
+use App\Services\Payment\StripeConnectService;
 use App\Services\Payment\StripeGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Mockery;
 use Mockery\MockInterface;
+use Stripe\Account;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
+use Stripe\PaymentMethod as StripePaymentMethod;
 use Stripe\Refund;
+use Stripe\Service\AccountService;
 use Stripe\Service\PaymentIntentService;
+use Stripe\Service\PaymentMethodService;
 use Stripe\Service\RefundService;
 use Stripe\StripeClient;
 use Tests\TestCase;
@@ -26,9 +33,16 @@ class StripeGatewayTest extends TestCase
 
     private const WEBHOOK_SECRET = 'whsec_test_secret';
 
+    /** Account connesso del venditore: ogni addebito nasce lì, mai sulla piattaforma. */
+    private const ACCOUNT = 'acct_partner';
+
     private MockInterface $paymentIntents;
 
     private MockInterface $refunds;
+
+    private MockInterface $paymentMethods;
+
+    private MockInterface $accounts;
 
     private StripeGateway $gateway;
 
@@ -38,11 +52,19 @@ class StripeGatewayTest extends TestCase
 
         $this->paymentIntents = Mockery::mock(PaymentIntentService::class);
         $this->refunds = Mockery::mock(RefundService::class);
+        $this->paymentMethods = Mockery::mock(PaymentMethodService::class);
+        $this->accounts = Mockery::mock(AccountService::class);
 
         // StripeClient::__get delega a getService(): basta stubbare quello.
         $client = Mockery::mock(StripeClient::class);
         $client->shouldReceive('getService')->with('paymentIntents')->andReturn($this->paymentIntents);
         $client->shouldReceive('getService')->with('refunds')->andReturn($this->refunds);
+        $client->shouldReceive('getService')->with('paymentMethods')->andReturn($this->paymentMethods);
+        $client->shouldReceive('getService')->with('accounts')->andReturn($this->accounts);
+
+        // Il gateway delega la sincronizzazione dell'account al servizio Connect,
+        // che condivide lo stesso StripeClient.
+        $this->app->instance(StripeConnectService::class, new StripeConnectService($client));
 
         $this->gateway = new StripeGateway($client);
 
@@ -59,10 +81,11 @@ class StripeGatewayTest extends TestCase
                 'amount' => 47600,
                 'currency' => 'eur',
                 'payment_method_types' => ['card'],
-            ])
+                'application_fee_amount' => 4760,
+            ], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_new'));
 
-        $session = $this->gateway->initPaymentSession(47600, PaymentMethod::Card);
+        $session = $this->gateway->initPaymentSession(47600, PaymentMethod::Card, $this->context(['application_fee_amount' => 4760]));
 
         $this->assertSame([
             'client_secret' => 'pi_new_secret',
@@ -77,12 +100,14 @@ class StripeGatewayTest extends TestCase
             ->with('pi_existing', [
                 'amount' => 20000,
                 'payment_method_types' => ['card'],
-            ])
+                'application_fee_amount' => 2000,
+            ], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_existing'));
 
-        $session = $this->gateway->initPaymentSession(20000, PaymentMethod::GooglePay, [
+        $session = $this->gateway->initPaymentSession(20000, PaymentMethod::GooglePay, $this->context([
             'payment_intent_id' => 'pi_existing',
-        ]);
+            'application_fee_amount' => 2000,
+        ]));
 
         $this->assertSame('pi_existing', $session['payment_intent_id']);
     }
@@ -93,10 +118,10 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldReceive('retrieve')
             ->once()
-            ->with('pi_123')
+            ->with('pi_123', [], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_123', status: 'succeeded', amountReceived: 47600));
 
-        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600);
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
 
         $this->assertTrue($result->succeeded);
         $this->assertSame('pi_123', $result->gatewaySessionId);
@@ -110,10 +135,10 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldReceive('retrieve')
             ->once()
-            ->with('pi_123')
+            ->with('pi_123', [], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_123', status: 'succeeded', amountReceived: 100));
 
-        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600);
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
 
         // Incassato ma NON valido: fundsCaptured + transaction id per lo
         // storno immediato del chiamante (mai soldi orfani).
@@ -129,10 +154,10 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldReceive('retrieve')
             ->once()
-            ->with('pi_123')
+            ->with('pi_123', [], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_123', status: 'requires_payment_method', amountReceived: 47600));
 
-        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600);
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
 
         $this->assertFalse($result->succeeded);
         // Nessun incasso avvenuto: niente da stornare.
@@ -143,7 +168,7 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldNotReceive('retrieve');
 
-        $result = $this->gateway->captureFromCheckout([], 47600);
+        $result = $this->gateway->captureFromCheckout([], 47600, self::ACCOUNT);
 
         $this->assertFalse($result->succeeded);
     }
@@ -154,10 +179,13 @@ class StripeGatewayTest extends TestCase
     {
         $this->refunds->shouldReceive('create')
             ->once()
-            ->with(['payment_intent' => 'pi_123', 'amount' => 4760])
+            ->with(
+                ['payment_intent' => 'pi_123', 'amount' => 4760, 'refund_application_fee' => true],
+                ['stripe_account' => self::ACCOUNT],
+            )
             ->andReturn(Refund::constructFrom(['id' => 're_1']));
 
-        $this->gateway->refund('pi_123', 4760);
+        $this->gateway->refund('pi_123', 4760, self::ACCOUNT);
     }
 
     // ── webhook ─────────────────────────────────────────────────────────
@@ -313,5 +341,135 @@ class StripeGatewayTest extends TestCase
             'stripe-signature' => [$signature],
             'raw_body' => [$json],
         ]);
+    }
+
+    // ── webhook Connect ─────────────────────────────────────────────────
+
+    public function test_account_updated_allinea_i_flag_del_profilo(): void
+    {
+        $profile = PartnerProfile::factory()->create([
+            'stripe_account_id' => self::ACCOUNT,
+            'stripe_charges_enabled' => false,
+            'stripe_payouts_enabled' => false,
+        ]);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with(self::ACCOUNT)
+            ->andReturn(Account::constructFrom([
+                'id' => self::ACCOUNT,
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+            ]));
+
+        // Nessun OrderPayment coinvolto: l'evento riguarda l'account, non un incasso.
+        $this->assertNull($this->handleSignedWebhook([
+            'id' => 'evt_account',
+            'type' => 'account.updated',
+            'account' => self::ACCOUNT,
+            'data' => ['object' => ['id' => self::ACCOUNT]],
+        ]));
+
+        $profile->refresh();
+
+        $this->assertTrue($profile->stripe_charges_enabled);
+        $this->assertTrue($profile->stripe_payouts_enabled);
+        $this->assertSame([], $profile->stripe_requirements_due);
+    }
+
+    public function test_un_incasso_di_un_account_connesso_viene_riconciliato(): void
+    {
+        $payment = OrderPayment::factory()->create([
+            'gateway_session_id' => 'pi_connect',
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        // Con i direct charges l'evento nasce sull'account del partner: l'id
+        // del PaymentIntent resta l'aggancio, ed è unico.
+        $event = $this->succeededEvent('pi_connect');
+        $event['account'] = self::ACCOUNT;
+
+        $this->assertNotNull($this->handleSignedWebhook($event));
+        $this->assertSame(PaymentStatus::Completed, $payment->fresh()->status);
+    }
+
+    // ── direct charges ──────────────────────────────────────────────────
+
+    public function test_sotto_soglia_la_provvigione_non_compare_nella_richiesta(): void
+    {
+        $this->paymentIntents->shouldReceive('create')
+            ->once()
+            ->with(
+                Mockery::on(fn (array $params): bool => ! array_key_exists('application_fee_amount', $params)),
+                ['stripe_account' => self::ACCOUNT],
+            )
+            ->andReturn($this->intent('pi_small'));
+
+        // null = nessuna provvigione dovuta: il parametro va omesso, non messo
+        // a zero (Stripe lo rifiuterebbe con invalid_request_error).
+        $this->gateway->initPaymentSession(4000, PaymentMethod::Card, $this->context(['application_fee_amount' => null]));
+    }
+
+    public function test_senza_account_connesso_il_pagamento_non_parte(): void
+    {
+        $this->paymentIntents->shouldNotReceive('create');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        // Mai un addebito sul conto della piattaforma: è il punto del modello.
+        $this->gateway->initPaymentSession(10000, PaymentMethod::Card);
+    }
+
+    public function test_la_carta_salvata_viene_clonata_sull_account_del_partner(): void
+    {
+        $this->paymentMethods->shouldReceive('create')
+            ->once()
+            ->with(
+                ['customer' => 'cus_platform', 'payment_method' => 'pm_platform'],
+                ['stripe_account' => self::ACCOUNT],
+            )
+            ->andReturn(StripePaymentMethod::constructFrom(['id' => 'pm_cloned']));
+
+        $this->paymentIntents->shouldReceive('create')
+            ->once()
+            ->with(
+                // Il customer resta alla piattaforma: sul PI va solo il
+                // payment method clonato sull'account del venditore.
+                Mockery::on(fn (array $params): bool => $params['payment_method'] === 'pm_cloned'
+                    && ! array_key_exists('customer', $params)),
+                ['stripe_account' => self::ACCOUNT],
+            )
+            ->andReturn($this->intent('pi_saved'));
+
+        $this->gateway->initPaymentSession(12000, PaymentMethod::Card, $this->context([
+            'customer_id' => 'cus_platform',
+            'payment_method_id' => 'pm_platform',
+            'application_fee_amount' => 1200,
+        ]));
+    }
+
+    public function test_aggiornare_la_sessione_non_riclona_la_carta(): void
+    {
+        $this->paymentMethods->shouldNotReceive('create');
+
+        $this->paymentIntents->shouldReceive('update')
+            ->once()
+            ->with('pi_existing', Mockery::type('array'), ['stripe_account' => self::ACCOUNT])
+            ->andReturn($this->intent('pi_existing'));
+
+        // Il payment method è già allegato al PI: riclonarlo a ogni cambio di
+        // importo creerebbe un PaymentMethod nuovo per ogni tasto premuto.
+        $this->gateway->initPaymentSession(12000, PaymentMethod::Card, $this->context([
+            'payment_intent_id' => 'pi_existing',
+            'customer_id' => 'cus_platform',
+            'payment_method_id' => 'pm_platform',
+        ]));
+    }
+
+    /** Context di una sessione: sempre con l'account del venditore. */
+    private function context(array $extra = []): array
+    {
+        return array_merge(['stripe_account_id' => self::ACCOUNT], $extra);
     }
 }

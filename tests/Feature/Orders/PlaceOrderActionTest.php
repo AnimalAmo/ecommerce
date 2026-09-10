@@ -2,26 +2,21 @@
 
 namespace Tests\Feature\Orders;
 
-use App\Actions\Order\PlaceOrderAction;
-use App\Data\Checkout\CheckoutCaptureResult;
-use App\Data\Checkout\PlaceOrderData;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Models\Event\Event;
-use App\Models\Order\Order;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
-use App\Services\Cart\CartManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
+use Tests\Feature\Orders\Concerns\PlacesOrders;
 use Tests\TestCase;
 
 /**
@@ -32,6 +27,7 @@ use Tests\TestCase;
  */
 class PlaceOrderActionTest extends TestCase
 {
+    use PlacesOrders;
     use RefreshDatabase;
 
     private User $buyer;
@@ -61,7 +57,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_structure_order_snapshots_lines_payment_and_buyer(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure); // 5 notti = 500 €
 
         $order = $this->placeOrder();
@@ -128,6 +125,7 @@ class PlaceOrderActionTest extends TestCase
     public function test_event_order_books_real_dates_and_increments_seats(): void
     {
         $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
@@ -173,7 +171,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_smartbox_gift_order_snapshots_gift_options_and_validity(): void
     {
-        $box = SmartboxPackage::factory()->create(['price_cents' => 21500, 'validity_months' => 12]);
+        $box = SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500, 'validity_months' => 12]);
         $this->addGiftSmartboxLine($box);
 
         $order = $this->placeOrder(gift: true);
@@ -200,7 +199,8 @@ class PlaceOrderActionTest extends TestCase
     {
         Auth::logout(); // carrello di sessione, come un vero guest
 
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         $order = $this->placeOrder();
@@ -215,12 +215,14 @@ class PlaceOrderActionTest extends TestCase
     public function test_sold_out_line_rolls_back_the_whole_order(): void
     {
         $available = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
             'ends_at' => '2026-08-10 20:00:00',
         ]);
         $soldOut = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-11 18:00:00',
@@ -257,7 +259,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_deleted_purchasable_fails_as_cart_validation_not_model_not_found(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         // Snapshot righe PRIMA della cancellazione (come handlePaymentCallback):
@@ -280,7 +283,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_deleted_smartbox_fails_as_cart_validation_not_model_not_found(): void
     {
-        $box = SmartboxPackage::factory()->create(['price_cents' => 21500]);
+        $box = SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500]);
         $this->addGiftSmartboxLine($box);
 
         $items = $this->cart()->items(true);
@@ -296,9 +300,11 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_ordering_the_gift_flow_leaves_the_normal_lines_in_the_cart(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $normalKey = $this->addStructureLine($structure);
-        $this->addGiftSmartboxLine(SmartboxPackage::factory()->create(['price_cents' => 21500]));
+        $this->addGiftSmartboxLine(SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500]));
 
         $this->placeOrder(gift: true);
 
@@ -314,7 +320,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_order_numbers_are_sequential(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
 
         $this->addStructureLine($structure);
         $first = $this->placeOrder();
@@ -332,7 +339,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_total_mismatch_aborts_before_any_write(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         try {
@@ -346,63 +354,5 @@ class PlaceOrderActionTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseCount('order_payments', 0);
         $this->assertCount(1, $this->cart()->items());
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private function cart(): CartManager
-    {
-        return app(CartManager::class);
-    }
-
-    private function placeOrder(
-        bool $gift = false,
-        ?int $totalCentsOverride = null,
-        string $gatewaySessionId = 'pi_test_1',
-        ?Collection $itemsOverride = null,
-    ): Order {
-        $data = new PlaceOrderData(
-            firstName: 'Giulia',
-            lastName: 'Rossi',
-            email: 'giulia.rossi@gmail.com',
-            phone: '340 5738920',
-            country: 'Italia',
-            gift: $gift,
-            paymentMethod: PaymentMethod::Card,
-            capture: CheckoutCaptureResult::success(
-                gatewaySessionId: $gatewaySessionId,
-                transactionId: $gatewaySessionId,
-                provider: 'stripe',
-                providerResponse: ['status' => 'succeeded'],
-            ),
-            items: $itemsOverride ?? $this->cart()->items($gift),
-            totalCents: $totalCentsOverride ?? $this->cart()->total($gift),
-        );
-
-        return app(PlaceOrderAction::class)->execute($data);
-    }
-
-    /** Riga struttura: 01/08 → 06/08 (5 notti), 2 adulti e 1 cane. */
-    private function addStructureLine(Structure $structure): int|string
-    {
-        return $this->cart()->addItem('structure', $structure->id, [
-            'check_in' => '2026-08-01',
-            'check_out' => '2026-08-06',
-            'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
-            'animals' => ['cane' => 1],
-        ], false)->key;
-    }
-
-    /** Riga regalo: smartbox con metadati gift completi (destinatario incluso). */
-    private function addGiftSmartboxLine(SmartboxPackage $box): int|string
-    {
-        return $this->cart()->addItem('smartbox_package', $box->id, [
-            'animals' => ['cane' => 1],
-            'gift' => [
-                'dedication' => 'Marco',
-                'message' => 'Tanti auguri!',
-                'recipient_email' => 'marco@example.com',
-            ],
-        ], true)->key;
     }
 }

@@ -4,6 +4,7 @@ namespace Database\Factories\Event;
 
 use App\Enums\ProductType;
 use App\Models\Event\Event;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -20,6 +21,8 @@ class EventFactory extends Factory
         $startsAt = fake()->dateTimeBetween('+1 week', '+3 months');
 
         return [
+            // Ogni prodotto a catalogo ha un proprietario: senza non è vendibile.
+            'user_id' => User::factory(),
             'type' => ProductType::Event,
             'title' => $title,
             'slug' => Str::slug($title),

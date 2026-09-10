@@ -32,10 +32,10 @@ class FakePaymentGateway implements PaymentGatewayInterface
     /** @var list<array{amount_cents: int, method: string, context: array}> */
     public array $initCalls = [];
 
-    /** @var list<array{payload: array, expected_amount_cents: int}> */
+    /** @var list<array{payload: array, expected_amount_cents: int, stripe_account_id: ?string}> */
     public array $captureCalls = [];
 
-    /** @var list<array{transaction_id: string, amount_cents: int}> */
+    /** @var list<array{transaction_id: string, amount_cents: int, stripe_account_id: ?string}> */
     public array $refundCalls = [];
 
     public function initPaymentSession(int $amountCents, PaymentMethod $method, array $context = []): array
@@ -56,11 +56,12 @@ class FakePaymentGateway implements PaymentGatewayInterface
         ];
     }
 
-    public function captureFromCheckout(array $payload, int $expectedAmountCents): CheckoutCaptureResult
+    public function captureFromCheckout(array $payload, int $expectedAmountCents, ?string $stripeAccountId = null): CheckoutCaptureResult
     {
         $this->captureCalls[] = [
             'payload' => $payload,
             'expected_amount_cents' => $expectedAmountCents,
+            'stripe_account_id' => $stripeAccountId,
         ];
 
         if ($this->captureAmountMismatch) {
@@ -85,11 +86,12 @@ class FakePaymentGateway implements PaymentGatewayInterface
         );
     }
 
-    public function refund(string $transactionId, int $amountCents): void
+    public function refund(string $transactionId, int $amountCents, ?string $stripeAccountId = null): void
     {
         $this->refundCalls[] = [
             'transaction_id' => $transactionId,
             'amount_cents' => $amountCents,
+            'stripe_account_id' => $stripeAccountId,
         ];
     }
 

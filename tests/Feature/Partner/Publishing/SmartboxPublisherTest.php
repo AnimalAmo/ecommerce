@@ -24,7 +24,7 @@ class SmartboxPublisherTest extends TestCase
     private function smartboxDraft(array $attributes = []): StructureDraft
     {
         return StructureDraft::create(array_merge([
-            'user_id' => User::factory()->create()->id,
+            'user_id' => User::factory()->stripeConnected()->create()->id,
             'status' => StructureDraft::STATUS_COMPLETED,
             'current_step' => 12,
             'service_category' => 'smartbox',
