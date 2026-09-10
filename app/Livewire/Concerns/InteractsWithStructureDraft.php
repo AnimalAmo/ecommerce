@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Exceptions\PartnerNotPayableException;
 use App\Models\Structure\StructureDraft;
 use App\Services\Partner\Publishing\DraftPublisher;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -72,14 +74,22 @@ trait InteractsWithStructureDraft
 
         // Transazione: se la pubblicazione fallisce, lo status torna draft e il
         // partner può riprovare (niente bozze "completed" mai arrivate a catalogo).
-        DB::transaction(function () use ($draft, $finalStep): void {
-            $draft->update([
-                'status' => StructureDraft::STATUS_COMPLETED,
-                'current_step' => $finalStep,
-            ]);
+        try {
+            DB::transaction(function () use ($draft, $finalStep): void {
+                $draft->update([
+                    'status' => StructureDraft::STATUS_COMPLETED,
+                    'current_step' => $finalStep,
+                ]);
 
-            app(DraftPublisher::class)->publish($draft->fresh());
-        });
+                app(DraftPublisher::class)->publish($draft->fresh());
+            });
+        } catch (PartnerNotPayableException $exception) {
+            // Onboarding Stripe incompleto: la bozza resta aperta e il partner
+            // sa perché, invece di vedere un wizard concluso e nessun servizio.
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return;
+        }
 
         session()->forget('structure_draft_id');
     }

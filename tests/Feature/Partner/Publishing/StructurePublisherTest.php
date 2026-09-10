@@ -27,7 +27,7 @@ class StructurePublisherTest extends TestCase
     private function hotelDraft(array $attributes = []): StructureDraft
     {
         return StructureDraft::create(array_merge([
-            'user_id' => User::factory()->create()->id,
+            'user_id' => User::factory()->stripeConnected()->create()->id,
             'status' => StructureDraft::STATUS_COMPLETED,
             'current_step' => 11,
             'service_category' => 'struttura',

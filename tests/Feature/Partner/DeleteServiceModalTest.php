@@ -27,7 +27,7 @@ class DeleteServiceModalTest extends TestCase
 
     public function test_open_loads_the_service_data(): void
     {
-        $partner = $this->actingAsActivePartner();
+        $partner = $this->actingAsPayablePartner();
         $draft = $this->service($partner->id);
 
         Livewire::test(DeleteServiceModal::class)
@@ -39,7 +39,7 @@ class DeleteServiceModalTest extends TestCase
 
     public function test_it_deletes_the_service_and_notifies_the_list(): void
     {
-        $partner = $this->actingAsActivePartner();
+        $partner = $this->actingAsPayablePartner();
         $draft = $this->service($partner->id);
 
         Livewire::test(DeleteServiceModal::class)
@@ -52,7 +52,7 @@ class DeleteServiceModalTest extends TestCase
 
     public function test_it_cannot_target_another_users_service(): void
     {
-        $this->actingAsActivePartner();
+        $this->actingAsPayablePartner();
         $othersDraft = $this->service(User::factory()->create()->id, 'Altrui Resort');
 
         Livewire::test(DeleteServiceModal::class)

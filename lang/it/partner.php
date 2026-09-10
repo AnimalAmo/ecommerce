@@ -2,6 +2,11 @@
 
 return [
 
+    // Errori del flusso partner (toast danger / eccezioni di dominio).
+    'errors' => [
+        'stripe_onboarding_required' => 'Per pubblicare un servizio devi prima completare il collegamento del conto su Stripe.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Partner — Lavora con noi

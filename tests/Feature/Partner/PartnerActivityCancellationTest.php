@@ -15,7 +15,7 @@ class PartnerActivityCancellationTest extends TestCase
     public function test_page_renders_the_cancellation_timeline(): void
     {
         // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
-        $this->actingAsActivePartner();
+        $this->actingAsPayablePartner();
 
         $this->get(route('partner.activity.cancellation'))
             ->assertOk()
@@ -37,6 +37,9 @@ class PartnerActivityCancellationTest extends TestCase
 
     public function test_accepts_a_valid_window_and_completes_the_draft(): void
     {
+        // La bozza va a catalogo solo se il partner può essere pagato.
+        $this->actingAsPayablePartner();
+
         Livewire::test(ActivityCancellation::class)
             ->set('when', '7')
             ->call('next')
