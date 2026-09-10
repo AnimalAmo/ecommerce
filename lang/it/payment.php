@@ -3,6 +3,7 @@
 return [
     // Errori del flusso di pagamento (toast/messaggi al checkout)
     'errors' => [
+        'seller_unavailable' => 'Questa struttura non può ricevere pagamenti in questo momento. Riprova più tardi.',
         'already_placed' => 'Questo pagamento risulta già registrato: il tuo ordine è confermato e non è stato effettuato alcun nuovo addebito.',
         'amount_changed' => 'L\'importo addebitato non corrisponde più al totale dell\'ordine: l\'addebito è stato stornato. Ricontrolla il riepilogo e riprova.',
         'capture_failed' => 'Pagamento non riuscito: nessun addebito confermato. Riprova o scegli un altro metodo.',

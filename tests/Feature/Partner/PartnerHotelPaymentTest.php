@@ -36,6 +36,9 @@ class PartnerHotelPaymentTest extends TestCase
 
     public function test_next_saves_and_completes_to_the_dashboard(): void
     {
+        // La bozza va a catalogo solo se il partner può essere pagato.
+        $this->actingAsPayablePartner();
+
         Livewire::test(HotelPayment::class)
             ->set('form.accountHolder', 'Mario Rossi')
             ->set('form.iban', 'IT60X0542811101000000123456')
@@ -54,6 +57,9 @@ class PartnerHotelPaymentTest extends TestCase
 
     public function test_skip_completes_the_draft_and_redirects(): void
     {
+        // La bozza va a catalogo solo se il partner può essere pagato.
+        $this->actingAsPayablePartner();
+
         Livewire::test(HotelPayment::class)
             ->call('skip')
             ->assertRedirect(route('partner.dashboard'));

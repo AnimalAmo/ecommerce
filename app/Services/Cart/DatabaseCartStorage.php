@@ -32,7 +32,7 @@ class DatabaseCartStorage
     }
 
     /** Aggiunge la riga; riga identica già presente = no-op che riallinea lo snapshot prezzo. */
-    public function addItem(Model $purchasable, array $options, bool $isGift, int $priceCents): CartItemData
+    public function addItem(Model $purchasable, array $options, bool $isGift, int $priceCents, ?int $partnerUserId = null): CartItemData
     {
         $cart = $this->resolveOrCreateCart();
 
@@ -55,6 +55,7 @@ class DatabaseCartStorage
         $item = $cart->items()->create([
             'purchasable_type' => $purchasable->getMorphClass(),
             'purchasable_id' => $purchasable->getKey(),
+            'partner_user_id' => $partnerUserId,
             'is_gift' => $isGift,
             'price_cents' => $priceCents,
             'options' => $options,

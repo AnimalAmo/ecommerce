@@ -91,7 +91,9 @@ class ProductionSeedTest extends TestCase
         $this->assertSame(12, SmartboxPackage::count());
         $this->assertSame(7, StructureClosure::count());
         $this->assertSame(2, Venue::count());
-        $this->assertSame(2, User::count());
+        // Tre: Giulia, il partner demo e il partner proprietario del resto
+        // del catalogo mock (senza proprietario un prodotto non è vendibile).
+        $this->assertSame(3, User::count());
 
         // E i dati di piattaforma restano al loro posto.
         $this->assertSame(3, Role::count());

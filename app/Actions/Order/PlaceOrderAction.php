@@ -13,6 +13,7 @@ use App\Models\OrderPayment\OrderPayment;
 use App\Pipes\Order\ClearCartPipe;
 use App\Pipes\Order\CreateOrderItemsPipe;
 use App\Pipes\Order\CreateOrderPaymentPipe;
+use App\Pipes\Order\CreateOrderPayoutsPipe;
 use App\Pipes\Order\CreateOrderPipe;
 use App\Pipes\Order\ReserveAvailabilityPipe;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -50,6 +51,7 @@ class PlaceOrderAction
                         ReserveAvailabilityPipe::class,
                         CreateOrderPipe::class,
                         CreateOrderItemsPipe::class,
+                        CreateOrderPayoutsPipe::class,
                         CreateOrderPaymentPipe::class,
                         ClearCartPipe::class,
                     ])

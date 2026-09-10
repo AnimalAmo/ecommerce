@@ -57,8 +57,10 @@ function loadStripeJs() {
     return stripeJsPromise;
 }
 
-function createStripeElements(StripeFactory, publishableKey, clientSecret) {
-    const stripe = StripeFactory(publishableKey);
+function createStripeElements(StripeFactory, publishableKey, clientSecret, stripeAccount) {
+    // Direct charge: il PaymentIntent vive sull'account connesso del venditore,
+    // quindi Stripe.js va inizializzato sullo stesso account o non lo trova.
+    const stripe = StripeFactory(publishableKey, stripeAccount ? { stripeAccount } : undefined);
     const elements = stripe.elements({
         clientSecret,
         appearance: STRIPE_APPEARANCE,
@@ -112,7 +114,7 @@ window.stripePayment = (clientSecret, publishableKey, options = {}) => ({
     async init() {
         try {
             const StripeFactory = await loadStripeJs();
-            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret));
+            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret, options.stripeAccount));
             // Link disattivato: il metodo carta resta la sola superficie del Payment Element
             // (Apple/Google Pay hanno le loro righe dedicate via Express Checkout Element).
             this.elements.create('payment', { layout: 'tabs', wallets: { applePay: 'never', googlePay: 'never', link: 'never' } }).mount(this.$refs.element);
@@ -152,7 +154,7 @@ window.stripeSavedCard = (clientSecret, publishableKey, options = {}) => ({
     async init() {
         try {
             const StripeFactory = await loadStripeJs();
-            this.stripe = StripeFactory(publishableKey);
+            this.stripe = StripeFactory(publishableKey, options.stripeAccount ? { stripeAccount: options.stripeAccount } : undefined);
         } catch (error) {
             console.error('[Stripe saved card] init failed', error);
             this.$wire.reportPaymentInitFailed();
@@ -184,7 +186,7 @@ window.stripeSetupMethod = (clientSecret, publishableKey, options = {}) => ({
     async init() {
         try {
             const StripeFactory = await loadStripeJs();
-            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret));
+            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret, options.stripeAccount));
             // Il titolare è un campo nostro (label del mock XD) e il mock non
             // prevede il paese: entrambi 'never', li passiamo in confirmParams.
             this.elements
@@ -249,7 +251,7 @@ window.stripeExpressCheckout = (clientSecret, publishableKey, options = {}) => (
 
         try {
             const StripeFactory = await loadStripeJs();
-            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret));
+            ({ stripe: this.stripe, elements: this.elements } = createStripeElements(StripeFactory, publishableKey, clientSecret, options.stripeAccount));
 
             // Solo il wallet della riga selezionata: gli altri metodi ECE spenti.
             element = this.elements.create('expressCheckout', {

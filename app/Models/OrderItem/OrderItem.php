@@ -21,6 +21,7 @@ class OrderItem extends Model
         'order_id',
         'purchasable_type',
         'purchasable_id',
+        'partner_user_id',
         'title',
         'photo_url',
         'product_type',

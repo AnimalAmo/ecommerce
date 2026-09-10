@@ -15,7 +15,7 @@ class PartnerSmartboxPriceTest extends TestCase
     public function test_page_renders_the_price_field(): void
     {
         // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
-        $this->actingAsActivePartner();
+        $this->actingAsPayablePartner();
 
         $this->get(route('partner.smartbox.price'))
             ->assertOk()
@@ -34,6 +34,9 @@ class PartnerSmartboxPriceTest extends TestCase
 
     public function test_save_completes_the_draft_and_redirects_to_dashboard(): void
     {
+        // La bozza va a catalogo solo se il partner può essere pagato.
+        $this->actingAsPayablePartner();
+
         Livewire::test(SmartboxPrice::class)
             ->set('price', '149,90')
             ->call('save')

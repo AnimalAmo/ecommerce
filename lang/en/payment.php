@@ -3,6 +3,7 @@
 return [
     // Payment flow errors (toast/messages at checkout)
     'errors' => [
+        'seller_unavailable' => 'This property cannot take payments right now. Please try again later.',
         'already_placed' => 'This payment has already been recorded: your order is confirmed and no new charge was made.',
         'amount_changed' => 'The charged amount no longer matches the order total: the charge has been reversed. Please review the summary and try again.',
         'capture_failed' => 'Payment failed: no charge was confirmed. Try again or choose another method.',

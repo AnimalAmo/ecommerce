@@ -8,6 +8,8 @@ return [
     'invalid_range' => 'The check-out date must be after the check-in date.',
     'invalid_times' => 'The end time must be after the start time.',
     'sold_out' => 'There are not enough spots available.',
+    'single_partner' => 'Your cart can only hold products from one property at a time. Complete this purchase, or empty the cart to start over.',
+    'product_without_owner' => 'This product cannot be purchased right now. Please try again later.',
     'not_purchasable' => 'This product cannot be purchased.',
     'invalid_participants' => 'The selected number of participants is not valid.',
     // Add-to-cart confirmation toast

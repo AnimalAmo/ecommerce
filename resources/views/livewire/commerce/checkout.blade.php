@@ -117,13 +117,13 @@
                                         @elseif ($useSavedCard && $savedCardLast4 !== null)
                                             {{-- Nessun Element: il PI ha già la carta allegata, Stripe.js serve solo a confermare (3DS incluso) --}}
                                             <div wire:ignore wire:key="stripe-saved-{{ $clientSecret }}"
-                                                x-data="stripeSavedCard(@js($clientSecret), @js($stripeKey), { method: 'card', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })"></div>
+                                                x-data="stripeSavedCard(@js($clientSecret), @js($stripeKey), { method: 'card', stripeAccount: @js($stripeAccountId), returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })"></div>
 
                                             <flux:button wire:click="processPayment" :disabled="$processing || ! $elementReady" class="mt-4 !h-10 !w-[127px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60">{{ __('checkout.ui.pay_now') }}</flux:button>
                                         @else
                                             {{-- Payment Element (solo card), Appearance API allineata agli input Flux della pagina --}}
                                             <div wire:ignore wire:key="stripe-card-{{ $clientSecret }}" class="mt-4"
-                                                x-data="stripePayment(@js($clientSecret), @js($stripeKey), { method: 'card', returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
+                                                x-data="stripePayment(@js($clientSecret), @js($stripeKey), { method: 'card', stripeAccount: @js($stripeAccountId), returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
                                                 <div x-ref="element"></div>
                                             </div>
 
@@ -153,7 +153,7 @@
                                             @else
                                                 {{-- Apple/Google Pay: Express Checkout Element (bottone brand del wallet; fallback se il device non lo supporta) --}}
                                                 <div wire:ignore wire:key="ece-{{ $method->value }}-{{ $clientSecret }}" class="my-3 max-w-[295px]"
-                                                    x-data="stripeExpressCheckout(@js($clientSecret), @js($stripeKey), { wallet: @js($method === \App\Enums\PaymentMethod::ApplePay ? 'applePay' : 'googlePay'), returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
+                                                    x-data="stripeExpressCheckout(@js($clientSecret), @js($stripeKey), { wallet: @js($method === \App\Enums\PaymentMethod::ApplePay ? 'applePay' : 'googlePay'), stripeAccount: @js($stripeAccountId), returnUrl: @js($returnUrl), incompleteMessage: @js(__('checkout.payment_incomplete')) })">
                                                     <div x-ref="element"></div>
                                                     <p x-show="walletUnavailable" style="display: none;" class="text-[13px] leading-5 text-[#959595]">{{ __('payment.errors.wallet_unavailable') }}</p>
                                                 </div>

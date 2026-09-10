@@ -2,6 +2,11 @@
 
 return [
 
+    // Errori del flusso partner (toast danger / eccezioni di dominio).
+    'errors' => [
+        'stripe_onboarding_required' => 'Per pubblicare un servizio devi prima completare il collegamento del conto su Stripe.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Partner — Lavora con noi
@@ -89,6 +94,15 @@ return [
     |--------------------------------------------------------------------------
     */
     'profile' => [
+        'stripe' => [
+            'connected' => 'Conto collegato',
+            'connected_help' => 'I pagamenti dei tuoi clienti arrivano direttamente sul tuo conto Stripe.',
+            'disconnected' => 'Collega il tuo conto per ricevere i pagamenti',
+            'incomplete' => 'Collegamento da completare',
+            'help' => 'I clienti pagano direttamente te: il denaro arriva sul tuo conto Stripe, e AnimalAmo trattiene solo la propria provvigione. Finché il collegamento non è completo non puoi pubblicare i tuoi servizi.',
+            'connect' => 'Collega il conto',
+            'resume' => 'Riprendi il collegamento',
+        ],
         'title' => 'Profilo',
         'nav_profile' => 'Profilo',
         'nav_payment' => 'Metodo di pagamento',

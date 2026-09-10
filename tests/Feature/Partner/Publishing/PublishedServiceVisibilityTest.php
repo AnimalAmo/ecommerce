@@ -33,7 +33,12 @@ class PublishedServiceVisibilityTest extends TestCase
 
     public function test_completing_the_hotel_wizard_publishes_the_structure_on_the_b2c(): void
     {
+        // Il wizard vive dietro ['auth','partner'] e pubblica solo se il
+        // partner può essere pagato: la bozza ha sempre un proprietario.
+        $partner = $this->actingAsPayablePartner();
+
         $draft = StructureDraft::create([
+            'user_id' => $partner->id,
             'status' => StructureDraft::STATUS_DRAFT,
             'current_step' => 10,
             'service_category' => 'struttura',
@@ -72,7 +77,12 @@ class PublishedServiceVisibilityTest extends TestCase
 
     public function test_completing_the_activity_wizard_publishes_the_event_on_the_b2c(): void
     {
+        // Il wizard vive dietro ['auth','partner'] e pubblica solo se il
+        // partner può essere pagato: la bozza ha sempre un proprietario.
+        $partner = $this->actingAsPayablePartner();
+
         $draft = StructureDraft::create([
+            'user_id' => $partner->id,
             'status' => StructureDraft::STATUS_DRAFT,
             'current_step' => 9,
             'service_category' => 'attivita',
@@ -110,7 +120,7 @@ class PublishedServiceVisibilityTest extends TestCase
 
     public function test_deleting_a_service_from_my_services_unpublishes_the_catalog_row(): void
     {
-        $partner = $this->actingAsActivePartner();
+        $partner = $this->actingAsPayablePartner();
 
         $draft = StructureDraft::create([
             'user_id' => $partner->id,
@@ -139,7 +149,12 @@ class PublishedServiceVisibilityTest extends TestCase
 
     public function test_completing_the_smartbox_wizard_publishes_the_package_on_the_b2c(): void
     {
+        // Il wizard vive dietro ['auth','partner'] e pubblica solo se il
+        // partner può essere pagato: la bozza ha sempre un proprietario.
+        $partner = $this->actingAsPayablePartner();
+
         $draft = StructureDraft::create([
+            'user_id' => $partner->id,
             'status' => StructureDraft::STATUS_DRAFT,
             'current_step' => 11,
             'service_category' => 'smartbox',
