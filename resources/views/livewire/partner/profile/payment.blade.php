@@ -18,6 +18,34 @@
                 <div class="flex-1 rounded-[10px] bg-white p-6">
                     <h1 class="text-2xl font-bold text-[#0D171A]">{{ __('partner.profile.payment_heading') }}</h1>
 
+                    {{-- Collegamento del conto Stripe: senza, i servizi del partner non vanno a catalogo. --}}
+                    <div class="mt-6 rounded-[10px] border border-[#C8C8C8] p-5">
+                        @if ($stripeConnected)
+                            <div class="flex items-center gap-3">
+                                <flux:badge color="green">{{ __('partner.profile.stripe.connected') }}</flux:badge>
+                                <p class="text-sm text-[#555555]">{{ __('partner.profile.stripe.connected_help') }}</p>
+                            </div>
+                        @else
+                            <p class="text-base font-bold text-[#0D171A]">
+                                {{ $stripeStarted ? __('partner.profile.stripe.incomplete') : __('partner.profile.stripe.disconnected') }}
+                            </p>
+                            <p class="mt-2 text-sm text-[#555555]">{{ __('partner.profile.stripe.help') }}</p>
+
+                            @if ($stripeRequirements !== [])
+                                <ul class="mt-3 list-disc pl-5 text-sm text-[#555555]">
+                                    @foreach ($stripeRequirements as $requirement)
+                                        <li>{{ $requirement }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            <flux:button
+                                wire:click="connectStripe"
+                                class="mt-4 !h-10 !rounded-full !border-0 !bg-[#0D171A] !px-10 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C] [&>span]:flex [&>span]:items-center [&>span]:gap-2"
+                            >{{ $stripeStarted ? __('partner.profile.stripe.resume') : __('partner.profile.stripe.connect') }}</flux:button>
+                        @endif
+                    </div>
+
                     <form wire:submit="save" class="mt-8">
                         <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-3">
                             <div class="md:col-span-2 md:grid-cols-2 grid-cols-1 grid gap-x-4 gap-y-5 ">
