@@ -53,6 +53,12 @@ class CartValidationException extends RuntimeException
         return new self(__('cart.not_purchasable'));
     }
 
+    /** Carrello già intestato a un altro partner: un ordine, un venditore. */
+    public static function singlePartner(): self
+    {
+        return new self(__('cart.single_partner'));
+    }
+
     /** Prodotto senza partner proprietario: non c'è un conto su cui incassare. */
     public static function productWithoutOwner(): self
     {

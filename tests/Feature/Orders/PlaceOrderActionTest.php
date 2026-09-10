@@ -32,6 +32,8 @@ use Tests\TestCase;
  */
 class PlaceOrderActionTest extends TestCase
 {
+    private ?User $seller = null;
+
     use RefreshDatabase;
 
     private User $buyer;
@@ -61,7 +63,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_structure_order_snapshots_lines_payment_and_buyer(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure); // 5 notti = 500 €
 
         $order = $this->placeOrder();
@@ -128,6 +131,7 @@ class PlaceOrderActionTest extends TestCase
     public function test_event_order_books_real_dates_and_increments_seats(): void
     {
         $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
@@ -173,7 +177,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_smartbox_gift_order_snapshots_gift_options_and_validity(): void
     {
-        $box = SmartboxPackage::factory()->create(['price_cents' => 21500, 'validity_months' => 12]);
+        $box = SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500, 'validity_months' => 12]);
         $this->addGiftSmartboxLine($box);
 
         $order = $this->placeOrder(gift: true);
@@ -200,7 +205,8 @@ class PlaceOrderActionTest extends TestCase
     {
         Auth::logout(); // carrello di sessione, come un vero guest
 
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         $order = $this->placeOrder();
@@ -215,12 +221,14 @@ class PlaceOrderActionTest extends TestCase
     public function test_sold_out_line_rolls_back_the_whole_order(): void
     {
         $available = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-10 18:00:00',
             'ends_at' => '2026-08-10 20:00:00',
         ]);
         $soldOut = Event::factory()->create([
+            'user_id' => $this->seller()->id,
             'price_cents' => 2500,
             'max_participants' => 10,
             'starts_at' => '2026-08-11 18:00:00',
@@ -257,7 +265,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_deleted_purchasable_fails_as_cart_validation_not_model_not_found(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         // Snapshot righe PRIMA della cancellazione (come handlePaymentCallback):
@@ -280,7 +289,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_deleted_smartbox_fails_as_cart_validation_not_model_not_found(): void
     {
-        $box = SmartboxPackage::factory()->create(['price_cents' => 21500]);
+        $box = SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500]);
         $this->addGiftSmartboxLine($box);
 
         $items = $this->cart()->items(true);
@@ -296,9 +306,11 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_ordering_the_gift_flow_leaves_the_normal_lines_in_the_cart(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $normalKey = $this->addStructureLine($structure);
-        $this->addGiftSmartboxLine(SmartboxPackage::factory()->create(['price_cents' => 21500]));
+        $this->addGiftSmartboxLine(SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500]));
 
         $this->placeOrder(gift: true);
 
@@ -314,7 +326,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_order_numbers_are_sequential(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
 
         $this->addStructureLine($structure);
         $first = $this->placeOrder();
@@ -332,7 +345,8 @@ class PlaceOrderActionTest extends TestCase
 
     public function test_total_mismatch_aborts_before_any_write(): void
     {
-        $structure = Structure::factory()->create(['price_cents' => 10000]);
+        $structure = Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]);
         $this->addStructureLine($structure);
 
         try {
@@ -404,5 +418,15 @@ class PlaceOrderActionTest extends TestCase
                 'recipient_email' => 'marco@example.com',
             ],
         ], true)->key;
+    }
+
+    /**
+     * Il venditore di tutto ciò che finisce in questi carrelli: un ordine ha un
+     * solo partner, quindi due prodotti di proprietari diversi non possono
+     * coesistere in un carrello (CartManager::guardSinglePartner).
+     */
+    private function seller(): User
+    {
+        return $this->seller ??= User::factory()->create();
     }
 }

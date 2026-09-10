@@ -80,7 +80,7 @@ class DemoUserSeeder extends Seeder
     {
         Structure::whereIn('slug', ['hotel-brescia', 'hotel-mantova-residence'])->update(['user_id' => $partner->id]);
         Event::whereIn('slug', ['weekend-escursioni', 'puppy-yoga-milano', 'puppy-yoga', 'vacanza-montagna'])->update(['user_id' => $partner->id]);
-        SmartboxPackage::whereIn('slug', ['piemonte', 'relax-lombardia-2'])->update(['user_id' => $partner->id]);
+        SmartboxPackage::whereIn('slug', ['piemonte', 'relax-lombardia', 'relax-lombardia-2'])->update(['user_id' => $partner->id]);
 
         $this->assignRemainingCatalogTo($this->catalogPartner());
     }

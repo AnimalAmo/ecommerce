@@ -54,6 +54,8 @@ class CartManager implements CartStorageInterface
             throw CartValidationException::productWithoutOwner();
         }
 
+        $this->guardSinglePartner($partnerUserId);
+
         $this->availability->ensureAvailable($purchasable, $options);
         $priceCents = $this->pricing->quote($purchasable, $options);
 
@@ -118,6 +120,25 @@ class CartManager implements CartStorageInterface
     public function total(?bool $gift = null): int
     {
         return $this->driver()->total($gift);
+    }
+
+    /** Proprietario del carrello corrente: null se vuoto. */
+    public function currentPartnerUserId(): ?int
+    {
+        return $this->items()->first()?->partnerUserId;
+    }
+
+    /**
+     * Un ordine, un venditore. Il direct charge nasce su un solo account
+     * connesso: mescolare due partner renderebbe l'ordine impagabile.
+     */
+    private function guardSinglePartner(int $partnerUserId): void
+    {
+        $current = $this->currentPartnerUserId();
+
+        if ($current !== null && $current !== $partnerUserId) {
+            throw CartValidationException::singlePartner();
+        }
     }
 
     /**
