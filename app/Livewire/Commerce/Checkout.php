@@ -11,8 +11,11 @@ use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Exceptions\OrderAlreadyPlacedException;
 use App\Exceptions\PaymentConfigurationException;
+use App\Models\Partner\PartnerProfile;
+use App\Models\User;
 use App\Services\Availability\AvailabilityService;
 use App\Services\Cart\CartManager;
+use App\Services\Commerce\CommissionCalculator;
 use App\Services\Orders\OrderQueryService;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
@@ -73,6 +76,13 @@ class Checkout extends Component
     public bool $sessionUsedSavedCard = false;
 
     /** Sessione Stripe corrente (Payment/Express Checkout Element). */
+    /**
+     * Account connesso su cui è nata la sessione. Un PaymentIntent non si
+     * sposta da un account all'altro con un update: se il venditore del
+     * carrello cambia, la sessione va ricreata.
+     */
+    public ?string $sessionStripeAccountId = null;
+
     public ?string $clientSecret = null;
 
     /** PaymentIntent riusato agli switch di metodo Stripe (update dei types, mai un PI orfano a ogni click). */
@@ -288,7 +298,7 @@ class Checkout extends Component
 
         // Importo atteso SEMPRE dal CartManager server-side, mai dal client.
         $totalCents = $this->cart()->total($this->gift);
-        $capture = $gateway->captureFromCheckout($payload, $totalCents);
+        $capture = $gateway->captureFromCheckout($payload, $totalCents, $this->currentStripeAccountId());
 
         if (! $capture->succeeded) {
             // Incassato ma NON valido (importo/valuta cambiati fra init e
@@ -427,6 +437,9 @@ class Checkout extends Component
             'altMethods' => array_values(array_filter($methods, fn (PaymentMethod $method): bool => $method !== PaymentMethod::Card)),
             // Chiave pubblica per il JS dalla config (mai VITE_*).
             'stripeKey' => (string) config('payment.stripe.key'),
+            // Direct charge: Stripe.js va inizializzato sullo stesso account
+            // connesso su cui è nato il PaymentIntent, o la conferma fallisce.
+            'stripeAccountId' => $this->sessionStripeAccountId,
             'returnUrl' => $this->returnUrl(),
             // CTA "Vai ai tuoi acquisti" dello step 3: la sezione di profilo dipende
             // da cosa è stato comprato (eventi → "Eventi a cui partecipo", resto →
@@ -469,9 +482,22 @@ class Checkout extends Component
         $amountCents = $this->cart()->total($this->gift);
         $withSavedCard = $method === PaymentMethod::Card && $this->useSavedCard && $this->hasSavedCard();
 
+        // Il venditore del carrello: l'incasso nasce sul suo account, non su
+        // quello della piattaforma. Senza, non c'è pagamento possibile.
+        $seller = $this->sellerProfile();
+
+        if ($seller === null || ! $seller->canSell()) {
+            $this->paymentUnavailable = true;
+            Flux::toast(text: __('payment.errors.seller_unavailable'), variant: 'danger');
+
+            return;
+        }
+
         // Un PI con payment method allegato non serve un metodo diverso (e
-        // viceversa): cambiando forma si riparte da un PI nuovo.
-        if ($withSavedCard !== $this->sessionUsedSavedCard) {
+        // viceversa): cambiando forma si riparte da un PI nuovo. Idem se è
+        // cambiato il venditore: quel PI vive sull'account dell'altro.
+        if ($withSavedCard !== $this->sessionUsedSavedCard
+            || $this->sessionStripeAccountId !== $seller->stripe_account_id) {
             $this->paymentIntentId = null;
         }
 
@@ -483,6 +509,14 @@ class Checkout extends Component
                 $amountCents,
                 $method,
                 array_merge(
+                    [
+                        'stripe_account_id' => $seller->stripe_account_id,
+                        'application_fee_amount' => app(CommissionCalculator::class)->feeCentsFor(
+                            $amountCents,
+                            $seller->commissionRateBp(),
+                            $seller->commissionMinCents(),
+                        ),
+                    ],
                     $this->paymentIntentId !== null ? ['payment_intent_id' => $this->paymentIntentId] : [],
                     $withSavedCard ? $this->savedCardContext() : [],
                 ),
@@ -491,6 +525,7 @@ class Checkout extends Component
             $this->clientSecret = $session['client_secret'];
             $this->paymentIntentId = $session['payment_intent_id'];
             $this->sessionUsedSavedCard = $withSavedCard;
+            $this->sessionStripeAccountId = $seller->stripe_account_id;
 
             // Importo della sessione appena aperta: confrontato al "Paga ora"
             // col totale corrente per intercettare i carrelli cambiati altrove.
@@ -519,6 +554,34 @@ class Checkout extends Component
             $this->paymentUnavailable = true;
             Flux::toast(text: __('payment.errors.init_failed'), variant: 'danger');
         }
+    }
+
+    /**
+     * Account connesso su cui leggere l'incasso e su cui emettere lo storno.
+     *
+     * Di norma è quello su cui è nata la sessione; se la sessione non è mai
+     * partita (init fallito) si ricava dal carrello, che è comunque server-side:
+     * senza account un direct charge non è nemmeno leggibile.
+     */
+    private function currentStripeAccountId(): ?string
+    {
+        return $this->sessionStripeAccountId ?? $this->sellerProfile()?->stripe_account_id;
+    }
+
+    /**
+     * Profilo del venditore del carrello. Un carrello ha un solo partner
+     * (CartManager::guardSinglePartner), quindi la prima riga basta — e il
+     * proprietario arriva dal server, mai dal client.
+     */
+    private function sellerProfile(): ?PartnerProfile
+    {
+        $partnerUserId = $this->cart()->items($this->gift)->first()?->partnerUserId;
+
+        if ($partnerUserId === null) {
+            return null;
+        }
+
+        return User::find($partnerUserId)?->partnerProfile;
     }
 
     /**
@@ -573,7 +636,9 @@ class Checkout extends Component
     private function refundCapture(PaymentGatewayInterface $gateway, ?string $transactionId, int $amountCents): void
     {
         try {
-            $gateway->refund((string) $transactionId, $amountCents);
+            // Lo storno si emette sull'account connesso: è lì che vive
+            // l'addebito dei direct charges.
+            $gateway->refund((string) $transactionId, $amountCents, $this->currentStripeAccountId());
         } catch (Throwable $exception) {
             Log::critical('Checkout: refund post sold-out FALLITO, stornare manualmente', [
                 'transaction_id' => $transactionId,

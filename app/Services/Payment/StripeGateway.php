@@ -10,6 +10,7 @@ use App\Exceptions\PaymentConfigurationException;
 use App\Models\OrderPayment\OrderPayment;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 use Stripe\StripeObject;
@@ -40,28 +41,36 @@ class StripeGateway implements PaymentGatewayInterface
     public function initPaymentSession(int $amountCents, PaymentMethod $method, array $context = []): array
     {
         $types = $method->stripePaymentMethodTypes();
+        $options = $this->accountOptions($context['stripe_account_id'] ?? null);
 
-        // Carta salvata: il PI nasce già intestato al customer e con il
-        // payment method allegato, così il client conferma col solo client
-        // secret (nessun Element, nessun dato carta nel browser). Gli id
-        // arrivano SEMPRE dal server (utente autenticato), mai dal payload.
-        $saved = array_filter([
-            'customer' => $context['customer_id'] ?? null,
-            'payment_method' => $context['payment_method_id'] ?? null,
-        ]);
+        // Provvigione trattenuta all'origine. Sotto soglia il parametro va
+        // OMESSO: Stripe vuole un application_fee_amount "positive and less
+        // than the amount of the charge", e lo zero è un invalid_request_error.
+        $fee = $context['application_fee_amount'] ?? null;
+        $applicationFee = $fee !== null && $fee > 0 ? ['application_fee_amount' => $fee] : [];
 
-        $intent = isset($context['payment_intent_id'])
-            ? $this->client->paymentIntents->update($context['payment_intent_id'], [
+        if (isset($context['payment_intent_id'])) {
+            // Aggiornamento: il payment method già allegato resta dov'è, e la
+            // provvigione si ricalcola perché l'importo può essere cambiato.
+            $intent = $this->client->paymentIntents->update($context['payment_intent_id'], [
                 'amount' => $amountCents,
                 'payment_method_types' => $types,
-                ...$saved,
-            ])
-            : $this->client->paymentIntents->create([
-                'amount' => $amountCents,
-                'currency' => 'eur',
-                'payment_method_types' => $types,
-                ...$saved,
-            ]);
+                ...$applicationFee,
+            ], $options);
+
+            return [
+                'client_secret' => $intent->client_secret,
+                'payment_intent_id' => $intent->id,
+            ];
+        }
+
+        $intent = $this->client->paymentIntents->create([
+            'amount' => $amountCents,
+            'currency' => 'eur',
+            'payment_method_types' => $types,
+            ...$this->savedCardParams($context, $options),
+            ...$applicationFee,
+        ], $options);
 
         return [
             'client_secret' => $intent->client_secret,
@@ -69,7 +78,41 @@ class StripeGateway implements PaymentGatewayInterface
         ];
     }
 
-    public function captureFromCheckout(array $payload, int $expectedAmountCents): CheckoutCaptureResult
+    /**
+     * Carta salvata su un direct charge: il PaymentMethod è della piattaforma
+     * e non è utilizzabile sull'account connesso, va clonato lì
+     * (`/connect/direct-charges-multiple-accounts`). Il customer NON si passa:
+     * appartiene alla piattaforma, il PaymentMethod clonato no.
+     */
+    private function savedCardParams(array $context, array $options): array
+    {
+        if (! isset($context['customer_id'], $context['payment_method_id'])) {
+            return [];
+        }
+
+        $cloned = $this->client->paymentMethods->create([
+            'customer' => $context['customer_id'],
+            'payment_method' => $context['payment_method_id'],
+        ], $options);
+
+        return ['payment_method' => $cloned->id];
+    }
+
+    /**
+     * Header Stripe-Account del venditore. Obbligatorio: senza, l'incasso
+     * nascerebbe sul conto della piattaforma — esattamente ciò che il modello
+     * fiscale concordato esclude.
+     */
+    private function accountOptions(?string $stripeAccountId): array
+    {
+        if ($stripeAccountId === null || $stripeAccountId === '') {
+            throw new InvalidArgumentException('Direct charge senza account connesso: manca stripe_account_id.');
+        }
+
+        return ['stripe_account' => $stripeAccountId];
+    }
+
+    public function captureFromCheckout(array $payload, int $expectedAmountCents, ?string $stripeAccountId = null): CheckoutCaptureResult
     {
         $paymentIntentId = (string) ($payload['payment_intent_id'] ?? '');
 
@@ -78,7 +121,11 @@ class StripeGateway implements PaymentGatewayInterface
         }
 
         try {
-            $intent = $this->client->paymentIntents->retrieve($paymentIntentId);
+            $intent = $this->client->paymentIntents->retrieve(
+                $paymentIntentId,
+                [],
+                $this->accountOptions($stripeAccountId),
+            );
         } catch (ApiErrorException $exception) {
             Log::warning('Stripe capture: retrieve del PaymentIntent fallito', [
                 'payment_intent_id' => $paymentIntentId,
@@ -128,12 +175,19 @@ class StripeGateway implements PaymentGatewayInterface
         );
     }
 
-    public function refund(string $transactionId, int $amountCents): void
+    /**
+     * Storno emesso come l'account connesso (è lì che vive l'addebito).
+     * refund_application_fee: senza, la provvigione resta ad AnimalAmo e a
+     * perderla è il partner. Rimborso totale = fee intera, parziale = quota
+     * proporzionale, che con un'aliquota unica per ordine è l'importo giusto.
+     */
+    public function refund(string $transactionId, int $amountCents, ?string $stripeAccountId = null): void
     {
         $this->client->refunds->create([
             'payment_intent' => $transactionId,
             'amount' => $amountCents,
-        ]);
+            'refund_application_fee' => true,
+        ], $this->accountOptions($stripeAccountId));
     }
 
     public function handleWebhook(array $payload, array $headers): ?OrderPayment

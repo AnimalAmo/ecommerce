@@ -86,6 +86,8 @@ trait PlacesOrders
      */
     private function seller(): User
     {
-        return $this->seller ??= User::factory()->create();
+        // Collegato a Stripe: con i direct charges un venditore senza
+        // account connesso non può incassare, quindi non può nemmeno vendere.
+        return $this->seller ??= User::factory()->stripeConnected()->create();
     }
 }
