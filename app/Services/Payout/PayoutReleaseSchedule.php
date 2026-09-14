@@ -18,9 +18,11 @@ class PayoutReleaseSchedule
 {
     public function releaseAtFor(OrderItem $item): CarbonImmutable
     {
+        // Niente startOfDay qui: le Condizioni Fornitore (art. 8.9) promettono
+        // "almeno 14 giorni dall'acquisto", e azzerare l'ora renderebbe
+        // bonificabile un acquisto del pomeriggio dopo tredici giorni e mezzo.
         $floor = CarbonImmutable::now()
-            ->addDays((int) config('commerce.payout.release_delay_days'))
-            ->startOfDay();
+            ->addDays((int) config('commerce.payout.release_delay_days'));
 
         if ($item->booked_from === null) {
             return $floor;
