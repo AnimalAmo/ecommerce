@@ -77,9 +77,12 @@ class OrderPayoutsTest extends TestCase
         $order = $this->placeOrderWithTotalCents(12000);
         $payout = OrderPayout::where('order_id', $order->id)->sole();
 
+        // Le Condizioni Fornitore (art. 8.9) dicono "almeno 14 giorni
+        // dall'acquisto": il confronto va fatto con l'istante, non con la
+        // mezzanotte di quel giorno, o si rilascia mezza giornata prima.
         $this->assertTrue(
-            $payout->release_at->greaterThanOrEqualTo(now()->addDays(14)->startOfDay()),
-            'Il rilascio è stato programmato prima della scadenza del recesso.',
+            $payout->release_at->greaterThanOrEqualTo(now()->addDays(14)),
+            'Il rilascio è stato programmato prima che i 14 giorni fossero trascorsi.',
         );
     }
 

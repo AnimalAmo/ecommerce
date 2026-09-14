@@ -24,7 +24,9 @@ class PageSeeder extends Seeder
         ],
         Page::TERMS_SUPPLIERS => [
             'title' => ['it' => 'Condizioni generali di adesione fornitore', 'en' => 'Supplier general terms of adhesion'],
-            'last_updated_at' => '2026-08-26',
+            // Art. 8 riscritto dal cliente il 14/09/2026: la provvigione si
+            // trattiene all'origine invece di essere fatturata a 30 giorni.
+            'last_updated_at' => '2026-09-14',
         ],
         // Il documento non porta una data propria: questa è quella di consegna
         // dei testi da parte del cliente.
