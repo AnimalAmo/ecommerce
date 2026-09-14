@@ -76,6 +76,37 @@ class PartnerStripeOnboardingTest extends TestCase
         Livewire::test(PartnerProfilePayment::class)->assertOk();
     }
 
+    public function test_dopo_il_riallineamento_la_pagina_mostra_lo_stato_nuovo(): void
+    {
+        // Non basta chiamare Stripe: se la pagina continua a leggere la
+        // relazione già in cache, il partner vede "incompleto" anche dopo un
+        // resync riuscito e deve ricaricare. È il difetto che il resync
+        // esisteva per togliere.
+        $partner = $this->actingAsActivePartner();
+        $profile = PartnerProfile::factory()->for($partner)->create([
+            'stripe_account_id' => 'acct_x',
+            'stripe_charges_enabled' => false,
+            'stripe_payouts_enabled' => false,
+            'stripe_requirements_due' => ['external_account'],
+        ]);
+
+        // Il servizio vero scrive su un'ALTRA istanza del profilo: qui si
+        // riproduce esattamente quello.
+        $this->mock(StripeConnectService::class, function (MockInterface $mock) use ($profile): void {
+            $mock->shouldReceive('syncAccountState')->once()->andReturnUsing(function () use ($profile): void {
+                PartnerProfile::whereKey($profile->id)->update([
+                    'stripe_charges_enabled' => true,
+                    'stripe_payouts_enabled' => true,
+                    'stripe_requirements_due' => [],
+                ]);
+            });
+        });
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertSee(__('partner.profile.stripe.connected'))
+            ->assertDontSee(__('partner.profile.stripe.incomplete'));
+    }
+
     public function test_un_profilo_gia_bonificabile_non_interroga_stripe(): void
     {
         $partner = $this->actingAsActivePartner();

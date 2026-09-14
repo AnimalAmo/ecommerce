@@ -27,6 +27,7 @@ class OrderPayout extends Model
         'gross_cents',
         'commission_cents',
         'net_cents',
+        'net_reconciled_at',
         'commission_rate_bp',
         'status',
         'release_at',
@@ -35,6 +36,7 @@ class OrderPayout extends Model
         'failed_at',
         'last_error',
         'payout_attempts',
+        'payout_idempotency_key',
     ];
 
     protected function casts(): array
@@ -44,6 +46,7 @@ class OrderPayout extends Model
             'gross_cents' => 'integer',
             'commission_cents' => 'integer',
             'net_cents' => 'integer',
+            'net_reconciled_at' => 'datetime',
             'payout_attempts' => 'integer',
             'commission_rate_bp' => 'integer',
             'release_at' => 'immutable_datetime',

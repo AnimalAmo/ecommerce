@@ -42,11 +42,13 @@ class OrderPayoutFactory extends Factory
     }
 
     /** Riga matura: il rilascio è già dovuto, il payout non è ancora partito. */
+    /** Matura e bonificabile: netto già confermato dalla balance transaction. */
     public function matured(): static
     {
         return $this->state(fn (): array => [
             'release_at' => Carbon::now()->subDay(),
             'status' => PayoutStatus::Pending,
+            'net_reconciled_at' => Carbon::now()->subDay(),
         ]);
     }
 
