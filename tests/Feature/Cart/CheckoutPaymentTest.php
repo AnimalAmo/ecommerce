@@ -22,7 +22,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\Locked;
 use Livewire\Livewire;
+use ReflectionProperty;
 use RuntimeException;
 use Tests\Support\Payment\FakePaymentGateway;
 use Tests\TestCase;
@@ -818,5 +820,19 @@ class CheckoutPaymentTest extends TestCase
         // Collegato a Stripe: con i direct charges un venditore senza
         // account connesso non può incassare, quindi non può nemmeno vendere.
         return $this->seller ??= User::factory()->stripeConnected()->create();
+    }
+
+    public function test_lo_stato_della_sessione_stripe_non_e_modificabile_dal_client(): void
+    {
+        // L'account connesso su cui si riverifica l'incasso non deve arrivare
+        // dal browser: è il venditore del carrello, che il server conosce.
+        // Stessa ragione per il PaymentIntent e per l'importo con cui la
+        // sessione è stata aperta — sono lo stato della sessione, non input.
+        foreach (['sessionStripeAccountId', 'paymentIntentId', 'sessionAmountCents'] as $property) {
+            $this->assertNotEmpty(
+                (new ReflectionProperty(Checkout::class, $property))->getAttributes(Locked::class),
+                "{$property} deve essere #[Locked]: il client non può dettarla.",
+            );
+        }
     }
 }

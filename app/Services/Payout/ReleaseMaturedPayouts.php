@@ -73,11 +73,7 @@ class ReleaseMaturedPayouts
                 'error' => $exception->getMessage(),
             ]);
 
-            OrderPayout::whereIn('id', $ids)->update([
-                'status' => PayoutStatus::Failed,
-                'failed_at' => now(),
-                'last_error' => $exception->getMessage(),
-            ]);
+            $this->recordFailure($ids, $accountId, $exception);
 
             return false;
         }
@@ -89,6 +85,43 @@ class ReleaseMaturedPayouts
         ]));
 
         return true;
+    }
+
+    /**
+     * Un fallimento non chiude la riga: la lascia `Pending`, così il giro del
+     * giorno dopo riprova da solo. Quasi tutte le cause sono transitorie — il
+     * saldo che non copre ancora, un rate limit, un 500 di Stripe — e chiudere
+     * al primo errore significherebbe non pagare mai più quel partner senza
+     * che nessuno se ne accorga.
+     *
+     * Esauriti i tentativi la riga diventa `Failed` e serve una mano umana:
+     * `payouts:retry` la rimette in coda. Il log è `critical` perché da lì in
+     * poi il denaro non si muove più da solo.
+     *
+     * @param  Collection<int, int>  $ids
+     */
+    private function recordFailure(Collection $ids, string $accountId, ApiErrorException $exception): void
+    {
+        OrderPayout::whereIn('id', $ids)->increment('payout_attempts', 1, [
+            'failed_at' => now(),
+            'last_error' => $exception->getMessage(),
+        ]);
+
+        $exhausted = OrderPayout::whereIn('id', $ids)
+            ->where('payout_attempts', '>=', (int) config('commerce.payout.max_release_attempts'))
+            ->pluck('id');
+
+        if ($exhausted->isEmpty()) {
+            return;
+        }
+
+        OrderPayout::whereIn('id', $exhausted)->update(['status' => PayoutStatus::Failed]);
+
+        Log::critical('Payout al partner esaurito: nessun altro tentativo automatico', [
+            'stripe_account_id' => $accountId,
+            'order_payout_ids' => $exhausted->all(),
+            'error' => $exception->getMessage(),
+        ]);
     }
 
     /** Stessa chiave per lo stesso gruppo di righe: due giri, un solo payout. */

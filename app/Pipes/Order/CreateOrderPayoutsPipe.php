@@ -31,15 +31,32 @@ class CreateOrderPayoutsPipe
         $rateBp = (int) config('commerce.commission.rate_bp');
 
         $totalCommission = $this->commission->feeCentsFor($order->total_cents) ?? 0;
+        // Netto davvero accreditato sul saldo del venditore: lordo meno
+        // provvigione meno commissione Stripe. Quest'ultima con i direct
+        // charges esce dallo stesso saldo, quindi "lordo - provvigione"
+        // chiederebbe sempre qualche centesimo più di quanto c'è, e il payout
+        // del giorno 14 morirebbe con balance_insufficient.
+        $totalNet = $data->input->capture->netCents;
         $assigned = 0;
+        $assignedNet = 0;
         $lastIndex = $items->count() - 1;
 
-        $items->each(function (OrderItem $item, int $index) use ($order, $totalCommission, $rateBp, &$assigned, $lastIndex): void {
+        $items->each(function (OrderItem $item, int $index) use ($order, $totalCommission, $totalNet, $rateBp, &$assigned, &$assignedNet, $lastIndex): void {
             $commissionCents = $index === $lastIndex
                 ? $totalCommission - $assigned
                 : intdiv($totalCommission * $item->price_cents, max($order->total_cents, 1));
 
             $assigned += $commissionCents;
+
+            // Stessa ripartizione della provvigione, resto all'ultima riga: la
+            // somma dei netti fa esattamente il netto accreditato.
+            $netCents = match (true) {
+                $totalNet === null => $item->price_cents - $commissionCents,
+                $index === $lastIndex => $totalNet - $assignedNet,
+                default => intdiv($totalNet * $item->price_cents, max($order->total_cents, 1)),
+            };
+
+            $assignedNet += $netCents;
 
             $order->payouts()->create([
                 'order_item_id' => $item->id,
@@ -47,7 +64,7 @@ class CreateOrderPayoutsPipe
                 'stripe_account_id' => $item->partner?->partnerProfile?->stripe_account_id,
                 'gross_cents' => $item->price_cents,
                 'commission_cents' => $commissionCents,
-                'net_cents' => $item->price_cents - $commissionCents,
+                'net_cents' => $netCents,
                 'commission_rate_bp' => $rateBp,
                 'status' => $item->partner_user_id === null ? PayoutStatus::PlatformOnly : PayoutStatus::Pending,
                 'release_at' => $this->schedule->releaseAtFor($item),

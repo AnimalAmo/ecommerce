@@ -34,6 +34,7 @@ class OrderPayout extends Model
         'released_at',
         'failed_at',
         'last_error',
+        'payout_attempts',
     ];
 
     protected function casts(): array
@@ -43,6 +44,7 @@ class OrderPayout extends Model
             'gross_cents' => 'integer',
             'commission_cents' => 'integer',
             'net_cents' => 'integer',
+            'payout_attempts' => 'integer',
             'commission_rate_bp' => 'integer',
             'release_at' => 'immutable_datetime',
             'released_at' => 'immutable_datetime',

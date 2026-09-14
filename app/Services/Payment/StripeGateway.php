@@ -11,7 +11,9 @@ use App\Models\OrderPayment\OrderPayment;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Stripe\Event;
 use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\SignatureVerificationException;
 use Stripe\StripeClient;
 use Stripe\StripeObject;
 use Stripe\Webhook;
@@ -123,7 +125,9 @@ class StripeGateway implements PaymentGatewayInterface
         try {
             $intent = $this->client->paymentIntents->retrieve(
                 $paymentIntentId,
-                [],
+                // La balance transaction viaggia con questa stessa retrieve:
+                // il netto reale non costa una chiamata in più.
+                ['expand' => ['latest_charge.balance_transaction']],
                 $this->accountOptions($stripeAccountId),
             );
         } catch (ApiErrorException $exception) {
@@ -172,7 +176,22 @@ class StripeGateway implements PaymentGatewayInterface
             transactionId: $intent->id,
             provider: 'stripe',
             providerResponse: Arr::only($intent->toArray(), self::SAFE_INTENT_FIELDS),
+            netCents: $this->netFromBalanceTransaction($intent),
         );
+    }
+
+    /**
+     * Netto accreditato al venditore. Con i direct charges la balance
+     * transaction dell'account connesso porta già sottratte sia la commissione
+     * Stripe sia la provvigione di piattaforma: è la sola cifra che il saldo
+     * del partner contiene davvero. Null quando Stripe non l'ha ancora
+     * calcolata — il registro ricade sull'aritmetica sul lordo.
+     */
+    private function netFromBalanceTransaction(StripeObject $intent): ?int
+    {
+        $net = $intent->latest_charge->balance_transaction->net ?? null;
+
+        return $net === null ? null : (int) $net;
     }
 
     /**
@@ -192,17 +211,17 @@ class StripeGateway implements PaymentGatewayInterface
 
     public function handleWebhook(array $payload, array $headers): ?OrderPayment
     {
-        $secret = (string) config('payment.stripe.webhook_secret');
+        $secrets = $this->webhookSecrets();
 
-        if ($secret === '') {
+        if ($secrets === []) {
             throw PaymentConfigurationException::missing('stripe');
         }
 
-        // Firma verificata sul raw body (il json re-encodato non matcherebbe).
-        $event = Webhook::constructEvent(
+        $event = $this->verifiedEvent(
+            // Firma verificata sul raw body (il json re-encodato non matcherebbe).
             $headers['raw_body'][0] ?? json_encode($payload),
             $headers['stripe-signature'][0] ?? $headers['Stripe-Signature'][0] ?? '',
-            $secret,
+            $secrets,
         );
 
         return match ($event->type) {
@@ -216,12 +235,62 @@ class StripeGateway implements PaymentGatewayInterface
     }
 
     /**
+     * I segreti di firma configurati, uno per riga della lista separata da
+     * virgole. Connect impone due endpoint sullo stesso URL — eventi di
+     * piattaforma e eventi degli account connessi — e Stripe assegna a ciascuno
+     * il proprio `whsec_`: con un segreto solo, un endpoint risponderebbe 400 a
+     * ogni consegna. Una configurazione a segreto singolo resta valida.
+     *
+     * @return list<string>
+     */
+    private function webhookSecrets(): array
+    {
+        return array_values(array_filter(array_map(
+            trim(...),
+            explode(',', (string) config('payment.stripe.webhook_secret')),
+        ), fn (string $secret): bool => $secret !== ''));
+    }
+
+    /**
+     * Il primo segreto che verifica la firma vince. Se nessuno la verifica si
+     * rilancia l'ultima eccezione: il chiamante deve vedere un 400, non un
+     * evento accettato a metà.
+     *
+     * @param  list<string>  $secrets
+     */
+    private function verifiedEvent(string $body, string $signature, array $secrets): Event
+    {
+        $last = null;
+
+        foreach ($secrets as $secret) {
+            try {
+                return Webhook::constructEvent($body, $signature, $secret);
+            } catch (SignatureVerificationException $exception) {
+                $last = $exception;
+            }
+        }
+
+        throw $last;
+    }
+
+    /**
      * Specchia su partner_profiles lo stato dell'account connesso. Torna null:
      * nessun pagamento è coinvolto, e il controller risponde comunque 200.
      */
     private function syncConnectedAccount(StripeObject $account): ?OrderPayment
     {
-        app(StripeConnectService::class)->syncAccountState((string) $account->id);
+        try {
+            app(StripeConnectService::class)->syncAccountState((string) $account->id);
+        } catch (ApiErrorException $exception) {
+            // Non deve risalire: questo endpoint è condiviso con gli incassi, e
+            // un 400 farebbe riconsegnare l'evento finché Stripe non disabilita
+            // la destinazione. Lo stato si riallinea comunque, dalla pagina del
+            // partner o con `animalamo:connect-sync`.
+            Log::warning('Sync dello stato Connect fallito su account.updated', [
+                'stripe_account_id' => $account->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         return null;
     }
