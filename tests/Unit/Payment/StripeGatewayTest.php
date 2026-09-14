@@ -16,6 +16,7 @@ use InvalidArgumentException;
 use Mockery;
 use Mockery\MockInterface;
 use Stripe\Account;
+use Stripe\Exception\ApiConnectionException;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
 use Stripe\PaymentMethod as StripePaymentMethod;
@@ -25,6 +26,7 @@ use Stripe\Service\PaymentIntentService;
 use Stripe\Service\PaymentMethodService;
 use Stripe\Service\RefundService;
 use Stripe\StripeClient;
+use Stripe\StripeObject;
 use Tests\TestCase;
 
 class StripeGatewayTest extends TestCase
@@ -118,7 +120,7 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldReceive('retrieve')
             ->once()
-            ->with('pi_123', [], ['stripe_account' => self::ACCOUNT])
+            ->with('pi_123', ['expand' => ['latest_charge.balance_transaction']], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_123', status: 'succeeded', amountReceived: 47600));
 
         $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
@@ -135,7 +137,7 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldReceive('retrieve')
             ->once()
-            ->with('pi_123', [], ['stripe_account' => self::ACCOUNT])
+            ->with('pi_123', ['expand' => ['latest_charge.balance_transaction']], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_123', status: 'succeeded', amountReceived: 100));
 
         $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
@@ -154,7 +156,7 @@ class StripeGatewayTest extends TestCase
     {
         $this->paymentIntents->shouldReceive('retrieve')
             ->once()
-            ->with('pi_123', [], ['stripe_account' => self::ACCOUNT])
+            ->with('pi_123', ['expand' => ['latest_charge.balance_transaction']], ['stripe_account' => self::ACCOUNT])
             ->andReturn($this->intent('pi_123', status: 'requires_payment_method', amountReceived: 47600));
 
         $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
@@ -221,6 +223,33 @@ class StripeGatewayTest extends TestCase
         $this->assertSame(PaymentStatus::Completed, $payment->status);
         $this->assertTrue($payment->paid_at->equalTo($paidAt));
         $this->assertSame(['status' => 'succeeded'], $payment->provider_response);
+    }
+
+    public function test_accetta_la_firma_del_secondo_segreto_configurato(): void
+    {
+        // Connect impone due endpoint sullo stesso URL — uno per gli eventi di
+        // piattaforma, uno per quelli degli account connessi — e Stripe assegna
+        // a ciascuno il proprio whsec_. Con un segreto solo, un endpoint
+        // risponderebbe 400 a ogni consegna.
+        config(['payment.stripe.webhook_secret' => 'whsec_piattaforma,'.self::WEBHOOK_SECRET]);
+
+        $payment = OrderPayment::factory()->create([
+            'gateway_session_id' => 'pi_connect_secret',
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        $this->handleSignedWebhook($this->succeededEvent('pi_connect_secret'));
+
+        $this->assertSame(PaymentStatus::Completed, $payment->fresh()->status);
+    }
+
+    public function test_una_firma_che_non_corrisponde_a_nessun_segreto_resta_rifiutata(): void
+    {
+        config(['payment.stripe.webhook_secret' => 'whsec_uno,whsec_due']);
+
+        $this->expectException(SignatureVerificationException::class);
+
+        $this->handleSignedWebhook($this->succeededEvent('pi_qualsiasi'));
     }
 
     public function test_webhook_with_invalid_signature_throws(): void
@@ -298,6 +327,44 @@ class StripeGatewayTest extends TestCase
 
     // ── helper ──────────────────────────────────────────────────────────
 
+    public function test_il_capture_riporta_il_netto_della_balance_transaction(): void
+    {
+        // Con i direct charges anche la commissione Stripe esce dal saldo del
+        // partner: il netto vero è quello che Stripe ha accreditato, non
+        // lordo meno provvigione. Arriva espandendo la balance transaction
+        // sulla retrieve che il capture fa comunque.
+        $intent = $this->intent('pi_123');
+        $intent->latest_charge = StripeObject::constructFrom([
+            'id' => 'ch_123',
+            'balance_transaction' => ['id' => 'txn_123', 'net' => 41595, 'currency' => 'eur'],
+        ]);
+
+        $this->paymentIntents->shouldReceive('retrieve')
+            ->once()
+            ->with('pi_123', ['expand' => ['latest_charge.balance_transaction']], ['stripe_account' => self::ACCOUNT])
+            ->andReturn($intent);
+
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
+
+        $this->assertTrue($result->succeeded);
+        $this->assertSame(41595, $result->netCents);
+    }
+
+    public function test_senza_balance_transaction_il_capture_non_inventa_un_netto(): void
+    {
+        // Transazione ancora in sospeso: meglio nessun dato che un dato finto,
+        // il registro ricade sull'aritmetica lorda.
+        $this->paymentIntents->shouldReceive('retrieve')
+            ->once()
+            ->with('pi_123', ['expand' => ['latest_charge.balance_transaction']], ['stripe_account' => self::ACCOUNT])
+            ->andReturn($this->intent('pi_123'));
+
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
+
+        $this->assertTrue($result->succeeded);
+        $this->assertNull($result->netCents);
+    }
+
     private function intent(string $id, string $status = 'succeeded', int $amountReceived = 47600): PaymentIntent
     {
         return PaymentIntent::constructFrom([
@@ -363,6 +430,14 @@ class StripeGatewayTest extends TestCase
                 'requirements' => ['currently_due' => []],
             ]));
 
+        // L'evento che porta payouts_enabled a true è anche quello che mette la
+        // pianificazione dei bonifici su manuale: è lì che la trattenuta dei 14
+        // giorni smette di essere soltanto contrattuale.
+        $this->accounts->shouldReceive('update')
+            ->once()
+            ->with(self::ACCOUNT, ['settings' => ['payouts' => ['schedule' => ['interval' => 'manual']]]])
+            ->andReturn(Account::constructFrom(['id' => self::ACCOUNT]));
+
         // Nessun OrderPayment coinvolto: l'evento riguarda l'account, non un incasso.
         $this->assertNull($this->handleSignedWebhook([
             'id' => 'evt_account',
@@ -376,6 +451,26 @@ class StripeGatewayTest extends TestCase
         $this->assertTrue($profile->stripe_charges_enabled);
         $this->assertTrue($profile->stripe_payouts_enabled);
         $this->assertSame([], $profile->stripe_requirements_due);
+    }
+
+    public function test_un_account_updated_che_stripe_rifiuta_non_diventa_un_400(): void
+    {
+        // L'endpoint è lo stesso degli incassi: un'eccezione qui farebbe
+        // rispondere 400, Stripe riconsegnerebbe per giorni e finirebbe per
+        // disabilitare l'endpoint, portandosi dietro payment_intent.*.
+        PartnerProfile::factory()->create(['stripe_account_id' => self::ACCOUNT]);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with(self::ACCOUNT)
+            ->andThrow(ApiConnectionException::factory('Stripe irraggiungibile'));
+
+        $this->assertNull($this->handleSignedWebhook([
+            'id' => 'evt_account_ko',
+            'type' => 'account.updated',
+            'account' => self::ACCOUNT,
+            'data' => ['object' => ['id' => self::ACCOUNT]],
+        ]));
     }
 
     public function test_un_incasso_di_un_account_connesso_viene_riconciliato(): void

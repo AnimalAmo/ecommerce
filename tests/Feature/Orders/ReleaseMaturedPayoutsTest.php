@@ -94,7 +94,7 @@ class ReleaseMaturedPayoutsTest extends TestCase
         $this->assertSame(PayoutStatus::Pending, $row->fresh()->status);
     }
 
-    public function test_un_errore_stripe_lascia_le_righe_in_stato_failed(): void
+    public function test_un_errore_stripe_lascia_la_riga_riprovabile(): void
     {
         $rows = $this->maturedRowsFor($this->payablePartner(), [4000]);
 
@@ -106,11 +106,58 @@ class ReleaseMaturedPayoutsTest extends TestCase
 
         $row = $rows[0]->fresh();
 
-        // Saldo insufficiente è il caso reale (rimborso partito prima): deve
-        // restare visibile, non finire in un catch muto.
-        $this->assertSame(PayoutStatus::Failed, $row->status);
+        // Saldo insufficiente è il caso reale (un rimborso partito prima) ed è
+        // transitorio: la riga resta riprovabile e l'errore resta visibile.
+        // Chiuderla al primo tentativo significherebbe non pagare mai più quel
+        // partner, in silenzio.
+        $this->assertSame(PayoutStatus::Pending, $row->status);
+        $this->assertSame(1, $row->payout_attempts);
         $this->assertNotNull($row->failed_at);
         $this->assertStringContainsString('Insufficient funds', $row->last_error);
+    }
+
+    public function test_esauriti_i_tentativi_la_riga_diventa_definitiva(): void
+    {
+        $rows = $this->maturedRowsFor($this->payablePartner(), [4000]);
+        $rows[0]->update(['payout_attempts' => config('commerce.payout.max_release_attempts') - 1]);
+
+        $this->payouts->shouldReceive('create')
+            ->once()
+            ->andThrow(new InvalidRequestException('Insufficient funds in the Stripe account.'));
+
+        $this->assertSame(0, app(ReleaseMaturedPayouts::class)->run());
+
+        $this->assertSame(PayoutStatus::Failed, $rows[0]->fresh()->status);
+    }
+
+    public function test_una_riga_esaurita_non_viene_piu_ritentata_dallo_scheduler(): void
+    {
+        $rows = $this->maturedRowsFor($this->payablePartner(), [4000]);
+        $rows[0]->update(['status' => PayoutStatus::Failed]);
+
+        $this->payouts->shouldReceive('create')->never();
+
+        $this->assertSame(0, app(ReleaseMaturedPayouts::class)->run());
+    }
+
+    public function test_il_comando_di_retry_rimette_in_coda_le_righe_definitive(): void
+    {
+        // La via d'uscita umana: dopo aver sistemato la causa (saldo, account
+        // ripristinato), le righe chiuse tornano bonificabili al giro dopo.
+        $rows = $this->maturedRowsFor($this->payablePartner(), [4000]);
+        $rows[0]->update([
+            'status' => PayoutStatus::Failed,
+            'payout_attempts' => 5,
+            'last_error' => 'Insufficient funds in the Stripe account.',
+        ]);
+
+        $this->artisan('payouts:retry')->assertSuccessful();
+
+        $row = $rows[0]->fresh();
+
+        $this->assertSame(PayoutStatus::Pending, $row->status);
+        $this->assertSame(0, $row->payout_attempts);
+        $this->assertNull($row->failed_at);
     }
 
     public function test_le_righe_di_sola_piattaforma_non_vengono_mai_bonificate(): void
