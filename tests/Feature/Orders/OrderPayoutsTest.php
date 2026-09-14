@@ -121,6 +121,26 @@ class OrderPayoutsTest extends TestCase
     }
 
     /** Cinque notti di una struttura senza supplemento animali: totale = 5 × prezzo. */
+    public function test_il_netto_del_registro_e_quello_accreditato_da_stripe(): void
+    {
+        // 120,00 € lordi: 12,00 di provvigione e ~2,05 di commissione Stripe,
+        // che con i direct charges esce dallo stesso saldo del partner. Il
+        // registro deve chiedere 105,95, non 108,00 — o al giorno 14 il
+        // bonifico va in balance_insufficient.
+        $this->addStructureLine($this->structureAt(12000));
+
+        $order = $this->placeOrder(netCents: 10595);
+
+        $this->assertSame(
+            10595,
+            (int) OrderPayout::where('order_id', $order->id)->sum('net_cents'),
+        );
+        $this->assertSame(
+            1200,
+            (int) OrderPayout::where('order_id', $order->id)->sum('commission_cents'),
+        );
+    }
+
     private function placeOrderWithTotalCents(int $totalCents): Order
     {
         $this->addStructureLine($this->structureAt($totalCents));

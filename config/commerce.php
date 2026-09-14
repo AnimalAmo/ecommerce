@@ -28,6 +28,10 @@ return [
 
     'payout' => [
         'release_delay_days' => (int) env('PAYOUT_RELEASE_DELAY_DAYS', 14),
+        // Tentativi prima di dichiarare definitivamente fallita una riga: lo
+        // scheduler gira una volta al giorno, quindi sono altrettanti giorni
+        // di riprove prima che serva una mano umana.
+        'max_release_attempts' => (int) env('PAYOUT_MAX_RELEASE_ATTEMPTS', 5),
     ],
 
 ];

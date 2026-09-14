@@ -33,6 +33,7 @@ trait PlacesOrders
         ?int $totalCentsOverride = null,
         string $gatewaySessionId = 'pi_test_1',
         ?Collection $itemsOverride = null,
+        ?int $netCents = null,
     ): Order {
         $data = new PlaceOrderData(
             firstName: 'Giulia',
@@ -47,6 +48,7 @@ trait PlacesOrders
                 transactionId: $gatewaySessionId,
                 provider: 'stripe',
                 providerResponse: ['status' => 'succeeded'],
+                netCents: $netCents,
             ),
             items: $itemsOverride ?? $this->cart()->items($gift),
             totalCents: $totalCentsOverride ?? $this->cart()->total($gift),

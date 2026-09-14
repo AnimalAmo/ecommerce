@@ -23,6 +23,14 @@ class CheckoutCaptureResult
         public readonly bool $fundsCaptured = false,
         /** Importo realmente incassato (per lo storno pieno sui mismatch). */
         public readonly ?int $capturedAmountCents = null,
+        /**
+         * Netto accreditato sul saldo del venditore, dalla balance transaction
+         * dell'addebito. Con i direct charges è lordo meno provvigione meno
+         * commissione Stripe: è la cifra davvero bonificabile, e il registro
+         * dei payout deve usare questa, non l'aritmetica sul lordo. Null se
+         * Stripe non l'ha ancora resa disponibile.
+         */
+        public readonly ?int $netCents = null,
     ) {}
 
     public static function success(
@@ -30,6 +38,7 @@ class CheckoutCaptureResult
         string $transactionId,
         string $provider,
         array $providerResponse,
+        ?int $netCents = null,
     ): self {
         return new self(
             succeeded: true,
@@ -38,6 +47,7 @@ class CheckoutCaptureResult
             provider: $provider,
             providerResponse: $providerResponse,
             fundsCaptured: true,
+            netCents: $netCents,
         );
     }
 

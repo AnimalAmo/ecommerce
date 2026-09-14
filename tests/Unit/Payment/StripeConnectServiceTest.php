@@ -10,6 +10,7 @@ use Mockery;
 use Mockery\MockInterface;
 use Stripe\Account;
 use Stripe\AccountLink;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\Service\AccountLinkService;
 use Stripe\Service\AccountService;
 use Stripe\StripeClient;
@@ -112,6 +113,103 @@ class StripeConnectServiceTest extends TestCase
         $this->assertTrue($profile->stripe_charges_enabled);
         $this->assertFalse($profile->stripe_payouts_enabled);
         $this->assertSame(['external_account'], $profile->stripe_requirements_due);
+    }
+
+    public function test_sync_mette_su_manuale_la_pianificazione_dei_bonifici(): void
+    {
+        // Senza questo, Stripe bonifica in automatico dopo pochi giorni e la
+        // trattenuta di 14 giorni prevista dalle Condizioni Fornitore non
+        // esiste: payouts:release troverebbe il saldo gia' vuoto.
+        $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with('acct_existing')
+            ->andReturn(Account::constructFrom([
+                'id' => 'acct_existing',
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+                'settings' => ['payouts' => ['schedule' => ['interval' => 'daily']]],
+            ]));
+
+        $this->accounts->shouldReceive('update')
+            ->once()
+            ->with('acct_existing', ['settings' => ['payouts' => ['schedule' => ['interval' => 'manual']]]])
+            ->andReturn(Account::constructFrom(['id' => 'acct_existing']));
+
+        $this->connect->syncAccountState('acct_existing');
+    }
+
+    public function test_sync_non_tocca_una_pianificazione_gia_manuale(): void
+    {
+        $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with('acct_existing')
+            ->andReturn(Account::constructFrom([
+                'id' => 'acct_existing',
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+                'settings' => ['payouts' => ['schedule' => ['interval' => 'manual']]],
+            ]));
+
+        $this->accounts->shouldReceive('update')->never();
+
+        $this->connect->syncAccountState('acct_existing');
+    }
+
+    public function test_sync_non_impone_il_manuale_finche_i_bonifici_non_sono_abilitati(): void
+    {
+        // Onboarding a meta': Stripe rifiuta la modifica su un account che non
+        // ha ancora la capability, e l'evento successivo ripassa di qui.
+        $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with('acct_existing')
+            ->andReturn(Account::constructFrom([
+                'id' => 'acct_existing',
+                'charges_enabled' => true,
+                'payouts_enabled' => false,
+                'requirements' => ['currently_due' => ['external_account']],
+                'settings' => ['payouts' => ['schedule' => ['interval' => 'daily']]],
+            ]));
+
+        $this->accounts->shouldReceive('update')->never();
+
+        $this->connect->syncAccountState('acct_existing');
+    }
+
+    public function test_un_rifiuto_sulla_pianificazione_non_fa_fallire_il_sync(): void
+    {
+        // L'endpoint webhook è condiviso con gli incassi: se un rifiuto di
+        // Stripe sulla pianificazione risalisse al controller, questo
+        // risponderebbe 400, Stripe riconsegnerebbe per giorni e finirebbe per
+        // disabilitare l'endpoint — portandosi dietro payment_intent.*.
+        $partner = $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')
+            ->once()
+            ->with('acct_existing')
+            ->andReturn(Account::constructFrom([
+                'id' => 'acct_existing',
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+                'settings' => ['payouts' => ['schedule' => ['interval' => 'daily']]],
+            ]));
+
+        $this->accounts->shouldReceive('update')
+            ->once()
+            ->andThrow(InvalidRequestException::factory('Non puoi modificare questo account.'));
+
+        $this->connect->syncAccountState('acct_existing');
+
+        // Lo specchio dei flag resta comunque allineato.
+        $this->assertTrue($partner->partnerProfile->fresh()->stripe_payouts_enabled);
     }
 
     public function test_sync_di_un_account_sconosciuto_non_esplode(): void

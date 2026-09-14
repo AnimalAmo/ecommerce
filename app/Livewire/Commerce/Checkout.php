@@ -80,12 +80,17 @@ class Checkout extends Component
      * Account connesso su cui è nata la sessione. Un PaymentIntent non si
      * sposta da un account all'altro con un update: se il venditore del
      * carrello cambia, la sessione va ricreata.
+     *
+     * Bloccata: è l'account su cui si riverifica l'incasso, e il client non
+     * deve poter dire su quale account guardare.
      */
+    #[Locked]
     public ?string $sessionStripeAccountId = null;
 
     public ?string $clientSecret = null;
 
     /** PaymentIntent riusato agli switch di metodo Stripe (update dei types, mai un PI orfano a ogni click). */
+    #[Locked]
     public ?string $paymentIntentId = null;
 
     /**
@@ -93,6 +98,7 @@ class Checkout extends Component
      * al "Paga ora" il carrello (cambiato in un'altra tab) non coincide più,
      * la sessione va ri-allineata PRIMA di confermare.
      */
+    #[Locked]
     public ?int $sessionAmountCents = null;
 
     /** True dal click su "Paga ora" all'esito della conferma JS (bottone disabilitato). */

@@ -8,6 +8,7 @@ use App\Services\Payment\StripeConnectService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Mockery\MockInterface;
+use Stripe\Exception\ApiConnectionException;
 use Tests\TestCase;
 
 /**
@@ -32,6 +33,7 @@ class PartnerStripeOnboardingTest extends TestCase
     public function test_un_onboarding_incompleto_elenca_cosa_manca(): void
     {
         $partner = $this->actingAsActivePartner();
+        $this->silentConnectService();
         PartnerProfile::factory()->for($partner)->create([
             'stripe_account_id' => 'acct_x',
             'stripe_charges_enabled' => true,
@@ -53,6 +55,65 @@ class PartnerStripeOnboardingTest extends TestCase
         Livewire::test(PartnerProfilePayment::class)
             ->assertSee(__('partner.profile.stripe.connected'))
             ->assertDontSee(__('partner.profile.stripe.connect'));
+    }
+
+    public function test_aprendo_la_pagina_lo_stato_incompleto_si_riallinea_con_stripe(): void
+    {
+        // Senza questo, i flag Connect dipendono solo da account.updated: se
+        // quell'evento non arriva — endpoint non ancora creato, segreto
+        // sbagliato, endpoint disabilitato da Stripe dopo troppi 400 — il
+        // partner vede "non collegato" per sempre e nessuno può riallinearlo.
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create([
+            'stripe_account_id' => 'acct_x',
+            'stripe_charges_enabled' => false,
+        ]);
+
+        $this->mock(StripeConnectService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('syncAccountState')->once()->with('acct_x');
+        });
+
+        Livewire::test(PartnerProfilePayment::class)->assertOk();
+    }
+
+    public function test_un_profilo_gia_bonificabile_non_interroga_stripe(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->connected()->for($partner)->create();
+
+        $this->mock(StripeConnectService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('syncAccountState')->never();
+        });
+
+        Livewire::test(PartnerProfilePayment::class)->assertOk();
+    }
+
+    public function test_stripe_irraggiungibile_non_rompe_la_pagina(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create([
+            'stripe_account_id' => 'acct_x',
+            'stripe_charges_enabled' => false,
+        ]);
+
+        $this->mock(StripeConnectService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('syncAccountState')
+                ->once()
+                ->andThrow(ApiConnectionException::factory('Stripe irraggiungibile'));
+        });
+
+        // La pagina resta sull'ultimo stato noto, quello dello specchio locale.
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertOk()
+            ->assertSee(__('partner.profile.stripe.incomplete'));
+    }
+
+    /** Profilo con account id: la pagina lo riallinea, e nei test non si chiama Stripe. */
+    private function silentConnectService(): void
+    {
+        $this->mock(StripeConnectService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('syncAccountState')->andReturnNull();
+        });
     }
 
     public function test_il_pulsante_porta_al_link_di_onboarding_di_stripe(): void
