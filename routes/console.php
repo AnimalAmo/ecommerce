@@ -9,4 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Bonifici ai partner: le righe mature del giorno prima, un payout per account.
+// Prima del rilascio: al capture la balance transaction non esiste ancora,
+// quindi ogni riga nasce con un netto provvisorio da confermare.
+Schedule::command('payouts:reconcile-net')->dailyAt('05:45');
 Schedule::command('payouts:release')->dailyAt('06:00');

@@ -10,6 +10,7 @@ use App\Services\Payout\ReleaseMaturedPayouts;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Mockery\MockInterface;
+use Stripe\Exception\ApiConnectionException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\Payout;
 use Stripe\Service\PayoutService;
@@ -158,6 +159,83 @@ class ReleaseMaturedPayoutsTest extends TestCase
         $this->assertSame(PayoutStatus::Pending, $row->status);
         $this->assertSame(0, $row->payout_attempts);
         $this->assertNull($row->failed_at);
+    }
+
+    public function test_il_ritentativo_riusa_la_chiave_del_primo_tentativo(): void
+    {
+        // Senza una chiave persistita, una riga che matura nel frattempo cambia
+        // il gruppo, quindi la chiave, quindi Stripe vede una richiesta mai
+        // vista: un secondo bonifico che ripaga anche le righe del primo.
+        $partner = $this->payablePartner();
+        $primo = $this->maturedRowsFor($partner, [5000]);
+
+        $this->payouts->shouldReceive('create')
+            ->once()
+            ->andThrow(new InvalidRequestException('Insufficient funds in the Stripe account.'));
+
+        app(ReleaseMaturedPayouts::class)->run();
+
+        $chiave = $primo[0]->fresh()->payout_idempotency_key;
+        $this->assertNotNull($chiave, 'la chiave va scritta prima della chiamata');
+
+        // Giro successivo: per lo stesso partner è maturata un'altra riga.
+        $seconda = $this->maturedRowsFor($partner, [3000]);
+
+        $chiamate = [];
+        $this->payouts->shouldReceive('create')
+            ->twice()
+            ->andReturnUsing(function (array $params, array $options) use (&$chiamate): Payout {
+                $chiamate[] = ['amount' => $params['amount'], 'key' => $options['idempotency_key']];
+
+                return Payout::constructFrom(['id' => 'po_'.count($chiamate)]);
+            });
+
+        app(ReleaseMaturedPayouts::class)->run();
+
+        $vecchio = collect($chiamate)->firstWhere('amount', 5000);
+        $nuovo = collect($chiamate)->firstWhere('amount', 3000);
+
+        $this->assertNotNull($vecchio, 'il gruppo già tentato va ribonificato per conto suo');
+        $this->assertSame($chiave, $vecchio['key'], 'il ritentativo deve riusare la chiave del primo tentativo');
+        $this->assertNotNull($nuovo, 'la riga nuova è un bonifico a sé');
+        $this->assertNotSame($chiave, $nuovo['key'], 'la riga nuova non può ereditare la chiave del gruppo vecchio');
+    }
+
+    public function test_un_esito_ignoto_non_viene_ritentato_da_solo(): void
+    {
+        // Un errore di connessione non dice "non è successo": dice "non so".
+        // Il bonifico può essere stato creato e la risposta persa: ritentare
+        // alla cieca significherebbe pagarlo due volte.
+        $rows = $this->maturedRowsFor($this->payablePartner(), [4000]);
+
+        $this->payouts->shouldReceive('create')
+            ->once()
+            ->andThrow(ApiConnectionException::factory('Connection timed out'));
+
+        $this->assertSame(0, app(ReleaseMaturedPayouts::class)->run());
+
+        $row = $rows[0]->fresh();
+
+        $this->assertSame(PayoutStatus::Failed, $row->status);
+        $this->assertStringContainsString('ESITO IGNOTO', (string) $row->last_error);
+
+        // E il giro dopo non ci riprova: la riga non è più Pending.
+        app(ReleaseMaturedPayouts::class)->run();
+    }
+
+    public function test_una_riga_col_netto_non_ancora_riconciliato_non_viene_bonificata(): void
+    {
+        // Il netto provvisorio è lordo meno provvigione: qualche centesimo più
+        // di quanto il saldo contiene. Bonificarlo significa prendere
+        // balance_insufficient e mettere la riga in coda ai ritentativi per
+        // niente. Aspetta il giro di payouts:reconcile-net delle 05:45.
+        $rows = $this->maturedRowsFor($this->payablePartner(), [5000]);
+        $rows[0]->update(['net_reconciled_at' => null]);
+
+        $this->payouts->shouldReceive('create')->never();
+
+        $this->assertSame(0, app(ReleaseMaturedPayouts::class)->run());
+        $this->assertSame(PayoutStatus::Pending, $rows[0]->fresh()->status);
     }
 
     public function test_le_righe_di_sola_piattaforma_non_vengono_mai_bonificate(): void
