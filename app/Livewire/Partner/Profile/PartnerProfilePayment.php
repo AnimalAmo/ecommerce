@@ -37,6 +37,12 @@ class PartnerProfilePayment extends Component
             // pretende le credenziali, e un gateway non configurato non deve
             // impedire al partner di aprire la propria pagina.
             app(StripeConnectService::class)->syncAccountState($profile->stripe_account_id);
+
+            // Il servizio aggiorna un'ALTRA istanza del profilo, letta per
+            // stripe_account_id. Senza scaricare la relazione, render()
+            // rileggerebbe quella caricata qui sopra e mostrerebbe lo stato di
+            // prima: il partner vedrebbe "incompleto" dopo un resync riuscito.
+            Auth::user()->unsetRelation('partnerProfile');
         } catch (ApiErrorException|PaymentConfigurationException $exception) {
             // Stripe irraggiungibile (o chiavi assenti) non è un buon motivo
             // per non mostrare la pagina: si resta sull'ultimo stato noto.

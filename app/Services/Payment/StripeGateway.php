@@ -191,6 +191,21 @@ class StripeGateway implements PaymentGatewayInterface
     {
         $net = $intent->latest_charge->balance_transaction->net ?? null;
 
+        if ($net === null) {
+            // Il registro ricade sull'aritmetica sul lordo, che con i direct
+            // charges chiede più di quanto il saldo contiene: va saputo, non
+            // scoperto al giorno 14 con un balance_insufficient.
+            Log::warning('Netto reale non disponibile al capture: il payout userà lordo meno provvigione', [
+                'payment_intent_id' => $intent->id ?? null,
+                'latest_charge' => is_object($intent->latest_charge ?? null)
+                    ? ($intent->latest_charge->id ?? 'oggetto senza id')
+                    : ($intent->latest_charge ?? 'assente'),
+                'balance_transaction' => is_object($intent->latest_charge->balance_transaction ?? null)
+                    ? 'oggetto'
+                    : ($intent->latest_charge->balance_transaction ?? 'assente'),
+            ]);
+        }
+
         return $net === null ? null : (int) $net;
     }
 
