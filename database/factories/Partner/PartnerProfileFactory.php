@@ -20,8 +20,6 @@ class PartnerProfileFactory extends Factory
             'business_name' => fake()->company(),
             'vat' => fake()->numerify('###########'),
             'tax_code' => fake()->bothify('??????##?##?###?'),
-            'pec' => fake()->unique()->safeEmail(),
-            'sdi' => fake()->bothify('???####'),
             'address' => fake()->streetAddress(),
             'city' => fake()->city(),
             'province' => fake()->lexify('??'),

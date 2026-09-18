@@ -39,8 +39,6 @@ class RegisterPartnerAccount
                 'business_name' => $step1['businessName'],
                 'vat' => $step1['vat'],
                 'tax_code' => $step1['taxCode'],
-                'pec' => $step1['pec'],
-                'sdi' => $step1['sdi'],
                 'address' => $step1['address'],
                 'province' => $step1['province'],
                 'zip' => $step1['zip'],

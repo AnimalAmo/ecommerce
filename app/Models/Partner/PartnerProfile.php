@@ -21,8 +21,6 @@ class PartnerProfile extends Model
         'business_name',
         'vat',
         'tax_code',
-        'pec',
-        'sdi',
         'address',
         'city',
         'province',

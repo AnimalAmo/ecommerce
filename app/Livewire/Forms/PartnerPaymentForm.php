@@ -15,8 +15,6 @@ class PartnerPaymentForm extends Form
 
     public string $iban = '';
 
-    public string $sdi = '';
-
     public string $bic = '';
 
     public function rules(): array
@@ -24,7 +22,6 @@ class PartnerPaymentForm extends Form
         return [
             'accountHolder' => ['required', 'string', 'max:128'],
             'iban' => ['required', 'string', 'max:34'],
-            'sdi' => ['required', 'string', 'max:7'],
             'bic' => ['required', 'string', 'max:11'],
         ];
     }
@@ -33,7 +30,6 @@ class PartnerPaymentForm extends Form
     {
         $this->accountHolder = $profile->account_holder ?? '';
         $this->iban = $profile->iban ?? '';
-        $this->sdi = $profile->sdi ?? '';
         $this->bic = $profile->bic ?? '';
     }
 
@@ -42,7 +38,6 @@ class PartnerPaymentForm extends Form
         return [
             'account_holder' => $this->accountHolder,
             'iban' => $this->iban,
-            'sdi' => $this->sdi,
             'bic' => $this->bic,
         ];
     }

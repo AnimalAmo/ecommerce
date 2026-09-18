@@ -93,23 +93,11 @@
                             <flux:error name="form.vat" />
                         </flux:field>
 
-                        {{-- Codice Fiscale | PEC --}}
+                        {{-- Codice Fiscale --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.tax_code') }} *</flux:label>
                             <flux:input wire:model="form.taxCode" class="{{ $fieldClass }}" />
                             <flux:error name="form.taxCode" />
-                        </flux:field>
-                        <flux:field>
-                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.pec') }} *</flux:label>
-                            <flux:input type="email" wire:model="form.pec" class="{{ $fieldClass }}" />
-                            <flux:error name="form.pec" />
-                        </flux:field>
-
-                        {{-- SDI | (vuoto) --}}
-                        <flux:field>
-                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.register.sdi') }} *</flux:label>
-                            <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
-                            <flux:error name="form.sdi" />
                         </flux:field>
                     </div>
 

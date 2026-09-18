@@ -65,8 +65,6 @@ class BecomePartnerFromAccountTest extends TestCase
             'phone' => '3498798828',
             'vat' => '86334519757',
             'taxCode' => 'RSSGLI90A41G224X',
-            'pec' => 'lepalme@pec.it',
-            'sdi' => 'SUBM70N',
         ];
     }
 
@@ -215,8 +213,6 @@ class BecomePartnerFromAccountTest extends TestCase
             ->set('form.zip', '35100')
             ->set('form.vat', '86334519757')
             ->set('form.taxCode', 'RSSGLI90A41G224X')
-            ->set('form.pec', 'lepalme@pec.it')
-            ->set('form.sdi', 'SUBM70N')
             ->call('submit')
             ->assertRedirect(route('partner.register.step2'));
 

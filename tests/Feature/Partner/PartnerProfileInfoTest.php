@@ -21,7 +21,8 @@ class PartnerProfileInfoTest extends TestCase
             ->assertSee(__('partner.profile.info_heading'))
             ->assertSee(__('partner.profile.business_name'))
             ->assertSee(__('partner.profile.vat'))
-            ->assertSee(__('partner.profile.pec'))
+            ->assertDontSee('PEC')
+            ->assertDontSee('SDI')
             ->assertSee(__('partner.profile.save'));
     }
 
@@ -75,8 +76,6 @@ class PartnerProfileInfoTest extends TestCase
             ->set('form.vat', '12345678901')
             ->set('form.phone', '3331234567')
             ->set('form.taxCode', 'RSSMRA80A01H501U')
-            ->set('form.pec', 'pethotel@pec.it')
-            ->set('form.sdi', 'ABCDEF1')
             ->call('save')
             ->assertHasNoErrors();
 

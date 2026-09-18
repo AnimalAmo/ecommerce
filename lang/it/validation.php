@@ -40,12 +40,6 @@ return [
             'same' => 'Le password non coincidono.',
         ],
         // Dati fiscali del partner: "Valore troppo lungo." non dice quanto.
-        'pec' => [
-            'email' => 'Inserisci un indirizzo PEC valido.',
-        ],
-        'sdi' => [
-            'max' => 'Il codice SDI è di 7 caratteri.',
-        ],
         'taxCode' => [
             'max' => 'Il codice fiscale non può superare i 16 caratteri.',
         ],
@@ -66,14 +60,12 @@ return [
         'lastName' => 'il cognome',
         'offerType' => 'il tipo di offerta',
         'password' => 'la password',
-        'pec' => 'la PEC',
         'petType' => 'la tipologia di animale',
         'phone' => 'il numero di cellulare',
         'postalCode' => 'il CAP',
         'province' => 'la provincia',
         'recipientEmail' => 'l\'email del destinatario',
         'role' => 'il tuo ruolo',
-        'sdi' => 'il codice SDI',
         'taxCode' => 'il codice fiscale',
         'vat' => 'la partita IVA',
         'website' => 'il sito web',

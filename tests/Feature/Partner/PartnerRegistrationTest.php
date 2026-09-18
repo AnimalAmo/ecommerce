@@ -21,11 +21,30 @@ class PartnerRegistrationTest extends TestCase
             ->assertSee(__('partner.register.next'));
     }
 
+    /**
+     * PEC e codice SDI tolti su richiesta della cliente (18/09/2026): prima
+     * dallo step 1, poi anche dall'area partner. Sono dati di fatturazione
+     * elettronica e non servono per iscriversi. Le colonne restano a database
+     * (nullable) con i valori dei partner già registrati: qui si verifica che
+     * nessuna schermata li chieda più.
+     */
+    public function test_step_1_does_not_ask_for_the_e_invoicing_fields(): void
+    {
+        $this->get(route('partner.register'))
+            ->assertOk()
+            ->assertDontSee('PEC')
+            ->assertDontSee('SDI');
+
+        Livewire::test(PartnerRegisterStep1::class)
+            ->call('submit')
+            ->assertHasNoErrors(['form.pec', 'form.sdi']);
+    }
+
     public function test_step_1_requires_the_mandatory_fields(): void
     {
         Livewire::test(PartnerRegisterStep1::class)
             ->call('submit')
-            ->assertHasErrors(['form.firstName', 'form.email', 'form.vat', 'form.pec', 'form.sdi'])
+            ->assertHasErrors(['form.firstName', 'form.email', 'form.vat', 'form.taxCode'])
             ->assertNoRedirect();
     }
 
@@ -50,8 +69,6 @@ class PartnerRegistrationTest extends TestCase
             ->set('form.phone', '3331234567')
             ->set('form.vat', '12345678901')
             ->set('form.taxCode', 'RSSMRA80A01H501U')
-            ->set('form.pec', 'pethotel@pec.it')
-            ->set('form.sdi', 'ABCDEF1')
             ->call('submit')
             ->assertHasNoErrors()
             ->assertRedirect(route('partner.register.step2'));
@@ -76,8 +93,6 @@ class PartnerRegistrationTest extends TestCase
             ->set('form.phone', '3331234567')
             ->set('form.vat', '12345678901')
             ->set('form.taxCode', 'RSSMRA80A01H501U')
-            ->set('form.pec', 'pethotel@pec.it')
-            ->set('form.sdi', 'ABCDEF1')
             // La provincia è l'unica non scelta: è il caso segnalato dalla cliente.
             ->call('submit')
             ->assertHasErrors('form.province')
@@ -101,8 +116,6 @@ class PartnerRegistrationTest extends TestCase
                 'Inserisci il numero di cellulare.',
                 'Inserisci la partita IVA.',
                 'Inserisci il codice fiscale.',
-                'Inserisci la PEC.',
-                'Inserisci il codice SDI.',
             ]);
     }
 
@@ -112,12 +125,10 @@ class PartnerRegistrationTest extends TestCase
         Livewire::test(PartnerRegisterStep1::class)
             ->set('form.zip', '351')
             ->set('form.vat', 'PARTITA IVA 12345678901')
-            ->set('form.sdi', 'nonhosdi')
             ->call('submit')
             ->assertSee([
                 'Il CAP deve avere 5 cifre.',
                 'La partita IVA non può superare i 13 caratteri.',
-                'Il codice SDI è di 7 caratteri.',
             ]);
     }
 

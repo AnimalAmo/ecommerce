@@ -46,8 +46,6 @@ class WorkWithUsFlowTest extends TestCase
             'phone' => '3498798828',
             'vat' => '86334519757',
             'taxCode' => 'SSNNRSS98A39T582I',
-            'pec' => 'susanna@pec.it',
-            'sdi' => 'SUBM70N',
         ];
     }
 
@@ -276,8 +274,6 @@ class WorkWithUsFlowTest extends TestCase
             ->set('form.phone', '3331234567')
             ->set('form.vat', '12345678901')
             ->set('form.taxCode', 'RSSMRA80A01H501U')
-            ->set('form.pec', 'palme@pec.it')
-            ->set('form.sdi', 'ABCDEF1')
             ->call('submit');
 
         $this->get(route('partner.register'))

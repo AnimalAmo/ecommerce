@@ -69,15 +69,6 @@
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.profile.city') }} *</flux:label>
                                 <flux:input wire:model="form.city" class="{{ $fieldClass }}" />
                             </flux:field>
-
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.pec') }} *</flux:label>
-                                <flux:input type="email" wire:model="form.pec" class="{{ $fieldClass }}" />
-                            </flux:field>
-                            <flux:field>
-                                <flux:label class="{{ $labelClass }}">{{ __('partner.profile.sdi') }} *</flux:label>
-                                <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
-                            </flux:field>
                         </div>
 
                         <div class="mt-10 flex items-center justify-end">

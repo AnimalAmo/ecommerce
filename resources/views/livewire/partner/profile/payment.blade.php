@@ -57,11 +57,6 @@
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.profile.iban') }} *</flux:label>
                                     <flux:input wire:model="form.iban" class="{{ $fieldClass }}" />
                                 </flux:field>
-
-                                <flux:field>
-                                    <flux:label class="{{ $labelClass }}">{{ __('partner.profile.sdi') }} *</flux:label>
-                                    <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
-                                </flux:field>
                                 <flux:field>
                                     <flux:label class="{{ $labelClass }}">{{ __('partner.profile.bic') }} *</flux:label>
                                     <flux:input wire:model="form.bic" class="{{ $fieldClass }}" />
