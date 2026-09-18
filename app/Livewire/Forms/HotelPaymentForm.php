@@ -14,8 +14,6 @@ class HotelPaymentForm extends Form
 
     public string $iban = '';
 
-    public string $sdi = '';
-
     public string $bic = '';
 
     public function rules(): array
@@ -23,7 +21,6 @@ class HotelPaymentForm extends Form
         return [
             'accountHolder' => ['required', 'string', 'max:128'],
             'iban' => ['required', 'string', 'max:34'],
-            'sdi' => ['required', 'string', 'max:7'],
             'bic' => ['required', 'string', 'max:11'],
         ];
     }
@@ -32,7 +29,6 @@ class HotelPaymentForm extends Form
     {
         $this->accountHolder = $draft->account_holder ?? '';
         $this->iban = $draft->iban ?? '';
-        $this->sdi = $draft->sdi ?? '';
         $this->bic = $draft->bic ?? '';
     }
 
@@ -42,7 +38,6 @@ class HotelPaymentForm extends Form
         return [
             'account_holder' => $this->accountHolder,
             'iban' => $this->iban,
-            'sdi' => $this->sdi,
             'bic' => $this->bic,
         ];
     }

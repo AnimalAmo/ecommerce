@@ -39,7 +39,7 @@ class PartnerProfilePaymentTest extends TestCase
 
         Livewire::test(PartnerProfilePayment::class)
             ->call('save')
-            ->assertHasErrors(['form.accountHolder', 'form.iban', 'form.sdi', 'form.bic']);
+            ->assertHasErrors(['form.accountHolder', 'form.iban', 'form.bic']);
     }
 
     public function test_save_persists_the_payment_data(): void
@@ -49,7 +49,6 @@ class PartnerProfilePaymentTest extends TestCase
         Livewire::test(PartnerProfilePayment::class)
             ->set('form.accountHolder', 'Susanna Rossi')
             ->set('form.iban', 'IT60X0542811101000000123456')
-            ->set('form.sdi', 'ABCDEF1')
             ->set('form.bic', 'UNCRITMM')
             ->call('save')
             ->assertHasNoErrors();

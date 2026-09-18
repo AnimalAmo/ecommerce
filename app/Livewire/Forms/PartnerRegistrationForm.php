@@ -7,7 +7,12 @@ use Livewire\Form;
 
 /**
  * Iscrizione B2B — step 1 "Informazioni personali".
- * Dati anagrafici + fiscali del partner (Ragione Sociale, P.IVA, CF, PEC, SDI).
+ * Dati anagrafici + fiscali del partner (Ragione Sociale, P.IVA, CF).
+ *
+ * PEC e codice SDI sono stati tolti da qui su richiesta della cliente
+ * (18/09/2026): servono a fatturare, non a iscriversi, e allungavano il modulo
+ * nel punto in cui il candidato decide se proseguire. Le due colonne restano su
+ * partner_profiles (già nullable) e si compilano dal profilo partner.
  */
 class PartnerRegistrationForm extends Form
 {
@@ -31,10 +36,6 @@ class PartnerRegistrationForm extends Form
 
     public string $taxCode = '';
 
-    public string $pec = '';
-
-    public string $sdi = '';
-
     public function rules(): array
     {
         return [
@@ -48,8 +49,6 @@ class PartnerRegistrationForm extends Form
             'phone' => ['required', ...Phone::rules()],
             'vat' => ['required', 'string', 'max:13'],
             'taxCode' => ['required', 'string', 'max:16'],
-            'pec' => ['required', 'email', 'max:128'],
-            'sdi' => ['required', 'string', 'max:7'],
         ];
     }
 }

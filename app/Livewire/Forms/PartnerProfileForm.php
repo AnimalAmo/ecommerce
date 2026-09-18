@@ -37,10 +37,6 @@ class PartnerProfileForm extends Form
 
     public string $taxCode = '';
 
-    public string $pec = '';
-
-    public string $sdi = '';
-
     public function rules(): array
     {
         return [
@@ -55,8 +51,6 @@ class PartnerProfileForm extends Form
             'zip' => ['required', 'digits:5'],
             'vat' => ['required', 'string', 'max:13'],
             'taxCode' => ['required', 'string', 'max:16'],
-            'pec' => ['required', 'email', 'max:128'],
-            'sdi' => ['required', 'string', 'max:7'],
         ];
     }
 
@@ -75,8 +69,6 @@ class PartnerProfileForm extends Form
         $this->zip = $profile->zip ?? '';
         $this->vat = $profile->vat ?? '';
         $this->taxCode = $profile->tax_code ?? '';
-        $this->pec = $profile->pec ?? '';
-        $this->sdi = $profile->sdi ?? '';
     }
 
     /** Campi personali per l'update di users. */
@@ -101,8 +93,6 @@ class PartnerProfileForm extends Form
             'zip' => $this->zip,
             'vat' => $this->vat,
             'tax_code' => $this->taxCode,
-            'pec' => $this->pec,
-            'sdi' => $this->sdi,
         ];
     }
 

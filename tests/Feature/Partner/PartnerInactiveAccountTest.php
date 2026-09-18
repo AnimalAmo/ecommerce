@@ -36,8 +36,6 @@ class PartnerInactiveAccountTest extends TestCase
             'phone' => '3498798828',
             'vat' => '86334519757',
             'taxCode' => 'RSSSNN98A41F205X',
-            'pec' => 'susanna@pec.it',
-            'sdi' => 'SUBM70N',
         ], $overrides);
     }
 

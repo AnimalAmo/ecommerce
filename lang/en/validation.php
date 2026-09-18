@@ -41,12 +41,6 @@ return [
             'same' => 'The passwords do not match.',
         ],
         // Partner tax details: "Value too long." does not say how long.
-        'pec' => [
-            'email' => 'Enter a valid certified email (PEC) address.',
-        ],
-        'sdi' => [
-            'max' => 'The SDI code is 7 characters long.',
-        ],
         'taxCode' => [
             'max' => 'The tax code cannot exceed 16 characters.',
         ],
@@ -67,14 +61,12 @@ return [
         'lastName' => 'your last name',
         'offerType' => 'your offer type',
         'password' => 'your password',
-        'pec' => 'your certified email (PEC)',
         'petType' => 'your pet type',
         'phone' => 'your mobile number',
         'postalCode' => 'your postal code',
         'province' => 'your province',
         'recipientEmail' => 'the recipient\'s email',
         'role' => 'your role',
-        'sdi' => 'your SDI code',
         'taxCode' => 'your tax code',
         'vat' => 'your VAT number',
         'website' => 'your website',

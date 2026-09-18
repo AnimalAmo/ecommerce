@@ -57,7 +57,6 @@ class PartnerServiceDetail extends Component
             $draft->account_holder,
             $draft->iban,
             $draft->bic,
-            $draft->sdi ? 'SDI '.$draft->sdi : null,
         ])->filter()->implode(' · ');
 
         return [

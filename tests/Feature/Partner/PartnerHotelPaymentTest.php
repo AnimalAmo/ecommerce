@@ -31,7 +31,7 @@ class PartnerHotelPaymentTest extends TestCase
     {
         Livewire::test(HotelPayment::class)
             ->call('next')
-            ->assertHasErrors(['form.accountHolder', 'form.iban', 'form.sdi', 'form.bic']);
+            ->assertHasErrors(['form.accountHolder', 'form.iban', 'form.bic']);
     }
 
     public function test_next_saves_and_completes_to_the_dashboard(): void
@@ -42,7 +42,6 @@ class PartnerHotelPaymentTest extends TestCase
         Livewire::test(HotelPayment::class)
             ->set('form.accountHolder', 'Mario Rossi')
             ->set('form.iban', 'IT60X0542811101000000123456')
-            ->set('form.sdi', 'ABCDEF1')
             ->set('form.bic', 'UNCRITMM')
             ->call('next')
             ->assertHasNoErrors()

@@ -31,11 +31,7 @@
                             <flux:input wire:model="form.iban" class="{{ $fieldClass }}" />
                         </flux:field>
 
-                        {{-- SDI | BIC --}}
-                        <flux:field>
-                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_payment.sdi') }} *</flux:label>
-                            <flux:input wire:model="form.sdi" class="{{ $fieldClass }}" />
-                        </flux:field>
+                        {{-- BIC --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.hotel_payment.bic') }} *</flux:label>
                             <flux:input wire:model="form.bic" class="{{ $fieldClass }}" />

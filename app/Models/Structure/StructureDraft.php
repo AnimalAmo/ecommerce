@@ -81,7 +81,6 @@ class StructureDraft extends Model
         'photos',
         'account_holder',
         'iban',
-        'sdi',
         'bic',
     ];
 

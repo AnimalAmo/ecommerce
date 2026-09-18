@@ -56,8 +56,6 @@ class DemoUserSeeder extends Seeder
             'business_name' => 'Hotel Rosovino Milano',
             'vat' => '86334519757',
             'tax_code' => 'SSNNRSS98A39T582I',
-            'pec' => 'susanna.rossi@pec.it',
-            'sdi' => 'SUBM70N',
             'address' => 'Via C. Pacini, 19',
             'city' => 'Milano',
             'province' => 'MI',
@@ -127,7 +125,7 @@ class DemoUserSeeder extends Seeder
                 'cancellation_when' => '7',
                 'services' => ['wifi', 'piscina', 'parcheggio'], 'additional_services' => ['colazione'], 'rules' => ['vietato_fumare'],
                 'animal_services' => ['area_animali', 'servizio_veterinario'], 'animal_services_other' => 'Ciotole e cuccia in camera',
-                'account_holder' => 'Susanna Rossi', 'iban' => 'IT60X0542811101000000123456', 'bic' => 'UNCRITMM', 'sdi' => 'SUBM70N',
+                'account_holder' => 'Susanna Rossi', 'iban' => 'IT60X0542811101000000123456', 'bic' => 'UNCRITMM',
                 'current_step' => 11,
             ],
             [
