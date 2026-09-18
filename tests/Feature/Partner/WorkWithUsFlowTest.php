@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Partner;
 
-use App\Livewire\Partner\Registration\PartnerRegisterStep1;
 use App\Livewire\Partner\Registration\PartnerRegisterStep2;
 use App\Livewire\Partner\Registration\WorkWithUs;
 use App\Mail\PartnerInvitationMail;
@@ -119,6 +118,46 @@ class WorkWithUsFlowTest extends TestCase
 
         $this->assertSame(0, PartnerApplication::count());
         Mail::assertNotQueued(PartnerInvitationMail::class);
+    }
+
+    /**
+     * Ogni invio manda una mail da mg.animalamo.it a un indirizzo scelto da chi
+     * compila, con dentro il nome che sceglie lui: senza tetto è il modo più
+     * diretto per bruciare la reputazione del dominio, che è la stessa che fa
+     * arrivare gli inviti veri. Stesso rimedio già usato in RegisterModal.
+     */
+    public function test_the_application_is_rate_limited_per_ip(): void
+    {
+        Mail::fake();
+
+        for ($i = 1; $i <= 5; $i++) {
+            $this->fillApplication(Livewire::test(WorkWithUs::class))
+                ->set('form.email', "hotel{$i}@example.com")
+                ->call('submit')
+                ->assertHasNoErrors();
+        }
+
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->set('form.email', 'hotel6@example.com')
+            ->call('submit')
+            ->assertHasErrors('form.email');
+
+        $this->assertSame(5, PartnerApplication::count());
+        Mail::assertQueued(PartnerInvitationMail::class, 5);
+    }
+
+    /** Un modulo compilato male non consuma il budget: solo le mail davvero partite. */
+    public function test_a_rejected_submit_does_not_burn_the_rate_limit(): void
+    {
+        Mail::fake();
+
+        for ($i = 1; $i <= 6; $i++) {
+            Livewire::test(WorkWithUs::class)->call('submit')->assertHasErrors('form.email');
+        }
+
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->call('submit')
+            ->assertHasNoErrors();
     }
 
     public function test_the_application_requires_the_mandatory_fields(): void

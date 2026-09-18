@@ -19,6 +19,7 @@ return [
 
     // Tab titles (Livewire components)
     'title_work_with_us' => 'AnimalAmo — Work with us',
+    'throttle' => 'You have already sent several applications. Try again in :seconds seconds.',
     'title_thanks' => 'AnimalAmo — Thank you',
 
     // Heading

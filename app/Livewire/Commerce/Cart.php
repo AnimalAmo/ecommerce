@@ -65,6 +65,15 @@ class Cart extends Component
     /** CTA "Vai al checkout" in modalità regalo: persiste dedica/messaggio sulle righe e apre il checkout regalo. */
     public function goToCheckout()
     {
+        // Questi due campi sono l'unico punto in cui un testo scritto da chi
+        // compra finisce dentro una mail spedita da noi a un indirizzo che non
+        // ci ha chiesto niente: vanno tenuti corti, o un messaggio enorme
+        // gonfia il messaggio in uscita senza che nessuno se ne accorga.
+        $this->validate([
+            'giftDedication.*' => ['nullable', 'string', 'max:200'],
+            'giftMessage.*' => ['nullable', 'string', 'max:500'],
+        ]);
+
         foreach ($this->cart()->items(true) as $item) {
             $this->cart()->updateGift($item->key, [
                 'dedication' => $this->giftDedication[$item->key] ?? '',

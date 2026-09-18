@@ -7,6 +7,9 @@ use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use App\Services\Partner\SendPartnerInvitation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class WorkWithUs extends Component
@@ -63,6 +66,8 @@ class WorkWithUs extends Component
      */
     public function submit(SendPartnerInvitation $invitation): void
     {
+        $this->ensureIsNotRateLimited();
+
         $user = Auth::user();
 
         // Nessuna scelta all'utente loggato: l'identità è quella dell'account.
@@ -85,6 +90,12 @@ class WorkWithUs extends Component
 
         $invitation->send($application);
 
+        // `hit` dopo l'invio e non prima della validazione (RegisterModal fa il
+        // contrario): qui il modulo ha dieci campi e un rifiuto di validazione è
+        // normale, non sospetto. A consumare il budget devono essere le mail
+        // davvero partite.
+        RateLimiter::hit($this->throttleKey());
+
         if ($this->confirmInPlace) {
             $this->showConfirmation = true;
 
@@ -92,6 +103,28 @@ class WorkWithUs extends Component
         }
 
         $this->redirectRoute('work-with-us.thanks');
+    }
+
+    /** Cinque candidature al minuto per IP: oltre, l'errore torna sul campo email. */
+    private function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'form.email' => __('partner.throttle', [
+                'seconds' => $seconds,
+                'minutes' => (int) ceil($seconds / 60),
+            ]),
+        ]);
+    }
+
+    private function throttleKey(): string
+    {
+        return Str::transliterate('partner-application|'.request()->ip());
     }
 
     /**

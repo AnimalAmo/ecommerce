@@ -32,6 +32,13 @@ return [
         'email' => [
             'unique' => 'This email is already registered.',
         ],
+        // Smartbox gift: the text goes into a mail to a stranger.
+        'giftDedication.*' => [
+            'max' => 'The dedication cannot be longer than 200 characters.',
+        ],
+        'giftMessage.*' => [
+            'max' => 'The message cannot be longer than 500 characters.',
+        ],
         'passwordConfirmation' => [
             'required' => 'Repeat the password.',
             'same' => 'The passwords do not match.',

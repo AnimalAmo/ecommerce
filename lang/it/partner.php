@@ -19,6 +19,7 @@ return [
 
     // Titoli tab (componenti Livewire)
     'title_work_with_us' => 'AnimalAmo — Lavora con noi',
+    'throttle' => 'Hai già inviato diverse candidature. Riprova tra :seconds secondi.',
     'title_thanks' => 'AnimalAmo — Grazie',
 
     // Intestazione
