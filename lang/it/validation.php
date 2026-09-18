@@ -31,6 +31,13 @@ return [
         'email' => [
             'unique' => 'Questa email è già registrata.',
         ],
+        // Regalo Smartbox: il testo va in una mail verso un estraneo.
+        'giftDedication.*' => [
+            'max' => 'La dedica non può superare i 200 caratteri.',
+        ],
+        'giftMessage.*' => [
+            'max' => 'Il messaggio non può superare i 500 caratteri.',
+        ],
         'passwordConfirmation' => [
             'required' => 'Ripeti la password.',
             'same' => 'Le password non coincidono.',

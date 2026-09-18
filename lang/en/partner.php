@@ -19,6 +19,7 @@ return [
 
     // Tab titles (Livewire components)
     'title_work_with_us' => 'AnimalAmo — Work with us',
+    'throttle' => 'You have already sent several applications. Try again in :seconds seconds.',
     'title_thanks' => 'AnimalAmo — Thank you',
 
     // Heading
@@ -256,6 +257,8 @@ return [
         'back' => 'Back',
         'next' => 'Continue',
         'error_email_taken' => 'An account with this email already exists: log in to continue the registration with that account.',
+        'invitation_other_account' => 'This invitation is for :email. You are signed in with a different account, so registering would create the partner on the wrong address: sign out and open the link from the invited mailbox.',
+        'invitation_logout' => 'Sign out of this account',
         'error_account_inactive' => 'Your account is disabled: contact support to have it re-enabled and finish the registration.',
         'login_and_continue' => 'Log in and continue',
         'contact_support' => 'Contact support',

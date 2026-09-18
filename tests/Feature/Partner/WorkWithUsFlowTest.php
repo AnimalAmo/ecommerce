@@ -121,6 +121,46 @@ class WorkWithUsFlowTest extends TestCase
         Mail::assertNotQueued(PartnerInvitationMail::class);
     }
 
+    /**
+     * Ogni invio manda una mail da mg.animalamo.it a un indirizzo scelto da chi
+     * compila, con dentro il nome che sceglie lui: senza tetto è il modo più
+     * diretto per bruciare la reputazione del dominio, che è la stessa che fa
+     * arrivare gli inviti veri. Stesso rimedio già usato in RegisterModal.
+     */
+    public function test_the_application_is_rate_limited_per_ip(): void
+    {
+        Mail::fake();
+
+        for ($i = 1; $i <= 5; $i++) {
+            $this->fillApplication(Livewire::test(WorkWithUs::class))
+                ->set('form.email', "hotel{$i}@example.com")
+                ->call('submit')
+                ->assertHasNoErrors();
+        }
+
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->set('form.email', 'hotel6@example.com')
+            ->call('submit')
+            ->assertHasErrors('form.email');
+
+        $this->assertSame(5, PartnerApplication::count());
+        Mail::assertQueued(PartnerInvitationMail::class, 5);
+    }
+
+    /** Un modulo compilato male non consuma il budget: solo le mail davvero partite. */
+    public function test_a_rejected_submit_does_not_burn_the_rate_limit(): void
+    {
+        Mail::fake();
+
+        for ($i = 1; $i <= 6; $i++) {
+            Livewire::test(WorkWithUs::class)->call('submit')->assertHasErrors('form.email');
+        }
+
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->call('submit')
+            ->assertHasNoErrors();
+    }
+
     public function test_the_application_requires_the_mandatory_fields(): void
     {
         Mail::fake();
@@ -164,6 +204,70 @@ class WorkWithUsFlowTest extends TestCase
             ->assertSee('Susanna')
             ->assertSee('Hotel Rosovino')
             ->assertSee('susanna@example.com');
+    }
+
+    /**
+     * Il caso che la cliente vedeva come "l'invito non funziona": l'albergatore
+     * apre il link dal browser dove è già loggato col suo account personale.
+     * Prima l'iscrizione proseguiva in silenzio e il partner nasceva su
+     * quell'account, mentre l'indirizzo invitato non diventava mai una login.
+     */
+    public function test_an_invitation_opened_from_another_account_is_blocked(): void
+    {
+        Mail::fake();
+        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
+        $application = PartnerApplication::firstOrFail();
+
+        $other = User::factory()->create(['email' => 'mario.personale@example.com']);
+        $link = URL::signedRoute('partner.register', ['application' => $application->id]);
+
+        $this->actingAs($other)->get($link)
+            ->assertOk()
+            ->assertSee('susanna@example.com')      // l'invito è per questo indirizzo
+            ->assertDontSee('Hotel Rosovino');      // e i dati non vengono precompilati
+
+        $this->assertSame('susanna@example.com', session('partner_registration.invitation_for'));
+
+        // Il blocco non è solo grafica, e non si toglie riaprendo la pagina
+        // senza il link: il submit rifiuta anche se lo si chiama a mano.
+        Livewire::actingAs($other)->test(PartnerRegisterStep1::class)
+            ->assertSet('invitationFor', 'susanna@example.com')
+            ->call('submit')
+            ->assertHasErrors('form.email')
+            ->assertNoRedirect();
+    }
+
+    /** Uscire e rientrare dall'indirizzo invitato è la via d'uscita promessa dal messaggio. */
+    public function test_the_block_falls_away_once_the_invited_address_signs_in(): void
+    {
+        Mail::fake();
+        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
+        $application = PartnerApplication::firstOrFail();
+
+        $other = User::factory()->create(['email' => 'mario.personale@example.com']);
+        $this->actingAs($other)->get(URL::signedRoute('partner.register', ['application' => $application->id]));
+
+        $invited = User::factory()->create(['email' => 'susanna@example.com']);
+
+        Livewire::actingAs($invited)->test(PartnerRegisterStep1::class)
+            ->assertSet('invitationFor', '');
+
+        $this->assertNull(session('partner_registration.invitation_for'));
+    }
+
+    /** Stesso account dell'invito: nessun blocco, prefill normale. */
+    public function test_an_invitation_opened_from_its_own_account_still_prefills(): void
+    {
+        Mail::fake();
+        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
+        $application = PartnerApplication::firstOrFail();
+
+        $owner = User::factory()->create(['email' => 'susanna@example.com']);
+
+        $this->actingAs($owner)
+            ->get(URL::signedRoute('partner.register', ['application' => $application->id]))
+            ->assertOk()
+            ->assertSee('Hotel Rosovino');
     }
 
     public function test_an_unsigned_application_param_does_not_prefill(): void

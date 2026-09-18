@@ -197,6 +197,38 @@ class CartPageTest extends TestCase
         $this->assertSame('Tanti auguri!', $options['gift']['message']);
     }
 
+    /**
+     * Dedica e messaggio finiscono dentro una mail spedita a un indirizzo
+     * esterno: senza tetto, un testo lunghissimo gonfia il messaggio e nessuno
+     * se ne accorge finché non rimbalza. L'errore deve anche VEDERSI — i due
+     * campi sono composti a mano, quindi senza `flux:error` il pulsante
+     * sembrerebbe morto (ValidationException è pur sempre un HTTP 200).
+     */
+    public function test_the_gift_message_has_a_length_limit_and_says_so(): void
+    {
+        $this->actingAs($this->giulia);
+        $key = $this->addGiftSmartboxLine();
+
+        Livewire::withQueryParams(['regalo' => 1])->test(Cart::class)
+            ->set('giftMessage.'.$key, str_repeat('a', 501))
+            ->call('goToCheckout')
+            ->assertHasErrors('giftMessage.'.$key)
+            ->assertNoRedirect()
+            ->assertSee('Il messaggio non può superare i 500 caratteri.');
+    }
+
+    public function test_the_gift_dedication_has_a_length_limit(): void
+    {
+        $this->actingAs($this->giulia);
+        $key = $this->addGiftSmartboxLine();
+
+        Livewire::withQueryParams(['regalo' => 1])->test(Cart::class)
+            ->set('giftDedication.'.$key, str_repeat('a', 201))
+            ->call('goToCheckout')
+            ->assertHasErrors('giftDedication.'.$key)
+            ->assertNoRedirect();
+    }
+
     /** Facciata carrello (storage scelto dallo stato auth corrente). */
     private function cart(): CartManager
     {

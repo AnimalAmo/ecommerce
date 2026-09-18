@@ -36,10 +36,27 @@ class SmartboxGiftMail extends Mailable
             markdown: 'emails.smartbox-gift',
             with: [
                 'buyerName' => $this->buyerName(),
-                'dedication' => $this->item->options['gift']['dedication'] ?? null,
-                'giftMessage' => $this->item->options['gift']['message'] ?? null,
+                'dedication' => $this->plainText($this->item->options['gift']['dedication'] ?? null),
+                'giftMessage' => $this->plainText($this->item->options['gift']['message'] ?? null),
             ],
         );
+    }
+
+    /**
+     * Dedica e messaggio li scrive l'acquirente, e finiscono dentro un markdown
+     * spedito a un indirizzo che non ci ha mai chiesto niente: `[testo](http://…)`
+     * uscirebbe come link cliccabile verso un dominio terzo e `![x](…)` come
+     * immagine remota, cioè un tracking pixel scelto da altri. Blade neutralizza
+     * l'HTML grezzo ma non questa sintassi.
+     *
+     * Il backslash è l'escape di CommonMark: la parentesi resta visibile nel
+     * testo e il link non si forma. Serve a proteggere la reputazione del
+     * dominio di invio, non il destinatario: una segnalazione di spam su
+     * mg.animalamo.it la pagano anche gli inviti partner.
+     */
+    private function plainText(?string $text): ?string
+    {
+        return $text === null ? null : str_replace(['[', ']'], ['\\[', '\\]'], $text);
     }
 
     private function buyerName(): string

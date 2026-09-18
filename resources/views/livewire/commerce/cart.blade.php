@@ -196,8 +196,10 @@
                                             {{-- Campi dedica: stile input checkout ma vuoti (placeholder #0D171A non corsivo);
                                                  persistiti sulla riga (options.gift) alla CTA "Vai al checkout" --}}
                                             <flux:input wire:model="giftDedication.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_dedication_placeholder') }}" class="mt-4 !min-w-0 !max-w-[972px] !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
+                                            <flux:error name="giftDedication.{{ $item['id'] }}" />
                                             {{-- flux:textarea NON ha wrapper (la radice È la textarea stessa): classi dirette, niente selettori [&_textarea] --}}
                                             <flux:textarea wire:model="giftMessage.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_message_placeholder') }}" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !max-w-[972px] !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
+                                            <flux:error name="giftMessage.{{ $item['id'] }}" />
                                         </div>
                                     @endif
                                 </article>
@@ -261,7 +263,9 @@
                                                 <span class="truncate text-[15px] font-medium leading-none text-[#2B2B2B]">{{ $item['giftValidity'] }}</span>
                                             </div>
                                             <flux:input wire:model="giftDedication.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_dedication_placeholder') }}" class="mt-4 !min-w-0 !border-0 !bg-transparent !shadow-none !ring-0 [&_input]:!h-10 [&_input]:!w-full [&_input]:!rounded-[3px] [&_input]:!border [&_input]:!border-[#C8C8C8]/70 [&_input]:!bg-white [&_input]:!px-[15px] [&_input]:!text-[15px] [&_input]:!text-[#0D171A] [&_input]:!shadow-none [&_input]:!ring-0 [&_input::placeholder]:!text-[#0D171A]" />
+                                            <flux:error name="giftDedication.{{ $item['id'] }}" />
                                             <flux:textarea wire:model="giftMessage.{{ $item['id'] }}" placeholder="{{ __('cart.ui.gift_message_placeholder') }}" rows="3" resize="none" class="mt-4 !h-[100px] !w-full !rounded-[3px] !border !border-[#C8C8C8]/70 !bg-white !px-[15px] !py-[11px] !text-[15px] !text-[#0D171A] !shadow-none !ring-0 placeholder:!text-[#0D171A]" />
+                                            <flux:error name="giftMessage.{{ $item['id'] }}" />
                                         </div>
                                     @endif
                                 </article>
