@@ -93,6 +93,36 @@ class WorkWithUsFlowTest extends TestCase
             ->assertSet('form.email', '');
     }
 
+    /**
+     * Regressione dal campo: la candidatura reale "info@…​.comm" (refuso nel
+     * TLD) superava la validazione, passava a INVITED e moriva in Mailgun con
+     * "No MX" — il candidato restava in attesa di un invito mai partito.
+     * Il test interroga il DNS davvero: `.comm` non è un TLD esistente.
+     */
+    public function test_the_application_rejects_an_email_whose_domain_does_not_exist(): void
+    {
+        // Alcune reti domestiche (router TIM: search domain homenet.telecomitalia.it)
+        // rispondono con un wildcard a *qualsiasi* nome: lì NXDOMAIN non esiste e
+        // la regola `dns` non può essere osservata. Meglio saltare che avere un
+        // rosso che dipende dal Wi-Fi.
+        // La sonda usa lo stesso TLD inesistente del caso reale: `.invalid` non
+        // serve, systemd-resolved lo tratta come speciale e non ci applica il
+        // search domain, quindi non rivelerebbe il wildcard.
+        if (checkdnsrr('nxdomain-probe-'.uniqid().'.comm', 'A')) {
+            $this->markTestSkipped('Il resolver di questa rete risolve anche i domini inesistenti.');
+        }
+
+        Mail::fake();
+
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->set('form.email', 'info@babaresidences.comm')
+            ->call('submit')
+            ->assertHasErrors(['form.email']);
+
+        $this->assertSame(0, PartnerApplication::count());
+        Mail::assertNotQueued(PartnerInvitationMail::class);
+    }
+
     public function test_the_application_requires_the_mandatory_fields(): void
     {
         Mail::fake();
