@@ -32,7 +32,13 @@ class PartnerApplicationForm extends Form
         return [
             'firstName' => ['required', 'string', 'max:64'],
             'lastName' => ['required', 'string', 'max:64'],
-            'email' => ['required', 'email', 'max:128'],
+            // `dns` oltre a `rfc`: un refuso nel TLD (caso reale in produzione,
+            // "…@babaresidences.comm") supera la validazione sintattica, la
+            // candidatura passa a INVITED e la mail muore dentro Mailgun con
+            // "No MX for babaresidences.comm" — il candidato aspetta un invito
+            // che non arriverà mai, e nessuno se ne accorge. Costa una query
+            // DNS sul submit.
+            'email' => ['required', 'email:rfc,dns', 'max:128'],
             'phone' => ['required', ...Phone::rules()],
             'website' => ['nullable', 'string', 'max:128'],
             'city' => ['required', 'string', 'max:64'],

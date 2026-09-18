@@ -412,3 +412,128 @@ solo `MAILGUN_ENDPOINT`.
   ed è l'unico modo di accorgersi che si finisce in spam.
 - Ruotare le chiavi usate in sviluppo e tenere in produzione una sending key
   dedicata.
+
+## 9. Recapito: DMARC, Reply-To e webhook *(18 set 2026)*
+
+Verifica nata dal reclamo della cliente: «alcuni partner non ricevono l'email di
+iscrizione, ad altri arriva in spam». Sul lato Mailgun **non c'era niente di
+rotto**: dominio `active`, SPF e DKIM `valid`, liste di soppressione
+(bounce/complaint/unsubscribe) **vuote**, 0 `rejected`. Le cause stanno altrove.
+
+### 9.1 Cosa dicevano i log
+
+| Evento | Destinatario | Esito |
+|:--|:--|:--|
+| 17/09 19:01 `failed` | `info@…​.comm` | `No MX for …comm … no such host` |
+| 17/09 19:01 `delivered` | `info@…​.com` | `250` — stesso destinatario, indirizzo corretto |
+| 14/09 `delivered` | struttura su Aruba | `250`, consegna al MX in 0,1s |
+
+Due lezioni: un refuso nel TLD passava la validazione (`'email'` controlla solo
+la sintassi), e la consegna al MX non dice nulla su dove il messaggio finisca
+dentro la casella. Per il resto, vedi anche `./docs/mailgun-logs.sh`: la
+ritenzione è di pochi giorni, quindi i log **non** sono un archivio.
+
+### 9.2 DMARC (la causa più probabile dello spam)
+
+`_dmarc.animalamo.it` e `_dmarc.mg.animalamo.it` erano **entrambi assenti**.
+Mailgun non lo elenca fra i suoi record e il dominio resta `active` lo stesso:
+è l'unico pezzo che nessuno segnala come mancante. Con dominio nuovo, volume
+bassissimo e IP condivisi, per Gmail/Aruba/Libero non resta alcun segnale di
+reputazione.
+
+Record da pubblicare su **DigitalOcean**, zona `mg.animalamo.it`:
+
+```
+TXT  _dmarc   v=DMARC1; p=none; rua=mailto:dmarc@animalamo.it; adkim=r; aspf=r; pct=100
+```
+
+`p=none` è volutamente in sola osservazione: si raccolgono i report per qualche
+settimana e solo dopo si passa a `quarantine`. Irrigidire subito, con un dominio
+senza storico, rischia di far sparire mail legittime.
+
+Lo stesso record va poi su **Register.it** per `animalamo.it` (host `_dmarc`),
+che è quello che i filtri interrogano per primo ora che il `From` è
+`no-reply@animalamo.it`. Controllo: `./docs/mailgun-verify.sh`, sezione DMARC.
+
+### 9.3 From e Reply-To
+
+- `MAIL_FROM_ADDRESS="no-reply@animalamo.it"` — il dominio che il destinatario
+  conosce. L'allineamento DMARC regge in modalità *relaxed*: DKIM firma
+  `d=mg.animalamo.it`, sottodominio dello stesso dominio organizzativo, e il
+  Return-Path resta su `mg.animalamo.it`, coperto da SPF. **Non** passare
+  `adkim=s`/`aspf=s` senza rifare i conti.
+- `MAIL_REPLY_TO_ADDRESS` — `mail.reply_to` è nativo in Laravel: lo applica
+  `MailManager` come `alwaysReplyTo`, senza codice. Attenzione, un mailable che
+  dichiara il proprio Reply-To lo *aggiunge* invece di sostituirlo: per questo
+  `ContactMessageMail` usa il callback `using:` dell'Envelope.
+
+### 9.4 Webhook: l'esito reale entra nel progetto
+
+`POST /webhooks/mailgun` (firma HMAC + finestra di 15 minuti sul timestamp)
+scrive su `mail_deliveries`, una riga per messaggio+destinatario aperta da
+`RecordMailDelivery` quando la mail parte.
+
+Configurazione su Mailgun → *Webhooks*, dominio `mg.animalamo.it`, eventi
+`delivered`, `permanent_fail`, `temporary_fail`, `complained` verso
+`https://animalamo.it/webhooks/mailgun`; la *HTTP webhook signing key* (una per
+account, **diversa** dalla sending key) va in `MAILGUN_WEBHOOK_SIGNING_KEY`.
+Senza chiave ogni webhook viene rifiutato con 403: è il default sicuro.
+
+Lettura: `php artisan mail:deliveries --failed --days=30`, che è anche la
+risposta alla domanda «a chi non è arrivata?» finché non esiste un'area admin.
+
+### 9.5 Cosa resta fuori dal codice
+
+- Pubblicare i due record DMARC (§9.2).
+- `.env` di produzione: `MAIL_FROM_ADDRESS`, `MAIL_REPLY_TO_ADDRESS`,
+  `MAILGUN_WEBHOOK_SIGNING_KEY`, poi `php artisan config:clear`.
+- Verificare che `queue:work` giri davvero. **Non** tutte le mail sono in coda,
+  come dicono tre documenti di questo repo: lo sono solo `PartnerInvitationMail`
+  e `ContactMessageMail`. `ResetPasswordMail`, `OrderConfirmationMail` e
+  `SmartboxGiftMail` partono dentro la richiesta HTTP. La distinzione è quella
+  che serve quando la cliente chiede «perché a lui sì e a lei no»: un reset
+  password consegnato dimostra che Mailgun funziona, non che il worker giri.
+  E la candidatura passa a `INVITED` appena il job entra in coda — worker fermo
+  significa stato "invitato" senza nessuna mail partita.
+
+
+## 10. Correzioni dopo l'audit del 18 set 2026
+
+Verifiche fatte con l'API Mailgun e sul messaggio reale, che smentiscono cose
+scritte altrove (qui e nel `.env` di produzione):
+
+- **La ritenzione degli eventi è di ~4 giorni, non "qualche giorno" generico.**
+  Una query con `begin` a 35 giorni indietro torna 16 eventi, il più vecchio del
+  14/09; le statistiche contano invii dell'8, 9 e 10 settembre che non hanno più
+  nessun evento. Quando una segnalazione arriva dopo una settimana, la prova non
+  esiste più: è il motivo per cui serve `mail_deliveries`.
+- **Mailgun accetta un `From` fuori dal sending domain.** Provato in test mode
+  (`o:testmode=yes`, nessuna consegna): `from=no-reply@animalamo.it` su
+  `mg.animalamo.it` risponde `200 Queued`. Il warning di `MailTestCommand`
+  («Mailgun accetta solo mittenti del dominio verificato») è sbagliato e va
+  riscritto: il vincolo non è di Mailgun, è di allineamento DMARC.
+- **Il sandbox US è ancora attivo e la stessa chiave lo apre.** `GET /v3/domains`
+  sull'endpoint US elenca `sandbox…9.mailgun.org`; sullo stesso endpoint
+  `mg.animalamo.it` risponde 404. La chiave non è vincolata a una regione: è il
+  default `api.eu.mailgun.net` in `config/services.php` a tenere gli invii in EU.
+  Il commento in testa al blocco mail del `.env` di produzione descrive ancora il
+  sandbox e va riscritto.
+- **Nessuna credenziale SMTP esiste sul dominio** (`GET /credentials` → 0):
+  `MAIL_MAILER=smtp` non è una via di ritorno, fallirebbe in autenticazione.
+  L'unico fallback è `MAIL_MAILER=log`.
+- **Nessuna route in entrata** (`GET /v3/routes` → 0) mentre gli MX di
+  `mg.animalamo.it` puntano a Mailgun: la posta inviata a `no-reply@…` viene
+  accettata e buttata via senza errore. Chi risponde all'invito non è letto da
+  nessuno — un altro motivo per il `Reply-To`.
+- **`/v4/address/validate` è disponibile** su questo account: su
+  `babaresidences.comm` avrebbe risposto `undeliverable`. Resta un'alternativa a
+  `email:rfc,dns` se i refusi si ripetono, non una sostituzione da fare ora.
+- **Ordine obbligato per i webhook**: prima il deploy del codice (senza rotta è
+  un 404), poi `MAILGUN_WEBHOOK_SIGNING_KEY` + `config:cache` + `queue:restart`,
+  e **solo dopo** l'attivazione su `app.eu.mailgun.com` (regione EU: sulla
+  dashboard US si vede solo il sandbox). Attivarli prima significa 403 o 404 in
+  serie, che Mailgun ritenta per ore e che possono far disattivare l'endpoint.
+- **Dopo ogni modifica del `.env` serve `config:cache` e `queue:restart`**, non
+  il `config:clear` ripetuto in questi documenti: il pannello Forge scrive il
+  file ma non tocca i daemon, e il worker continua a spedire con la vecchia
+  configurazione finché non viene riavviato.
