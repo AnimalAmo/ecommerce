@@ -257,6 +257,8 @@ return [
         'back' => 'Indietro',
         'next' => 'Prosegui',
         'error_email_taken' => 'Esiste già un account con questa email: accedi per continuare l’iscrizione con quell’account.',
+        'invitation_other_account' => 'Questo invito è per :email. Sei collegato con un altro account, quindi l\'iscrizione creerebbe il partner sull\'indirizzo sbagliato: esci e riapri il link dalla casella invitata.',
+        'invitation_logout' => 'Esci da questo account',
         'error_account_inactive' => 'Il tuo account è disattivato: scrivi all’assistenza per riattivarlo e completare l’iscrizione.',
         'login_and_continue' => 'Accedi e continua',
         'contact_support' => 'Contatta l’assistenza',

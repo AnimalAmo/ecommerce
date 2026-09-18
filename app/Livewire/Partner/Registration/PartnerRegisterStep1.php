@@ -10,6 +10,7 @@ use App\Models\User;
 use Flux\Flux;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class PartnerRegisterStep1 extends Component
@@ -27,6 +28,17 @@ class PartnerRegisterStep1 extends Component
      * l'accesso, che è la sola via d'uscita (l'iscrizione promuove quell'account).
      */
     public bool $emailConflict = false;
+
+    /**
+     * L'invito aperto è per un indirizzo diverso da quello dell'account in
+     * sessione: contiene l'email invitata, e blocca l'iscrizione.
+     *
+     * Senza questo controllo l'iscrizione proseguiva in silenzio sull'account
+     * loggato — il partner nasceva sulla mail personale di chi apriva il link e
+     * l'indirizzo invitato non diventava mai una login. Dall'esterno sembrava
+     * che l'invito non fosse arrivato.
+     */
+    public string $invitationFor = '';
 
     /**
      * L'account con cui si sta compilando è disattivato: l'iscrizione non parte.
@@ -71,6 +83,20 @@ class PartnerRegisterStep1 extends Component
         if ($user !== null) {
             $this->form->email = $user->email;
         }
+
+        // Il blocco resta appiccicato alla sessione: riaprire la pagina senza il
+        // link firmato non deve toglierlo, o basterebbe quello per aggirarlo.
+        // Cade da solo quando l'identità torna a coincidere — cioè quando si
+        // esce e si entra con l'indirizzo invitato, che è proprio ciò che il
+        // messaggio chiede di fare.
+        $invited = session('partner_registration.invitation_for');
+
+        if ($invited !== null && $user !== null && strcasecmp($invited, $user->email) === 0) {
+            session()->forget('partner_registration.invitation_for');
+            $invited = null;
+        }
+
+        $this->invitationFor = (string) ($invited ?? '');
 
         $this->accountInactive = $user !== null && ! $user->is_active;
 
@@ -146,6 +172,16 @@ class PartnerRegisterStep1 extends Component
             $application = PartnerApplication::find($request->query('application'));
 
             if ($application !== null && ($application->user_id === null || $application->user_id === $user?->id)) {
+                // `user_id === null` è il caso di OGNI candidatura inviata da
+                // visitatore anonimo, quindi da solo non prova niente
+                // sull'identità: è l'email dell'invito a dire per chi è.
+                if ($user !== null && strcasecmp($application->email, $user->email) !== 0) {
+                    session(['partner_registration.invitation_for' => $application->email]);
+                    $this->invitationFor = $application->email;
+
+                    return null;
+                }
+
                 return $application;
             }
         }
@@ -156,6 +192,16 @@ class PartnerRegisterStep1 extends Component
     /** Valida e parcheggia i dati in sessione: l'account nasce a fine step 2. */
     public function submit(): void
     {
+        // Dalla sessione e non dalla proprietà pubblica, che il browser può
+        // riscrivere: il `disabled` sul pulsante è grafica, questo è il gate.
+        if ($invited = session('partner_registration.invitation_for')) {
+            $this->invitationFor = $invited;
+
+            throw ValidationException::withMessages([
+                'form.email' => __('partner.register.invitation_other_account', ['email' => $invited]),
+            ]);
+        }
+
         if ($user = Auth::user()) {
             $this->form->email = $user->email;
         }

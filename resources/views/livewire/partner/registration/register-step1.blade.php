@@ -31,6 +31,19 @@
                     </div>
                 @endif
 
+                {{-- Invito aperto da un altro account: l'iscrizione promuoverebbe
+                     l'account in sessione, non l'indirizzo invitato. Si dice per chi
+                     è l'invito e si offre l'unica via d'uscita, uscire. --}}
+                @if ($invitationFor !== '')
+                    <div class="mt-4 rounded-[5px] border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p class="text-sm text-amber-700">{{ __('partner.register.invitation_other_account', ['email' => $invitationFor]) }}</p>
+                        <form method="POST" action="{{ route('logout') }}" class="mt-1">
+                            @csrf
+                            <flux:button type="submit" variant="ghost" class="!px-0 !text-xs !font-bold !text-[#68CDEB] hover:!text-ink">{{ __('partner.register.invitation_logout') }}</flux:button>
+                        </form>
+                    </div>
+                @endif
+
                 <form wire:submit="submit" class="mt-8 max-lg:mt-6">
                     {{-- items-start: l'errore email (+ CTA di accesso) non deve stirare la riga --}}
                     <div class="grid grid-cols-1 items-start gap-x-4 gap-y-5 md:grid-cols-2">
@@ -105,7 +118,7 @@
                     {{-- Su mobile: CTA a tutta larghezza sopra, "Indietro" centrato sotto (pattern work-with-us) --}}
                     <div class="mt-12 flex items-center justify-end gap-6 max-lg:mt-8 max-lg:flex-col-reverse max-lg:items-stretch max-lg:gap-3">
                         <flux:button href="{{ route('home') }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.register.back') }}</flux:button>
-                        <flux:button type="submit" :disabled="$accountInactive" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C] max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.register.next') }}</flux:button>
+                        <flux:button type="submit" :disabled="$accountInactive || $invitationFor !== ''" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C] max-lg:!h-[39px] max-lg:!w-full">{{ __('partner.register.next') }}</flux:button>
                     </div>
                 </form>
             </div>
