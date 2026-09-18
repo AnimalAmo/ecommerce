@@ -25,6 +25,10 @@ return [
         'secret' => env('MAILGUN_SECRET'),
         'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
         'scheme' => 'https',
+        // Mailgun → Webhooks → "HTTP webhook signing key" (una per account, non
+        // per dominio: è diversa dalla sending key di MAILGUN_SECRET). Vuota =
+        // ogni webhook viene rifiutato con 403, che è il default sicuro.
+        'webhook_signing_key' => env('MAILGUN_WEBHOOK_SIGNING_KEY', ''),
     ],
 
     'postmark' => [
