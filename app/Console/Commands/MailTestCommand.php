@@ -137,8 +137,13 @@ class MailTestCommand extends Command
         }
 
         if (str_contains((string) config('mail.from.address'), 'example.com')) {
-            $warnings[] = 'MAIL_FROM_ADDRESS è ancora un indirizzo di esempio: Mailgun accetta solo '
-                .'mittenti del dominio verificato.';
+            // Mailgun *accetta* un From fuori dal sending domain — provato in test
+            // mode il 18/09/2026: from=no-reply@animalamo.it su mg.animalamo.it
+            // risponde "200 Queued". Il vincolo vero non è suo: è l'allineamento
+            // DMARC, che regge solo se i due domini condividono il dominio
+            // organizzativo (mg.animalamo.it ↔ animalamo.it). Un example.com no.
+            $warnings[] = 'MAIL_FROM_ADDRESS è ancora un indirizzo di esempio: il messaggio parte, '
+                .'ma il From non è allineato al dominio che firma (DKIM/DMARC) e finisce in spam.';
         }
 
         return $warnings;

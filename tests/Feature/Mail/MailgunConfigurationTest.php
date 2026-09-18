@@ -33,6 +33,33 @@ class MailgunConfigurationTest extends TestCase
         );
     }
 
+    /**
+     * Il mittente di default deve restare sul dominio organizzativo di AnimalAmo:
+     * è ciò che tiene in piedi l'allineamento DMARC in modalità relaxed (DKIM
+     * firma d=mg.animalamo.it, sottodominio dello stesso dominio). Un From su un
+     * dominio terzo non dà nessun errore: le mail partono e finiscono in spam.
+     */
+    public function test_the_default_sender_stays_on_the_organisational_domain(): void
+    {
+        $from = $this->envExample('MAIL_FROM_ADDRESS');
+
+        $this->assertMatchesRegularExpression('/@(mg\.)?animalamo\.it$/', $from, ".env.example: {$from}");
+    }
+
+    /** Un no-reply senza Reply-To lascia il partner senza un indirizzo a cui scrivere. */
+    public function test_a_default_reply_to_is_configured(): void
+    {
+        $this->assertNotSame('', $this->envExample('MAIL_REPLY_TO_ADDRESS'));
+        $this->assertNotSame('', (string) config('mail.reply_to.address'));
+    }
+
+    private function envExample(string $key): string
+    {
+        preg_match("/^{$key}=\"?([^\"\n]*)/m", (string) file_get_contents(base_path('.env.example')), $matches);
+
+        return trim($matches[1] ?? '');
+    }
+
     public function test_the_smtp_mailer_always_has_a_timeout(): void
     {
         $timeout = config('mail.mailers.smtp.timeout');

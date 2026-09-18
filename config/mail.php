@@ -128,6 +128,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Reply-To di default
+    |--------------------------------------------------------------------------
+    |
+    | Il mittente è un no-reply tecnico: senza un Reply-To raggiungibile, chi
+    | risponde all'invito partner scrive nel vuoto — e per i filtri antispam un
+    | dominio che non accetta risposte è un segnale in meno a favore.
+    |
+    | Lo applica MailManager da solo (come 'from'): non serve codice. Attenzione
+    | però, è un `alwaysReplyTo` — un mailable che dichiara il suo Reply-To lo
+    | *aggiunge* a questo invece di sostituirlo. Vedi ContactMessageMail, che
+    | deve rispondere al visitatore e a nessun altro.
+    |
+    */
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', env('CONTACT_RECIPIENT', 'animalamo24@gmail.com')),
+        'name' => env('MAIL_REPLY_TO_NAME', env('APP_NAME', 'AnimalAmo')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Casella "Contattaci"
     |--------------------------------------------------------------------------
     |
