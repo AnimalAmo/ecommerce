@@ -10,6 +10,8 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Symfony\Component\Mime\Address as SymfonyAddress;
+use Symfony\Component\Mime\Email;
 
 /**
  * Notifica alla casella informazioni di un nuovo messaggio dal form
@@ -38,6 +40,13 @@ class ContactMessageMail extends Mailable implements ShouldQueue
             // autenticato SPF/DKIM, altrimenti Mailgun rifiuta o finiamo in
             // spam), ma "Rispondi" scrive direttamente a chi ha compilato.
             replyTo: [new Address($this->contactMessage->email, $this->senderName())],
+            // `using` e non solo `replyTo`: mail.reply_to è un alwaysReplyTo, e
+            // l'header del mailable gli si somma invece di sostituirlo — chi
+            // risponde scriverebbe al visitatore *e* alla casella informazioni,
+            // che il messaggio ce l'ha già. Il callback di Symfony sostituisce.
+            using: [fn (Email $message) => $message->replyTo(
+                new SymfonyAddress($this->contactMessage->email, $this->senderName()),
+            )],
         );
     }
 

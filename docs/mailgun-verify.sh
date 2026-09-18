@@ -97,6 +97,24 @@ raise SystemExit(1 if missing else 0)
 PY
 
 echo
+# Mailgun non elenca il DMARC fra i suoi record e il dominio resta "active"
+# anche senza: è l'unico pezzo del trittico che nessuno segnala come mancante,
+# e intanto le mail finiscono in spam su Gmail/Aruba/Libero.
+echo "── DMARC (non richiesto da Mailgun, richiesto dai filtri) ───────────────"
+ORG=$(echo "$DOMAIN" | awk -F. '{print $(NF-1)"."$NF}')
+for NAME in "_dmarc.$DOMAIN" "_dmarc.$ORG"; do
+    VALUE=$(dig +short TXT "$NAME" | tr -d '"' | grep -m1 "v=DMARC1" || true)
+    if [ -z "$VALUE" ]; then
+        echo "  [--] $NAME → assente"
+    else
+        echo "  [ok] $NAME → $VALUE"
+    fi
+done
+echo "  Il record del sottodominio basta per le mail del portale; quello sul"
+echo "  dominio principale copre anche il resto ed è quello che i filtri cercano"
+echo "  per primo quando il From è @$ORG."
+echo
+
 echo "── Verifica su Mailgun ──────────────────────────────────────────────────"
 STATE=$(curl -sS --max-time 60 -u "api:$KEY" -X PUT "https://${ENDPOINT}/v3/domains/${DOMAIN}/verify" |
     python3 -c 'import sys, json; print(json.load(sys.stdin).get("domain", {}).get("state", "?"))')
@@ -115,5 +133,7 @@ echo "  Dominio verificato. Ora in .env (server):"
 echo "    MAIL_MAILER=mailgun"
 echo "    MAILGUN_DOMAIN=${DOMAIN}"
 echo "    MAILGUN_ENDPOINT=${ENDPOINT}"
-echo "    MAIL_FROM_ADDRESS=\"no-reply@${DOMAIN}\""
+echo "    MAIL_FROM_ADDRESS=\"no-reply@${ORG}\"   # allineamento DMARC relaxed: il"
+echo "                                          # sottodominio firma per il dominio"
+echo "    MAILGUN_WEBHOOK_SIGNING_KEY=...       # Mailgun → Webhooks"
 echo "  poi: php artisan config:clear && php artisan mail:test <indirizzo esterno>"

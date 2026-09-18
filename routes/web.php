@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\LocaleSwitchController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\Webhook\MailgunWebhookController;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Catalog\ActivityDetail;
 use App\Livewire\Catalog\AnimalHoliday;
@@ -215,3 +216,8 @@ Route::get('locale/{locale}', LocaleSwitchController::class)->name('locale.switc
 // prefisso di lingua la renderebbe irraggiungibile; le due lingue stanno DENTRO
 // il documento, come <xhtml:link rel="alternate">.
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
+
+// Webhook Mailgun: fuori dal gruppo localizzato (Mailgun chiama un URL fisso,
+// un prefisso di lingua lo romperebbe) ed esente da CSRF via `webhooks/*` in
+// bootstrap/app.php. L'autenticazione è la firma HMAC del payload.
+Route::post('webhooks/mailgun', MailgunWebhookController::class)->name('webhooks.mailgun');
