@@ -17,7 +17,10 @@ class NoIndexPartnerPages
     {
         $response = $next($request);
 
-        if (str_starts_with((string) $request->route()?->getName(), 'partner.')) {
+        $name = (string) $request->route()?->getName();
+
+        // Area partner e pannello di amministrazione: niente indicizzazione.
+        if (str_starts_with($name, 'partner.') || str_starts_with($name, 'admin.')) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
         }
 

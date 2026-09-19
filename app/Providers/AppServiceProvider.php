@@ -6,6 +6,7 @@ use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Services\Admin\AdminCounters;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -18,7 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Layout e home del pannello chiedono gli stessi contatori: una volta per request.
+        $this->app->scoped(AdminCounters::class);
     }
 
     /**

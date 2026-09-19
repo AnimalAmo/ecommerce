@@ -25,6 +25,19 @@ abstract class TestCase extends BaseTestCase
         return $user;
     }
 
+    /** Crea (e autentica) un amministratore del pannello, attivo. */
+    protected function actingAsSuperadmin(array $attributes = []): User
+    {
+        Role::findOrCreate('superadmin', 'web');
+
+        $user = User::factory()->create(array_merge(['is_active' => true], $attributes));
+        $user->assignRole('superadmin');
+
+        $this->actingAs($user);
+
+        return $user;
+    }
+
     /**
      * Partner che può davvero mandare un servizio a catalogo: con i direct
      * charges serve l'account Stripe collegato, altrimenti DraftPublisher
