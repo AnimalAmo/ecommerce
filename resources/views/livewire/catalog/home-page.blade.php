@@ -14,8 +14,8 @@
             {{-- Box hero (stile XD: #152E36, radius 2px): titolo, testo, Dove/Quando --}}
             {{-- Mobile (XD app "Cerca - home"): niente box scuro, testo diretto sulla foto --}}
             <div class="w-full max-w-2xl rounded-[2px] bg-[#152E36] px-4 py-6 shadow-[0px_3px_6px_#00000029] max-lg:bg-transparent max-lg:px-0 max-lg:py-0 max-lg:shadow-none">
-                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.hero_title') }}</h1>
-                <p class="mt-4 text-sm leading-relaxed text-white/70 max-lg:text-[15px] max-lg:text-white">{{ __('home.hero_text') }}</p>
+                <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white max-lg:text-2xl max-lg:font-bold">{{ cms('home.hero_title') }}</h1>
+                <p class="mt-4 text-sm leading-relaxed text-white/70 max-lg:text-[15px] max-lg:text-white">{{ cms('home.hero_text') }}</p>
 
                 {{-- Search bar stile XD: pill bianco (border #F4F4F4, radius 100px) con input + pulsante dentro --}}
                 {{-- Mobile: la pill è solo un trigger, la ricerca vive nel modal "Filtri cerca" (XD app) --}}
@@ -165,8 +165,8 @@
         <div class="mb-10 flex items-end justify-between max-lg:mb-6">
             <div>
                 <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.holiday_kicker') }}</p>
-                <h2 class="text-4xl font-extrabold max-lg:text-2xl max-lg:font-bold">{{ __('home.holiday_title') }}</h2>
-                <p class="mt-3 max-w-xl text-lg text-gray-500 max-lg:text-[15px]">{{ __('home.holiday_subtitle') }}</p>
+                <h2 class="text-4xl font-extrabold max-lg:text-2xl max-lg:font-bold">{{ cms('home.holiday_title') }}</h2>
+                <p class="mt-3 max-w-xl text-lg text-gray-500 max-lg:text-[15px]">{{ cms('home.holiday_subtitle') }}</p>
             </div>
         </div>
         {{-- Mobile (XD app): riga di card 280px a scroll orizzontale invece della griglia --}}
@@ -198,11 +198,11 @@
             <img src="{{ asset('img/eventi-bg.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 -z-10 h-full w-full object-cover">
             <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#00000099_0%,#71717100_100%)]"></div>
             <div class="{{ $px }} flex min-h-[660px] flex-col justify-end pb-10 pt-24 max-lg:min-h-[420px] max-lg:pt-16">
-                <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.events_title') }}</h2>
+                <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ cms('home.events_title') }}</h2>
                 {{-- Senza eventi in calendario la banda non promette esperienze che non ci sono:
                      resta il titolo di sezione, ma copy e CTA portano dove c'è davvero qualcosa
                      (l'area partner: sono i partner a pubblicare gli eventi). --}}
-                <p class="mt-3 max-w-xl text-lg text-white/85 max-lg:text-[15px]">{{ $events->isNotEmpty() ? __('home.events_subtitle') : __('home.events_empty') }}</p>
+                <p class="mt-3 max-w-xl text-lg text-white/85 max-lg:text-[15px]">{{ $events->isNotEmpty() ? cms('home.events_subtitle') : cms('home.events_empty') }}</p>
                 <a href="{{ $events->isNotEmpty() ? route('eventi') : route('work-with-us') }}" class="mt-12 w-fit rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ $events->isNotEmpty() ? __('home.events_cta') : __('home.events_empty_cta') }}</a>
             </div>
         </div>
@@ -264,8 +264,8 @@
             <img src="{{ asset('img/smartbox.jpg') }}" alt="Smartbox" class="h-full min-h-[660px] w-full object-cover max-lg:h-56 max-lg:min-h-0">
             <div class="flex flex-col items-end justify-center bg-white p-16 text-right max-lg:items-start max-lg:p-6 max-lg:text-left">
                 <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.smartbox_kicker') }}</p>
-                <h2 class="text-[36px] font-bold leading-tight text-black max-lg:text-2xl">{{ __('home.smartbox_title') }}</h2>
-                <p class="mt-4 text-[18px] text-[#555555] max-lg:text-[15px]">{{ __('home.smartbox_subtitle') }}</p>
+                <h2 class="text-[36px] font-bold leading-tight text-black max-lg:text-2xl">{{ cms('home.smartbox_title') }}</h2>
+                <p class="mt-4 text-[18px] text-[#555555] max-lg:text-[15px]">{{ cms('home.smartbox_subtitle') }}</p>
                 <flux:button href="{{ route('smartbox') }}" class="mt-8 w-fit !rounded-full !border-0 !bg-brand-cyan !px-6 !py-3 !text-[15px] !font-extrabold !text-white !shadow-none hover:!bg-[#68CDEB]">{{ __('home.smartbox_cta') }}</flux:button>
             </div>
         </div>
@@ -276,8 +276,8 @@
         <div class="{{ $px }}">
             <div class="text-center">
                 <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-magenta">{{ __('home.news_kicker') }}</p>
-                <h2 class="text-[36px] font-bold text-black max-lg:text-2xl">{{ __('home.news_title') }}</h2>
-                <p class="mt-3 text-[18px] font-normal text-[#555555] max-lg:text-[15px]">{{ __('home.news_subtitle') }}</p>
+                <h2 class="text-[36px] font-bold text-black max-lg:text-2xl">{{ cms('home.news_title') }}</h2>
+                <p class="mt-3 text-[18px] font-normal text-[#555555] max-lg:text-[15px]">{{ cms('home.news_subtitle') }}</p>
             </div>
             {{-- Mobile (XD app): card 300px a scroll orizzontale --}}
             <div class="mt-10 grid grid-cols-3 gap-6 max-lg:-mx-4 max-lg:mt-6 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
@@ -315,8 +315,8 @@
             <div class="{{ $px }} flex min-h-[660px] flex-col pb-[98px] max-lg:min-h-[520px] max-lg:pb-10">
                 <div class="my-auto max-lg:pt-16">
                     <p class="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-brand-yellow">{{ __('home.community_kicker') }}</p>
-                    <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ __('home.community_title') }}</h2>
-                    <p class="mt-3 max-w-md text-lg text-white/85 max-lg:text-[15px]">{{ __('home.community_subtitle') }}</p>
+                    <h2 class="text-4xl font-extrabold text-white max-lg:text-2xl max-lg:font-bold">{{ cms('home.community_title') }}</h2>
+                    <p class="mt-3 max-w-md text-lg text-white/85 max-lg:text-[15px]">{{ cms('home.community_subtitle') }}</p>
                     <a href="{{ route('community') }}" class="mt-12 inline-block rounded-full bg-brand-cyan px-6 py-3 text-[15px] font-extrabold text-white transition hover:bg-[#68CDEB]">{{ __('home.community_cta') }}</a>
                 </div>
                 {{-- Box recensione XD: glass bianco su foto, blur 7px.
