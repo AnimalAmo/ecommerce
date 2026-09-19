@@ -3,6 +3,7 @@
 namespace App\Services\Partner\Publishing;
 
 use App\Models\Amenity\Amenity;
+use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -34,6 +35,31 @@ abstract class FamilyPublisher
     ];
 
     abstract public function publish(StructureDraft $draft): Model;
+
+    /**
+     * Colonne di moderazione da aggiungere all'updateOrCreate (config/admin.php).
+     *
+     * Moderazione spenta: niente, la riga nasce `approved` dal default di colonna.
+     * Accesa: una riga nuova, o rimandata con "Chiedi modifiche", va in attesa;
+     * una già approvata o già in attesa non cambia stato.
+     *
+     * @return array<string, mixed>
+     */
+    protected function moderationAttributes(?Model $current): array
+    {
+        if (! config('admin.moderation')) {
+            return [];
+        }
+
+        if ($current === null || $current->approval_status === Structure::APPROVAL_CHANGES_REQUESTED) {
+            return [
+                'approval_status' => Structure::APPROVAL_PENDING,
+                'approval_requested_at' => now(),
+            ];
+        }
+
+        return [];
+    }
 
     /**
      * Traduzioni compilate del campo draft, da assegnare alla colonna

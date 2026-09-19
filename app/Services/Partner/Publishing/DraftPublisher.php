@@ -54,9 +54,9 @@ class DraftPublisher
     public function unpublish(StructureDraft $draft): void
     {
         $published = match ($draft->family()) {
-            'attivita' => Event::query()->firstWhere('structure_draft_id', $draft->id),
-            'smartbox' => SmartboxPackage::query()->firstWhere('structure_draft_id', $draft->id),
-            default => Structure::query()->firstWhere('structure_draft_id', $draft->id),
+            'attivita' => Event::withHidden()->firstWhere('structure_draft_id', $draft->id),
+            'smartbox' => SmartboxPackage::withHidden()->firstWhere('structure_draft_id', $draft->id),
+            default => Structure::withHidden()->firstWhere('structure_draft_id', $draft->id),
         };
 
         if ($published !== null) {

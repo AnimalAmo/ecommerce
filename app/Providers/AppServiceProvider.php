@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureSuperadmin;
+use App\Http\Middleware\UseItalianLocale;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
@@ -10,6 +12,7 @@ use App\Services\Admin\AdminCounters;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Spatie\Translatable\Facades\Translatable;
 
 class AppServiceProvider extends ServiceProvider
@@ -47,5 +50,11 @@ class AppServiceProvider extends ServiceProvider
         // richiesta, l'inglese opzionale — su locale EN senza traduzione si mostra
         // l'IT. (Diverso da app.fallback_locale=en, che riguarda i lang file UI.)
         Translatable::fallback(fallbackLocale: 'it');
+
+        // Le azioni Livewire (POST /livewire/update) non ripassano dal gruppo di
+        // rotte: senza questa riga un wire:click del pannello girerebbe senza il
+        // controllo superadmin e con la lingua di configurazione. Livewire le
+        // riapplica solo se la rotta d'origine le aveva.
+        Livewire::addPersistentMiddleware([EnsureSuperadmin::class, UseItalianLocale::class]);
     }
 }

@@ -121,7 +121,7 @@ class PurgeMockCatalog extends Command
                     ->whereIn('purchasable_id', $ids)
                     ->update(['purchasable_type' => null, 'purchasable_id' => null]);
 
-                self::CATALOG[$alias]::whereIn('id', $ids)->delete();
+                self::CATALOG[$alias]::withHidden()->whereIn('id', $ids)->delete();
             }
 
             // Gli ordini demo: orders.user_id è nullOnDelete, quindi cancellare
@@ -183,7 +183,7 @@ class PurgeMockCatalog extends Command
         $mock = [];
 
         foreach (self::CATALOG as $alias => $model) {
-            $mock[$alias] = $model::query()
+            $mock[$alias] = $model::withHidden()
                 // Mai una bozza dietro: è la firma dei seeder, i publisher la
                 // scrivono sempre. È questo a proteggere il contenuto vero
                 // pubblicato quando il wizard era ancora aperto agli ospiti.
@@ -216,7 +216,7 @@ class PurgeMockCatalog extends Command
         // Il contenuto pubblicato da chi ha provato il wizard su staging ha una
         // bozza dietro: sopravvive, ed è giusto così, ma va guardato a mano.
         $published = collect(self::CATALOG)
-            ->map(fn (string $model) => $model::whereNotNull('structure_draft_id')->count())
+            ->map(fn (string $model) => $model::withHidden()->whereNotNull('structure_draft_id')->count())
             ->sum();
 
         if ($published > 0) {

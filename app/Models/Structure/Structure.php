@@ -5,6 +5,7 @@ namespace App\Models\Structure;
 use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
+use App\Models\Concerns\HasCatalogModeration;
 use App\Models\Concerns\HasFaqs;
 use App\Models\Concerns\HasMapEmbed;
 use App\Models\Concerns\HasReviews;
@@ -17,7 +18,7 @@ use Spatie\Translatable\HasTranslations;
 class Structure extends Model
 {
     /** @use HasFactory<StructureFactory> */
-    use HasAmenities, HasCatalogImages, HasFactory, HasFaqs, HasMapEmbed, HasReviews, HasTranslations, StructureHasRelationships;
+    use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasFaqs, HasMapEmbed, HasReviews, HasTranslations, StructureHasRelationships;
 
     /** SOLO colonne stringa — mai le json (general_info/features): spatie tratterebbe l'array come mappa di locale. */
     public array $translatable = ['name', 'description'];

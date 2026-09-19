@@ -16,12 +16,12 @@ class EventPublisher extends FamilyPublisher
 {
     public function publish(StructureDraft $draft): Event
     {
-        $current = Event::query()->firstWhere('structure_draft_id', $draft->id);
+        $current = Event::withHidden()->firstWhere('structure_draft_id', $draft->id);
         $isEvent = $draft->type === 'eventi';
         // Senza tipo prezzo o importo l'evento è gratuito ("Partecipa", hasJoinCta).
         $isFree = $draft->price_type !== 'pagamento' || blank($draft->price_per_person);
 
-        $event = Event::query()->updateOrCreate(['structure_draft_id' => $draft->id], [
+        $event = Event::withHidden()->updateOrCreate(['structure_draft_id' => $draft->id], [
             'user_id' => $draft->user_id,
             'venue_id' => $this->venue($draft)?->id,
             'type' => $isEvent ? ProductType::Event : ProductType::Activity,
@@ -40,8 +40,9 @@ class EventPublisher extends FamilyPublisher
             'img' => $this->coverPhoto($draft),
             'hero_img' => $this->coverPhoto($draft),
             'description' => $this->translations($draft, 'description'),
-            'position' => $current->position ?? ((int) Event::query()->max('position') + 1),
+            'position' => $current->position ?? ((int) Event::withHidden()->max('position') + 1),
             'cancellation_policy_days' => $this->cancellationDays($draft),
+            ...$this->moderationAttributes($current),
         ]);
 
         $this->syncAmenities($event, [

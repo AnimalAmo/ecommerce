@@ -73,7 +73,7 @@ class SmartboxStructures extends Component
      */
     private function options(): array
     {
-        return $this->options ??= Structure::query()
+        return $this->options ??= Structure::withHidden()
             ->whereNotNull('user_id')
             ->where('user_id', Auth::id())
             ->orderBy('position')

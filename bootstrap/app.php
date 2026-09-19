@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureActivePartner;
 use App\Http\Middleware\EnsureSuperadmin;
 use App\Http\Middleware\NoIndexPartnerPages;
+use App\Http\Middleware\UseItalianLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Pannello di amministrazione: FUORI dal gruppo localizzato. È solo in
         // italiano, e un prefisso di lingua non servirebbe a nessuno.
         then: function (): void {
-            Route::middleware('web')
+            Route::middleware(['web', UseItalianLocale::class])
                 ->prefix('admin')
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));

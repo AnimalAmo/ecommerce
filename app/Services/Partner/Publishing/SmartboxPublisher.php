@@ -15,10 +15,10 @@ class SmartboxPublisher extends FamilyPublisher
 {
     public function publish(StructureDraft $draft): SmartboxPackage
     {
-        $current = SmartboxPackage::query()->firstWhere('structure_draft_id', $draft->id);
+        $current = SmartboxPackage::withHidden()->firstWhere('structure_draft_id', $draft->id);
         $priceCents = $this->cents($draft->price);
 
-        $package = SmartboxPackage::query()->updateOrCreate(['structure_draft_id' => $draft->id], [
+        $package = SmartboxPackage::withHidden()->updateOrCreate(['structure_draft_id' => $draft->id], [
             'user_id' => $draft->user_id,
             'type' => match ($draft->type) {
                 'benessere' => ProductType::Wellness,
@@ -40,8 +40,9 @@ class SmartboxPublisher extends FamilyPublisher
             'general_info' => $this->generalInfo($draft),
             // Colonna NOT NULL senza fonte wizard: vuoto ⇒ sezione "Cosa troverai" nascosta.
             'features' => [],
-            'position' => $current->position ?? ((int) SmartboxPackage::query()->max('position') + 1),
+            'position' => $current->position ?? ((int) SmartboxPackage::withHidden()->max('position') + 1),
             'cancellation_policy_days' => $this->cancellationDays($draft),
+            ...$this->moderationAttributes($current),
         ]);
 
         $this->syncAmenities($package, [
