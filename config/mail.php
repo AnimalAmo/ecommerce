@@ -63,13 +63,14 @@ return [
         /*
          | La newsletter sul suo sottodominio Mailgun (config/newsletter.php):
          | sending key e dominio propri, così una segnalazione di spam su un
-         | numero della newsletter non ferma le conferme d'ordine. Senza
-         | MAILGUN_NEWSLETTER_SECRET ricade sulle credenziali di services.mailgun.
+         | numero della newsletter non ferma le conferme d'ordine. Vuote, le
+         | MAILGUN_NEWSLETTER_* ricadono su quelle della posta di servizio (`?:`
+         | e non il default di env(): in .env la riga c'è, vuota).
          */
         'mailgun-newsletter' => [
             'transport' => 'mailgun',
-            'domain' => env('MAILGUN_NEWSLETTER_DOMAIN'),
-            'secret' => env('MAILGUN_NEWSLETTER_SECRET'),
+            'domain' => env('MAILGUN_NEWSLETTER_DOMAIN') ?: env('MAILGUN_DOMAIN'),
+            'secret' => env('MAILGUN_NEWSLETTER_SECRET') ?: env('MAILGUN_SECRET'),
             'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
             'scheme' => 'https',
         ],
