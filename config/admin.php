@@ -18,4 +18,16 @@ return [
 
     'moderation' => (bool) env('ADMIN_MODERATION', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fuso orario del pannello
+    |--------------------------------------------------------------------------
+    | L'applicazione e il database ragionano in UTC; la cliente ragiona in ora
+    | italiana. Un ordine delle 00:30 del primo del mese è di quel mese, non
+    | del precedente, e alle 14 il saluto è "buon pomeriggio". Vale per i
+    | periodi di Home e Incassi e per il saluto, non per i dati salvati.
+    */
+
+    'timezone' => 'Europe/Rome',
+
 ];
