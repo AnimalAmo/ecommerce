@@ -40,6 +40,6 @@ class Login extends Component
     {
         return view('livewire.admin.auth.login')
             ->layout('layouts::admin-guest')
-            ->title('Accesso');
+            ->title(__('admin.auth.login.title'));
     }
 }

@@ -29,6 +29,6 @@ class ForgotPassword extends Component
             'expiresIn' => app(AdminAuthService::class)->expiresInMinutes(),
         ])
             ->layout('layouts::admin-guest')
-            ->title('Password dimenticata');
+            ->title(__('admin.auth.forgot.title'));
     }
 }

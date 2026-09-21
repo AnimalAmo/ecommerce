@@ -64,10 +64,10 @@ class CatalogShow extends Component
             'regionId' => [$isStructure ? 'nullable' : 'exclude', 'exists:regions,id'],
             'cancellationDays' => ['nullable', 'integer', 'min:0', 'max:365'],
         ], [
-            'name.it.required' => 'Il nome in italiano è obbligatorio.',
-            'description.it.required' => 'La descrizione in italiano è obbligatoria.',
-            'price.regex' => 'Scrivi un importo in euro, per esempio 120 o 120,50.',
-            'supplement.regex' => 'Scrivi un importo in euro, per esempio 15.',
+            'name.it.required' => __('admin-catalog.validation.name_required'),
+            'description.it.required' => __('admin-catalog.validation.description_required'),
+            'price.regex' => __('admin-catalog.validation.price_format'),
+            'supplement.regex' => __('admin-catalog.validation.supplement_format'),
         ]);
 
         $catalog->update($item, [
@@ -79,7 +79,7 @@ class CatalogShow extends Component
             'cancellation_policy_days' => $this->cancellationDays !== '' ? (int) $this->cancellationDays : null,
         ]);
 
-        Flux::toast(text: 'Modifiche salvate. Sono già sul sito.', variant: 'success');
+        Flux::toast(text: __('admin-catalog.show.saved'), variant: 'success');
     }
 
     protected function afterCatalogAction(bool $deleted): void
@@ -103,10 +103,10 @@ class CatalogShow extends Component
             'publicUrl' => $item->isVisibleInCatalog() ? $presenter->publicUrl($item) : null,
             'publishedOn' => ($item->approved_at ?? $item->created_at)?->locale('it')->isoFormat('D MMMM YYYY'),
             'stats' => [
-                ['label' => 'Prenotazioni totali', 'value' => (string) $bookings['total']],
-                ['label' => 'Prenotazioni future', 'value' => (string) $bookings['future']],
-                ['label' => 'Nei preferiti', 'value' => (string) $catalog->favoritesCount($item)],
-                ['label' => 'Valutazione media', 'value' => $rating !== null ? Format::rating($rating) : '—'],
+                ['label' => __('admin-catalog.show.stats.bookings'), 'value' => (string) $bookings['total']],
+                ['label' => __('admin-catalog.show.stats.future'), 'value' => (string) $bookings['future']],
+                ['label' => __('admin-catalog.show.stats.favorites'), 'value' => (string) $catalog->favoritesCount($item)],
+                ['label' => __('admin-catalog.show.stats.rating'), 'value' => $rating !== null ? Format::rating($rating) : __('admin.none')],
             ],
             'blocker' => $catalog->deletionBlocker($item),
             'regions' => Region::query()->orderBy('name')->pluck('name', 'id'),

@@ -26,12 +26,10 @@ trait ConfirmsCatalogActions
             'action' => $on ? 'reactivate' : 'suspend',
             'family' => $family,
             'id' => $id,
-            'title' => $on ? 'Riattivare questa scheda?' : 'Sospendere questa scheda?',
-            'body' => $on
-                ? "«{$name}» torna visibile nel catalogo e ricomincia a ricevere prenotazioni."
-                : "«{$name}» sparisce dal sito e dalle ricerche. Carrelli e preferiti restano intatti, gli ordini già fatti si leggono come prima. La riattivi quando vuoi.",
+            'title' => __($on ? 'admin-catalog.confirm.reactivate_title' : 'admin-catalog.confirm.suspend_title'),
+            'body' => __($on ? 'admin-catalog.confirm.reactivate_body' : 'admin-catalog.confirm.suspend_body', ['name' => $name]),
             'blocked' => null,
-            'confirm' => $on ? 'Riattiva' : 'Sospendi',
+            'confirm' => __($on ? 'admin-catalog.confirm.reactivate' : 'admin-catalog.confirm.suspend'),
         ];
 
         Flux::modal('catalog-confirm')->show();
@@ -47,10 +45,10 @@ trait ConfirmsCatalogActions
             'action' => $blocker !== null ? 'suspend' : 'delete',
             'family' => $family,
             'id' => $id,
-            'title' => 'Cancellare definitivamente?',
-            'body' => '«'.$catalog->name($item)."» verrà rimossa dal database, insieme a preferiti, carrelli e recensioni che la riguardano. Gli ordini già fatti restano leggibili. L'operazione non si può annullare.",
+            'title' => __('admin-catalog.confirm.delete_title'),
+            'body' => __('admin-catalog.confirm.delete_body', ['name' => $catalog->name($item)]),
             'blocked' => $blocker,
-            'confirm' => $blocker !== null ? 'Sospendi invece' : 'Elimina',
+            'confirm' => __($blocker !== null ? 'admin-catalog.confirm.suspend_instead' : 'admin-catalog.confirm.delete'),
         ];
 
         Flux::modal('catalog-confirm')->show();
@@ -75,16 +73,12 @@ trait ConfirmsCatalogActions
             // Una prenotazione è arrivata fra l'apertura della modale e la conferma.
             $this->confirming['blocked'] = $locked->getMessage();
             $this->confirming['action'] = 'suspend';
-            $this->confirming['confirm'] = 'Sospendi invece';
+            $this->confirming['confirm'] = __('admin-catalog.confirm.suspend_instead');
 
             return;
         }
 
-        $message = match ($this->confirming['action']) {
-            'suspend' => "«{$name}» è sospesa.",
-            'reactivate' => "«{$name}» è di nuovo online.",
-            'delete' => "«{$name}» è stata eliminata.",
-        };
+        $message = __('admin-catalog.confirm.done_'.$this->confirming['action'], ['name' => $name]);
         $deleted = $this->confirming['action'] === 'delete';
 
         $this->confirming = null;

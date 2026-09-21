@@ -1,46 +1,49 @@
 <div class="flex flex-col gap-[18px]">
     <x-admin.page-header
-        heading="Catalogo"
-        :sub="'Strutture, attività e Smartbox di tutti i partner. '.$totals['total'].' '.($totals['total'] === 1 ? 'scheda' : 'schede').', '.$totals['suspended'].' '.($totals['suspended'] === 1 ? 'sospesa' : 'sospese').'.'"
+        :heading="__('admin-catalog.index.heading')"
+        :sub="__('admin-catalog.index.sub', [
+            'items' => trans_choice('admin-catalog.index.items', $totals['total']),
+            'suspended' => trans_choice('admin-catalog.index.suspended', $totals['suspended']),
+        ])"
     >
         <x-slot:actions>
-            <x-admin.button icon="arrow-down-tray" :href="$exportUrl">Esporta</x-admin.button>
+            <x-admin.button icon="arrow-down-tray" :href="$exportUrl">{{ __('admin-catalog.index.export') }}</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
 
     <x-admin.card>
         <x-admin.filters>
             <div class="min-w-[190px] max-w-[340px] flex-1">
-                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Cerca per nome, luogo o partner" aria-label="Cerca nel catalogo" />
+                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('admin-catalog.index.search_placeholder')" :aria-label="__('admin-catalog.index.search_label')" />
             </div>
             <div class="min-w-[150px]">
-                <flux:select wire:model.live="partner" aria-label="Partner">
-                    <flux:select.option value="">Tutti i partner</flux:select.option>
-                    <flux:select.option value="platform">AnimalAmo</flux:select.option>
+                <flux:select wire:model.live="partner" :aria-label="__('admin-catalog.index.partner')">
+                    <flux:select.option value="">{{ __('admin-catalog.index.all_partners') }}</flux:select.option>
+                    <flux:select.option value="platform">{{ __('admin-catalog.platform') }}</flux:select.option>
                     @foreach ($partners as $id => $label)
                         <flux:select.option value="{{ $id }}">{{ $label }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </div>
             <div class="min-w-[130px]">
-                <flux:select wire:model.live="family" aria-label="Tipo">
-                    <flux:select.option value="">Tutti i tipi</flux:select.option>
+                <flux:select wire:model.live="family" :aria-label="__('admin-catalog.index.type')">
+                    <flux:select.option value="">{{ __('admin-catalog.index.all_types') }}</flux:select.option>
                     @foreach ($families as $value => $label)
                         <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </div>
             <div class="min-w-[140px]">
-                <flux:select wire:model.live="region" aria-label="Regione">
-                    <flux:select.option value="">Tutte le regioni</flux:select.option>
+                <flux:select wire:model.live="region" :aria-label="__('admin-catalog.index.region')">
+                    <flux:select.option value="">{{ __('admin-catalog.index.all_regions') }}</flux:select.option>
                     @foreach ($regions as $id => $name)
                         <flux:select.option value="{{ $id }}">{{ $name }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </div>
             <div class="min-w-[130px]">
-                <flux:select wire:model.live="status" aria-label="Stato">
-                    <flux:select.option value="">Tutti gli stati</flux:select.option>
+                <flux:select wire:model.live="status" :aria-label="__('admin-catalog.index.status')">
+                    <flux:select.option value="">{{ __('admin-catalog.index.all_statuses') }}</flux:select.option>
                     @foreach ($statuses as $value => $label)
                         <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
                     @endforeach
@@ -49,18 +52,18 @@
         </x-admin.filters>
 
         @if ($rows->isEmpty())
-            <x-admin.empty>Nessuna scheda corrisponde ai filtri.</x-admin.empty>
+            <x-admin.empty>{{ __('admin-catalog.index.empty') }}</x-admin.empty>
         @else
             <div class="overflow-x-auto">
                 <flux:table class="min-w-[940px]">
                     <flux:table.columns>
-                        <flux:table.column class="!pl-5">Scheda</flux:table.column>
-                        <flux:table.column>Partner</flux:table.column>
-                        <flux:table.column>Tipo</flux:table.column>
-                        <flux:table.column>Regione</flux:table.column>
-                        <flux:table.column align="end">Prezzo</flux:table.column>
-                        <flux:table.column>Stato</flux:table.column>
-                        <flux:table.column align="end" class="!pr-5">Azioni</flux:table.column>
+                        <flux:table.column class="!pl-5">{{ __('admin-catalog.index.columns.item') }}</flux:table.column>
+                        <flux:table.column>{{ __('admin-catalog.index.columns.partner') }}</flux:table.column>
+                        <flux:table.column>{{ __('admin-catalog.index.columns.type') }}</flux:table.column>
+                        <flux:table.column>{{ __('admin-catalog.index.columns.region') }}</flux:table.column>
+                        <flux:table.column align="end">{{ __('admin-catalog.index.columns.price') }}</flux:table.column>
+                        <flux:table.column>{{ __('admin-catalog.index.columns.status') }}</flux:table.column>
+                        <flux:table.column align="end" class="!pr-5">{{ __('admin-catalog.index.columns.actions') }}</flux:table.column>
                     </flux:table.columns>
                     <flux:table.rows>
                         @foreach ($rows as $row)
@@ -76,19 +79,19 @@
                                 </flux:table.cell>
                                 <flux:table.cell class="!text-admin-rail">{{ $row['partner'] }}</flux:table.cell>
                                 <flux:table.cell><x-admin.badge :tone="$row['typeTone']">{{ $row['type'] }}</x-admin.badge></flux:table.cell>
-                                <flux:table.cell>{{ $row['region'] ?? '—' }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['region'] ?? __('admin.none') }}</flux:table.cell>
                                 <flux:table.cell align="end" class="whitespace-nowrap !text-admin-rail">{{ $row['price'] }}</flux:table.cell>
                                 <flux:table.cell><x-admin.badge :tone="$row['statusTone']">{{ $row['statusLabel'] }}</x-admin.badge></flux:table.cell>
                                 <flux:table.cell class="!pr-5">
                                     <div class="flex items-center justify-end gap-2">
-                                        <x-admin.icon-action tone="view" icon="eye" label="Apri scheda" :href="$row['url']" wire:navigate />
+                                        <x-admin.icon-action tone="view" icon="eye" :label="__('admin-catalog.index.open')" :href="$row['url']" wire:navigate />
                                         <x-admin.icon-action
                                             tone="suspend"
                                             :icon="$row['suspended'] ? 'play' : 'pause'"
-                                            :label="$row['suspended'] ? 'Riattiva' : 'Sospendi'"
+                                            :label="__($row['suspended'] ? 'admin-catalog.index.reactivate' : 'admin-catalog.index.suspend')"
                                             wire:click="askSuspend('{{ $row['family'] }}', {{ $row['id'] }})"
                                         />
-                                        <x-admin.icon-action tone="delete" icon="trash" label="Elimina" wire:click="askDelete('{{ $row['family'] }}', {{ $row['id'] }})" />
+                                        <x-admin.icon-action tone="delete" icon="trash" :label="__('admin-catalog.index.delete')" wire:click="askDelete('{{ $row['family'] }}', {{ $row['id'] }})" />
                                     </div>
                                 </flux:table.cell>
                             </flux:table.row>
@@ -98,7 +101,7 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-between gap-2.5 px-5 py-3.5">
-                <span class="text-[13.5px] text-gray-400">{{ $page->count() }} di {{ $page->total() }} schede</span>
+                <span class="text-[13.5px] text-gray-400">{{ __('admin-catalog.index.paging', ['shown' => $page->count(), 'total' => $page->total()]) }}</span>
                 <div>{{ $page->onEachSide(1)->links() }}</div>
             </div>
         @endif

@@ -32,8 +32,8 @@ class CatalogExportController
         });
 
         return CsvDownload::make(
-            'catalogo-'.now()->format('Y-m-d').'.csv',
-            ['Scheda', 'Tipo', 'Partner', 'Località', 'Regione', 'Prezzo', 'Stato', 'Prenotazioni', 'Creata il'],
+            __('admin-catalog.export.filename', ['date' => now()->format('Y-m-d')]),
+            array_values(__('admin-catalog.export.columns')),
             $rows,
         );
     }

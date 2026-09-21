@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="robots" content="noindex, nofollow">
-        <title>{{ isset($title) ? $title.' · ' : '' }}Amministrazione AnimalAmo</title>
+        <title>{{ isset($title) ? $title.' · ' : '' }}{{ __('admin.brand') }}</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
@@ -12,10 +12,10 @@
     <body class="min-h-screen font-sans text-ink antialiased">
         <div class="flex min-h-screen flex-col items-center justify-center gap-7 bg-[linear-gradient(296deg,#FF3EA526_0%,#68CDEB33_100%)] px-5 py-12">
             <div class="flex flex-col items-center gap-2.5">
-                <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="block h-auto w-[108px]">
+                <img src="{{ asset('img/logo.svg') }}" alt="{{ __('admin.logo_alt') }}" class="block h-auto w-[108px]">
                 <span class="flex items-center gap-[7px] text-admin-teal">
                     <flux:icon.animal class="size-[15px] shrink-0" />
-                    <span class="text-[10.5px] font-bold tracking-[.11em] uppercase">Amministrazione</span>
+                    <span class="text-[10.5px] font-bold tracking-[.11em] uppercase">{{ __('admin.section') }}</span>
                 </span>
             </div>
 

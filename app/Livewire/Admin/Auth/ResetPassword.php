@@ -39,11 +39,11 @@ class ResetPassword extends Component
             // Copy del design: "Almeno dieci caratteri, con una lettera maiuscola e un numero."
             'password' => ['required', 'confirmed', Password::min(10)->mixedCase()->numbers()],
         ], [
-            'password.required' => 'Scegli una password.',
-            'password.confirmed' => 'Le due password non coincidono.',
-            'password.min' => 'Almeno dieci caratteri.',
-            'password.mixed' => 'Serve almeno una lettera maiuscola e una minuscola.',
-            'password.numbers' => 'Serve almeno un numero.',
+            'password.required' => __('admin.auth.errors.password_required'),
+            'password.confirmed' => __('admin.auth.errors.password_confirmed'),
+            'password.min' => __('admin.auth.errors.password_min'),
+            'password.mixed' => __('admin.auth.errors.password_mixed'),
+            'password.numbers' => __('admin.auth.errors.password_numbers'),
         ]);
 
         $status = $auth->reset($this->email, $this->token, $this->password);
@@ -56,6 +56,6 @@ class ResetPassword extends Component
     {
         return view('livewire.admin.auth.reset-password')
             ->layout('layouts::admin-guest')
-            ->title('Nuova password');
+            ->title(__('admin.auth.reset.title'));
     }
 }

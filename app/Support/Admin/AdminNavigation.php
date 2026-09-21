@@ -21,27 +21,27 @@ class AdminNavigation
     public function groups(): array
     {
         return [
-            ['label' => 'Panoramica', 'items' => [
-                $this->item('Home pannello', 'admin.home', ['admin.home', 'admin.search']),
+            ['label' => __('admin.nav.groups.overview'), 'items' => [
+                $this->item(__('admin.nav.home'), 'admin.home', ['admin.home', 'admin.search']),
             ]],
-            ['label' => 'Catalogo', 'items' => [
-                $this->item('Schede pubblicate', 'admin.catalog.index', ['admin.catalog.*']),
-                $this->item('Da approvare', 'admin.approvals', ['admin.approvals'], $this->counters->pendingApprovals()),
-                $this->item('Recensioni', 'admin.reviews', ['admin.reviews'], $this->counters->pendingReviews()),
+            ['label' => __('admin.nav.groups.catalog'), 'items' => [
+                $this->item(__('admin.nav.catalog'), 'admin.catalog.index', ['admin.catalog.*']),
+                $this->item(__('admin.nav.approvals'), 'admin.approvals', ['admin.approvals'], $this->counters->pendingApprovals()),
+                $this->item(__('admin.nav.reviews'), 'admin.reviews', ['admin.reviews'], $this->counters->pendingReviews()),
             ]],
-            ['label' => 'Contenuti', 'items' => [
-                $this->item('Pagine', 'admin.pages.index', ['admin.pages.*']),
-                $this->item('Animal Times', 'admin.articles.index', ['admin.articles.*']),
-                $this->item('Domande frequenti', 'admin.faqs', ['admin.faqs']),
-                $this->item('Community', 'admin.community', ['admin.community'], $this->counters->flaggedPosts()),
+            ['label' => __('admin.nav.groups.content'), 'items' => [
+                $this->item(__('admin.nav.pages'), 'admin.pages.index', ['admin.pages.*']),
+                $this->item(__('admin.nav.articles'), 'admin.articles.index', ['admin.articles.*']),
+                $this->item(__('admin.nav.faqs'), 'admin.faqs', ['admin.faqs']),
+                $this->item(__('admin.nav.community'), 'admin.community', ['admin.community'], $this->counters->flaggedPosts()),
             ]],
-            ['label' => 'Persone', 'items' => [
-                $this->item('Iscritti', 'admin.users.index', ['admin.users.*']),
-                $this->item('Contatti e candidature', 'admin.inbox', ['admin.inbox'], $this->counters->openInbox()),
-                $this->item('Newsletter', 'admin.newsletter.index', ['admin.newsletter.*']),
+            ['label' => __('admin.nav.groups.people'), 'items' => [
+                $this->item(__('admin.nav.users'), 'admin.users.index', ['admin.users.*']),
+                $this->item(__('admin.nav.inbox'), 'admin.inbox', ['admin.inbox'], $this->counters->openInbox()),
+                $this->item(__('admin.nav.newsletter'), 'admin.newsletter.index', ['admin.newsletter.*']),
             ]],
-            ['label' => 'Denaro', 'items' => [
-                $this->item('Incassi', 'admin.payouts', ['admin.payouts*']),
+            ['label' => __('admin.nav.groups.money'), 'items' => [
+                $this->item(__('admin.nav.payouts'), 'admin.payouts', ['admin.payouts*']),
             ]],
         ];
     }

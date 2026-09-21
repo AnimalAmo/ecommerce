@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-[18px]">
-    <x-admin.back-link :href="route('admin.catalog.index')">Torna al catalogo</x-admin.back-link>
+    <x-admin.back-link :href="route('admin.catalog.index')">{{ __('admin-catalog.show.back') }}</x-admin.back-link>
 
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="flex min-w-0 items-center gap-4">
@@ -10,70 +10,70 @@
                     <x-admin.badge :tone="$row['statusTone']">{{ $row['statusLabel'] }}</x-admin.badge>
                     <x-admin.badge :tone="$row['typeTone']">{{ $row['type'] }}</x-admin.badge>
                 </div>
-                <p class="mt-2 text-[15px] text-gray-600">{{ $row['partner'] }} · {{ $row['place'] }} · pubblicata il {{ $publishedOn }}</p>
+                <p class="mt-2 text-[15px] text-gray-600">{{ __('admin-catalog.show.meta', ['partner' => $row['partner'], 'place' => $row['place'], 'date' => $publishedOn]) }}</p>
             </div>
         </div>
         <div class="flex flex-wrap gap-2.5">
             @if ($publicUrl)
-                <x-admin.button tone="ghost" icon="arrow-top-right-on-square" :href="$publicUrl" target="_blank">Vedi sul sito</x-admin.button>
+                <x-admin.button tone="ghost" icon="arrow-top-right-on-square" :href="$publicUrl" target="_blank">{{ __('admin-catalog.show.view_on_site') }}</x-admin.button>
             @endif
             <x-admin.button
                 :icon="$row['suspended'] ? 'play' : 'pause'"
                 wire:click="askSuspend('{{ $row['family'] }}', {{ $row['id'] }})"
-            >{{ $row['suspended'] ? 'Riattiva scheda' : 'Sospendi scheda' }}</x-admin.button>
-            <x-admin.button tone="primary" wire:click="save">Salva modifiche</x-admin.button>
+            >{{ __($row['suspended'] ? 'admin-catalog.show.reactivate' : 'admin-catalog.show.suspend') }}</x-admin.button>
+            <x-admin.button tone="primary" wire:click="save">{{ __('admin-catalog.show.save') }}</x-admin.button>
         </div>
     </div>
 
     @if ($item->approval_status === 'changes_requested' && filled($item->approval_note))
-        <x-admin.notice tone="warning" heading="Hai chiesto modifiche al partner">
-            «{{ $item->approval_note }}» — la scheda resta fuori dal sito finché il partner non la ripubblica.
+        <x-admin.notice tone="warning" :heading="__('admin-catalog.show.changes_heading')">
+            {{ __('admin-catalog.show.changes_body', ['note' => $item->approval_note]) }}
         </x-admin.notice>
     @endif
 
     <div class="grid items-start gap-3.5 lg:grid-cols-3">
-        <x-admin.card heading="Testi pubblicati" class="lg:col-span-2">
+        <x-admin.card :heading="__('admin-catalog.show.texts')" class="lg:col-span-2">
             <x-slot:aside>
-                <span class="text-[12.5px] text-gray-400">{{ $lang === 'it' ? 'Italiano' : 'Inglese' }}</span>
+                <span class="text-[12.5px] text-gray-400">{{ __($lang === 'it' ? 'admin-catalog.show.lang_it' : 'admin-catalog.show.lang_en') }}</span>
             </x-slot:aside>
 
-            <x-admin.tabs class="px-5" model="lang" :current="$lang" :items="[['key' => 'it', 'label' => 'Italiano'], ['key' => 'en', 'label' => 'Inglese']]" />
+            <x-admin.tabs class="px-5" model="lang" :current="$lang" :items="[['key' => 'it', 'label' => __('admin-catalog.show.lang_it')], ['key' => 'en', 'label' => __('admin-catalog.show.lang_en')]]" />
 
             <form wire:submit="save" class="flex flex-col gap-4 p-5">
                 @foreach (['it', 'en'] as $locale)
                     <div wire:key="texts-{{ $locale }}" @class(['flex flex-col gap-4', 'hidden' => $lang !== $locale])>
-                        <flux:input wire:model="name.{{ $locale }}" label="Nome della scheda" :placeholder="$locale === 'en' ? 'Lascia vuoto per mostrare il nome italiano' : ''" />
-                        <flux:textarea wire:model="description.{{ $locale }}" label="Descrizione" rows="6" resize="vertical" :placeholder="$locale === 'en' ? 'Lascia vuoto per mostrare la descrizione italiana' : ''" />
+                        <flux:input wire:model="name.{{ $locale }}" :label="__('admin-catalog.show.name')" :placeholder="$locale === 'en' ? __('admin-catalog.show.name_en_placeholder') : ''" />
+                        <flux:textarea wire:model="description.{{ $locale }}" :label="__('admin-catalog.show.description')" rows="6" resize="vertical" :placeholder="$locale === 'en' ? __('admin-catalog.show.description_en_placeholder') : ''" />
                     </div>
                 @endforeach
 
                 <div class="grid items-start gap-3.5 sm:grid-cols-3">
                     <flux:input
                         wire:model="price"
-                        :label="$isStructure ? 'Prezzo a notte (€)' : ($isEvent ? 'Prezzo a persona (€)' : 'Prezzo (€)')"
-                        :placeholder="$isEvent ? 'Vuoto = gratis' : ''"
+                        :label="__($isStructure ? 'admin-catalog.show.price_night' : ($isEvent ? 'admin-catalog.show.price_person' : 'admin-catalog.show.price'))"
+                        :placeholder="$isEvent ? __('admin-catalog.show.price_free_placeholder') : ''"
                         inputmode="decimal"
                     />
                     @if ($isStructure)
-                        <flux:input wire:model="supplement" label="Supplemento animale (€)" inputmode="decimal" />
-                        <flux:select wire:model="regionId" label="Regione">
-                            <flux:select.option value="">Nessuna</flux:select.option>
+                        <flux:input wire:model="supplement" :label="__('admin-catalog.show.supplement')" inputmode="decimal" />
+                        <flux:select wire:model="regionId" :label="__('admin-catalog.show.region')">
+                            <flux:select.option value="">{{ __('admin-catalog.show.region_none') }}</flux:select.option>
                             @foreach ($regions as $id => $name)
                                 <flux:select.option value="{{ $id }}">{{ $name }}</flux:select.option>
                             @endforeach
                         </flux:select>
                     @endif
-                    <flux:input wire:model="cancellationDays" type="number" min="0" max="365" label="Cancellazione gratuita (giorni prima)" />
+                    <flux:input wire:model="cancellationDays" type="number" min="0" max="365" :label="__('admin-catalog.show.cancellation')" />
                 </div>
 
                 @if ($isStructure && $item->structure_draft_id)
-                    <p class="m-0 text-[12.5px] leading-normal text-gray-400">Il prezzo a notte nasce dalle camere inserite dal partner: se il partner ripubblica la scheda, torna al prezzo della sua camera più economica. Nome e descrizione invece restano quelli che salvi qui.</p>
+                    <p class="m-0 text-[12.5px] leading-normal text-gray-400">{{ __('admin-catalog.show.draft_price_note') }}</p>
                 @endif
             </form>
         </x-admin.card>
 
         <div class="flex min-w-0 flex-col gap-3.5">
-            <x-admin.card heading="Sul sito">
+            <x-admin.card :heading="__('admin-catalog.show.on_site')">
                 @foreach ($stats as $stat)
                     <div class="flex items-center justify-between gap-3 border-b border-admin-row px-5 py-3 last:border-b-0">
                         <span class="text-[13.5px] text-gray-600">{{ $stat['label'] }}</span>
@@ -83,14 +83,14 @@
             </x-admin.card>
 
             @if ($blocker)
-                <x-admin.notice tone="warning" heading="La cancellazione è bloccata">
+                <x-admin.notice tone="warning" :heading="__('admin-catalog.show.blocked_heading')">
                     {{ $blocker }}
                 </x-admin.notice>
             @else
                 <x-admin.card>
                     <div class="flex flex-col gap-3 px-5 py-4">
-                        <p class="m-0 text-[13px] leading-normal text-gray-600">Nessuna prenotazione futura: puoi eliminare la scheda definitivamente. Se vuoi solo toglierla dal sito, sospendila.</p>
-                        <x-admin.button tone="danger" icon="trash" class="self-start" wire:click="askDelete('{{ $row['family'] }}', {{ $row['id'] }})">Elimina scheda</x-admin.button>
+                        <p class="m-0 text-[13px] leading-normal text-gray-600">{{ __('admin-catalog.show.delete_note') }}</p>
+                        <x-admin.button tone="danger" icon="trash" class="self-start" wire:click="askDelete('{{ $row['family'] }}', {{ $row['id'] }})">{{ __('admin-catalog.show.delete') }}</x-admin.button>
                     </div>
                 </x-admin.card>
             @endif

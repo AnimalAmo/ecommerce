@@ -42,7 +42,7 @@ class AdminAuthService
             $minutes = (int) ceil(RateLimiter::availableIn($key) / 60);
 
             throw ValidationException::withMessages([
-                'email' => "Troppi tentativi. Riprova fra {$minutes} minuti.",
+                'email' => __('admin.auth.errors.throttled', ['minutes' => $minutes]),
             ]);
         }
 
@@ -54,7 +54,7 @@ class AdminAuthService
             RateLimiter::hit($key, self::LOCKOUT_SECONDS);
 
             throw ValidationException::withMessages([
-                'email' => 'Email o password non corretti. Dopo cinque tentativi l\'accesso si blocca per quindici minuti.',
+                'email' => __('admin.auth.errors.failed'),
             ]);
         }
 
@@ -74,7 +74,7 @@ class AdminAuthService
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_RESET_REQUESTS_PER_IP)) {
             throw ValidationException::withMessages([
-                'email' => 'Troppe richieste. Riprova fra un minuto.',
+                'email' => __('admin.auth.errors.reset_throttled'),
             ]);
         }
 

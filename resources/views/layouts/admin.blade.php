@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="robots" content="noindex, nofollow">
-        <title>{{ isset($title) ? $title.' · ' : '' }}Amministrazione AnimalAmo</title>
+        <title>{{ isset($title) ? $title.' · ' : '' }}{{ __('admin.brand') }}</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
@@ -25,17 +25,17 @@
             >
                 <div class="flex h-[68px] items-center justify-between gap-2 border-b border-gray-150 bg-white px-5">
                     <a href="{{ route('admin.home') }}" wire:navigate>
-                        <img src="{{ asset('img/logo.svg') }}" alt="AnimalAmo" class="block h-auto w-24">
+                        <img src="{{ asset('img/logo.svg') }}" alt="{{ __('admin.logo_alt') }}" class="block h-auto w-24">
                     </a>
-                    <flux:button variant="ghost" size="sm" icon="x-mark" x-on:click="drawer = false" aria-label="Chiudi menu" class="lg:!hidden" />
+                    <flux:button variant="ghost" size="sm" icon="x-mark" x-on:click="drawer = false" aria-label="{{ __('admin.layout.close_menu') }}" class="lg:!hidden" />
                 </div>
 
                 <div class="flex items-center gap-[7px] px-5 pt-[18px] pb-3.5 text-brand-cyan">
                     <flux:icon.animal class="size-[15px] shrink-0" />
-                    <span class="text-[10.5px] font-bold tracking-[.11em] uppercase">Amministrazione</span>
+                    <span class="text-[10.5px] font-bold tracking-[.11em] uppercase">{{ __('admin.section') }}</span>
                 </div>
 
-                <nav class="flex-1 overflow-y-auto px-3.5 pb-5" aria-label="Pannello">
+                <nav class="flex-1 overflow-y-auto px-3.5 pb-5" aria-label="{{ __('admin.layout.nav_label') }}">
                     @foreach ($navigation as $group)
                         <div class="mb-4">
                             <p class="mb-[7px] px-2 text-[10px] font-bold tracking-[.11em] text-admin-rail-label uppercase">{{ $group['label'] }}</p>
@@ -70,12 +70,12 @@
                 <div class="flex flex-col gap-3.5 border-t border-admin-rail-line px-5 py-4">
                     <a href="{{ route('home') }}" target="_blank" rel="noopener" class="flex items-center gap-2 text-[13px] font-semibold text-admin-rail-text hover:text-brand-cyan">
                         <flux:icon.arrow-top-right-on-square class="size-[15px] shrink-0" />
-                        Vai al sito pubblico
+                        {{ __('admin.layout.public_site') }}
                     </a>
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf
                         <flux:button type="submit" variant="ghost" size="sm" icon="x-mark" class="!h-auto !px-0 !text-[13px] !font-semibold !text-admin-rail-muted hover:!bg-transparent hover:!text-white">
-                            Esci
+                            {{ __('admin.layout.logout') }}
                         </flux:button>
                     </form>
                 </div>
@@ -85,7 +85,7 @@
 
             <div class="flex min-w-0 flex-1 flex-col">
                 <header class="sticky top-0 z-20 flex h-[68px] items-center gap-3.5 border-b border-gray-150 bg-white px-[clamp(16px,2.2vw,28px)]">
-                    <flux:button variant="outline" size="sm" icon="bars-3" x-on:click="drawer = true" aria-label="Apri menu" class="lg:!hidden" />
+                    <flux:button variant="outline" size="sm" icon="bars-3" x-on:click="drawer = true" aria-label="{{ __('admin.layout.open_menu') }}" class="lg:!hidden" />
 
                     <form method="GET" action="{{ route('admin.search') }}" class="min-w-0 max-w-[420px] flex-1" role="search">
                         <flux:input
@@ -93,8 +93,8 @@
                             name="q"
                             value="{{ request()->routeIs('admin.search') ? request('q') : '' }}"
                             icon="magnifying-glass"
-                            placeholder="Cerca schede, iscritti, ordini…"
-                            aria-label="Cerca nel pannello"
+                            :placeholder="__('admin.layout.search_placeholder')"
+                            :aria-label="__('admin.layout.search_label')"
                         />
                     </form>
 

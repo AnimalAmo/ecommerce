@@ -135,7 +135,7 @@ class CatalogAdmin
         $user = $item->user;
 
         if ($user === null) {
-            return 'AnimalAmo';
+            return __('admin-catalog.platform');
         }
 
         return $user->partnerProfile?->business_name ?: $user->name;
@@ -215,9 +215,7 @@ class CatalogAdmin
             return null;
         }
 
-        return $future === 1
-            ? 'Questa scheda ha 1 prenotazione futura: la cancellazione è bloccata finché non si conclude. Puoi sospenderla.'
-            : "Questa scheda ha {$future} prenotazioni future: la cancellazione è bloccata finché non si concludono. Puoi sospenderla.";
+        return trans_choice('admin-catalog.blocker', $future);
     }
 
     /**

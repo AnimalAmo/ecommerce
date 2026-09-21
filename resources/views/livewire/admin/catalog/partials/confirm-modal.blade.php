@@ -14,7 +14,7 @@
 
             <div class="mt-6 flex flex-wrap justify-end gap-2.5">
                 <flux:modal.close>
-                    <x-admin.button>Annulla</x-admin.button>
+                    <x-admin.button>{{ __('admin.actions.cancel') }}</x-admin.button>
                 </flux:modal.close>
                 <x-admin.button
                     :tone="$confirming['action'] === 'delete' ? 'danger' : 'primary'"

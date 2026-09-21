@@ -59,11 +59,11 @@ class CatalogIndex extends Component
             'totals' => $totals,
             'partners' => $catalog->partnerOptions(),
             'regions' => Region::query()->orderBy('name')->pluck('name', 'id'),
-            'families' => CatalogPresenter::FAMILY_LABELS,
-            'statuses' => collect(CatalogPresenter::STATUS_BADGES)->map(fn (array $badge) => $badge[0]),
+            'families' => CatalogPresenter::familyLabels(),
+            'statuses' => CatalogPresenter::statusLabels(),
             'exportUrl' => route('admin.catalog.export', array_filter($this->filters())),
         ])
             ->layout('layouts::admin')
-            ->title('Catalogo');
+            ->title(__('admin-catalog.index.title'));
     }
 }

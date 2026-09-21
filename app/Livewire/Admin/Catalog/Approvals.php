@@ -21,7 +21,7 @@ class Approvals extends Component
         $item = $catalog->find($family, $id);
         $catalog->approve($item);
 
-        Flux::toast(text: '«'.$catalog->name($item).'» è pubblicata. Il partner riceve una mail.', variant: 'success');
+        Flux::toast(text: __('admin-catalog.approvals.approved', ['name' => $catalog->name($item)]), variant: 'success');
     }
 
     public function askChanges(string $family, int $id, CatalogAdmin $catalog): void
@@ -38,8 +38,8 @@ class Approvals extends Component
         $this->validate(
             ['note' => ['required', 'string', 'min:10', 'max:2000']],
             [
-                'note.required' => 'Scrivi al partner cosa va cambiato.',
-                'note.min' => 'Qualche parola in più: il partner deve capire cosa sistemare.',
+                'note.required' => __('admin-catalog.validation.note_required'),
+                'note.min' => __('admin-catalog.validation.note_min'),
             ],
         );
 
@@ -47,7 +47,7 @@ class Approvals extends Component
         $catalog->requestChanges($item, trim($this->note));
 
         Flux::modal('request-changes')->close();
-        Flux::toast(text: 'Richiesta inviata al partner.', variant: 'success');
+        Flux::toast(text: __('admin-catalog.approvals.changes_sent'), variant: 'success');
 
         $this->reset('changing', 'note');
     }
@@ -65,24 +65,24 @@ class Approvals extends Component
             'moderation' => (bool) config('admin.moderation'),
         ])
             ->layout('layouts::admin')
-            ->title('Schede da approvare');
+            ->title(__('admin-catalog.approvals.title'));
     }
 
     /** @return list<array{label: string, value: string}> */
     private function facts(Model $item, CatalogPresenter $presenter): array
     {
-        $facts = [['label' => 'Prezzo', 'value' => $presenter->price($item)]];
+        $facts = [['label' => __('admin-catalog.approvals.facts.price'), 'value' => $presenter->price($item)]];
 
         if (isset($item->animal_supplement_cents) && $item->animal_supplement_cents > 0) {
-            $facts[] = ['label' => 'Supplemento animale', 'value' => Format::money((int) $item->animal_supplement_cents)];
+            $facts[] = ['label' => __('admin-catalog.approvals.facts.supplement'), 'value' => Format::money((int) $item->animal_supplement_cents)];
         }
 
         if (isset($item->validity_months) && $item->validity_months) {
-            $facts[] = ['label' => 'Validità', 'value' => $item->validity_months.' mesi'];
+            $facts[] = ['label' => __('admin-catalog.approvals.facts.validity'), 'value' => trans_choice('admin-catalog.approvals.facts.validity_value', (int) $item->validity_months)];
         }
 
         if (isset($item->cancellation_policy_days) && $item->cancellation_policy_days !== null) {
-            $facts[] = ['label' => 'Cancellazione gratuita', 'value' => $item->cancellation_policy_days.' giorni prima'];
+            $facts[] = ['label' => __('admin-catalog.approvals.facts.cancellation'), 'value' => trans_choice('admin-catalog.approvals.facts.cancellation_value', (int) $item->cancellation_policy_days)];
         }
 
         return $facts;

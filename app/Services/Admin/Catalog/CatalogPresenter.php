@@ -14,20 +14,29 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CatalogPresenter
 {
-    /** Badge di stato: etichetta e tono di x-admin.badge. */
-    public const STATUS_BADGES = [
-        CatalogAdmin::STATUS_PUBLISHED => ['Pubblicata', 'success'],
-        CatalogAdmin::STATUS_SUSPENDED => ['Sospesa', 'muted'],
-        CatalogAdmin::STATUS_PENDING => ['In attesa', 'warning'],
-        CatalogAdmin::STATUS_CHANGES => ['Modifiche chieste', 'pink'],
+    /** Tono di x-admin.badge per ogni stato; le etichette sono in lang/it/admin-catalog.php. */
+    public const STATUS_TONES = [
+        CatalogAdmin::STATUS_PUBLISHED => 'success',
+        CatalogAdmin::STATUS_SUSPENDED => 'muted',
+        CatalogAdmin::STATUS_PENDING => 'warning',
+        CatalogAdmin::STATUS_CHANGES => 'pink',
     ];
 
-    /** Famiglie per il filtro "Tutti i tipi". */
-    public const FAMILY_LABELS = [
-        'structure' => 'Strutture',
-        'event' => 'Attività ed eventi',
-        'smartbox_package' => 'Smartbox',
-    ];
+    /** @return array<string, string> stato => etichetta, nell'ordine del filtro */
+    public static function statusLabels(): array
+    {
+        return collect(self::STATUS_TONES)
+            ->mapWithKeys(fn (string $tone, string $status) => [$status => __("admin-catalog.status.{$status}")])
+            ->all();
+    }
+
+    /** @return array<string, string> famiglia => etichetta, per il filtro "Tutti i tipi" */
+    public static function familyLabels(): array
+    {
+        return collect(CatalogAdmin::FAMILIES)
+            ->mapWithKeys(fn (array $family, string $key) => [$key => __("admin-catalog.families.{$key}")])
+            ->all();
+    }
 
     public function __construct(private readonly CatalogAdmin $catalog) {}
 
@@ -37,7 +46,6 @@ class CatalogPresenter
     public function row(Model $item): array
     {
         $status = $this->catalog->status($item);
-        [$statusLabel, $statusTone] = self::STATUS_BADGES[$status];
         $family = $this->catalog->family($item);
 
         return [
@@ -45,7 +53,7 @@ class CatalogPresenter
             'id' => (int) $item->getKey(),
             'key' => $family.'-'.$item->getKey(),
             'name' => $this->catalog->name($item),
-            'type' => $item->type?->label() ?? self::FAMILY_LABELS[$family],
+            'type' => $item->type?->label() ?? __("admin-catalog.families.{$family}"),
             'typeTone' => match ($family) {
                 'structure' => 'info',
                 'event' => 'pink',
@@ -56,8 +64,8 @@ class CatalogPresenter
             'region' => $this->catalog->regionName($item),
             'price' => $this->price($item),
             'status' => $status,
-            'statusLabel' => $statusLabel,
-            'statusTone' => $statusTone,
+            'statusLabel' => __("admin-catalog.status.{$status}"),
+            'statusTone' => self::STATUS_TONES[$status],
             'img' => $item->imageUrl(),
             'suspended' => $item->suspended_at !== null,
             'url' => route('admin.catalog.show', ['type' => $family, 'id' => $item->getKey()]),
@@ -84,18 +92,18 @@ class CatalogPresenter
     {
         if ($item instanceof Event) {
             return $item->is_free || $item->price_cents === null
-                ? 'Gratis'
-                : Format::money((int) $item->price_cents).' / persona';
+                ? __('admin-catalog.price.free')
+                : __('admin-catalog.price.per_person', ['amount' => Format::money((int) $item->price_cents)]);
         }
 
         $cents = (int) ($item->price_cents ?? 0);
 
         if ($cents === 0) {
-            return '—';
+            return __('admin.none');
         }
 
         return $item instanceof Structure
-            ? Format::money($cents).' / notte'
+            ? __('admin-catalog.price.per_night', ['amount' => Format::money($cents)])
             : Format::money($cents);
     }
 }
