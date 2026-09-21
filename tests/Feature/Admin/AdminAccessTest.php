@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Event\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,29 @@ class AdminAccessTest extends TestCase
     {
         $this->assertSame(url('/admin'), route('admin.home'));
         $this->assertSame('admin', Route::getRoutes()->getByName('admin.home')->getPrefix());
+    }
+
+    public function test_panel_addresses_are_in_english(): void
+    {
+        // Richiesta di Matteo del 21/09/2026: interfaccia in italiano, indirizzi in inglese.
+        $this->assertSame(url('/admin/login'), route('admin.login'));
+        $this->assertSame(url('/admin/reset-password/abc'), route('admin.password.reset', ['token' => 'abc']));
+        $this->assertSame(url('/admin/catalog/structure/7'), route('admin.catalog.show', ['type' => 'structure', 'id' => 7]));
+        $this->assertSame(url('/admin/users/export'), route('admin.users.export'));
+        $this->assertSame(url('/admin/inbox'), route('admin.inbox'));
+        $this->assertSame(url('/admin/payouts'), route('admin.payouts'));
+    }
+
+    public function test_list_filters_are_read_from_english_query_strings(): void
+    {
+        $this->actingAsSuperadmin();
+        Event::factory()->create(['title' => ['it' => 'Puppy Yoga'], 'suspended_at' => now()]);
+        Event::factory()->create(['title' => ['it' => 'Dog Trekking']]);
+
+        $this->get('/admin/catalog?status=suspended&type=event')
+            ->assertOk()
+            ->assertSee('Puppy Yoga')
+            ->assertDontSee('Dog Trekking');
     }
 
     public function test_the_layout_shows_the_navigation_of_the_design(): void

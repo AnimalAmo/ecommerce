@@ -19,7 +19,7 @@ class FaqIndex extends Component
 {
     public const TABS = ['platform', 'products'];
 
-    #[Url(as: 'vista', except: 'platform')]
+    #[Url(except: 'platform')]
     public string $tab = 'platform';
 
     /** Modale di scrittura: null = nuova domanda. */

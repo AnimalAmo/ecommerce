@@ -31,52 +31,53 @@ use Illuminate\Support\Facades\Route;
 
 /*
 | Pannello di amministrazione (prefisso /admin, nomi admin.*), registrato in
-| bootstrap/app.php fuori dal gruppo localizzato: solo italiano.
+| bootstrap/app.php fuori dal gruppo localizzato. Path in inglese, interfaccia
+| solo in italiano.
 */
 
 // Accesso: pubblico, il token nell'URL di reset è la sola credenziale.
-Route::get('accesso', Login::class)->name('login');
-Route::get('password-dimenticata', ForgotPassword::class)->name('password.request');
-Route::get('reimposta-password/{token}', ResetPassword::class)->name('password.reset');
+Route::get('login', Login::class)->name('login');
+Route::get('forgot-password', ForgotPassword::class)->name('password.request');
+Route::get('reset-password/{token}', ResetPassword::class)->name('password.reset');
 
 Route::middleware(['auth', 'superadmin'])->group(function () {
-    Route::post('esci', LogoutController::class)->name('logout');
+    Route::post('logout', LogoutController::class)->name('logout');
 
     Route::get('/', Home::class)->name('home');
-    Route::get('cerca', Search::class)->name('search');
+    Route::get('search', Search::class)->name('search');
 
     // Catalogo
-    Route::get('catalogo', CatalogIndex::class)->name('catalog.index');
-    Route::get('catalogo/esporta', CatalogExportController::class)->name('catalog.export');
-    Route::get('catalogo/{type}/{id}', CatalogShow::class)
+    Route::get('catalog', CatalogIndex::class)->name('catalog.index');
+    Route::get('catalog/export', CatalogExportController::class)->name('catalog.export');
+    Route::get('catalog/{type}/{id}', CatalogShow::class)
         ->whereIn('type', ['structure', 'event', 'smartbox_package'])
         ->whereNumber('id')
         ->name('catalog.show');
-    Route::get('da-approvare', Approvals::class)->name('approvals');
-    Route::get('recensioni', ReviewIndex::class)->name('reviews');
+    Route::get('approvals', Approvals::class)->name('approvals');
+    Route::get('reviews', ReviewIndex::class)->name('reviews');
 
     // Contenuti
-    Route::get('pagine', PageIndex::class)->name('pages.index');
-    Route::get('pagine/nuova', PageEdit::class)->name('pages.create');
-    Route::get('pagine/sito/{section}', SitePageEdit::class)->name('pages.site');
-    Route::get('pagine/{page}', PageEdit::class)->whereNumber('page')->name('pages.edit');
+    Route::get('pages', PageIndex::class)->name('pages.index');
+    Route::get('pages/new', PageEdit::class)->name('pages.create');
+    Route::get('pages/site/{section}', SitePageEdit::class)->name('pages.site');
+    Route::get('pages/{page}', PageEdit::class)->whereNumber('page')->name('pages.edit');
     Route::get('animal-times', ArticleIndex::class)->name('articles.index');
-    Route::get('animal-times/nuovo', ArticleEdit::class)->name('articles.create');
+    Route::get('animal-times/new', ArticleEdit::class)->name('articles.create');
     Route::get('animal-times/{article}', ArticleEdit::class)->whereNumber('article')->name('articles.edit');
-    Route::get('domande-frequenti', FaqIndex::class)->name('faqs');
+    Route::get('faqs', FaqIndex::class)->name('faqs');
     Route::get('community', CommunityIndex::class)->name('community');
 
     // Persone
-    Route::get('iscritti', UserIndex::class)->name('users.index');
-    Route::get('iscritti/esporta', UserExportController::class)->name('users.export');
-    Route::get('iscritti/{user}', UserShow::class)->whereNumber('user')->name('users.show');
-    Route::get('contatti', Inbox::class)->name('inbox');
+    Route::get('users', UserIndex::class)->name('users.index');
+    Route::get('users/export', UserExportController::class)->name('users.export');
+    Route::get('users/{user}', UserShow::class)->whereNumber('user')->name('users.show');
+    Route::get('inbox', Inbox::class)->name('inbox');
     Route::get('newsletter', NewsletterIndex::class)->name('newsletter.index');
-    Route::get('newsletter/esporta', NewsletterExportController::class)->name('newsletter.export');
-    Route::get('newsletter/nuova', CampaignEdit::class)->name('newsletter.create');
+    Route::get('newsletter/export', NewsletterExportController::class)->name('newsletter.export');
+    Route::get('newsletter/new', CampaignEdit::class)->name('newsletter.create');
     Route::get('newsletter/{campaign}', CampaignEdit::class)->whereNumber('campaign')->name('newsletter.edit');
 
     // Denaro
-    Route::get('incassi', Payouts::class)->name('payouts');
-    Route::get('incassi/esporta', PayoutExportController::class)->name('payouts.export');
+    Route::get('payouts', Payouts::class)->name('payouts');
+    Route::get('payouts/export', PayoutExportController::class)->name('payouts.export');
 });

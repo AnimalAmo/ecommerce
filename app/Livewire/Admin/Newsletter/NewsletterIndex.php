@@ -23,13 +23,13 @@ class NewsletterIndex extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
-    #[Url(as: 'stato', except: '')]
+    #[Url(except: '')]
     public string $status = '';
 
-    #[Url(as: 'origine', except: '')]
+    #[Url(except: '')]
     public string $source = '';
 
-    #[Url(as: 'lingua', except: '')]
+    #[Url(except: '')]
     public string $locale = '';
 
     /** Iscritto di cui si guarda la prova o che si sta disiscrivendo. */

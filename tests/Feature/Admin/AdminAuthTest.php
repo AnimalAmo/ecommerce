@@ -115,7 +115,7 @@ class AdminAuthTest extends TestCase
             ->assertSet('sent', true)
             ->assertSee('Controlla la posta');
 
-        Mail::assertSent(ResetPasswordMail::class, fn (ResetPasswordMail $mail) => str_contains($mail->link, '/admin/reimposta-password/'));
+        Mail::assertSent(ResetPasswordMail::class, fn (ResetPasswordMail $mail) => str_contains($mail->link, '/admin/reset-password/'));
     }
 
     public function test_no_mail_leaves_for_a_non_admin_but_the_answer_is_the_same(): void

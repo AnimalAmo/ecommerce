@@ -16,10 +16,10 @@ class PageIndex extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
-    #[Url(as: 'tipo', except: '')]
+    #[Url(as: 'type', except: '')]
     public string $kind = '';
 
-    #[Url(as: 'stato', except: '')]
+    #[Url(as: 'status', except: '')]
     public string $state = '';
 
     public function render(PageService $pages)

@@ -177,7 +177,7 @@ class CatalogAdminTest extends TestCase
 
     public function test_an_unknown_family_is_a_404(): void
     {
-        $this->get('/admin/catalogo/order/1')->assertNotFound();
+        $this->get('/admin/catalog/order/1')->assertNotFound();
     }
 
     public function test_export_is_a_csv_excel_can_open(): void

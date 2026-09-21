@@ -20,10 +20,10 @@ class ArticleIndex extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
-    #[Url(as: 'stato', except: '')]
+    #[Url(except: '')]
     public string $status = '';
 
-    #[Url(as: 'categoria', except: '')]
+    #[Url(except: '')]
     public string $category = '';
 
     /** Articolo di cui si sta confermando l'eliminazione. */

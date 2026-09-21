@@ -20,13 +20,13 @@ class CatalogIndex extends Component
     #[Url(except: '')]
     public string $partner = '';
 
-    #[Url(as: 'tipo', except: '')]
+    #[Url(as: 'type', except: '')]
     public string $family = '';
 
-    #[Url(as: 'regione', except: '')]
+    #[Url(except: '')]
     public string $region = '';
 
-    #[Url(as: 'stato', except: '')]
+    #[Url(except: '')]
     public string $status = '';
 
     public function updated(string $property): void

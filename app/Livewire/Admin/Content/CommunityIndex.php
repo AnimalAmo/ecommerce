@@ -20,7 +20,7 @@ class CommunityIndex extends Component
 {
     use WithPagination;
 
-    #[Url(as: 'vista', except: CommunityModerationService::FLAGGED)]
+    #[Url(except: CommunityModerationService::FLAGGED)]
     public string $tab = CommunityModerationService::FLAGGED;
 
     /** @var array{action: string, id: int}|null post o risposta in attesa di conferma */

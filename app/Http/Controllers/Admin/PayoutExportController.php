@@ -23,7 +23,7 @@ class PayoutExportController
 {
     public function __invoke(Request $request, PayoutLedger $ledger): StreamedResponse
     {
-        $key = $request->query('periodo');
+        $key = $request->query('period');
         $period = Period::fromKey(is_string($key) ? $key : null);
 
         $rows = $ledger->ledgerFor($period)

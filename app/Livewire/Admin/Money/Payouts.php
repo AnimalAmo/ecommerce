@@ -12,7 +12,7 @@ use Livewire\Component;
 class Payouts extends Component
 {
     /** '2026-09' o '12m'; normalizzato, così l'URL condiviso dice sempre il periodo vero. */
-    #[Url(as: 'periodo')]
+    #[Url]
     public string $period = '';
 
     public function mount(): void
@@ -38,7 +38,7 @@ class Payouts extends Component
             'stuck' => $ledger->stuck(),
             'stripe' => $stripe,
             'maxAttempts' => (int) config('commerce.payout.max_release_attempts'),
-            'exportUrl' => route('admin.payouts.export', ['periodo' => $period->key]),
+            'exportUrl' => route('admin.payouts.export', ['period' => $period->key]),
         ])
             ->layout('layouts::admin')
             ->title(__('admin-money.title'));

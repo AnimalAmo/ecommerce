@@ -92,7 +92,7 @@ class PayoutsPageTest extends TestCase
             ->assertSee('Emesso')
             ->assertSee('In maturazione')
             ->assertSee('https://dashboard.stripe.com/connect/accounts/acct_lamasu', false)
-            ->assertSee(route('admin.payouts.export', ['periodo' => '2026-09']), false);
+            ->assertSee(route('admin.payouts.export', ['period' => '2026-09']), false);
     }
 
     public function test_the_stripe_links_point_to_test_mode_with_a_test_key(): void
@@ -137,7 +137,7 @@ class PayoutsPageTest extends TestCase
             'net_reconciled_at' => null,
         ]);
 
-        $this->get(route('admin.payouts', ['periodo' => '2026-09']))
+        $this->get(route('admin.payouts', ['period' => '2026-09']))
             ->assertSee('In attesa')
             ->assertSee('aspetta il netto confermato da Stripe');
     }
@@ -172,7 +172,7 @@ class PayoutsPageTest extends TestCase
         // Agosto: fuori.
         $this->sale('2026-08-30 10:00', $partner, 9900, 990, 8700);
 
-        $response = $this->get(route('admin.payouts.export', ['periodo' => '2026-09']));
+        $response = $this->get(route('admin.payouts.export', ['period' => '2026-09']));
 
         $response->assertOk();
         $this->assertStringContainsString('incassi-2026-09.csv', (string) $response->headers->get('Content-Disposition'));
