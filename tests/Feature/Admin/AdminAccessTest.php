@@ -84,8 +84,15 @@ class AdminAccessTest extends TestCase
 
     public function test_the_panel_lives_outside_the_language_prefix(): void
     {
-        $this->assertSame(url('/admin'), route('admin.home'));
+        $this->assertSame(url('/admin/dashboard'), route('admin.home'));
         $this->assertSame('admin', Route::getRoutes()->getByName('admin.home')->getPrefix());
+    }
+
+    public function test_the_bare_panel_address_leads_to_the_dashboard(): void
+    {
+        $this->actingAsSuperadmin();
+
+        $this->get('/admin')->assertRedirect(route('admin.home'));
     }
 
     public function test_panel_addresses_are_in_english(): void
@@ -117,7 +124,8 @@ class AdminAccessTest extends TestCase
 
         $this->get(route('admin.home'))
             ->assertOk()
-            ->assertSeeInOrder(['Panoramica', 'Catalogo', 'Contenuti', 'Persone', 'Denaro'])
+            ->assertSeeInOrder(['Dashboard', 'Catalogo', 'Contenuti', 'Persone', 'Denaro'])
+            ->assertDontSee('Panoramica')
             ->assertSee('Contatti e candidature')
             ->assertSee('Vai al sito pubblico')
             ->assertSee('SR');

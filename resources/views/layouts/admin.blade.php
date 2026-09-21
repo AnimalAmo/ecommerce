@@ -38,7 +38,9 @@
                 <nav class="flex-1 overflow-y-auto px-3.5 pb-5" aria-label="{{ __('admin.layout.nav_label') }}">
                     @foreach ($navigation as $group)
                         <div class="mb-4">
-                            <p class="mb-[7px] px-2 text-[10px] font-bold tracking-[.11em] text-admin-rail-label uppercase">{{ $group['label'] }}</p>
+                            @if ($group['label'])
+                                <p class="mb-[7px] px-2 text-[10px] font-bold tracking-[.11em] text-admin-rail-label uppercase">{{ $group['label'] }}</p>
+                            @endif
                             <div class="flex flex-col gap-0.5">
                                 @foreach ($group['items'] as $item)
                                     @php $active = request()->routeIs(...$item['active']); @endphp
@@ -52,7 +54,12 @@
                                             'text-admin-rail-text hover:bg-admin-rail-active/60 hover:text-white' => ! $active,
                                         ])
                                     >
-                                        <span class="truncate">{{ $item['label'] }}</span>
+                                        <span class="flex min-w-0 items-center gap-2.5">
+                                            @if ($item['icon'])
+                                                <flux:icon :icon="$item['icon']" class="size-[17px] shrink-0" />
+                                            @endif
+                                            <span class="truncate">{{ $item['label'] }}</span>
+                                        </span>
                                         @if ($item['count'])
                                             <span @class([
                                                 'inline-flex h-[19px] min-w-[21px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold',

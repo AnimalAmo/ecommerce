@@ -43,7 +43,8 @@ Route::get('reset-password/{token}', ResetPassword::class)->name('password.reset
 Route::middleware(['auth', 'superadmin'])->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
 
-    Route::get('/', Home::class)->name('home');
+    Route::redirect('/', '/admin/dashboard');
+    Route::get('dashboard', Home::class)->name('home');
     Route::get('search', Search::class)->name('search');
 
     // Catalogo

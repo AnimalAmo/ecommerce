@@ -8,7 +8,7 @@
 
 return [
     'home' => [
-        'title' => 'Home pannello',
+        'title' => 'Dashboard',
 
         // Il saluto cambia con l'ora italiana; il nome si aggiunge in coda solo se c'è.
         'greeting' => [

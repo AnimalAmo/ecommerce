@@ -25,13 +25,12 @@ return [
 
     'nav' => [
         'groups' => [
-            'overview' => 'Panoramica',
             'catalog' => 'Catalogo',
             'content' => 'Contenuti',
             'people' => 'Persone',
             'money' => 'Denaro',
         ],
-        'home' => 'Home pannello',
+        'home' => 'Dashboard',
         'catalog' => 'Schede pubblicate',
         'approvals' => 'Da approvare',
         'reviews' => 'Recensioni',

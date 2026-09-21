@@ -9,20 +9,21 @@ use App\Services\Admin\AdminCounters;
  *
  * `active` sono i pattern di nome rotta che accendono la voce: la scheda di
  * una struttura tiene acceso "Schede pubblicate", l'editor di un articolo
- * tiene acceso "Animal Times".
+ * tiene acceso "Animal Times". Il primo gruppo non ha etichetta: è la sola
+ * Dashboard, con la sua icona.
  */
 class AdminNavigation
 {
     public function __construct(private readonly AdminCounters $counters) {}
 
     /**
-     * @return list<array{label: string, items: list<array{label: string, route: string, active: list<string>, count: int|null}>}>
+     * @return list<array{label: string|null, items: list<array{label: string, route: string, active: list<string>, count: int|null, icon: string|null}>}>
      */
     public function groups(): array
     {
         return [
-            ['label' => __('admin.nav.groups.overview'), 'items' => [
-                $this->item(__('admin.nav.home'), 'admin.home', ['admin.home', 'admin.search']),
+            ['label' => null, 'items' => [
+                $this->item(__('admin.nav.home'), 'admin.home', ['admin.home', 'admin.search'], icon: 'dashboard'),
             ]],
             ['label' => __('admin.nav.groups.catalog'), 'items' => [
                 $this->item(__('admin.nav.catalog'), 'admin.catalog.index', ['admin.catalog.*']),
@@ -48,9 +49,9 @@ class AdminNavigation
 
     /**
      * @param  list<string>  $active
-     * @return array{label: string, route: string, active: list<string>, count: int|null}
+     * @return array{label: string, route: string, active: list<string>, count: int|null, icon: string|null}
      */
-    private function item(string $label, string $route, array $active, ?int $count = null): array
+    private function item(string $label, string $route, array $active, ?int $count = null, ?string $icon = null): array
     {
         return [
             'label' => $label,
@@ -58,6 +59,7 @@ class AdminNavigation
             'active' => $active,
             // Zero non si mostra: il badge dice "c'è qualcosa da fare".
             'count' => $count ?: null,
+            'icon' => $icon,
         ];
     }
 }
