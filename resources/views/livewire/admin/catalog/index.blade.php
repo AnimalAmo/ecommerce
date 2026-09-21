@@ -55,7 +55,7 @@
             <x-admin.empty>{{ __('admin-catalog.index.empty') }}</x-admin.empty>
         @else
             <div class="overflow-x-auto">
-                <flux:table class="min-w-[940px]">
+                <flux:table class="min-w-[max(100%,940px)]">
                     <flux:table.columns>
                         <flux:table.column class="!pl-5">{{ __('admin-catalog.index.columns.item') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-catalog.index.columns.partner') }}</flux:table.column>

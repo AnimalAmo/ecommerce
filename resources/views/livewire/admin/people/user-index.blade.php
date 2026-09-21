@@ -51,23 +51,23 @@
         @if ($users->isEmpty())
             <x-admin.empty>{{ __('admin-people.users.empty') }}</x-admin.empty>
         @else
-            <div class="px-5 pb-2">
-                <flux:table :paginate="$users" class="min-w-[900px]">
+            <div class="overflow-x-auto">
+                <flux:table class="min-w-[max(100%,900px)]">
                     <flux:table.columns>
-                        <flux:table.column :class="$th" sortable :sorted="$sort === 'name'" :direction="$dir" wire:click="sortBy('name')">{{ __('admin-people.users.col_user') }}</flux:table.column>
+                        <flux:table.column :class="$th.' !pl-5'" sortable :sorted="$sort === 'name'" :direction="$dir" wire:click="sortBy('name')">{{ __('admin-people.users.col_user') }}</flux:table.column>
                         <flux:table.column :class="$th" sortable :sorted="$sort === 'created_at'" :direction="$dir" wire:click="sortBy('created_at')">{{ __('admin-people.users.col_since') }}</flux:table.column>
                         <flux:table.column :class="$th">{{ __('admin-people.users.col_newsletter') }}</flux:table.column>
                         <flux:table.column :class="$th" align="end" sortable :sorted="$sort === 'orders'" :direction="$dir" wire:click="sortBy('orders')">{{ __('admin-people.users.col_orders') }}</flux:table.column>
                         <flux:table.column :class="$th" align="end" sortable :sorted="$sort === 'spent'" :direction="$dir" wire:click="sortBy('spent')">{{ __('admin-people.users.col_spent') }}</flux:table.column>
                         <flux:table.column :class="$th">{{ __('admin-people.users.col_status') }}</flux:table.column>
-                        <flux:table.column :class="$th" align="end">{{ __('admin-people.users.col_actions') }}</flux:table.column>
+                        <flux:table.column :class="$th.' !pr-5'" align="end">{{ __('admin-people.users.col_actions') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
                         @foreach ($users as $u)
                             @php $isPartner = $u->roles->contains('name', 'partner'); @endphp
                             <flux:table.row :key="$u->id">
-                                <flux:table.cell>
+                                <flux:table.cell class="!pl-5">
                                     <a href="{{ route('admin.users.show', $u) }}" wire:navigate class="flex items-center gap-3">
                                         <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-cyan-bg text-[12.5px] font-bold text-admin-teal">{{ $initials($u) }}</span>
                                         <span class="flex min-w-0 flex-col gap-0.5">
@@ -90,7 +90,7 @@
                                     @php $state = UserDirectory::status($u); @endphp
                                     <x-admin.badge :tone="['active' => 'info', 'inactive' => 'warning', 'anonymized' => 'muted'][$state]">{{ __('admin-people.users.status.'.$state) }}</x-admin.badge>
                                 </flux:table.cell>
-                                <flux:table.cell align="end">
+                                <flux:table.cell align="end" class="!pr-5">
                                     <div class="flex items-center justify-end gap-2">
                                         <x-admin.icon-action tone="view" icon="eye" :label="__('admin-people.users.open')" :href="route('admin.users.show', $u)" wire:navigate />
                                         @if ($u->anonymized_at === null)
@@ -102,6 +102,10 @@
                         @endforeach
                     </flux:table.rows>
                 </flux:table>
+            </div>
+
+            <div class="px-5 py-3.5">
+                <flux:pagination :paginator="$users" />
             </div>
         @endif
     </x-admin.card>

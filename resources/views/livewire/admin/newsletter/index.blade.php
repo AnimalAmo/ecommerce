@@ -93,7 +93,7 @@
                 <x-admin.empty>{{ $hasFilters ? __('admin-newsletter.subscribers.empty_filtered') : __('admin-newsletter.subscribers.empty') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[420px]">
+                    <flux:table class="min-w-[max(100%,420px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-newsletter.subscribers.col_address') }}</flux:table.column>
                             <flux:table.column>{{ __('admin-newsletter.subscribers.col_consent') }}</flux:table.column>
@@ -139,7 +139,7 @@
                 <x-admin.empty>{{ __('admin-newsletter.campaigns.empty') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[420px]">
+                    <flux:table class="min-w-[max(100%,420px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-newsletter.campaigns.col_subject') }}</flux:table.column>
                             <flux:table.column>{{ __('admin-newsletter.campaigns.col_sent') }}</flux:table.column>

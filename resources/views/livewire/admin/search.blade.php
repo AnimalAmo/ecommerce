@@ -39,7 +39,7 @@
                 <x-admin.empty>{{ __('admin-dashboard.search.catalog.empty') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[640px]">
+                    <flux:table class="min-w-[max(100%,640px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-dashboard.search.catalog.col_item') }}</flux:table.column>
                             <flux:table.column>{{ __('admin-dashboard.search.catalog.col_partner') }}</flux:table.column>
@@ -82,7 +82,7 @@
                 <x-admin.empty>{{ __('admin-dashboard.search.users.empty') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[560px]">
+                    <flux:table class="min-w-[max(100%,560px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-dashboard.search.users.col_user') }}</flux:table.column>
                             <flux:table.column>{{ __('admin-dashboard.search.users.col_role') }}</flux:table.column>
@@ -129,7 +129,7 @@
                 <x-admin.empty>{{ __($searchesOrders ? 'admin-dashboard.search.orders.empty' : 'admin-dashboard.search.orders.empty_no_digits') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[640px]">
+                    <flux:table class="min-w-[max(100%,640px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-dashboard.search.orders.col_order') }}</flux:table.column>
                             <flux:table.column>{{ __('admin-dashboard.search.orders.col_buyer') }}</flux:table.column>

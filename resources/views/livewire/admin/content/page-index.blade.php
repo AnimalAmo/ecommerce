@@ -37,7 +37,7 @@
             <x-admin.empty>{{ __('admin-content.common.no_results') }}</x-admin.empty>
         @else
             <div class="overflow-x-auto">
-                <flux:table class="min-w-[900px]">
+                <flux:table class="min-w-[max(100%,900px)]">
                     <flux:table.columns>
                         <flux:table.column class="!pl-5">{{ __('admin-content.pages.columns.page') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.pages.columns.address') }}</flux:table.column>

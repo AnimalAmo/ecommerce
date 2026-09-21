@@ -33,7 +33,7 @@
             <x-admin.empty>{{ __('admin-content.articles.empty') }}</x-admin.empty>
         @else
             <div class="overflow-x-auto">
-                <flux:table class="min-w-[860px]">
+                <flux:table class="min-w-[max(100%,860px)]">
                     <flux:table.columns>
                         <flux:table.column class="!pl-5">{{ __('admin-content.articles.columns.article') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.articles.columns.category') }}</flux:table.column>

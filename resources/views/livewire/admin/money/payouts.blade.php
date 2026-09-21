@@ -77,7 +77,7 @@
                 <x-admin.empty>{{ __('admin-money.partners.empty') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[460px]">
+                    <flux:table class="min-w-[max(100%,460px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-money.partners.col_partner') }}</flux:table.column>
                             <flux:table.column align="end">{{ __('admin-money.partners.col_gross') }}</flux:table.column>
@@ -116,7 +116,7 @@
                 <x-admin.empty>{{ __('admin-money.transfers.empty') }}</x-admin.empty>
             @else
                 <div class="overflow-x-auto">
-                    <flux:table class="min-w-[440px]">
+                    <flux:table class="min-w-[max(100%,440px)]">
                         <flux:table.columns>
                             <flux:table.column class="!pl-5">{{ __('admin-money.transfers.col_partner') }}</flux:table.column>
                             <flux:table.column>{{ __('admin-money.transfers.col_date') }}</flux:table.column>
