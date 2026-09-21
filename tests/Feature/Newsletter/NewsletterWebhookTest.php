@@ -99,6 +99,19 @@ class NewsletterWebhookTest extends TestCase
         $this->assertTrue($subscriber->fresh()->isConfirmed());
     }
 
+    /** Blocco del mittente o scadenza dei tentativi: l'indirizzo non c'entra. */
+    public function test_a_sender_block_or_an_expired_retry_does_not_suppress_the_address(): void
+    {
+        $blocked = NewsletterSubscriber::factory()->confirmed()->create(['email' => 'gmail@example.com']);
+        $old = NewsletterSubscriber::factory()->confirmed()->create(['email' => 'lento@example.com']);
+
+        $this->postEvent(['event' => 'failed', 'severity' => 'permanent', 'reason' => 'espblock', 'recipient' => 'gmail@example.com'])->assertOk();
+        $this->postEvent(['event' => 'failed', 'severity' => 'permanent', 'reason' => 'old', 'recipient' => 'lento@example.com'])->assertOk();
+
+        $this->assertTrue($blocked->fresh()->isConfirmed());
+        $this->assertTrue($old->fresh()->isConfirmed());
+    }
+
     /** Scarto per lista di Mailgun: il motivo dice quale lista. */
     public function test_a_drop_for_mailgun_unsubscribe_list_is_an_unsubscription_not_a_bounce(): void
     {

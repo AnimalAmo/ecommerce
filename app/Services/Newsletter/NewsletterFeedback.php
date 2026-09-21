@@ -46,11 +46,17 @@ class NewsletterFeedback
      * nemmeno la consegna perché l'indirizzo è già nelle sue liste: lì il
      * motivo dice quale, e un "disiscritto" non è un rimbalzo.
      *
+     * Due motivi non dicono nulla dell'indirizzo e non lo sopprimono:
+     * `espblock` (il provider ha bloccato il mittente, un problema di
+     * reputazione che colpirebbe in blocco indirizzi validi) e `old` (non
+     * consegnata dopo ore di tentativi temporanei).
+     *
      * @param  array<string, mixed>  $event
      */
     private function permanentFailure(array $event): bool
     {
         return match ($event['reason'] ?? null) {
+            'espblock', 'old' => false,
             'suppress-unsubscribe' => $this->unsubscribe($event),
             'suppress-complaint' => $this->suppress($event, NewsletterSubscriber::STATUS_COMPLAINED),
             default => $this->suppress($event, NewsletterSubscriber::STATUS_BOUNCED),
