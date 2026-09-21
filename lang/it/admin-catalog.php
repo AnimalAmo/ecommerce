@@ -1,0 +1,176 @@
+<?php
+
+/*
+| Pannello di amministrazione — catalogo (elenco, scheda, approvazioni).
+| Solo italiano, come tutto il pannello: vedi lang/it/admin.php.
+*/
+
+return [
+    'status' => [
+        'published' => 'Pubblicata',
+        'suspended' => 'Sospesa',
+        'pending' => 'In attesa',
+        'changes_requested' => 'Modifiche chieste',
+    ],
+
+    'families' => [
+        'structure' => 'Strutture',
+        'event' => 'Attività ed eventi',
+        'smartbox_package' => 'Smartbox',
+    ],
+
+    // Scheda senza partner: è del catalogo della piattaforma.
+    'platform' => 'AnimalAmo',
+
+    'price' => [
+        'free' => 'Gratis',
+        'per_person' => ':amount / persona',
+        'per_night' => ':amount / notte',
+    ],
+
+    'index' => [
+        'title' => 'Catalogo',
+        'heading' => 'Catalogo',
+        'sub' => 'Strutture, attività e Smartbox di tutti i partner. :items, :suspended.',
+        'items' => ':count scheda|:count schede',
+        'suspended' => ':count sospesa|:count sospese',
+        'export' => 'Esporta',
+        'search_placeholder' => 'Cerca per nome, luogo o partner',
+        'search_label' => 'Cerca nel catalogo',
+        'partner' => 'Partner',
+        'type' => 'Tipo',
+        'region' => 'Regione',
+        'status' => 'Stato',
+        'all_partners' => 'Tutti i partner',
+        'all_types' => 'Tutti i tipi',
+        'all_regions' => 'Tutte le regioni',
+        'all_statuses' => 'Tutti gli stati',
+        'empty' => 'Nessuna scheda corrisponde ai filtri.',
+        'columns' => [
+            'item' => 'Scheda',
+            'partner' => 'Partner',
+            'type' => 'Tipo',
+            'region' => 'Regione',
+            'price' => 'Prezzo',
+            'status' => 'Stato',
+            'actions' => 'Azioni',
+        ],
+        'open' => 'Apri scheda',
+        'suspend' => 'Sospendi',
+        'reactivate' => 'Riattiva',
+        'delete' => 'Elimina',
+        'paging' => ':shown di :total schede',
+    ],
+
+    'show' => [
+        'back' => 'Torna al catalogo',
+        'meta' => ':partner · :place · pubblicata il :date',
+        'view_on_site' => 'Vedi sul sito',
+        'suspend' => 'Sospendi scheda',
+        'reactivate' => 'Riattiva scheda',
+        'save' => 'Salva modifiche',
+        'changes_heading' => 'Hai chiesto modifiche al partner',
+        'changes_body' => '«:note» — la scheda resta fuori dal sito finché il partner non la ripubblica.',
+        'texts' => 'Testi pubblicati',
+        'lang_it' => 'Italiano',
+        'lang_en' => 'Inglese',
+        'name' => 'Nome della scheda',
+        'name_en_placeholder' => 'Lascia vuoto per mostrare il nome italiano',
+        'description' => 'Descrizione',
+        'description_en_placeholder' => 'Lascia vuoto per mostrare la descrizione italiana',
+        'price_night' => 'Prezzo a notte (€)',
+        'price_person' => 'Prezzo a persona (€)',
+        'price' => 'Prezzo (€)',
+        'price_free_placeholder' => 'Vuoto = gratis',
+        'supplement' => 'Supplemento animale (€)',
+        'region' => 'Regione',
+        'region_none' => 'Nessuna',
+        'cancellation' => 'Cancellazione gratuita (giorni prima)',
+        'draft_price_note' => 'Il prezzo a notte nasce dalle camere inserite dal partner: se il partner ripubblica la scheda, torna al prezzo della sua camera più economica. Nome e descrizione invece restano quelli che salvi qui.',
+        'on_site' => 'Sul sito',
+        'stats' => [
+            'bookings' => 'Prenotazioni totali',
+            'future' => 'Prenotazioni future',
+            'favorites' => 'Nei preferiti',
+            'rating' => 'Valutazione media',
+        ],
+        'blocked_heading' => 'La cancellazione è bloccata',
+        'delete_note' => 'Nessuna prenotazione futura: puoi eliminare la scheda definitivamente. Se vuoi solo toglierla dal sito, sospendila.',
+        'delete' => 'Elimina scheda',
+        'saved' => 'Modifiche salvate. Sono già sul sito.',
+    ],
+
+    'validation' => [
+        'name_required' => 'Il nome in italiano è obbligatorio.',
+        'description_required' => 'La descrizione in italiano è obbligatoria.',
+        'price_format' => 'Scrivi un importo in euro, per esempio 120 o 120,50.',
+        'supplement_format' => 'Scrivi un importo in euro, per esempio 15.',
+        'note_required' => 'Scrivi al partner cosa va cambiato.',
+        'note_min' => 'Qualche parola in più: il partner deve capire cosa sistemare.',
+    ],
+
+    // Cancellazione bloccata da prenotazioni future (CatalogAdmin::deletionBlocker).
+    'blocker' => 'Questa scheda ha :count prenotazione futura: la cancellazione è bloccata finché non si conclude. Puoi sospenderla.|Questa scheda ha :count prenotazioni future: la cancellazione è bloccata finché non si concludono. Puoi sospenderla.',
+
+    'confirm' => [
+        'suspend_title' => 'Sospendere questa scheda?',
+        'suspend_body' => '«:name» sparisce dal sito e dalle ricerche. Carrelli e preferiti restano intatti, gli ordini già fatti si leggono come prima. La riattivi quando vuoi.',
+        'suspend' => 'Sospendi',
+        'reactivate_title' => 'Riattivare questa scheda?',
+        'reactivate_body' => '«:name» torna visibile nel catalogo e ricomincia a ricevere prenotazioni.',
+        'reactivate' => 'Riattiva',
+        'delete_title' => 'Cancellare definitivamente?',
+        'delete_body' => "«:name» verrà rimossa dal database, insieme a preferiti, carrelli e recensioni che la riguardano. Gli ordini già fatti restano leggibili. L'operazione non si può annullare.",
+        'delete' => 'Elimina',
+        'suspend_instead' => 'Sospendi invece',
+        'done_suspend' => '«:name» è sospesa.',
+        'done_reactivate' => '«:name» è di nuovo online.',
+        'done_delete' => '«:name» è stata eliminata.',
+    ],
+
+    'approvals' => [
+        'title' => 'Schede da approvare',
+        'heading' => 'Schede da approvare',
+        'sub_none' => 'Nessuna scheda in attesa.',
+        'sub' => 'Una scheda è in attesa. Finché non la approvi non si vede sul sito.|:count schede sono in attesa. Finché non le approvi non si vedono sul sito.',
+        'on_heading' => "L'approvazione è attiva",
+        'on_body' => 'Le nuove schede dei partner passano da qui prima di andare online: conviene rispondere entro un paio di giorni. Quelle già approvate restano online anche quando il partner le modifica.',
+        'off_heading' => "L'approvazione preventiva è spenta",
+        'off_body' => 'Oggi i partner pubblicano da soli: le nuove schede vanno online appena chiudono il percorso di inserimento. Si accende con :flag, dopo averlo annunciato ai partner.',
+        'sent' => 'inviata :when',
+        'approve' => 'Approva e pubblica',
+        'ask_changes' => 'Chiedi modifiche',
+        'view' => 'Vedi la scheda',
+        'empty' => 'Niente da approvare: tutte le schede dei partner sono già state valutate.',
+        'changes_title' => 'Chiedere modifiche?',
+        'changes_body' => '«:name» resta fuori dal sito. Il partner riceve questo messaggio per mail e torna in attesa quando ripubblica.',
+        'changes_note' => 'Cosa va cambiato',
+        'changes_placeholder' => "Per esempio: le foto sono sfocate, e manca il supplemento per l'animale.",
+        'send' => 'Invia al partner',
+        'approved' => '«:name» è pubblicata. Il partner riceve una mail.',
+        'changes_sent' => 'Richiesta inviata al partner.',
+        'facts' => [
+            'price' => 'Prezzo',
+            'supplement' => 'Supplemento animale',
+            'validity' => 'Validità',
+            'validity_value' => ':count mese|:count mesi',
+            'cancellation' => 'Cancellazione gratuita',
+            'cancellation_value' => ':count giorno prima|:count giorni prima',
+        ],
+    ],
+
+    'export' => [
+        'filename' => 'catalogo-:date.csv',
+        'columns' => [
+            'item' => 'Scheda',
+            'type' => 'Tipo',
+            'partner' => 'Partner',
+            'place' => 'Località',
+            'region' => 'Regione',
+            'price' => 'Prezzo',
+            'status' => 'Stato',
+            'bookings' => 'Prenotazioni',
+            'created' => 'Creata il',
+        ],
+    ],
+];

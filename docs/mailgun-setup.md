@@ -469,7 +469,8 @@ che è quello che i filtri interrogano per primo ora che il `From` è
 
 ### 9.4 Webhook: l'esito reale entra nel progetto
 
-`POST /webhooks/mailgun` (firma HMAC + finestra di 15 minuti sul timestamp)
+`POST /webhooks/mailgun` (firma HMAC + finestra di 15 minuti sul timestamp +
+token accettato una volta sola, in cache)
 scrive su `mail_deliveries`, una riga per messaggio+destinatario aperta da
 `RecordMailDelivery` quando la mail parte.
 
@@ -481,6 +482,14 @@ Senza chiave ogni webhook viene rifiutato con 403: è il default sicuro.
 
 Lettura: `php artisan mail:deliveries --failed --days=30`, che è anche la
 risposta alla domanda «a chi non è arrivata?» finché non esiste un'area admin.
+
+**Newsletter (21 set 2026).** Lo stesso endpoint alimenta la newsletter
+(`NewsletterFeedback`): uno scarto definitivo o una segnalazione di spam, su
+qualunque mail, mettono l'indirizzo nella lista di soppressione della
+newsletter; consegne e aperture delle campagne fanno i numeri del pannello.
+Agli eventi sopra vanno aggiunti `opened` e `unsubscribed`. Se la newsletter
+parte dal suo sottodominio (`NEWSLETTER_MAILER=mailgun-newsletter`), il webhook
+va configurato anche su quel dominio, stesso URL: la signing key è la stessa.
 
 ### 9.5 Cosa resta fuori dal codice
 

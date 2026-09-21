@@ -5,6 +5,7 @@ namespace App\Models\SmartboxPackage;
 use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
+use App\Models\Concerns\HasCatalogModeration;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use Database\Factories\SmartboxPackage\SmartboxPackageFactory;
@@ -16,7 +17,7 @@ use Spatie\Translatable\HasTranslations;
 class SmartboxPackage extends Model
 {
     /** @use HasFactory<SmartboxPackageFactory> */
-    use HasAmenities, HasCatalogImages, HasFactory, HasTranslations;
+    use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasTranslations;
 
     /** SOLO colonne stringa — mai le json (general_info/features): spatie tratterebbe l'array come mappa di locale. */
     public array $translatable = ['title', 'description', 'extended_description'];

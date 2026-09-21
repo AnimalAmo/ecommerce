@@ -31,4 +31,21 @@ class ReviewFactory extends Factory
             'position' => fake()->numberBetween(1, 20),
         ];
     }
+
+    /** Scritta da un cliente e non ancora moderata: fuori dal sito. */
+    public function pending(): static
+    {
+        return $this->state(fn (): array => ['status' => Review::STATUS_PENDING]);
+    }
+
+    /** Nascosta dal pannello: fuori dal sito e dalle medie. */
+    public function hidden(): static
+    {
+        return $this->state(fn (): array => ['status' => Review::STATUS_HIDDEN, 'moderated_at' => now()]);
+    }
+
+    public function flagged(): static
+    {
+        return $this->state(fn (): array => ['flagged_at' => now()]);
+    }
 }

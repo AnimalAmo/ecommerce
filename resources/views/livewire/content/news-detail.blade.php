@@ -14,7 +14,7 @@
             </a>
 
             {{-- Foto hero mobile (XD app: 343x136 mascherata r3, sopra il titolo) --}}
-            <img src="{{ asset($article->heroImage()) }}" alt="{{ $article->titleFor() }}" class="mt-4 h-[136px] w-full rounded-[3px] object-cover lg:hidden">
+            <x-article-cover :article="$article" conversion="hero" class="mt-4 h-[136px] w-full rounded-[3px] object-cover lg:hidden" />
 
             {{-- Titolo articolo (XD: Nunito-Bold 36px nero, frame 709px; app: 18px #0D171A) --}}
             <h1 class="mt-6 max-w-[709px] text-lg font-bold text-[#0D171A] lg:mt-8 lg:text-4xl lg:text-black">{{ $article->titleFor() }}</h1>
@@ -24,7 +24,7 @@
             <div class="mt-2 flex items-start gap-10 lg:mt-4">
                 <div class="article-content min-w-0 max-w-[978px] flex-1">{!! $article->bodyFor() !!}</div>
                 {{-- XD "Gruppo di maschere 12": clip 620x451 r=[4], foto scaleBehavior=fill → object-cover --}}
-                <img src="{{ asset($article->heroImage()) }}" alt="{{ $article->titleFor() }}" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover xl:block">
+                <x-article-cover :article="$article" conversion="hero" class="hidden h-[451px] w-[620px] shrink-0 rounded-[4px] object-cover xl:block" />
             </div>
 
             {{-- Articoli correlati (XD: colonna x211..1711 → 1500px centrati; 4 card 354x482, gap 28) --}}
@@ -37,7 +37,7 @@
                     @foreach ($related as $item)
                         <a href="{{ route('news.detail', $item->slug) }}" wire:key="related-mobile-{{ $item->slug }}" class="block h-[200px] w-[280px] shrink-0 snap-start rounded-[3px] border border-gray-150 bg-white p-2">
                             <div class="relative h-full w-full overflow-hidden rounded-[3px]">
-                                <img src="{{ asset($item->cardImage()) }}" alt="{{ $item->titleFor() }}" class="h-full w-full object-cover">
+                                <x-article-cover :article="$item" class="h-full w-full object-cover" />
                                 {{-- Sfumatura XD "Rettangolo 32": 141px dal basso, #000 80% → trasparente --}}
                                 <div class="absolute inset-x-0 bottom-0 h-[141px] bg-gradient-to-t from-black/80 via-[#121212]/55 to-transparent" aria-hidden="true"></div>
                                 {{-- XD ancora il titolo a 115px dal bordo alto della foto: vale sia a una riga sia a due --}}
@@ -51,7 +51,7 @@
                     @foreach ($related as $item)
                         <article wire:key="related-{{ $item->slug }}" class="group relative flex h-[482px] flex-col rounded-[3px] border border-gray-150 bg-white p-[10px]">
                             <div class="overflow-hidden rounded-t-[3px]">
-                                <img src="{{ asset($item->cardImage()) }}" alt="{{ $item->titleFor() }}" class="h-[223px] w-full object-cover transition duration-500 group-hover:scale-105">
+                                <x-article-cover :article="$item" class="h-[223px] w-full object-cover transition duration-500 group-hover:scale-105" />
                             </div>
                             <div class="flex flex-1 flex-col px-2.5 pb-2">
                                 {{-- Data: XD usa Roboto-Regular, font non caricato nel progetto → fallback sans di sistema (come /news) --}}

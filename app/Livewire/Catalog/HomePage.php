@@ -106,12 +106,14 @@ class HomePage extends Component
                 ->orderBy('position')
                 ->limit(self::HOME_EVENTS)
                 ->get(),
-            'news' => Article::published()->take(self::HOME_NEWS)->get(),
+            'news' => Article::published()->with('media')->take(self::HOME_NEWS)->get(),
             // Fascia Animal Network: il post più recente davvero pubblicato. Il box
             // XD mostrava un post inventato (Sofia, 25/11/23, 6 risposte) che a
             // bacheca vuota era l'unico "post" visibile sul sito.
             'communityPost' => CommunityPost::query()
-                ->withCount('replies')
+                // Quello che il pannello nasconde non esce nemmeno qui.
+                ->visible()
+                ->withCount(['replies' => fn ($query) => $query->visible()])
                 ->latest('created_at')
                 ->latest('id')
                 ->first(),

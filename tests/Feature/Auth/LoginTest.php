@@ -104,4 +104,19 @@ class LoginTest extends TestCase
 
         $this->assertGuest();
     }
+
+    /** Cancellazione su richiesta dal pannello: l'account resta per gli ordini, ma non rientra. */
+    public function test_an_anonymised_account_cannot_log_in(): void
+    {
+        $user = User::factory()->create(['email' => 'ex@example.com']);
+        $user->forceFill(['anonymized_at' => now()])->save();
+
+        Livewire::test(AuthModal::class)
+            ->set('form.email', 'ex@example.com')
+            ->set('form.password', 'password')
+            ->call('login')
+            ->assertHasErrors(['form.email']);
+
+        $this->assertGuest();
+    }
 }

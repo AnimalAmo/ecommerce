@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Event\Event;
 use App\Models\Favorite\Favorite;
 use App\Models\OrderItem\OrderItem;
+use App\Models\Scopes\CatalogVisibleScope;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use Illuminate\Database\Eloquent\Builder;
@@ -74,6 +75,9 @@ class Dashboard extends Component
      */
     private function ownedBy(Builder $query): void
     {
-        $query->whereNotNull('user_id')->where('user_id', Auth::id());
+        // Sospese o in attesa restano del partner: i numeri della sua dashboard le contano.
+        $query->withoutGlobalScope(CatalogVisibleScope::class)
+            ->whereNotNull('user_id')
+            ->where('user_id', Auth::id());
     }
 }

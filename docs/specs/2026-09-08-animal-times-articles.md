@@ -2,6 +2,15 @@
 
 Data: 2026-09-08
 
+> **Aggiornamento 21/09/2026 (pannello admin, modulo Contenuti).** Gli articoli
+> si scrivono dal pannello e il database è la fonte di verità: l'ArticleSeeder
+> usa `firstOrCreate`. Le foto non stanno più in `public/img/news/`: una foto
+> per articolo in `database/seeders/content/articles/<slug>.jpg`, caricata
+> nella media collection `cover` (spatie/laravel-medialibrary) con le
+> conversioni `card` e `hero`. L'occhiello ha ora un campo facoltativo
+> (`excerpt`); senza, resta il primo paragrafo. I punti 2 e 3 qui sotto
+> descrivono l'impianto di partenza.
+
 ## Problema
 
 La sezione Animal Times andava online con **sei articoli finti**: titoli e foto

@@ -9,8 +9,12 @@ Sorgente: storage/articoli/*.docx (consegna cliente del 01/09/2026, fuori da git
 perché sono i file originali). Uscite, entrambe versionate:
 
     database/seeders/content/articles/<slug>.it.html
-    public/img/news/<slug>.jpg        card 960x495
-    public/img/news/<slug>-hero.jpg   hero, ritaglio nativo
+    database/seeders/content/articles/<slug>.jpg   foto, fascia nativa
+
+La foto non va più in public/: è la copertina che l'ArticleSeeder (o la
+migration 2026_09_19_220002 sui database già seminati) carica nella media
+collection `cover` dell'articolo, e i ritagli per card e pagina li fa
+spatie/laravel-medialibrary (conversioni `card` e `hero` di Article).
 
 Struttura dei documenti: un paragrafo con il titolo, un unico paragrafo con
 tutto il corpo diviso da <w:br>, e in coda l'immagine. Da qui le regole:
@@ -48,7 +52,7 @@ W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
 SOURCE_DIR = os.path.join(ROOT, 'storage', 'articoli')
 HTML_DIR = os.path.join(ROOT, 'database', 'seeders', 'content', 'articles')
-IMAGE_DIR = os.path.join(ROOT, 'public', 'img', 'news')
+IMAGE_DIR = HTML_DIR
 
 # Titolo e data non si ricavano dal .docx: il titolo è tutto maiuscolo (e in due
 # documenti scritto "PET FRENDLY"), la data del file è quella in cui la cliente
@@ -82,7 +86,6 @@ ARTICLES = [
 ]
 
 HEADING_MAX_LENGTH = 80
-CARD_SIZE = (960, 495)
 
 # La fascia alta del post porta la data ("14mar2025") e la zampa del logo: sul
 # sito la data la scrive il blade e il logo sta in header, quindi si taglia.
@@ -175,18 +178,10 @@ def crop_photo(archive, slug):
 
     usable = badge_top - 12
 
-    card_height = round(width / (CARD_SIZE[0] / CARD_SIZE[1]))
-    top = max(TOP_MARGIN, TOP_MARGIN + (usable - TOP_MARGIN - card_height) // 2)
-    image.crop((0, top, width, top + card_height)).resize(CARD_SIZE, Image.LANCZOS) \
-        .save(os.path.join(IMAGE_DIR, f'{slug}.jpg'), quality=82, optimize=True)
-
-    # Hero 620x451 CSS: il ritaglio nativo sta fra 1x e 2x, meglio di un
-    # ingrandimento finto a 1240x902.
-    hero_height = usable - TOP_MARGIN
-    hero_width = min(width, round(hero_height * (620 / 451)))
-    left = (width - hero_width) // 2
-    image.crop((left, TOP_MARGIN, left + hero_width, usable)) \
-        .save(os.path.join(IMAGE_DIR, f'{slug}-hero.jpg'), quality=82, optimize=True)
+    # Tutta la fascia utile, alla risoluzione nativa: card (960x495) e hero
+    # (620x451 a video) le ritaglia la media library, al centro come prima.
+    image.crop((0, TOP_MARGIN, width, usable)) \
+        .save(os.path.join(IMAGE_DIR, f'{slug}.jpg'), quality=85, optimize=True)
 
 
 def main():

@@ -44,8 +44,8 @@
                  catalogo che non c'è. Niente rosso: non è una ricerca andata male. --}}
             @if ($catalogueEmpty)
                 <div class="mt-8 rounded-[4px] border border-[#E9E9E9] bg-gray-100 px-6 py-5">
-                    <p class="text-lg font-semibold text-ink">{{ __('holiday.empty_catalogue_title') }}</p>
-                    <p class="mt-1.5 text-[15px] leading-[22px] text-[#555555]">{{ __('holiday.empty_catalogue_body') }}</p>
+                    <p class="text-lg font-semibold text-ink">{{ cms('holiday.empty_catalogue_title') }}</p>
+                    <p class="mt-1.5 text-[15px] leading-[22px] text-[#555555]">{{ cms('holiday.empty_catalogue_body') }}</p>
                     <div class="mt-4 flex flex-wrap items-center gap-3">
                         <flux:button href="{{ route('work-with-us') }}" class="!h-10 !rounded-full !border-0 !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink !shadow-none">{{ __('holiday.empty_catalogue_partner_cta') }}</flux:button>
                         <flux:button href="{{ route('news') }}" variant="ghost" class="!h-10 !rounded-full !px-6 !text-sm !font-bold !text-ink">{{ __('holiday.empty_catalogue_news_cta') }}</flux:button>

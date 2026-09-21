@@ -5,6 +5,7 @@ namespace App\Models\Event;
 use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
+use App\Models\Concerns\HasCatalogModeration;
 use App\Models\Concerns\HasFaqs;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
@@ -18,7 +19,7 @@ use Spatie\Translatable\HasTranslations;
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
-    use HasAmenities, HasCatalogImages, HasFactory, HasFaqs, HasTranslations;
+    use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasFaqs, HasTranslations;
 
     /** SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale. */
     public array $translatable = ['title', 'description'];

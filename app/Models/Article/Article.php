@@ -2,23 +2,41 @@
 
 namespace App\Models\Article;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 /**
- * Articolo di Animal Times. Come per le pagine legali il testo nasce dai file
- * in database/seeders/content/articles/ ed è caricato dall'ArticleSeeder: git
- * resta la fonte di verità, il DB la sorgente a runtime.
+ * Articolo di Animal Times. I quattro articoli della consegna di settembre
+ * nascono dai file in database/seeders/content/articles/ (ArticleSeeder, solo
+ * alla prima semina); da lì in poi il database è la fonte di verità e la
+ * cliente li scrive dal pannello.
  *
- * Le foto non hanno una colonna: si chiamano come lo slug e le produce lo
- * stesso script che converte i .docx, così un rename dello slug senza le
- * immagini corrispondenti si vede subito.
+ * La copertina è la media collection `cover` (un file solo): card e pagina
+ * dell'articolo leggono le conversioni `card` e `hero`, mai un path a mano.
  */
-class Article extends Model
+class Article extends Model implements HasMedia
 {
-    use HasTranslations;
+    use HasTranslations, InteractsWithMedia;
+
+    public const COVER = 'cover';
+
+    /** Stati nel pannello: la data di pubblicazione decide tutto. */
+    public const DRAFT = 'draft';
+
+    public const SCHEDULED = 'scheduled';
+
+    public const PUBLISHED = 'published';
+
+    /** Categorie del magazine (etichette in admin-content.articles.categories). */
+    public const CATEGORIES = ['travel', 'puppies', 'partners'];
 
     /** Lingua in cui la cliente scrive gli articoli: è lei a fare da rete. */
     public const SOURCE_LOCALE = 'it';
@@ -27,10 +45,37 @@ class Article extends Model
     private const EXCERPT_LENGTH = 200;
 
     /** @var array<int, string> */
-    public array $translatable = ['title', 'body'];
+    public array $translatable = ['title', 'excerpt', 'body', 'cover_alt'];
 
     /** @var list<string> */
-    protected $fillable = ['slug', 'title', 'body', 'published_at'];
+    protected $fillable = ['slug', 'title', 'excerpt', 'body', 'published_at', 'category', 'cover_alt', 'author_id'];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::COVER)
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
+
+    /**
+     * Non in coda: la card deve esistere appena la cliente salva, e sono due
+     * ritagli di un'immagine sola.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        // Griglie di home, /news e correlati: il ritaglio 960x495 delle card XD.
+        $this->addMediaConversion('card')
+            ->fit(Fit::Crop, 960, 495)
+            ->performOnCollections(self::COVER)
+            ->nonQueued();
+
+        // Pagina dell'articolo: riquadro 620x451 (object-cover), doppio per gli
+        // schermi densi. Max e non Crop: una foto più piccola non si ingrandisce.
+        $this->addMediaConversion('hero')
+            ->fit(Fit::Max, 1240, 1240)
+            ->performOnCollections(self::COVER)
+            ->nonQueued();
+    }
 
     /** Pubblicati, dal più recente: l'ordine della griglia. */
     public function scopePublished(Builder $query): Builder
@@ -38,6 +83,33 @@ class Article extends Model
         return $query->whereDate('published_at', '<=', now())
             ->orderByDesc('published_at')
             ->orderByDesc('id');
+    }
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /** In bozza senza data, programmato con una data futura, pubblicato altrimenti. */
+    public function status(): string
+    {
+        return match (true) {
+            $this->published_at === null => self::DRAFT,
+            $this->published_at->isAfter(today()) => self::SCHEDULED,
+            default => self::PUBLISHED,
+        };
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status() === self::PUBLISHED;
+    }
+
+    /** Lingue in cui l'articolo è scritto davvero (titolo e testo), non per ripiego. */
+    public function hasLocale(string $locale): bool
+    {
+        return trim((string) $this->getTranslation('title', $locale, false)) !== ''
+            && trim((string) $this->getTranslation('body', $locale, false)) !== '';
     }
 
     public function titleFor(?string $locale = null): string
@@ -50,9 +122,25 @@ class Article extends Model
         return $this->translationOr('body', $locale);
     }
 
-    /** Primo paragrafo ripulito dai tag: nessuna colonna da tenere allineata al corpo. */
+    /**
+     * Le righe sotto il titolo nelle card: il sommario scritto dalla cliente
+     * o, se manca, il primo paragrafo ripulito dai tag. Una lingua senza
+     * testo proprio ripiega per intero sull'italiano, sommario compreso.
+     */
     public function excerptFor(?string $locale = null): string
     {
+        $locale ??= app()->getLocale();
+
+        if (! $this->hasOwnBody($locale)) {
+            $locale = self::SOURCE_LOCALE;
+        }
+
+        $written = trim((string) $this->getTranslation('excerpt', $locale, false));
+
+        if ($written !== '') {
+            return $written;
+        }
+
         preg_match('/<p>(.*?)<\/p>/su', $this->bodyFor($locale), $matches);
 
         $text = html_entity_decode(strip_tags($matches[1] ?? ''), ENT_QUOTES);
@@ -71,14 +159,21 @@ class Article extends Model
         return $date->translatedFormat('j').' '.Str::ucfirst($date->translatedFormat('F')).' '.$date->translatedFormat('Y');
     }
 
-    public function cardImage(): string
+    /** URL della copertina nella conversione chiesta, o null se l'articolo non ne ha. */
+    public function coverUrl(string $conversion = 'card'): ?string
     {
-        return 'img/news/'.$this->slug.'.jpg';
+        return $this->getFirstMedia(self::COVER)?->getUrl($conversion);
     }
 
-    public function heroImage(): string
+    /** Testo alternativo della copertina: quello scritto dalla cliente, o il titolo. */
+    public function coverAlt(?string $locale = null): string
     {
-        return 'img/news/'.$this->slug.'-hero.jpg';
+        return $this->translationOr('cover_alt', $locale) ?: $this->titleFor($locale);
+    }
+
+    private function hasOwnBody(string $locale): bool
+    {
+        return trim((string) $this->getTranslation('body', $locale, false)) !== '';
     }
 
     /**
@@ -90,8 +185,8 @@ class Article extends Model
     {
         $locale ??= app()->getLocale();
 
-        return $this->getTranslation($key, $locale, false)
-            ?: $this->getTranslation($key, self::SOURCE_LOCALE, false);
+        return (string) ($this->getTranslation($key, $locale, false)
+            ?: $this->getTranslation($key, self::SOURCE_LOCALE, false));
     }
 
     /** @return array<string, string> */

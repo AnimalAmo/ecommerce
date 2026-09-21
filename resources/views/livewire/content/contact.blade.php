@@ -24,8 +24,8 @@
             </section>
         @endif
         <div class="{{ $px }} pt-[60px] pb-20 max-lg:pt-[54px] max-lg:pb-10">
-            <h1 class="text-4xl font-bold text-black max-lg:text-[18px] max-lg:leading-[21px] max-lg:text-[#0D171A]">{{ __('contact.heading') }}</h1>
-            <p class="mt-4 max-w-4xl text-lg text-black max-lg:mt-[10px] max-lg:text-[15px] max-lg:leading-5 max-lg:text-ink-700">{{ __('contact.intro') }}</p>
+            <h1 class="text-4xl font-bold text-black max-lg:text-[18px] max-lg:leading-[21px] max-lg:text-[#0D171A]">{{ cms('contact.heading') }}</h1>
+            <p class="mt-4 max-w-4xl text-lg text-black max-lg:mt-[10px] max-lg:text-[15px] max-lg:leading-5 max-lg:text-ink-700">{{ cms('contact.intro') }}</p>
 
             <div class="mt-10 flex items-start gap-6 max-lg:mt-7 max-lg:flex-col">
                 {{-- Card form (stessa card del form partner; su mobile campi a tutta pagina) --}}
@@ -72,7 +72,7 @@
 
                 {{-- Colonna dati di contatto (email informazioni, Instagram, dati societari); su mobile senza card, come i campi del form --}}
                 <aside class="w-[400px] shrink-0 rounded-[3px] border border-gray-150 bg-white/50 px-6 py-8 max-lg:w-full max-lg:rounded-none max-lg:border-0 max-lg:bg-transparent max-lg:p-0">
-                    <h2 class="text-lg font-bold text-black">{{ __('contact.info_heading') }}</h2>
+                    <h2 class="text-lg font-bold text-black">{{ cms('contact.info_heading') }}</h2>
 
                     <div class="mt-6 flex items-start gap-3.5">
                         <flux:icon.envelope class="mt-0.5 h-5 w-5 shrink-0 text-[#0D171A]" />
@@ -108,8 +108,8 @@
 
     {{-- Conferma "Grazie!" in-place su entrambi i viewport (stessa sweet-alert del form partner) --}}
     <x-sweet-alert name="contact-message-sent" model="showConfirmation" wire:close="closeConfirmation"
-        :heading="__('contact.thanks_heading')" :close-label="__('nav.close')">
-        {{ __('contact.thanks_line_1') }}<br>{{ __('contact.thanks_line_2') }}
+        :heading="cms('contact.thanks_heading')" :close-label="__('nav.close')">
+        {{ cms('contact.thanks_line_1') }}<br>{{ cms('contact.thanks_line_2') }}
     </x-sweet-alert>
 
     {{-- Su mobile il footer lascia il posto alla tabbar (come "Lavora con noi") --}}

@@ -5,6 +5,7 @@ namespace App\Livewire\Partner\Bookings;
 use App\Enums\ProductType;
 use App\Models\Event\Event;
 use App\Models\OrderItem\OrderItem;
+use App\Models\Scopes\CatalogVisibleScope;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Services\Pricing\BookingPricingService;
@@ -112,7 +113,8 @@ class PartnerBookings extends Component
             ->whereHasMorph(
                 'purchasable',
                 [Structure::class, Event::class, SmartboxPackage::class],
-                fn (Builder $query) => $query->where('user_id', Auth::id()),
+                // Una scheda sospesa non cancella le prenotazioni già fatte.
+                fn (Builder $query) => $query->withoutGlobalScope(CatalogVisibleScope::class)->where('user_id', Auth::id()),
             )
             ->with('order')
             ->latest()

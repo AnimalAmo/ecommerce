@@ -79,7 +79,8 @@ class StructureSeeder extends Seeder
         ];
 
         foreach (range(1, 12) as $position) {
-            $structure->reviews()->updateOrCreate(['position' => $position], [
+            // withHidden: una recensione demo nascosta dal pannello resta nascosta, non si duplica.
+            $structure->reviews()->withHidden()->updateOrCreate(['position' => $position], [
                 ...$samples[($position - 1) % 3],
                 // Body vuoto: copy in attesa della cliente; le righe restano per contatore e media voti.
                 'body' => '',

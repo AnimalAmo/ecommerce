@@ -61,6 +61,19 @@
     --color-gray-150: #e9e9e9;
     --color-gray-100: #f4f4f4;
 
+    /* Pannello di amministrazione ("Design admin Animal Amo", Claude Design) */
+    --color-admin-rail: #0d171a;         /* colonna di navigazione, testo titoli */
+    --color-admin-rail-active: #1e2e33;
+    --color-admin-rail-text: #c9d4d8;
+    --color-admin-rail-muted: #8fa3ab;
+    --color-admin-rail-label: #a5b5bc;
+    --color-admin-rail-pill: #243239;
+    --color-admin-rail-line: #1e2e33;
+    --color-admin-teal: #2c8fae;         /* link, avatar, badge Struttura */
+    --color-admin-line: #e2eaeb;         /* righe di tabella */
+    --color-admin-row: #f1f3f3;          /* separatori interni alle card */
+    --color-admin-cta: #232a2c;          /* pulsante primario del pannello */
+
     /* XD desktop grid: 1920 canvas, 140px side margins, 12 cols, 16 gutter */
     --spacing-margin: 140px;
     --container-canvas: 1920px;
@@ -198,3 +211,11 @@ textarea[data-flux-control] {
 .article-content li {
     margin-bottom: 0.375rem;
 }
+
+/* Pannello: corpo di pagine, articoli e newsletter nell'anteprima. */
+.admin-prose h2 { margin: 1.5rem 0 .75rem; font-size: 1.25rem; font-weight: 700; }
+.admin-prose h3 { margin: 1.25rem 0 .5rem; font-size: 1.0625rem; font-weight: 700; }
+.admin-prose p { margin-bottom: .75rem; }
+.admin-prose ul { margin: 0 0 .75rem 1.25rem; list-style: disc; }
+.admin-prose ol { margin: 0 0 .75rem 1.25rem; list-style: decimal; }
+.admin-prose a { color: var(--color-admin-teal); text-decoration: underline; }

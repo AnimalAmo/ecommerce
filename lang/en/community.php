@@ -35,4 +35,10 @@ return [
     'send' => 'Send',
     'author_me' => ':name (Me)',
     'open_post' => 'Open the post :title',
+    'report' => 'Report',
+    'reported_badge' => 'Reported',
+    'report_aria' => 'Report the post :title to the editors',
+    'report_reported' => 'Thank you: your report has reached the editors, who will review it.',
+    'report_already' => 'You have already reported this post: the editors are reviewing it.',
+    'report_own' => 'You cannot report your own post.',
 ];

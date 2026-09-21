@@ -14,10 +14,10 @@ class StructurePublisher extends FamilyPublisher
 {
     public function publish(StructureDraft $draft): Structure
     {
-        $current = Structure::query()->firstWhere('structure_draft_id', $draft->id);
+        $current = Structure::withHidden()->firstWhere('structure_draft_id', $draft->id);
         $priceCents = $this->minRoomPriceCents($draft);
 
-        $structure = Structure::query()->updateOrCreate(['structure_draft_id' => $draft->id], [
+        $structure = Structure::withHidden()->updateOrCreate(['structure_draft_id' => $draft->id], [
             'user_id' => $draft->user_id,
             // Sotto-tipologia hotel|bb|agriturismo per ora appiattita (v2: colonna sub_type).
             'type' => ProductType::Structure,
@@ -39,8 +39,9 @@ class StructurePublisher extends FamilyPublisher
             'general_info' => $this->generalInfo($draft),
             // Nessuna fonte wizard per le card "Cosa troverai" (v2).
             'features' => null,
-            'position' => $current->position ?? ((int) Structure::query()->max('position') + 1),
+            'position' => $current->position ?? ((int) Structure::withHidden()->max('position') + 1),
             'cancellation_policy_days' => $this->cancellationDays($draft),
+            ...$this->moderationAttributes($current),
         ]);
 
         $this->syncAmenities($structure, [

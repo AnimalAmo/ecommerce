@@ -23,4 +23,14 @@ class FaqFactory extends Factory
             'position' => fake()->numberBetween(1, 10),
         ];
     }
+
+    /** FAQ della pagina di assistenza: nessuna scheda, un argomento. */
+    public function platform(string $topic = 'bookings'): static
+    {
+        return $this->state(fn (): array => [
+            'faqable_type' => null,
+            'faqable_id' => null,
+            'topic' => $topic,
+        ]);
+    }
 }

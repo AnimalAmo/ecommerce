@@ -58,11 +58,11 @@ class ConnectReadiness extends Command
         $rows = [];
 
         foreach (self::CATALOG as $table => $model) {
-            $orphans = $model::query()->whereNull('user_id');
+            $orphans = $model::withHidden()->whereNull('user_id');
 
             $rows[] = [
                 $table,
-                $model::query()->count(),
+                $model::withHidden()->count(),
                 (clone $orphans)->count(),
                 // Con bozza = pubblicato davvero: va recuperato.
                 (clone $orphans)->whereNotNull('structure_draft_id')->count(),
@@ -83,7 +83,7 @@ class ConnectReadiness extends Command
         $rows = [];
 
         foreach (self::CATALOG as $table => $model) {
-            $model::query()
+            $model::withHidden()
                 ->whereNull('user_id')
                 ->whereNotNull('structure_draft_id')
                 ->get()
@@ -116,7 +116,7 @@ class ConnectReadiness extends Command
 
         DB::transaction(function () use ($owned, &$assigned): void {
             foreach (self::CATALOG as $model) {
-                $assigned += $model::query()
+                $assigned += $model::withHidden()
                     ->whereNull('user_id')
                     ->whereIn('structure_draft_id', $owned)
                     ->get()
@@ -149,7 +149,7 @@ class ConnectReadiness extends Command
                 }
 
                 $published = collect(self::CATALOG)
-                    ->sum(fn (string $model): int => $model::query()->where('user_id', $profile->user_id)->count());
+                    ->sum(fn (string $model): int => $model::withHidden()->where('user_id', $profile->user_id)->count());
 
                 if ($published === 0) {
                     return;

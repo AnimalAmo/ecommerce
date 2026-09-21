@@ -130,6 +130,20 @@ class Community extends Component
         unset($this->replyDrafts[$postId]);
     }
 
+    /** "Segnala" sulla card: il post va nella coda di moderazione del pannello. */
+    public function report(int $postId, CommunityService $community): void
+    {
+        if (! Auth::check()) {
+            Flux::modal('login')->show();
+
+            return;
+        }
+
+        $outcome = $community->report(Auth::user(), $postId);
+
+        Flux::toast(text: __('community.report_'.$outcome), variant: $outcome === 'reported' ? 'success' : null);
+    }
+
     public function render(CommunityService $community)
     {
         $needle = trim($this->search);

@@ -8,6 +8,7 @@ use App\Models\Event\Event;
 use App\Models\Page\Page;
 use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Services\Content\FaqService;
 use Carbon\CarbonInterface;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
@@ -73,6 +74,8 @@ class SitemapService
         return array_values(array_filter([
             ...$this->staticPages(),
             ...$this->legalPages(),
+            ...$this->faqPage(),
+            ...$this->freePages(),
             ...$this->regions(),
             ...$this->events(),
             ...$this->smartboxPackages(),
@@ -97,7 +100,7 @@ class SitemapService
      */
     private function legalPages(): array
     {
-        $revisions = Page::query()->pluck('last_updated_at', 'slug');
+        $revisions = Page::query()->legal()->pluck('last_updated_at', 'slug');
 
         $entries = [];
 
@@ -106,6 +109,35 @@ class SitemapService
         }
 
         return $entries;
+    }
+
+    /**
+     * Le domande frequenti solo quando ce n'è almeno una: vuota, la pagina è
+     * un invito a scriverci, e il piede del sito non la linka (stessa regola).
+     *
+     * @return list<array{urls: array<string, string>, lastmod: string|null}|null>
+     */
+    private function faqPage(): array
+    {
+        return app(FaqService::class)->hasPlatformFaqs() ? [$this->entry('faq')] : [];
+    }
+
+    /**
+     * Pagine libere create dal pannello (/pagina/{slug}), solo pubblicate.
+     * Niente lastmod: non hanno una data di revisione dichiarata, e
+     * updated_at è proprio la data inventata che la sitemap evita.
+     *
+     * @return list<array{urls: array<string, string>, lastmod: string|null}|null>
+     */
+    private function freePages(): array
+    {
+        return Page::query()
+            ->free()
+            ->where('is_published', true)
+            ->orderBy('id')
+            ->pluck('slug')
+            ->map(fn (string $slug) => $this->entry('page', ['slug' => $slug]))
+            ->all();
     }
 
     /**

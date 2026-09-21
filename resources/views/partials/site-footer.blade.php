@@ -1,6 +1,15 @@
 {{-- Footer completo (condiviso). Richiede $px definito dalla pagina. --}}
+@php
+    // Pagine che la cliente mette nel piede dal pannello ("Visibile nel piede del sito").
+    $footerPages = app(\App\Services\Content\PageService::class)->footerLinks();
+    // "Domande frequenti" compare quando la pagina ha qualcosa da dire.
+    $footerFaq = app(\App\Services\Content\FaqService::class)->hasPlatformFaqs();
+@endphp
 <footer class="mt-auto bg-white text-black">
     <div class="{{ $px }} border-b border-black pb-10 pt-16 max-lg:pt-10">
+        <div class="mb-12 max-lg:mb-10">
+            <livewire:newsletter.subscribe-form wire:key="newsletter-footer" />
+        </div>
         {{-- Mobile: 2 colonne invece di 4 --}}
         <div class="grid grid-cols-4 gap-10 max-lg:grid-cols-2 max-lg:gap-8">
             <div>
@@ -23,6 +32,9 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('about') }}" class="hover:text-brand-cyan">{{ __('nav.footer.about') }}</a></li>
                     <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">{{ __('nav.footer.work_with_us') }}</a></li>
+                    @foreach ($footerPages['company'] ?? [] as $link)
+                        <li><a href="{{ $link['url'] }}" class="hover:text-brand-cyan">{{ $link['title'] }}</a></li>
+                    @endforeach
                 </ul>
             </div>
             <div>
@@ -30,6 +42,12 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
                     <li><a href="{{ route('contact') }}" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
+                    @if ($footerFaq)
+                        <li><a href="{{ route('faq') }}" class="hover:text-brand-cyan">{{ __('nav.footer.faq') }}</a></li>
+                    @endif
+                    @foreach ($footerPages['support'] ?? [] as $link)
+                        <li><a href="{{ $link['url'] }}" class="hover:text-brand-cyan">{{ $link['title'] }}</a></li>
+                    @endforeach
                 </ul>
             </div>
         </div>

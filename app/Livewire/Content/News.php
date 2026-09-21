@@ -19,7 +19,7 @@ class News extends Component
 
     public function render()
     {
-        $articles = Article::published()->take($this->perPage)->get();
+        $articles = Article::published()->with('media')->take($this->perPage)->get();
 
         return view('livewire.content.news', [
             'articles' => $articles,
