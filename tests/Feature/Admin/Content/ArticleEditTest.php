@@ -185,6 +185,23 @@ class ArticleEditTest extends TestCase
         Storage::disk('public')->assertMissing($old);
     }
 
+    /** Un'immagine vera con un nome da pagina web: passa, ma salvata come immagine. */
+    public function test_a_cover_named_like_a_web_page_is_saved_with_the_image_extension(): void
+    {
+        $article = $this->published();
+
+        ob_start();
+        imagepng(imagecreatetruecolor(1600, 900));
+        $png = ob_get_clean().'<script>alert(document.cookie)</script>';
+
+        Livewire::test(ArticleEdit::class, ['article' => $article])
+            ->set('cover', UploadedFile::fake()->createWithContent('cover.html', $png)->mimeType('image/png'))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('viaggiare-col-cane.png', $article->refresh()->getFirstMedia(Article::COVER)->file_name);
+    }
+
     public function test_the_cover_must_be_an_image(): void
     {
         Livewire::test(ArticleEdit::class)

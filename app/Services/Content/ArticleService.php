@@ -100,10 +100,21 @@ class ArticleService
         return $article;
     }
 
-    /** Sostituisce la copertina (la collection tiene un file solo). */
+    /**
+     * Sostituisce la copertina (la collection tiene un file solo).
+     *
+     * L'estensione viene dal tipo letto nel contenuto, mai dal nome scelto da
+     * chi carica: un PNG chiamato .html finirebbe sul disco pubblico e il web
+     * server lo servirebbe come pagina. La collection accetta solo questi tre
+     * tipi, quindi il ripiego su jpg non salva mai altro.
+     */
     public function replaceCover(Article $article, UploadedFile $file): void
     {
-        $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
+        $extension = match ($file->getMimeType()) {
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            default => 'jpg',
+        };
 
         $article->addMedia($file)
             ->usingFileName($article->slug.'.'.$extension)

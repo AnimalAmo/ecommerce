@@ -138,6 +138,31 @@ class ArticleCoverTest extends TestCase
         $this->assertDatabaseCount('media', 2);
     }
 
+    /**
+     * Il nome del file lo sceglie chi carica: un PNG valido chiamato .html
+     * finirebbe sul disco pubblico come pagina servita dall'origine del sito.
+     * L'estensione la decide il contenuto.
+     */
+    public function test_the_cover_extension_comes_from_the_content_not_from_the_uploaded_name(): void
+    {
+        $article = Article::create([
+            'slug' => 'titolo-prova',
+            'title' => ['it' => 'Titolo prova'],
+            'body' => ['it' => '<p>Testo.</p>'],
+        ]);
+
+        ob_start();
+        imagepng(imagecreatetruecolor(1600, 900));
+        $path = tempnam(sys_get_temp_dir(), 'cover');
+        file_put_contents($path, ob_get_clean().'<script>alert(document.cookie)</script>');
+
+        app(ArticleService::class)->replaceCover($article, new UploadedFile($path, 'cover.html', null, null, true));
+
+        $media = $article->refresh()->getFirstMedia(Article::COVER);
+        $this->assertSame('titolo-prova.png', $media->file_name);
+        $this->assertStringEndsWith('.png', $media->getPathRelativeToRoot());
+    }
+
     public function test_the_public_pages_read_the_cover_crops(): void
     {
         $this->seed(ArticleSeeder::class);
