@@ -154,7 +154,17 @@
                                 <span class="flex h-[27px] shrink-0 items-center rounded-[3px] px-[10px] text-sm font-medium {{ $chipClasses[$post['tagColor']] ?? 'bg-[#555555] text-white' }}">{{ $post['tag'] }}</span>
                             </div>
 
-                            <p class="mt-[29px] text-[15px] font-bold leading-[21px] text-[#959595]">{{ $post['author'] }}</p>
+                            {{-- Autore + "Segnala" (manda il post alla moderazione del pannello; non sul proprio). --}}
+                            <div class="mt-[29px] flex items-center justify-between gap-4">
+                                <p class="text-[15px] font-bold leading-[21px] text-[#959595]">{{ $post['author'] }}</p>
+                                @unless ($post['mine'])
+                                    @if ($post['reported'])
+                                        <span class="shrink-0 text-[13px] text-[#959595]">{{ __('community.reported_badge') }}</span>
+                                    @else
+                                        <flux:button variant="ghost" size="sm" icon="flag" wire:click="report({{ $post['id'] }})" aria-label="{{ __('community.report_aria', ['title' => $post['title']]) }}" class="!h-7 shrink-0 !px-2 !text-[13px] !font-normal !text-[#959595] hover:!text-ink [&>span]:flex [&>span]:items-center [&>span]:gap-1.5">{{ __('community.report') }}</flux:button>
+                                    @endif
+                                @endunless
+                            </div>
                             <p class="mt-[13px] whitespace-pre-line text-[15px] leading-[21px] text-ink-700">{{ $post['body'] }}</p>
 
                             @foreach ($post['replies'] as $reply)

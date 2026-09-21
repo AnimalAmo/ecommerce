@@ -46,6 +46,20 @@ class PostDetail extends Component
         $this->draft = '';
     }
 
+    /** "Segnala": il post va nella coda di moderazione del pannello. */
+    public function report(CommunityService $community): void
+    {
+        if (! Auth::check()) {
+            Flux::modal('login')->show();
+
+            return;
+        }
+
+        $outcome = $community->report(Auth::user(), $this->postId);
+
+        Flux::toast(text: __('community.report_'.$outcome), variant: $outcome === 'reported' ? 'success' : null);
+    }
+
     public function render(CommunityService $community)
     {
         $post = $community->find($this->postId, Auth::id());

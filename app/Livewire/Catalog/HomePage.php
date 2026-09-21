@@ -111,7 +111,9 @@ class HomePage extends Component
             // XD mostrava un post inventato (Sofia, 25/11/23, 6 risposte) che a
             // bacheca vuota era l'unico "post" visibile sul sito.
             'communityPost' => CommunityPost::query()
-                ->withCount('replies')
+                // Quello che il pannello nasconde non esce nemmeno qui.
+                ->visible()
+                ->withCount(['replies' => fn ($query) => $query->visible()])
                 ->latest('created_at')
                 ->latest('id')
                 ->first(),
