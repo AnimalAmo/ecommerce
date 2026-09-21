@@ -15,11 +15,13 @@ use Illuminate\Database\Seeder;
  * maiuscolo, e la data del file è quella dell'export Word. Quelle qui sotto
  * sono le date di pubblicazione stampate sulle grafiche social.
  *
- * Come il PageSeeder crea solo quello che manca (firstOrCreate, mai
- * updateOrCreate): da quando la cliente scrive gli articoli dal pannello il
- * database è la fonte di verità, e un db:seed non deve riscriverli. Per lo
- * stesso motivo la copertina versionata ({slug}.jpg accanto all'HTML) entra
- * solo in un articolo che non ne ha già una.
+ * Semina solo una tabella vuota (installazione nuova, sviluppo): da quando
+ * la cliente scrive gli articoli dal pannello il database è la fonte di
+ * verità, e il seed di piattaforma gira anche in produzione. Con un articolo
+ * a database, cercare i quattro per slug non basta: uno cancellato dalla
+ * cliente tornerebbe online, uno con lo slug cambiato rinascerebbe accanto
+ * come doppione. Le copertine degli articoli già a database le ha portate la
+ * migration 2026_09_19_220002.
  */
 class ArticleSeeder extends Seeder
 {
@@ -47,6 +49,10 @@ class ArticleSeeder extends Seeder
 
     public function run(ArticleService $articles): void
     {
+        if (Article::query()->exists()) {
+            return;
+        }
+
         foreach (self::ARTICLES as $slug => $attributes) {
             $body = $this->bodies($slug);
 
@@ -54,7 +60,8 @@ class ArticleSeeder extends Seeder
                 continue;
             }
 
-            $article = Article::firstOrCreate(['slug' => $slug], [
+            $article = Article::create([
+                'slug' => $slug,
                 // Titolo tradotto solo in italiano: la cliente non ha ancora
                 // consegnato le versioni inglesi (il model ripiega sull'italiano).
                 'title' => ['it' => $attributes['title']],

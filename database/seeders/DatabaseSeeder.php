@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             // assignRole('client') e senza la riga esplode con RoleDoesNotExist.
             RoleSeeder::class,
             PageSeeder::class, // contenuto istituzionale: serve anche in produzione
-            ArticleSeeder::class, // Animal Times: articoli della cliente, servono anche in produzione
+            ArticleSeeder::class, // Animal Times: articoli della cliente, solo se la tabella è vuota
         ]);
 
         // Oltre questa riga si semina solo roba FINTA. Il catalogo (12 strutture,
