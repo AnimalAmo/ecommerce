@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\RollbackGuard;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -36,8 +37,15 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Ogni riga è un file caricato (le copertine scelte dalla cliente): senza
+     * la tabella resterebbero orfani in storage. Con dei dati il rollback si
+     * ferma.
+     */
     public function down(): void
     {
+        RollbackGuard::refuseToDropRows('media');
+
         Schema::dropIfExists('media');
     }
 };

@@ -45,6 +45,9 @@ return [
         'payouts' => 'Incassi',
     ],
 
+    // Una down() che eliminerebbe tabelle piene (App\Support\RollbackGuard).
+    'rollback_refused' => 'Rollback fermato: :tables contengono dati che andrebbero persi. Fai un backup del database e, se vuoi davvero tornare indietro, svuota a mano quelle tabelle prima di rilanciare il rollback.',
+
     'actions' => [
         'cancel' => 'Annulla',
         'back' => 'Indietro',

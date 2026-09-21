@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\RollbackGuard;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -105,8 +106,14 @@ return new class extends Migration
             });
     }
 
+    /**
+     * Iscritti e campagne sono la prova del consenso (e i vecchi flag
+     * travasati qui): con dei dati dentro il rollback si ferma.
+     */
     public function down(): void
     {
+        RollbackGuard::refuseToDropRows('newsletter_subscribers', 'newsletter_campaigns', 'newsletter_campaign_recipients');
+
         Schema::dropIfExists('newsletter_campaign_recipients');
         Schema::dropIfExists('newsletter_campaigns');
         Schema::dropIfExists('newsletter_subscribers');

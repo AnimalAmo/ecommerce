@@ -44,8 +44,22 @@ return new class extends Migration
             ->update(['newsletter' => false]);
     }
 
+    /**
+     * Prima di togliere le colonne riaccende `users.newsletter` per chi è
+     * ancora in lista (in attesa o confermato): la up() lo aveva spento a chi
+     * non aveva confermato, e dopo il rollback il vecchio flag torna a essere
+     * la sola traccia dell'iscrizione che il resto del sito legge.
+     */
     public function down(): void
     {
+        DB::table('users')
+            ->where('newsletter', false)
+            ->whereIn('id', DB::table('newsletter_subscribers')
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->whereNotNull('user_id')
+                ->select('user_id'))
+            ->update(['newsletter' => true]);
+
         Schema::table('newsletter_campaign_recipients', function (Blueprint $table) {
             $table->dropColumn('delivered_at');
         });
