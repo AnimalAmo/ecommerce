@@ -146,14 +146,31 @@ MAILGUN_DOMAIN=mg.animalamo.it
 
 ### 3.2 Script di deploy
 
+Rivisto il 21/09/2026 per il pannello admin: l'ordine vecchio (`composer`, poi
+`npm`, poi `migrate`) lasciava il codice nuovo in linea sullo schema vecchio per
+tutta la durata di `npm ci && npm run build`, e la revisione pre-produzione lo ha
+riprodotto: ogni pagina pubblica in 500, carrello e callback di pagamento
+compresi (un pagamento confermato in quella finestra resta incassato senza
+ordine). Da qui manutenzione per tutto il deploy e `migrate` subito dopo
+`composer`.
+
 ```bash
-composer install --no-dev --optimize-autoloader
-npm ci && npm run build
+set -e
+php artisan down --retry=60
+git pull origin $FORGE_SITE_BRANCH
+composer install --no-dev --optimize-autoloader --no-interaction
 php artisan migrate --force
+npm ci && npm run build
 php artisan storage:link
 php artisan config:cache && php artisan view:cache
 php artisan queue:restart
+php artisan up
 ```
+
+Se un passo fallisce lo script si ferma e il sito **resta in manutenzione**
+(503 con `Retry-After`): è voluto, meglio di un 500 con i pagamenti aperti. Si
+corregge, si rilancia il deploy o i passi mancanti, e `php artisan up` solo alla
+fine. Stripe e Mailgun ritentano da soli i webhook respinti con 503.
 
 Tre trappole verificate:
 
@@ -311,3 +328,30 @@ In alternativa, se preferisci la storia che il repo ha già: aprire la PR
 - IBAN, partita IVA, codice fiscale e PEC dei partner sono in chiaro nel DB.
 - La pagina FAQ non esiste: «Aiuto/FAQ» è un `href="#"` in tre punti dell'area
   partner.
+
+## 7. Primo deploy del pannello admin (preparato il 21/09/2026)
+
+Il merge porta 12 migration nuove, un pacchetto composer nuovo e un worker
+della coda che diventa necessario. In ordine:
+
+1. **Script di deploy aggiornato come in § 3.2 prima del push su `main`**: se
+   Forge ha il deploy automatico, il push lo fa partire subito.
+2. **Dump del database di produzione** subito prima (le migration spostano le
+   copertine in media library, copiano gli iscritti newsletter e azzerano
+   `users.newsletter` per chi non ha confermato).
+3. **Estensioni PHP `exif` e `gd`** sul server: le chiede
+   `spatie/laravel-medialibrary`; senza, `composer install` si ferma.
+4. **Daemon della coda attivo** (§ 3.3) e `QUEUE_CONNECTION=database`: senza,
+   nessuna campagna newsletter parte, e le conferme di iscrizione restano in coda.
+5. **Variabili newsletter** (vedi `.env.example`): prima della prima campagna
+   `NEWSLETTER_MAILER=mailgun-newsletter` con `MAILGUN_NEWSLETTER_DOMAIN` e
+   `MAILGUN_NEWSLETTER_SECRET` del sottodominio dedicato, poi `config:cache`. Il
+   dominio `mg.animalamo.it` ha una sola lista di soppressione: una newsletter
+   segnalata come spam fermerebbe anche le conferme d'ordine.
+6. **Webhook Mailgun**: aggiungere gli eventi `opened` e `unsubscribed`, e
+   configurarlo anche sul dominio della newsletter.
+7. **Primo accesso**: `php artisan animalamo:make-superadmin <email>` (manda la
+   mail per scegliere la password).
+8. **Dopo il deploy**: aprire `/admin/login`, la home pubblica, il carrello e una
+   scheda; controllare `storage/logs/laravel.log` e la tabella `failed_jobs`.
+
