@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -40,5 +41,35 @@ class MailgunWebhookSignature
         }
 
         return hash_equals(hash_hmac('sha256', $timestamp.$token, $key), $received);
+    }
+
+    /**
+     * La firma copre timestamp e token, non l'evento: dentro la finestra una
+     * firma catturata si potrebbe riusare con un evento qualsiasi (e ora un
+     * evento disiscrive o sopprime un indirizzo della newsletter). Mailgun
+     * consiglia di rifiutare un token già visto. False = già visto.
+     *
+     * @param  array<string, mixed>  $signature
+     */
+    public function claimToken(array $signature): bool
+    {
+        return Cache::add($this->tokenKey($signature), true, self::TOLERANCE_SECONDS * 2);
+    }
+
+    /**
+     * Elaborazione fallita: il token torna libero, così il nuovo tentativo di
+     * Mailgun non viene scambiato per un replay.
+     *
+     * @param  array<string, mixed>  $signature
+     */
+    public function releaseToken(array $signature): void
+    {
+        Cache::forget($this->tokenKey($signature));
+    }
+
+    /** @param  array<string, mixed>  $signature */
+    private function tokenKey(array $signature): string
+    {
+        return 'mailgun-webhook-token:'.hash('sha256', (string) ($signature['token'] ?? ''));
     }
 }

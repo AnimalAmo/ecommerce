@@ -7,6 +7,7 @@ use App\Services\Mail\RecordMailgunEvent;
 use App\Services\Newsletter\NewsletterFeedback;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Throwable;
 
 /**
  * Riceve gli eventi di consegna Mailgun: verifica la firma e passa l'evento ai
@@ -23,14 +24,27 @@ class MailgunWebhookController
         RecordMailgunEvent $recorder,
         NewsletterFeedback $newsletter,
     ): JsonResponse {
-        if (! $signature->isValid((array) $request->input('signature', []))) {
+        $signed = (array) $request->input('signature', []);
+
+        if (! $signature->isValid($signed)) {
             return response()->json(['error' => 'invalid signature'], 403);
+        }
+
+        // Token già usato: un replay, o un doppione. 200 e nessun effetto.
+        if (! $signature->claimToken($signed)) {
+            return response()->json(['status' => 'duplicate']);
         }
 
         $event = (array) $request->input('event-data', []);
 
-        $delivery = $recorder->record($event);
-        $handled = $newsletter->handle($event);
+        try {
+            $delivery = $recorder->record($event);
+            $handled = $newsletter->handle($event);
+        } catch (Throwable $exception) {
+            $signature->releaseToken($signed);
+
+            throw $exception;
+        }
 
         return response()->json(['status' => $delivery === null && ! $handled ? 'ignored' : 'ok']);
     }
