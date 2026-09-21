@@ -44,6 +44,8 @@ class PartnerApplication extends Model
         return [
             'invited_at' => 'datetime',
             'registered_at' => 'datetime',
+            'handled_at' => 'datetime',
+            'archived_at' => 'datetime',
         ];
     }
 

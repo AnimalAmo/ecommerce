@@ -37,7 +37,15 @@ class LoginForm extends Form
 
         $credentials = ['email' => $this->email, 'password' => $this->password];
 
-        if (! Auth::attemptWhen($credentials, $when !== null ? [$when] : [])) {
+        // Un account anonimizzato su richiesta (AnonymizeUser) non rientra
+        // più, qualunque sia la modale: stesso messaggio delle credenziali errate.
+        $guards = [fn ($user): bool => $user->anonymized_at === null];
+
+        if ($when !== null) {
+            $guards[] = $when;
+        }
+
+        if (! Auth::attemptWhen($credentials, $guards)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
