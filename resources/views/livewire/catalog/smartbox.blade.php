@@ -10,8 +10,8 @@
         <div class="{{ $px }} pt-10 pb-[120px] max-lg:pt-6 max-lg:pb-10">
             {{-- Titolo resta quello desktop anche su mobile (l'artboard app
                  "Cerca - risultati" è la pagina dei risultati di ricerca, non questa index) --}}
-            <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ __('smartbox.title') }}</h1>
-            <p class="mt-2 text-[15px] text-[#555555] lg:mt-3 lg:text-[18px]">{{ __('smartbox.subtitle') }}</p>
+            <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ cms('smartbox.title') }}</h1>
+            <p class="mt-2 text-[15px] text-[#555555] lg:mt-3 lg:text-[18px]">{{ cms('smartbox.subtitle') }}</p>
 
             {{-- Barra ricerca mobile (XD app, simbolo "Box ricerca"): pill 56px alta, raggio 28,
                  bordo #E2EAEB e nessuna ombra; termine sulla prima riga, riepilogo
@@ -120,8 +120,8 @@
                     tipologia Smartbox, oppure la fascia di prezzo esclude tutti i cofanetti. --}}
             @if ($catalogueEmpty)
                 <div class="mt-6 border-y border-[#E9E9E9] py-10 text-center">
-                    <p class="text-[18px] font-semibold text-[#0D171A]">{{ __('smartbox.empty_catalogue_title') }}</p>
-                    <p class="mx-auto mt-2 max-w-[560px] text-[15px] text-[#555555]">{{ __('smartbox.empty_catalogue_body') }}</p>
+                    <p class="text-[18px] font-semibold text-[#0D171A]">{{ cms('smartbox.empty_catalogue_title') }}</p>
+                    <p class="mx-auto mt-2 max-w-[560px] text-[15px] text-[#555555]">{{ cms('smartbox.empty_catalogue_body') }}</p>
                     <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
                         <flux:button :href="route('news')" class="!h-[39px] !rounded-full !border-0 !bg-brand-yellow !px-6 !text-sm !font-bold !text-ink !shadow-none">{{ __('smartbox.empty_catalogue_news_cta') }}</flux:button>
                         <flux:button :href="route('work-with-us')" class="!h-[39px] !rounded-full !border !border-[#C8C8C8] !bg-white !px-6 !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('smartbox.empty_catalogue_partner_cta') }}</flux:button>

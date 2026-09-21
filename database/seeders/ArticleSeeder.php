@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Article\Article;
+use App\Services\Content\ArticleService;
 use Illuminate\Database\Seeder;
 
 /**
@@ -14,9 +15,11 @@ use Illuminate\Database\Seeder;
  * maiuscolo, e la data del file è quella dell'export Word. Quelle qui sotto
  * sono le date di pubblicazione stampate sulle grafiche social.
  *
- * ATTENZIONE: come per il PageSeeder, quando arriverà il CRUD di backoffice
- * questo updateOrCreate va cambiato in firstOrCreate, altrimenti un db:seed
- * cancella le modifiche fatte dalla cliente.
+ * Come il PageSeeder crea solo quello che manca (firstOrCreate, mai
+ * updateOrCreate): da quando la cliente scrive gli articoli dal pannello il
+ * database è la fonte di verità, e un db:seed non deve riscriverli. Per lo
+ * stesso motivo la copertina versionata ({slug}.jpg accanto all'HTML) entra
+ * solo in un articolo che non ne ha già una.
  */
 class ArticleSeeder extends Seeder
 {
@@ -42,7 +45,7 @@ class ArticleSeeder extends Seeder
 
     private const LOCALES = ['it', 'en'];
 
-    public function run(): void
+    public function run(ArticleService $articles): void
     {
         foreach (self::ARTICLES as $slug => $attributes) {
             $body = $this->bodies($slug);
@@ -51,13 +54,15 @@ class ArticleSeeder extends Seeder
                 continue;
             }
 
-            Article::updateOrCreate(['slug' => $slug], [
+            $article = Article::firstOrCreate(['slug' => $slug], [
                 // Titolo tradotto solo in italiano: la cliente non ha ancora
                 // consegnato le versioni inglesi (il model ripiega sull'italiano).
                 'title' => ['it' => $attributes['title']],
                 'body' => $body,
                 'published_at' => $attributes['published_at'],
             ]);
+
+            $articles->importSeedCover($article);
         }
     }
 

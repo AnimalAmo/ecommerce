@@ -20,6 +20,8 @@ use App\Livewire\Commerce\Favorites;
 use App\Livewire\Content\AboutUs;
 use App\Livewire\Content\Community;
 use App\Livewire\Content\Contact;
+use App\Livewire\Content\FaqPage;
+use App\Livewire\Content\FreePage;
 use App\Livewire\Content\LegalPage;
 use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
@@ -109,6 +111,10 @@ Route::group([
         ->defaults('slug', Page::TERMS_SUPPLIERS)->name('terms.suppliers');
     Route::get(LaravelLocalization::transRoute('routes.privacy'), LegalPage::class)
         ->defaults('slug', Page::PRIVACY)->name('privacy');
+    // Domande frequenti di piattaforma, scritte dal pannello.
+    Route::get(LaravelLocalization::transRoute('routes.faq'), FaqPage::class)->name('faq');
+    // Pagine libere create dal pannello (kind = free).
+    Route::get(LaravelLocalization::transRoute('routes.page'), FreePage::class)->name('page');
     Route::get(LaravelLocalization::transRoute('routes.preferiti'), Favorites::class)->name('preferiti');
     Route::get(LaravelLocalization::transRoute('routes.carrello'), Cart::class)->name('carrello');
     Route::get(LaravelLocalization::transRoute('routes.checkout'), Checkout::class)->name('checkout');

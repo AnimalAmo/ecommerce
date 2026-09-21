@@ -15,9 +15,16 @@ class NewsDetail extends Component
 
     public function mount(string $article): void
     {
-        abort_unless(Article::published()->where('slug', $article)->exists(), 404);
+        $id = Article::published()->where('slug', $article)->value('id');
+
+        abort_if($id === null, 404);
 
         $this->articleSlug = $article;
+
+        // "Letture" nel pannello: una per apertura della pagina (mount non
+        // rigira sulle richieste Livewire). Dal query builder, così updated_at
+        // resta la data dell'ultima modifica vera.
+        Article::query()->whereKey($id)->toBase()->increment('views');
     }
 
     public function render()
@@ -25,6 +32,7 @@ class NewsDetail extends Component
         $article = Article::published()->where('slug', $this->articleSlug)->sole();
 
         $related = Article::published()
+            ->with('media')
             ->whereKeyNot($article->getKey())
             ->take(self::RELATED)
             ->get();

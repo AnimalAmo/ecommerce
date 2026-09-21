@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Middleware\EnsureSuperadmin;
 use App\Http\Middleware\UseItalianLocale;
+use App\Models\Article\Article;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
@@ -44,6 +45,8 @@ class AppServiceProvider extends ServiceProvider
             'event' => Event::class,
             'smartbox_package' => SmartboxPackage::class,
             'user' => User::class,
+            // Proprietari di media (spatie/laravel-medialibrary): copertine di Animal Times.
+            'article' => Article::class,
         ]);
 
         // Contenuti partner (spatie/laravel-translatable): l'italiano è la lingua

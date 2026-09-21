@@ -18,7 +18,7 @@
                     @foreach ($articles as $article)
                         <article wire:key="news-{{ $article->slug }}" class="group relative flex flex-col rounded-[3px] border border-gray-150 bg-white p-2 lg:border-0 lg:p-[10px] lg:pt-2 lg:shadow-[0_1px_5px_#0000001A]">
                             <div class="overflow-hidden rounded-t-[3px]">
-                                <img src="{{ asset($article->cardImage()) }}" alt="{{ $article->titleFor() }}" class="h-[136px] w-full object-cover transition duration-500 group-hover:scale-105 lg:h-[237px]">
+                                <x-article-cover :article="$article" class="h-[136px] w-full object-cover transition duration-500 group-hover:scale-105 lg:h-[237px]" />
                             </div>
                             <div class="flex flex-1 flex-col lg:px-4 lg:pb-1.5">
                                 {{-- Data: XD usa Roboto-Regular, font non caricato nel progetto → fallback sans di sistema (come home) --}}

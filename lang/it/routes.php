@@ -15,6 +15,8 @@ return [
     'terms.customers' => 'termini-e-condizioni',
     'terms.suppliers' => 'termini-e-condizioni-fornitori',
     'privacy' => 'privacy-policy',
+    'faq' => 'domande-frequenti',
+    'page' => 'pagina/{slug}',
     'community' => 'community',
     'community.post' => 'community/{post}',
     'preferiti' => 'preferiti',

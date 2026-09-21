@@ -51,6 +51,7 @@ return [
         'work_with_us' => 'Work with us',
         'how_it_works' => 'How it works',
         'contact_us' => 'Contact us',
+        'faq' => 'FAQ',
         'copyright' => 'Copyright ©',
         'terms' => 'Terms and conditions',
         'privacy' => 'Privacy information',

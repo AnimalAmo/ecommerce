@@ -37,4 +37,10 @@ return [
     'send' => 'Invia',
     'author_me' => ':name (Io)',
     'open_post' => 'Apri il post :title',
+    'report' => 'Segnala',
+    'reported_badge' => 'Segnalato',
+    'report_aria' => 'Segnala il post :title alla redazione',
+    'report_reported' => 'Grazie: la segnalazione è arrivata alla redazione, che la valuterà.',
+    'report_already' => 'Hai già segnalato questo post: la redazione lo sta valutando.',
+    'report_own' => 'Non puoi segnalare un tuo post.',
 ];

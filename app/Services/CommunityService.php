@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Community\CommunityPost;
+use App\Models\Community\CommunityPostReport;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -13,6 +15,9 @@ use Illuminate\Support\Str;
  * I componenti ricevono array già pronti per il markup (colore chip risolto, autore
  * firmato "(Io)" quando è il proprio): le viste non devono interrogare i modelli e
  * lista e dettaglio condividono la stessa forma.
+ *
+ * Solo post e risposte `visible()`: quello che il pannello nasconde sparisce dal
+ * sito, lista, dettaglio e risposte comprese.
  */
 class CommunityService
 {
@@ -34,19 +39,57 @@ class CommunityService
     /** @return array<int, array<string, mixed>> */
     public function posts(?int $userId = null): array
     {
-        return CommunityPost::with('replies')
+        $reported = $this->reportedBy($userId);
+
+        return CommunityPost::query()
+            ->visible()
+            ->with(['replies' => fn ($query) => $query->visible()])
             ->orderBy('id')
             ->get()
-            ->map(fn (CommunityPost $post): array => $this->present($post, $userId))
+            ->map(fn (CommunityPost $post): array => $this->present($post, $userId, $reported))
             ->all();
     }
 
     /** @return array<string, mixed>|null */
     public function find(int $id, ?int $userId = null): ?array
     {
-        $post = CommunityPost::with('replies')->find($id);
+        $post = CommunityPost::query()
+            ->visible()
+            ->with(['replies' => fn ($query) => $query->visible()])
+            ->find($id);
 
-        return $post === null ? null : $this->present($post, $userId);
+        return $post === null ? null : $this->present($post, $userId, $this->reportedBy($userId));
+    }
+
+    /**
+     * "Segnala" dal sito: manda il post nella coda di moderazione del pannello.
+     * Una segnalazione per utente e post; il proprio post non si segnala.
+     *
+     * @return 'reported'|'already'|'own'
+     */
+    public function report(User $user, int $postId): string
+    {
+        $post = CommunityPost::query()->visible()->findOrFail($postId);
+
+        if ($post->user_id === $user->id) {
+            return 'own';
+        }
+
+        return DB::transaction(function () use ($post, $user): string {
+            $report = CommunityPostReport::firstOrCreate([
+                'community_post_id' => $post->id,
+                'user_id' => $user->id,
+            ]);
+
+            if (! $report->wasRecentlyCreated) {
+                return 'already';
+            }
+
+            // Query builder: la segnalazione non è una modifica del post (updated_at resta).
+            CommunityPost::query()->whereKey($post->id)->toBase()->increment('reports_count');
+
+            return 'reported';
+        });
     }
 
     /** Pubblica dal composer: il titolo è la prima riga del testo, troncata. */
@@ -65,7 +108,7 @@ class CommunityService
 
     public function reply(int $postId, User $user, string $body): void
     {
-        CommunityPost::findOrFail($postId)->replies()->create([
+        CommunityPost::query()->visible()->findOrFail($postId)->replies()->create([
             'user_id' => $user->id,
             'author_name' => $user->name,
             'body' => $body,
@@ -77,8 +120,19 @@ class CommunityService
         return self::TAG_COLORS[$tag] ?? '#555555';
     }
 
-    /** @return array<string, mixed> */
-    private function present(CommunityPost $post, ?int $userId): array
+    /** @return list<int> id dei post già segnalati dall'utente */
+    private function reportedBy(?int $userId): array
+    {
+        return $userId === null
+            ? []
+            : CommunityPostReport::query()->where('user_id', $userId)->pluck('community_post_id')->map(fn ($id): int => (int) $id)->all();
+    }
+
+    /**
+     * @param  list<int>  $reported
+     * @return array<string, mixed>
+     */
+    private function present(CommunityPost $post, ?int $userId, array $reported = []): array
     {
         $mine = $post->user_id !== null && $post->user_id === $userId;
 
@@ -96,6 +150,7 @@ class CommunityService
                 ])
                 ->all(),
             'mine' => $mine,
+            'reported' => in_array($post->id, $reported, true),
         ];
     }
 
