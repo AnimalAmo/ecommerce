@@ -73,6 +73,22 @@ class PageIndexTest extends TestCase
         $this->assertSame(['it' => 'rewritten', 'en' => 'missing'], $rows['Viaggiare in treno col cane']['locales']);
     }
 
+    public function test_every_row_has_one_state_shown_in_its_own_column(): void
+    {
+        ContentBlock::create(['key' => 'about.heading', 'value' => ['it' => 'La nostra storia']]);
+        $this->freePage();
+
+        $rows = collect(Livewire::test(PageIndex::class)->viewData('rows'))->keyBy('name');
+
+        $this->assertSame('original', $rows['Termini e condizioni']['state']);
+        $this->assertSame('rewritten', $rows['Chi siamo']['state']);
+        // Riscritta in italiano ma senza inglese: conta la traduzione che manca.
+        $this->assertSame('missing', $rows['Viaggiare in treno col cane']['state']);
+
+        $this->get(route('admin.pages.index'))
+            ->assertSeeInOrder(['Tipo', 'Stato', 'Italiano', 'Inglese']);
+    }
+
     public function test_filters_narrow_the_list(): void
     {
         $this->freePage();

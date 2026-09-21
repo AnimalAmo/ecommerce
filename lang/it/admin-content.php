@@ -159,10 +159,17 @@ return [
             'rewritten' => 'Riscritta',
             'missing' => 'Manca',
         ],
+        // Lo stato dell'intera riga: con una lingua senza testo è la traduzione a mancare.
+        'row_states' => [
+            'original' => 'Testo originale',
+            'rewritten' => 'Riscritta',
+            'missing' => 'Traduzione mancante',
+        ],
         'columns' => [
             'page' => 'Pagina',
             'address' => 'Indirizzo',
             'kind' => 'Tipo',
+            'state' => 'Stato',
             'it' => 'Italiano',
             'en' => 'Inglese',
             'updated' => 'Ultima modifica',

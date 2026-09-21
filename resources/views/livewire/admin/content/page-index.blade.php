@@ -42,6 +42,7 @@
                         <flux:table.column class="!pl-5">{{ __('admin-content.pages.columns.page') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.pages.columns.address') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.pages.columns.kind') }}</flux:table.column>
+                        <flux:table.column>{{ __('admin-content.pages.columns.state') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.pages.columns.it') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.pages.columns.en') }}</flux:table.column>
                         <flux:table.column>{{ __('admin-content.pages.columns.updated') }}</flux:table.column>
@@ -50,11 +51,13 @@
                     <flux:table.rows>
                         @foreach ($rows as $row)
                             <flux:table.row :key="$row['key']">
-                                <flux:table.cell class="!pl-5">
+                                {{-- Va a capo come nel design: con la colonna Stato, "Condizioni generali di adesione fornitore" su una riga sola fa scorrere la tabella a 1440px. --}}
+                                <flux:table.cell class="!pl-5 whitespace-normal">
                                     <a href="{{ $row['edit_url'] }}" wire:navigate class="text-[14.5px] font-bold text-admin-rail hover:text-admin-teal">{{ $row['name'] }}</a>
                                 </flux:table.cell>
                                 <flux:table.cell>{{ $row['path'] }}</flux:table.cell>
                                 <flux:table.cell><x-admin.badge :tone="$kindTones[$row['kind']] ?? 'muted'">{{ __('admin-content.pages.kinds.'.$row['kind']) }}</x-admin.badge></flux:table.cell>
+                                <flux:table.cell><x-admin.badge :tone="$stateTones[$row['state']]">{{ __('admin-content.pages.row_states.'.$row['state']) }}</x-admin.badge></flux:table.cell>
                                 @foreach (['it', 'en'] as $lang)
                                     <flux:table.cell>
                                         <x-admin.badge :tone="$stateTones[$row['locales'][$lang]]">{{ __('admin-content.pages.states.'.$row['locales'][$lang]) }}</x-admin.badge>

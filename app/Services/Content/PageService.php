@@ -35,7 +35,7 @@ class PageService
      * Una riga per pagina, già pronta per la tabella: prima le sezioni del
      * sito, poi le legali, poi le libere.
      *
-     * @return Collection<int, array{key: string, name: string, kind: string, url: string|null, path: string, edit_url: string, locales: array<string, string>, updated_at: CarbonInterface|null}>
+     * @return Collection<int, array{key: string, name: string, kind: string, url: string|null, path: string, edit_url: string, locales: array<string, string>, state: string, updated_at: CarbonInterface|null}>
      */
     public function rows(): Collection
     {
@@ -44,6 +44,7 @@ class PageService
         foreach ($this->blocks->sections() as $key => $section) {
             $status = $this->blocks->sectionStatus($key);
             $url = route($section['route']);
+            $locales = array_map(fn (bool $rewritten): string => $rewritten ? self::REWRITTEN : self::ORIGINAL, $status['locales']);
 
             $rows->push([
                 'key' => 'site-'.$key,
@@ -52,7 +53,8 @@ class PageService
                 'url' => $url,
                 'path' => $this->path($url),
                 'edit_url' => route('admin.pages.site', $key),
-                'locales' => array_map(fn (bool $rewritten): string => $rewritten ? self::REWRITTEN : self::ORIGINAL, $status['locales']),
+                'locales' => $locales,
+                'state' => $this->rowState($locales),
                 'updated_at' => $status['updated_at'],
             ]);
         }
@@ -77,6 +79,7 @@ class PageService
                 'path' => $url === null ? '—' : $this->path($url),
                 'edit_url' => route('admin.pages.edit', $page),
                 'locales' => $locales,
+                'state' => $this->rowState($locales),
                 // Una legale mai toccata porta la data della semina, che non è una modifica.
                 'updated_at' => $page->isLegal() && $untouched ? null : $page->updated_at,
             ]);
@@ -232,6 +235,21 @@ class PageService
     public static function forgetFooterLinks(): void
     {
         Cache::forget(self::FOOTER_CACHE_KEY);
+    }
+
+    /**
+     * Lo stato della riga in una parola, per la colonna "Stato": una lingua
+     * senza testo pesa più di tutto, poi basta una lingua riscritta.
+     *
+     * @param  array<string, string>  $locales
+     */
+    private function rowState(array $locales): string
+    {
+        return match (true) {
+            in_array(self::MISSING, $locales, true) => self::MISSING,
+            in_array(self::REWRITTEN, $locales, true) => self::REWRITTEN,
+            default => self::ORIGINAL,
+        };
     }
 
     private function path(string $url): string
