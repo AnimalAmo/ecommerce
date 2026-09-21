@@ -5,6 +5,7 @@ namespace App\Services\Newsletter;
 use App\Mail\Newsletter\NewsletterConfirmationMail;
 use App\Models\Newsletter\NewsletterSubscriber;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -193,10 +194,7 @@ class SubscriptionService
     {
         $imported = 0;
 
-        User::query()
-            ->where('newsletter', true)
-            ->whereNotIn('id', NewsletterSubscriber::query()->whereNotNull('user_id')->select('user_id'))
-            ->orderBy('id')
+        $this->legacyFlagsQuery()
             ->lazyById(200)
             ->each(function (User $user) use (&$imported): void {
                 $subscriber = NewsletterSubscriber::firstOrCreate(
@@ -221,6 +219,20 @@ class SubscriptionService
             });
 
         return $imported;
+    }
+
+    /** Quanti flag della vecchia casella importLegacyFlags() raccoglierebbe. */
+    public function legacyFlagsToImport(): int
+    {
+        return $this->legacyFlagsQuery()->count();
+    }
+
+    /** @return Builder<User> */
+    private function legacyFlagsQuery(): Builder
+    {
+        return User::query()
+            ->where('newsletter', true)
+            ->whereNotIn('id', NewsletterSubscriber::query()->whereNotNull('user_id')->select('user_id'));
     }
 
     /**
