@@ -469,7 +469,8 @@ che è quello che i filtri interrogano per primo ora che il `From` è
 
 ### 9.4 Webhook: l'esito reale entra nel progetto
 
-`POST /webhooks/mailgun` (firma HMAC + finestra di 15 minuti sul timestamp)
+`POST /webhooks/mailgun` (firma HMAC + finestra di 15 minuti sul timestamp +
+token accettato una volta sola, in cache)
 scrive su `mail_deliveries`, una riga per messaggio+destinatario aperta da
 `RecordMailDelivery` quando la mail parte.
 
