@@ -175,7 +175,7 @@
     </div>
 
     {{-- Prova del consenso --}}
-    <flux:modal name="newsletter-proof" class="w-full max-w-[520px]" wire:close="$set('selectedId', null)">
+    <flux:modal name="newsletter-proof" class="w-full max-w-[520px]" wire:close="closeModal">
         @if ($selected)
             @php
                 $at = fn ($date) => $date?->translatedFormat('j M Y, H:i:s') ?? '—';
@@ -222,7 +222,7 @@
     </flux:modal>
 
     {{-- Disiscrizione dal pannello --}}
-    <flux:modal name="newsletter-unsubscribe" class="w-full max-w-[460px]" wire:close="$set('selectedId', null)">
+    <flux:modal name="newsletter-unsubscribe" class="w-full max-w-[460px]" wire:close="closeModal">
         @if ($selected)
             <div class="flex flex-col">
                 <flux:heading size="lg" class="!text-[19px] !font-bold !text-admin-rail">{{ __('admin-newsletter.unsubscribe_modal.title') }}</flux:heading>

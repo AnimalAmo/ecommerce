@@ -61,6 +61,15 @@ class NewsletterIndex extends Component
         Flux::modal('newsletter-proof')->show();
     }
 
+    /**
+     * Chiusura delle modali. Un metodo e non `$set('selectedId', null)`: la
+     * proprietà è Locked, e Livewire rifiuta qualunque scrittura dal browser.
+     */
+    public function closeModal(): void
+    {
+        $this->selectedId = null;
+    }
+
     public function askUnsubscribe(int $id): void
     {
         $this->selectedId = NewsletterSubscriber::findOrFail($id)->getKey();

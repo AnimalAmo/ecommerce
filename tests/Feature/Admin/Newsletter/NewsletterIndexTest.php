@@ -119,6 +119,20 @@ class NewsletterIndexTest extends TestCase
             ->assertSee('203.0.113.99');
     }
 
+    /** selectedId è Locked: la chiusura della modale passa da un metodo, non da $set. */
+    public function test_closing_a_modal_clears_the_selection_from_the_server(): void
+    {
+        $this->actingAsSuperadmin();
+        $subscriber = NewsletterSubscriber::factory()->confirmed()->create();
+
+        Livewire::test(NewsletterIndex::class)
+            ->call('showProof', $subscriber->id)
+            ->assertSet('selectedId', $subscriber->id)
+            ->call('closeModal')
+            ->assertSet('selectedId', null)
+            ->assertDontSeeHtml("\$set('selectedId'");
+    }
+
     public function test_the_admin_can_unsubscribe_an_address_after_confirming(): void
     {
         $this->actingAsSuperadmin();
