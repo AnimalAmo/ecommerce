@@ -24,13 +24,17 @@ class SitePageEditTest extends TestCase
         foreach (config('admin-content.sections') as $section => $definition) {
             $this->assertNotEmpty($definition['blocks'], $section);
 
-            foreach ($definition['blocks'] as $key => $block) {
+            $this->assertNotSame("admin-content.sections.{$section}", __("admin-content.sections.{$section}"));
+
+            foreach ($definition['blocks'] as $key => $type) {
                 foreach (['it', 'en'] as $locale) {
                     $this->assertNotSame($key, trans($key, [], $locale), "{$key} manca in lang/{$locale}");
                 }
 
-                $this->assertContains($block['type'], ['line', 'text', 'paragraphs']);
-                $this->assertSame($block['type'] === 'paragraphs', is_array(trans($key, [], 'it')), $key);
+                $this->assertContains($type, ['line', 'text', 'paragraphs']);
+                $this->assertSame($type === 'paragraphs', is_array(trans($key, [], 'it')), $key);
+                $this->assertIsString(__("admin-content.site_blocks.{$key}"), "etichetta di {$key}");
+                $this->assertNotSame("admin-content.site_blocks.{$key}", __("admin-content.site_blocks.{$key}"));
             }
         }
     }

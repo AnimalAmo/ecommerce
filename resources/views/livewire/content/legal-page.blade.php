@@ -24,8 +24,8 @@
                     </p>
                 @endif
 
-                {{-- Corpo non escapato: HTML strutturato prodotto dal nostro seeder,
-                     non input utente. Col CRUD di backoffice servirà sanitizzare. --}}
+                {{-- Corpo non escapato: HTML del nostro seeder o del pannello, che lo
+                     filtra con HtmlSanitizer prima di salvarlo. --}}
                 <div class="legal-content mt-8 max-lg:mt-6">{!! $page->bodyFor() !!}</div>
             </div>
         </div>

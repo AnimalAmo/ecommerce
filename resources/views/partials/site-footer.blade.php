@@ -1,4 +1,8 @@
 {{-- Footer completo (condiviso). Richiede $px definito dalla pagina. --}}
+@php
+    // Pagine che la cliente mette nel piede dal pannello ("Visibile nel piede del sito").
+    $footerPages = app(\App\Services\Content\PageService::class)->footerLinks();
+@endphp
 <footer class="mt-auto bg-white text-black">
     <div class="{{ $px }} border-b border-black pb-10 pt-16 max-lg:pt-10">
         {{-- Mobile: 2 colonne invece di 4 --}}
@@ -23,6 +27,9 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     <li><a href="{{ route('about') }}" class="hover:text-brand-cyan">{{ __('nav.footer.about') }}</a></li>
                     <li><a href="{{ route('work-with-us') }}" class="hover:text-brand-cyan">{{ __('nav.footer.work_with_us') }}</a></li>
+                    @foreach ($footerPages['company'] ?? [] as $link)
+                        <li><a href="{{ $link['url'] }}" class="hover:text-brand-cyan">{{ $link['title'] }}</a></li>
+                    @endforeach
                 </ul>
             </div>
             <div>
@@ -30,6 +37,9 @@
                 <ul class="space-y-4 text-sm text-[#2B2B2B]">
                     {{-- Contattaci e Assistenza unificati nella pagina Contattaci (lug 2026) --}}
                     <li><a href="{{ route('contact') }}" class="hover:text-brand-cyan">{{ __('nav.footer.contact_us') }}</a></li>
+                    @foreach ($footerPages['support'] ?? [] as $link)
+                        <li><a href="{{ $link['url'] }}" class="hover:text-brand-cyan">{{ $link['title'] }}</a></li>
+                    @endforeach
                 </ul>
             </div>
         </div>

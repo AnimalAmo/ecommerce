@@ -6,13 +6,14 @@ use App\Models\Page\Page;
 use Illuminate\Database\Seeder;
 
 /**
- * Carica le pagine redazionali dai file HTML versionati in seeders/content/.
- * Il testo sta in git — una revisione legale si legge come diff — e il DB è
- * solo la sorgente a runtime.
+ * Carica le pagine legali dai file HTML versionati in seeders/content/, solo
+ * se la pagina non esiste ancora: da quando la cliente le modifica dal
+ * pannello, il database è la fonte di verità e un db:seed non deve
+ * riscriverle (firstOrCreate, mai updateOrCreate).
  *
- * ATTENZIONE: quando arriverà il CRUD di backoffice questo updateOrCreate va
- * cambiato in firstOrCreate, altrimenti un db:seed cancella le modifiche fatte
- * dal cliente.
+ * Una revisione del testo fatta da noi passa quindi dal pannello o da una
+ * migration dedicata, non dalla modifica di questi file: su un database già
+ * seminato non avrebbe effetto.
  */
 class PageSeeder extends Seeder
 {
@@ -47,7 +48,8 @@ class PageSeeder extends Seeder
                 continue;
             }
 
-            Page::updateOrCreate(['slug' => $slug], [
+            Page::firstOrCreate(['slug' => $slug], [
+                'kind' => Page::KIND_LEGAL,
                 'title' => $attributes['title'],
                 'body' => $body,
                 'last_updated_at' => $attributes['last_updated_at'],

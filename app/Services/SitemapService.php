@@ -73,6 +73,7 @@ class SitemapService
         return array_values(array_filter([
             ...$this->staticPages(),
             ...$this->legalPages(),
+            ...$this->freePages(),
             ...$this->regions(),
             ...$this->events(),
             ...$this->smartboxPackages(),
@@ -97,7 +98,7 @@ class SitemapService
      */
     private function legalPages(): array
     {
-        $revisions = Page::query()->pluck('last_updated_at', 'slug');
+        $revisions = Page::query()->legal()->pluck('last_updated_at', 'slug');
 
         $entries = [];
 
@@ -106,6 +107,24 @@ class SitemapService
         }
 
         return $entries;
+    }
+
+    /**
+     * Pagine libere create dal pannello (/pagina/{slug}), solo pubblicate.
+     * Niente lastmod: non hanno una data di revisione dichiarata, e
+     * updated_at è proprio la data inventata che la sitemap evita.
+     *
+     * @return list<array{urls: array<string, string>, lastmod: string|null}|null>
+     */
+    private function freePages(): array
+    {
+        return Page::query()
+            ->free()
+            ->where('is_published', true)
+            ->orderBy('id')
+            ->pluck('slug')
+            ->map(fn (string $slug) => $this->entry('page', ['slug' => $slug]))
+            ->all();
     }
 
     /**

@@ -58,26 +58,23 @@ class SitePageEdit extends Component
     {
         $this->resetErrorBag();
 
-        $this->validate([
-            'values.*.*' => ['nullable', 'string', 'max:5000'],
-        ], [], ['values.*.*' => 'testo']);
+        $this->validate(
+            ['values.*.*' => ['nullable', 'string', 'max:5000']],
+            [],
+            ['values.*.*' => __('admin-content.site.field')],
+        );
 
         $errors = [];
 
         foreach (ContentBlockService::LOCALES as $locale) {
             foreach ($this->keys as $index => $key) {
                 $value = trim((string) ($this->values[$locale][$index] ?? ''));
-
-                if ($value === '') {
-                    continue;
-                }
-
-                $missing = $blocks->missingPlaceholders($key, $locale, $value);
+                $missing = $value === '' ? [] : $blocks->missingPlaceholders($key, $locale, $value);
 
                 if ($missing !== []) {
-                    $errors["values.{$locale}.{$index}"] = 'Il testo deve contenere '
-                        .implode(', ', array_map(fn (string $token): string => ':'.$token, $missing))
-                        .': al suo posto il sito scrive il valore giusto.';
+                    $errors["values.{$locale}.{$index}"] = __('admin-content.site.placeholder_missing', [
+                        'tokens' => implode(', ', array_map(fn (string $token): string => ':'.$token, $missing)),
+                    ]);
                 }
             }
         }
@@ -103,7 +100,7 @@ class SitePageEdit extends Component
 
         $blocks->save($this->section, $payload, Auth::user());
 
-        Flux::toast(text: 'Testi salvati e pubblicati.', variant: 'success');
+        Flux::toast(text: __('admin-content.site.saved'), variant: 'success');
     }
 
     /** "Ripristina il testo originale" per un campo, nella lingua aperta. */
@@ -120,7 +117,7 @@ class SitePageEdit extends Component
         $this->values[$this->locale][$index] = '';
         $this->resetErrorBag("values.{$this->locale}.{$index}");
 
-        Flux::toast(text: 'Torna il testo originale.', variant: 'success');
+        Flux::toast(text: __('admin-content.site.restored'), variant: 'success');
     }
 
     public function render(ContentBlockService $blocks)
@@ -132,9 +129,8 @@ class SitePageEdit extends Component
         foreach ($this->keys as $index => $key) {
             $fields[] = [
                 'index' => $index,
-                'key' => $key,
-                'label' => $definition['blocks'][$key]['label'],
-                'type' => $definition['blocks'][$key]['type'],
+                'label' => $blocks->blockLabel($key),
+                'type' => $definition['blocks'][$key],
                 'original' => $blocks->original($key, $this->locale),
                 'saved' => $blocks->override($key, $this->locale) !== null,
             ];
@@ -143,13 +139,13 @@ class SitePageEdit extends Component
         $status = $blocks->sectionStatus($this->section);
 
         return view('livewire.admin.content.site-page-edit', [
-            'definition' => $definition,
+            'label' => $blocks->sectionLabel($this->section),
             'fields' => $fields,
             'status' => $status,
             'isOriginal' => ! $status['locales'][$this->locale],
             'publicUrl' => route($definition['route']),
         ])
             ->layout('layouts::admin')
-            ->title($definition['label']);
+            ->title($blocks->sectionLabel($this->section));
     }
 }

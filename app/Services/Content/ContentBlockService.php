@@ -30,16 +30,28 @@ class ContentBlockService
     /** @var array<string, array<string, string>>|null chiave => [lingua => testo] */
     private ?array $map = null;
 
-    /** @return array<string, array{label: string, route: string, blocks: array<string, array{label: string, type: string}>}> */
+    /** @return array<string, array{route: string, blocks: array<string, string>}> sezione => rotta e chiave => tipo */
     public function sections(): array
     {
         return config('admin-content.sections', []);
     }
 
-    /** @return array{label: string, route: string, blocks: array<string, array{label: string, type: string}>}|null */
+    /** @return array{route: string, blocks: array<string, string>}|null */
     public function section(string $section): ?array
     {
         return $this->sections()[$section] ?? null;
+    }
+
+    /** Nome della sezione nel pannello. */
+    public function sectionLabel(string $section): string
+    {
+        return __('admin-content.sections.'.$section);
+    }
+
+    /** Etichetta del campo di una chiave nel pannello. */
+    public function blockLabel(string $key): string
+    {
+        return __('admin-content.site_blocks.'.$key);
     }
 
     /** @return array<string, array<string, string>> */
