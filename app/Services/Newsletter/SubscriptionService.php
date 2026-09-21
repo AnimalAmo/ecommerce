@@ -58,15 +58,32 @@ class SubscriptionService
             return $subscriber;
         }
 
+        // Seconda richiesta per un indirizzo appena scritto: nessuna mail e
+        // nessuna modifica. Il form è pubblico, e chiunque lo compili con
+        // l'indirizzo di un altro riscriverebbe la prova della sua richiesta.
         $recentlySent = $subscriber->exists
             && $subscriber->status === NewsletterSubscriber::STATUS_PENDING
             && $subscriber->confirmation_sent_at?->gt(now()->subMinutes(self::RESEND_COOLDOWN_MINUTES));
 
+        if ($recentlySent) {
+            if ($subscriber->user_id === null && $userId !== null) {
+                $subscriber->forceFill(['user_id' => $userId])->save();
+            }
+
+            return $subscriber;
+        }
+
         // Ritorno dopo una disiscrizione: token nuovo, così i link delle
-        // vecchie mail di conferma non riattivano niente. Chi è ancora in
-        // attesa lo tiene: la mail precedente resta buona.
+        // vecchie mail di conferma non riattivano niente, e via la conferma
+        // del giro precedente, che non prova più nulla. Chi è ancora in attesa
+        // tiene il token: la mail precedente resta buona.
         if ($subscriber->exists && $subscriber->status !== NewsletterSubscriber::STATUS_PENDING) {
-            $subscriber->token = NewsletterSubscriber::newToken();
+            $subscriber->forceFill([
+                'token' => NewsletterSubscriber::newToken(),
+                'confirmed_at' => null,
+                'confirmation_ip' => null,
+                'confirmation_user_agent' => null,
+            ]);
         }
 
         // Nuova richiesta (o ritorno dopo una disiscrizione): torna in attesa
@@ -81,19 +98,14 @@ class SubscriptionService
             'consent_ip' => $ip,
             'consent_user_agent' => $userAgent === null ? null : Str::limit($userAgent, 250, ''),
             'requested_at' => now(),
+            'confirmation_sent_at' => now(),
             'unsubscribed_at' => null,
         ]);
-
-        if (! $recentlySent) {
-            $subscriber->confirmation_sent_at = now();
-        }
 
         $subscriber->save();
         $this->syncUser($subscriber);
 
-        if (! $recentlySent) {
-            $this->mailer->send($subscriber->email, new NewsletterConfirmationMail($subscriber));
-        }
+        $this->mailer->send($subscriber->email, new NewsletterConfirmationMail($subscriber));
 
         return $subscriber;
     }

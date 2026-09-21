@@ -91,9 +91,16 @@ class SubscriptionServiceTest extends TestCase
     public function test_a_second_request_within_minutes_does_not_send_a_second_mail(): void
     {
         $this->subscribe('luca@example.com');
-        $this->subscribe('luca@example.com');
+        // Qualcun altro scrive lo stesso indirizzo: la prova della prima
+        // richiesta resta com'era.
+        $this->service->subscribe('luca@example.com', 'en', NewsletterSubscriber::SOURCE_REGISTRATION, 'Altra frase', '192.0.2.66', 'Bot/1');
 
         Mail::assertQueued(NewsletterConfirmationMail::class, 1);
+        $subscriber = NewsletterSubscriber::sole();
+        $this->assertSame('Frase del consenso', $subscriber->consent_text);
+        $this->assertSame('198.51.100.7', $subscriber->consent_ip);
+        $this->assertSame('it', $subscriber->locale);
+        $this->assertSame(NewsletterSubscriber::SOURCE_FOOTER, $subscriber->source);
 
         $this->travel(11)->minutes();
         $this->subscribe('luca@example.com');
@@ -187,6 +194,8 @@ class SubscriptionServiceTest extends TestCase
         $subscriber = $this->subscribe('luca@example.com');
 
         $this->assertNotSame($oldToken, $subscriber->token);
+        $this->assertNull($subscriber->confirmed_at);
+        $this->assertNull($subscriber->confirmation_ip);
         $this->assertNull($this->service->confirm($oldToken, null, null));
         $this->assertNotNull($this->service->confirm($subscriber->token, null, null));
     }
