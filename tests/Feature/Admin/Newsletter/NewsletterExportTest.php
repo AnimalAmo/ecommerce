@@ -42,6 +42,16 @@ class NewsletterExportTest extends TestCase
         $this->assertStringNotContainsString('marta@example.com', $csv);
     }
 
+    public function test_a_malformed_filter_is_ignored(): void
+    {
+        $this->actingAsSuperadmin();
+        NewsletterSubscriber::factory()->create(['email' => 'luca@example.com']);
+
+        $csv = $this->get(route('admin.newsletter.export').'?status[]=confirmed')->assertOk()->streamedContent();
+
+        $this->assertStringContainsString('luca@example.com', $csv);
+    }
+
     /** Un indirizzo scritto da un visitatore non deve diventare una formula in Excel. */
     public function test_cells_that_excel_would_run_as_formulas_are_neutralised(): void
     {

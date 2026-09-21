@@ -17,7 +17,8 @@ class NewsletterExportController
 {
     public function __invoke(Request $request, NewsletterAdmin $admin): StreamedResponse
     {
-        $filters = array_map('strval', $request->only(['search', 'status', 'source', 'locale']));
+        // Solo stringhe: un `?stato[]=` scritto a mano non deve diventare un 500.
+        $filters = array_map(fn ($value): string => is_string($value) ? $value : '', $request->only(['search', 'status', 'source', 'locale']));
         $at = fn ($date): string => $date?->format('d/m/Y H:i:s') ?? '';
 
         $rows = $admin->subscribers($filters)->reorder()->lazyById(500)->map(fn (NewsletterSubscriber $subscriber): array => [
