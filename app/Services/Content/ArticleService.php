@@ -173,6 +173,28 @@ class ArticleService
         return true;
     }
 
+    /**
+     * importSeedCover() su tutti gli articoli, dal più vecchio. Un articolo
+     * che non riceve niente (nessun jpg per il suo slug, o una copertina già
+     * presente perché un passaggio precedente si è interrotto) non ferma gli
+     * altri: per questo un foreach e non each(), che si arresta al primo
+     * `false` restituito dal callback.
+     *
+     * @return int quante copertine sono state caricate
+     */
+    public function importSeedCovers(): int
+    {
+        $imported = 0;
+
+        foreach (Article::query()->lazyById() as $article) {
+            if ($this->importSeedCover($article)) {
+                $imported++;
+            }
+        }
+
+        return $imported;
+    }
+
     private function translate(Article $article, string $attribute, string $locale, string $value): void
     {
         $value === ''

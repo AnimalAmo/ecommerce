@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Article\Article;
 use App\Services\Content\ArticleService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -16,16 +15,15 @@ return new class extends Migration
      * nome. Adesso la foto sta in database/seeders/content/articles/{slug}.jpg
      * e diventa la media `cover` dell'articolo: i ritagli li producono le
      * conversioni. Gli articoli già a database la ricevono qui; su un database
-     * nuovo la carica l'ArticleSeeder.
+     * nuovo la carica l'ArticleSeeder. Rilanciata dopo un'interruzione salta
+     * chi la copertina ce l'ha già e completa gli altri.
      *
      * `cover_path`, aggiunta dalle fondamenta del pannello e mai scritta da
      * nessuno, se ne va: un file caricato non si tiene come path in colonna.
      */
     public function up(): void
     {
-        $covers = app(ArticleService::class);
-
-        Article::query()->orderBy('id')->each(fn (Article $article) => $covers->importSeedCover($article));
+        app(ArticleService::class)->importSeedCovers();
 
         Schema::table('articles', function (Blueprint $table) {
             $table->dropColumn('cover_path');

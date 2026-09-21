@@ -5,8 +5,10 @@ namespace Tests\Feature\Content;
 use App\Models\Article\Article;
 use App\Services\Content\ArticleService;
 use Database\Seeders\ArticleSeeder;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -16,6 +18,8 @@ class ArticleCoverTest extends TestCase
     use RefreshDatabase;
 
     private const SLUG = 'come-gestire-i-bisogni-del-cucciolo';
+
+    private const COVER_MIGRATION = 'database/migrations/2026_09_19_220002_move_article_covers_to_media_library.php';
 
     protected function setUp(): void
     {
@@ -95,6 +99,45 @@ class ArticleCoverTest extends TestCase
         $this->assertFileExists(ArticleService::seedCoverPath(self::SLUG));
     }
 
+    /**
+     * Un articolo che non riceve la foto versionata (nessun jpg per il suo
+     * slug) non deve lasciare senza copertina quelli che vengono dopo: il
+     * loop della migration non si ferma al primo "niente da fare".
+     */
+    public function test_the_cover_migration_goes_past_an_article_without_a_versioned_photo(): void
+    {
+        $this->article('senza-foto');
+        $article = $this->article(self::SLUG);
+
+        // Lo schema di prima della migration: cover_path c'era ancora.
+        Schema::table('articles', fn (Blueprint $table) => $table->string('cover_path')->nullable());
+
+        (require base_path(self::COVER_MIGRATION))->up();
+
+        $this->assertTrue($article->refresh()->hasMedia(Article::COVER), 'articolo dopo quello senza foto rimasto senza copertina');
+        $this->assertFalse(Schema::hasColumn('articles', 'cover_path'));
+    }
+
+    /**
+     * Rilancio dopo un'interruzione: il primo articolo ha già la copertina,
+     * quelli dopo no. Devono riceverla, senza toccare quella che c'è.
+     */
+    public function test_importing_the_seed_covers_goes_past_the_articles_that_need_nothing(): void
+    {
+        $covers = app(ArticleService::class);
+
+        $first = $this->article('viaggiare-con-il-tuo-animale');
+        $covers->importSeedCover($first);
+        $this->article('senza-foto');
+        $last = $this->article(self::SLUG);
+
+        $this->assertSame(1, $covers->importSeedCovers());
+
+        $this->assertTrue($last->refresh()->hasMedia(Article::COVER));
+        $this->assertSame(1, $first->refresh()->getMedia(Article::COVER)->count());
+        $this->assertDatabaseCount('media', 2);
+    }
+
     public function test_the_public_pages_read_the_cover_crops(): void
     {
         $this->seed(ArticleSeeder::class);
@@ -151,5 +194,15 @@ class ArticleCoverTest extends TestCase
 
         Storage::disk('public')->assertMissing($path);
         $this->assertDatabaseCount('media', 3);
+    }
+
+    private function article(string $slug): Article
+    {
+        return Article::create([
+            'slug' => $slug,
+            'title' => ['it' => 'Titolo'],
+            'body' => ['it' => '<p>Testo.</p>'],
+            'published_at' => '2025-07-18',
+        ]);
     }
 }
