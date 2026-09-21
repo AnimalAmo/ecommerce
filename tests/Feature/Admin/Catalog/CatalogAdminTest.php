@@ -160,6 +160,21 @@ class CatalogAdminTest extends TestCase
             ->assertHasErrors('name.it');
     }
 
+    public function test_errors_from_generic_rules_are_in_italian(): void
+    {
+        // `integer` e `max.numeric` non avevano un testo in lang/it/validation.php:
+        // il pannello mostrava quello inglese del framework.
+        $structure = Structure::factory()->create();
+
+        Livewire::test(CatalogShow::class, ['type' => 'structure', 'id' => $structure->id])
+            ->set('cancellationDays', 'tre')
+            ->call('save')
+            ->assertHasErrors(['cancellationDays' => 'Inserisci un numero intero.'])
+            ->set('cancellationDays', '400')
+            ->call('save')
+            ->assertHasErrors(['cancellationDays' => 'Il valore non può superare 365.']);
+    }
+
     public function test_an_unknown_family_is_a_404(): void
     {
         $this->get('/admin/catalogo/order/1')->assertNotFound();
