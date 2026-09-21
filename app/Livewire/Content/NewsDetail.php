@@ -25,6 +25,7 @@ class NewsDetail extends Component
         $article = Article::published()->where('slug', $this->articleSlug)->sole();
 
         $related = Article::published()
+            ->with('media')
             ->whereKeyNot($article->getKey())
             ->take(self::RELATED)
             ->get();

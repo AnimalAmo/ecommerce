@@ -4,6 +4,7 @@ namespace Tests\Feature\Content;
 
 use Database\Seeders\ArticleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class NewsPagesTest extends TestCase
@@ -14,6 +15,7 @@ class NewsPagesTest extends TestCase
     {
         parent::setUp();
 
+        Storage::fake('public');
         $this->seed(ArticleSeeder::class);
     }
 
@@ -52,7 +54,7 @@ class NewsPagesTest extends TestCase
             // Guardia contro un `{!! !!}` che diventasse `{{ }}`: il tag
             // letterale sparirebbe pur restando vero il resto.
             ->assertSee('<h2>✨ Preparare la casa</h2>', false)
-            ->assertSee('img/news/come-gestire-i-bisogni-del-cucciolo-hero.jpg', false);
+            ->assertSee('conversions/come-gestire-i-bisogni-del-cucciolo-hero.jpg', false);
     }
 
     public function test_the_detail_lists_the_other_articles_as_related(): void
@@ -74,7 +76,7 @@ class NewsPagesTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSee('Come far diventare il tuo B&amp;B un alloggio pet-friendly', false)
-            ->assertSee('img/news/come-gestire-i-bisogni-del-cucciolo.jpg', false)
+            ->assertSee('conversions/come-gestire-i-bisogni-del-cucciolo-card.jpg', false)
             ->assertDontSee('Novità Trenitalia trasporto animali');
     }
 }

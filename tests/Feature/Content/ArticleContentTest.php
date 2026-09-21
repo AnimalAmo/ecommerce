@@ -5,6 +5,7 @@ namespace Tests\Feature\Content;
 use App\Models\Article\Article;
 use Database\Seeders\ArticleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -15,6 +16,14 @@ use Tests\TestCase;
 class ArticleContentTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Il seeder carica le copertine nella media library: mai sul disco vero.
+        Storage::fake('public');
+    }
 
     /** @return array<int, array{0: string}> */
     public static function slugProvider(): array
@@ -80,11 +89,16 @@ class ArticleContentTest extends TestCase
         $this->assertMatchesRegularExpression('/^<(p|h2|ul)>/', $html);
     }
 
+    /**
+     * Una foto per articolo, accanto all'HTML: è la copertina che il seeder
+     * carica nella media library. Abbastanza larga da non ingrandire la card.
+     */
     #[DataProvider('slugProvider')]
-    public function test_every_article_has_its_two_photos(string $slug): void
+    public function test_every_article_has_its_photo(string $slug): void
     {
-        $this->assertFileExists(public_path("img/news/{$slug}.jpg"));
-        $this->assertFileExists(public_path("img/news/{$slug}-hero.jpg"));
+        $path = database_path("seeders/content/articles/{$slug}.jpg");
+        $this->assertFileExists($path);
+        $this->assertGreaterThanOrEqual(960, getimagesize($path)[0]);
     }
 
     /** L'occhiello delle card nasce dal primo paragrafo: nessuna colonna da tenere allineata. */

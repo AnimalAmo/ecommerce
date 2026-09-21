@@ -283,7 +283,7 @@
             <div class="mt-10 grid grid-cols-3 gap-6 max-lg:-mx-4 max-lg:mt-6 max-lg:flex max-lg:snap-x max-lg:gap-4 max-lg:overflow-x-auto max-lg:px-4 max-lg:pb-2">
                 @foreach ($news as $article)
                     <div wire:key="news-{{ $article->slug }}" class="rounded-[3px] bg-white px-[10px] py-2 max-lg:w-[300px] max-lg:shrink-0 max-lg:snap-start">
-                        <img src="{{ asset($article->cardImage()) }}" alt="{{ $article->titleFor() }}" class="h-[237px] w-full object-cover">
+                        <x-article-cover :article="$article" class="h-[237px] w-full object-cover" />
                         <div class="p-2">
                             <p class="flex items-center gap-1.5 font-[Roboto,sans-serif] text-sm text-[#959595]">
                                 <flux:icon.calendar class="h-4 w-4 shrink-0 text-[#959595]" />
