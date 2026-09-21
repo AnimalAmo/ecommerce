@@ -148,6 +148,12 @@ class CampaignSender
     /**
      * Perché "Invia a tutti" non può partire, o null se può. I messaggi sono
      * del pannello (solo italiano).
+     *
+     * In produzione contano anche mailer e coda (in locale e nei test si
+     * prova apposta con quelli di default): dal dominio della posta di
+     * servizio una segnalazione di spam fermerebbe anche le conferme di
+     * prenotazione, e con una coda che esegue i job sul posto la lista
+     * partirebbe tutta dentro la richiesta, senza ritmo né tetto orario.
      */
     public function launchBlocker(NewsletterCampaign $campaign): ?string
     {
@@ -155,8 +161,45 @@ class CampaignSender
             ! $campaign->isDraft() => __('admin-newsletter.errors.not_draft'),
             ! $campaign->hasVersion('it') => __('admin-newsletter.errors.missing_italian'),
             $this->audienceCount($campaign->audience) === 0 => __('admin-newsletter.errors.empty_audience'),
+            app()->isProduction() && $this->sharesServiceMailDomain() => __('admin-newsletter.errors.shared_mailer'),
+            app()->isProduction() && $this->queueRunsInline() => __('admin-newsletter.errors.inline_queue'),
             default => null,
         };
+    }
+
+    /**
+     * La newsletter partirebbe dal dominio Mailgun della posta di servizio:
+     * NEWSLETTER_MAILER vuoto o uguale al mailer di default, oppure un mailer
+     * Mailgun senza dominio suo, che ricade su MAILGUN_DOMAIN (config/mail.php).
+     */
+    private function sharesServiceMailDomain(): bool
+    {
+        $mailer = (string) config('newsletter.mailer');
+
+        if ($mailer === '' || $mailer === config('mail.default')) {
+            return true;
+        }
+
+        if (config("mail.mailers.{$mailer}.transport") !== 'mailgun') {
+            return false;
+        }
+
+        $serviceDomain = config('services.mailgun.domain');
+        $domain = config("mail.mailers.{$mailer}.domain") ?: $serviceDomain;
+
+        return blank($domain) || $domain === $serviceDomain;
+    }
+
+    /**
+     * Code che eseguono il job subito, nello stesso giro: ignorano il ritardo
+     * con cui queueNextBatch() distanzia i lotti.
+     */
+    private function queueRunsInline(): bool
+    {
+        $connection = (string) config('queue.default');
+        $driver = config("queue.connections.{$connection}.driver", $connection);
+
+        return in_array($driver, ['sync', 'deferred', 'background'], true);
     }
 
     /**

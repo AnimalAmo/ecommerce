@@ -285,6 +285,8 @@ return [
         'not_draft' => 'Questa newsletter è già partita: non si può inviare di nuovo.',
         'missing_italian' => 'Manca la versione italiana: oggetto e testo sono obbligatori.',
         'empty_audience' => 'Nessun iscritto confermato riceverebbe questa newsletter.',
+        'shared_mailer' => 'Invio bloccato: la newsletter partirebbe dallo stesso dominio delle conferme di prenotazione, e chi la segnalasse come spam non riceverebbe più nemmeno quelle. Chiedi all\'assistenza tecnica di configurare il dominio della newsletter.',
+        'inline_queue' => 'Invio bloccato: il sito non è pronto a spedire a scaglioni, e la lista partirebbe tutta insieme dentro questa pagina. Chiedi all\'assistenza tecnica di attivare la coda di invio.',
         'test_failed' => 'La prova non è partita: il servizio di invio ha rifiutato la mail. Riprova tra qualche minuto.',
     ],
 

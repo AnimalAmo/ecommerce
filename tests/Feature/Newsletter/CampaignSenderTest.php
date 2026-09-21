@@ -388,6 +388,71 @@ class CampaignSenderTest extends TestCase
         Mail::assertSent(NewsletterCampaignMail::class, 1);
     }
 
+    /**
+     * Mailgun tiene una lista di soppressione per dominio: dal dominio della
+     * posta di servizio, chi segnala come spam un numero della newsletter non
+     * riceverebbe più nemmeno le conferme di prenotazione.
+     */
+    public function test_in_production_the_newsletter_cannot_leave_from_the_service_mail_domain(): void
+    {
+        Queue::fake();
+        NewsletterSubscriber::factory()->confirmed()->create();
+        $this->app['env'] = 'production';
+        config([
+            'mail.default' => 'mailgun',
+            'services.mailgun.domain' => 'mg.animalamo.it',
+            'queue.default' => 'database',
+        ]);
+
+        config(['newsletter.mailer' => null]);
+        $this->assertLaunchRefused(NewsletterCampaign::factory()->create(), __('admin-newsletter.errors.shared_mailer'));
+
+        config(['newsletter.mailer' => 'mailgun']);
+        $this->assertLaunchRefused(NewsletterCampaign::factory()->create(), __('admin-newsletter.errors.shared_mailer'));
+
+        // mailgun-newsletter senza MAILGUN_NEWSLETTER_DOMAIN ricade su MAILGUN_DOMAIN (config/mail.php).
+        config(['newsletter.mailer' => 'mailgun-newsletter', 'mail.mailers.mailgun-newsletter.domain' => 'mg.animalamo.it']);
+        $this->assertLaunchRefused(NewsletterCampaign::factory()->create(), __('admin-newsletter.errors.shared_mailer'));
+
+        config(['mail.mailers.mailgun-newsletter.domain' => 'news.animalamo.it']);
+        $campaign = NewsletterCampaign::factory()->create();
+        $this->assertNull($this->sender()->launchBlocker($campaign));
+        $this->sender()->launch($campaign);
+        Queue::assertPushed(BuildCampaignRecipients::class, 1);
+    }
+
+    /** Una coda che esegue i job sul posto ignora i ritardi: la lista partirebbe tutta dentro la richiesta. */
+    public function test_in_production_the_newsletter_needs_a_queue_that_honours_the_pace(): void
+    {
+        Queue::fake();
+        NewsletterSubscriber::factory()->confirmed()->create();
+        $this->app['env'] = 'production';
+        config([
+            'newsletter.mailer' => 'mailgun-newsletter',
+            'mail.mailers.mailgun-newsletter.domain' => 'news.animalamo.it',
+            'services.mailgun.domain' => 'mg.animalamo.it',
+        ]);
+
+        foreach (['sync', 'deferred'] as $connection) {
+            config(['queue.default' => $connection]);
+            $this->assertLaunchRefused(NewsletterCampaign::factory()->create(), __('admin-newsletter.errors.inline_queue'));
+        }
+
+        config(['queue.default' => 'database']);
+        $this->assertNull($this->sender()->launchBlocker(NewsletterCampaign::factory()->create()));
+        Queue::assertNothingPushed();
+    }
+
+    /** In locale e nei test si prova con il mailer di default e la coda sync. */
+    public function test_outside_production_the_mailer_and_queue_are_not_checked(): void
+    {
+        NewsletterSubscriber::factory()->confirmed()->create();
+        $this->app['env'] = 'local';
+        config(['newsletter.mailer' => null, 'queue.default' => 'sync']);
+
+        $this->assertNull($this->sender()->launchBlocker(NewsletterCampaign::factory()->create()));
+    }
+
     public function test_a_test_send_does_not_touch_the_last_edit_time(): void
     {
         Mail::fake();

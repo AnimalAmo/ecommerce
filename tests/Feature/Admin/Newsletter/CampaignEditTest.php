@@ -234,6 +234,23 @@ class CampaignEditTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_in_production_send_to_all_says_why_the_mail_setup_blocks_it(): void
+    {
+        $this->actingAsSuperadmin();
+        NewsletterSubscriber::factory()->confirmed()->create();
+        $campaign = NewsletterCampaign::factory()->create();
+        $this->app['env'] = 'production';
+        config(['newsletter.mailer' => null, 'queue.default' => 'database']);
+
+        Livewire::test(CampaignEdit::class, ['campaign' => $campaign])
+            ->call('askLaunch')
+            ->assertNotDispatched('modal-show', name: 'newsletter-launch')
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('admin-newsletter.errors.shared_mailer'));
+
+        $this->assertTrue($campaign->fresh()->isDraft());
+        Mail::assertNothingSent();
+    }
+
     public function test_a_campaign_that_left_opens_read_only_with_its_numbers(): void
     {
         $this->actingAsSuperadmin();
