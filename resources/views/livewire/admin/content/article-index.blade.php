@@ -6,7 +6,7 @@
         </x-slot:actions>
     </x-admin.page-header>
 
-    <x-admin.card>
+    <x-admin.card fill>
         <x-admin.filters>
             <div class="min-w-[190px] max-w-[340px] flex-1">
                 <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('admin-content.articles.search_placeholder')" :aria-label="__('admin-content.articles.search_label')" />
@@ -32,7 +32,7 @@
         @if ($page->isEmpty())
             <x-admin.empty>{{ __('admin-content.articles.empty') }}</x-admin.empty>
         @else
-            <div class="overflow-x-auto">
+            <div class="flex-1 overflow-x-auto">
                 <flux:table class="min-w-[max(100%,860px)]">
                     <flux:table.columns>
                         <flux:table.column class="!pl-5">{{ __('admin-content.articles.columns.article') }}</flux:table.column>

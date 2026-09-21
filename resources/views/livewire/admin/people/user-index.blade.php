@@ -15,7 +15,7 @@
         </x-slot:actions>
     </x-admin.page-header>
 
-    <x-admin.card>
+    <x-admin.card fill>
         <x-admin.filters>
             <flux:input
                 wire:model.live.debounce.300ms="q"
@@ -51,7 +51,7 @@
         @if ($users->isEmpty())
             <x-admin.empty>{{ __('admin-people.users.empty') }}</x-admin.empty>
         @else
-            <div class="overflow-x-auto">
+            <div class="flex-1 overflow-x-auto">
                 <flux:table class="min-w-[max(100%,900px)]">
                     <flux:table.columns>
                         <flux:table.column :class="$th.' !pl-5'" sortable :sorted="$sort === 'name'" :direction="$dir" wire:click="sortBy('name')">{{ __('admin-people.users.col_user') }}</flux:table.column>

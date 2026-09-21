@@ -11,7 +11,7 @@
         </x-slot:actions>
     </x-admin.page-header>
 
-    <x-admin.card>
+    <x-admin.card fill>
         <x-admin.filters>
             <div class="min-w-[190px] max-w-[340px] flex-1">
                 <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('admin-catalog.index.search_placeholder')" :aria-label="__('admin-catalog.index.search_label')" />
@@ -54,7 +54,7 @@
         @if ($rows->isEmpty())
             <x-admin.empty>{{ __('admin-catalog.index.empty') }}</x-admin.empty>
         @else
-            <div class="overflow-x-auto">
+            <div class="flex-1 overflow-x-auto">
                 <flux:table class="min-w-[max(100%,940px)]">
                     <flux:table.columns>
                         <flux:table.column class="!pl-5">{{ __('admin-catalog.index.columns.item') }}</flux:table.column>

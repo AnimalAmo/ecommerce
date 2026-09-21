@@ -105,7 +105,10 @@
                     </div>
                 </header>
 
-                <main class="w-full flex-1 px-[clamp(16px,2.2vw,28px)] pt-[clamp(20px,2vw,28px)] pb-[72px]">
+                {{-- Colonna flex: la pagina occupa tutta l'altezza, e una card con `fill` si allunga fino in fondo.
+                     I flux:modal in coda alla pagina sono alti zero ma prenderebbero comunque il gap del flex:
+                     `contents` li toglie dal layout (il dialog aperto sta nel top layer). --}}
+                <main class="flex w-full flex-1 flex-col px-[clamp(16px,2.2vw,28px)] py-[clamp(20px,2vw,28px)] *:flex-1 [&>*>ui-modal]:contents">
                     {{ $slot }}
                 </main>
             </div>

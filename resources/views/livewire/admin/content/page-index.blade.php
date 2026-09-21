@@ -10,7 +10,7 @@
         {{ __('admin-content.pages.notice_body') }}
     </x-admin.notice>
 
-    <x-admin.card>
+    <x-admin.card fill>
         <x-admin.filters>
             <div class="min-w-[190px] max-w-[340px] flex-1">
                 <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('admin-content.pages.search_placeholder')" :aria-label="__('admin-content.pages.search_label')" />
@@ -36,7 +36,7 @@
         @if ($rows->isEmpty())
             <x-admin.empty>{{ __('admin-content.common.no_results') }}</x-admin.empty>
         @else
-            <div class="overflow-x-auto">
+            <div class="flex-1 overflow-x-auto">
                 <flux:table class="min-w-[max(100%,900px)]">
                     <flux:table.columns>
                         <flux:table.column class="!pl-5">{{ __('admin-content.pages.columns.page') }}</flux:table.column>
