@@ -32,14 +32,8 @@ class AdminAuthService
     /** Richieste di link consentite per IP in un minuto. */
     private const MAX_RESET_REQUESTS_PER_IP = 5;
 
-    /**
-     * Hash bcrypt di una stringa casuale che nessuno conosce: il login lo
-     * verifica quando l'indirizzo non è di un amministratore, così il bcrypt
-     * gira in ogni caso e il tempo di risposta non dice chi lo è. Costo 12,
-     * lo stesso di BCRYPT_ROUNDS in produzione: se cambia quello, va
-     * rigenerato con lo stesso costo (password_hash(..., ['cost' => N])).
-     */
-    private const DUMMY_HASH = '$2y$12$Tpt2puGq08xc3V6/7T8.XuhQvL7AL8h8ovhe/AjuifjkwhIt6.l9O';
+    /** @var array<int, string> hash fittizi già calcolati, per costo bcrypt */
+    private static array $decoyHashes = [];
 
     /**
      * @throws ValidationException credenziali errate, account non amministratore, blocco attivo
@@ -64,7 +58,7 @@ class AdminAuthService
         // E la password si verifica sempre, contro un hash fittizio se non è
         // un amministratore: con il solo controllo del ruolo la risposta per
         // gli altri arriverebbe un bcrypt prima.
-        $passwordMatches = Hash::check($password, $admin ? $user->getAuthPassword() : self::DUMMY_HASH);
+        $passwordMatches = Hash::check($password, $admin ? $user->getAuthPassword() : $this->decoyHash());
 
         if (! $admin || ! $passwordMatches) {
             RateLimiter::hit($key, self::LOCKOUT_SECONDS);
@@ -76,6 +70,20 @@ class AdminAuthService
 
         RateLimiter::clear($key);
         Auth::login($user, $remember);
+    }
+
+    /**
+     * Hash bcrypt di una stringa casuale che nessuno conosce, allo stesso
+     * costo delle password vere (BCRYPT_ROUNDS): il login lo verifica quando
+     * l'indirizzo non è di un amministratore, così il bcrypt gira in ogni caso
+     * e il tempo di risposta non dice chi lo è. Calcolato una volta per
+     * processo; password_hash e non Hash::make, che nei test può essere finto.
+     */
+    private function decoyHash(): string
+    {
+        $cost = (int) config('hashing.bcrypt.rounds', 12);
+
+        return self::$decoyHashes[$cost] ??= password_hash(Str::random(40), PASSWORD_BCRYPT, ['cost' => $cost]);
     }
 
     public function canAccessPanel(User $user): bool

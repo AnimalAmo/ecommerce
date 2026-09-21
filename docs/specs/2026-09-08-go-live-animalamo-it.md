@@ -354,4 +354,12 @@ della coda che diventa necessario. In ordine:
    mail per scegliere la password).
 8. **Dopo il deploy**: aprire `/admin/login`, la home pubblica, il carrello e una
    scheda; controllare `storage/logs/laravel.log` e la tabella `failed_jobs`.
+9. **Se la migrazione delle copertine si è interrotta** a metà (timeout,
+   memoria), i ritagli `card`/`hero` possono mancare anche dove la copertina
+   c'è: `php artisan media-library:regenerate --only-missing`.
+
+**Il rollback di questo rilascio si rifiuta, per scelta.** Le migration di
+`media` e `newsletter_*` non cancellano tabelle con righe dentro (in produzione
+ne avranno sempre: copertine e iscritti legacy). La strada per tornare indietro
+è ripristinare il dump fatto al punto 2, non `migrate:rollback`.
 

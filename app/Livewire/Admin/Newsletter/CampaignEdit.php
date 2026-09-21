@@ -165,7 +165,14 @@ class CampaignEdit extends Component
             return;
         }
 
-        $sender->resume($campaign);
+        try {
+            $sender->resume($campaign);
+        } catch (CampaignNotLaunchable $refused) {
+            Flux::toast(text: $refused->getMessage(), variant: 'danger');
+
+            return;
+        }
+
         Flux::toast(text: __('admin-newsletter.editor.resumed'), variant: 'success');
     }
 

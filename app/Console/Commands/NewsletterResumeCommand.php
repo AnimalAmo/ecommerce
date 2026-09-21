@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Newsletter\NewsletterCampaign;
 use App\Services\Newsletter\CampaignSender;
+use App\Services\Newsletter\Exceptions\CampaignNotLaunchable;
 use Illuminate\Console\Command;
 
 /**
@@ -40,7 +41,13 @@ class NewsletterResumeCommand extends Command
             return self::FAILURE;
         }
 
-        $queued = $sender->resume($campaign);
+        try {
+            $queued = $sender->resume($campaign);
+        } catch (CampaignNotLaunchable $refused) {
+            $this->components->error($refused->getMessage());
+
+            return self::FAILURE;
+        }
 
         $this->components->info(__('admin-newsletter.command.resume_done', ['count' => $queued]));
 

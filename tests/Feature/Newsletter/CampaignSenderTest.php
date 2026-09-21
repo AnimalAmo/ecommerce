@@ -443,6 +443,48 @@ class CampaignSenderTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    /** Il driver null butta i job: la campagna resterebbe "in invio" per sempre. */
+    public function test_in_production_a_null_queue_blocks_the_launch(): void
+    {
+        NewsletterSubscriber::factory()->confirmed()->create();
+        $this->productionWithDedicatedMailer();
+        config(['queue.default' => 'null']);
+
+        $this->assertLaunchRefused(NewsletterCampaign::factory()->create(), __('admin-newsletter.errors.inline_queue'));
+    }
+
+    /**
+     * "Riprendi l'invio" rimette in coda i lotti come il lancio: con una coda
+     * che li esegue sul posto la lista partirebbe tutta dentro la richiesta.
+     */
+    public function test_in_production_resuming_needs_the_same_queue_as_launching(): void
+    {
+        Queue::fake();
+        NewsletterSubscriber::factory()->confirmed()->count(2)->create();
+        $campaign = NewsletterCampaign::factory()->create();
+        $this->sender()->launch($campaign);
+        $this->sender()->buildRecipients($campaign->fresh());
+        $this->travel(2)->hours();
+
+        $this->productionWithDedicatedMailer();
+        config(['queue.default' => 'sync']);
+
+        $this->artisan('newsletter:resume', ['campaign' => $campaign->id, '--force' => true])
+            ->expectsOutputToContain(__('admin-newsletter.errors.inline_queue'))
+            ->assertFailed();
+        Queue::assertPushed(SendCampaignBatch::class, 1);
+    }
+
+    private function productionWithDedicatedMailer(): void
+    {
+        $this->app['env'] = 'production';
+        config([
+            'newsletter.mailer' => 'mailgun-newsletter',
+            'mail.mailers.mailgun-newsletter.domain' => 'news.animalamo.it',
+            'services.mailgun.domain' => 'mg.animalamo.it',
+        ]);
+    }
+
     /** In locale e nei test si prova con il mailer di default e la coda sync. */
     public function test_outside_production_the_mailer_and_queue_are_not_checked(): void
     {

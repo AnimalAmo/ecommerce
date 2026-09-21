@@ -118,6 +118,25 @@ class AdminAuthTest extends TestCase
         $this->assertGuest();
     }
 
+    /**
+     * L'hash fittizio deve costare quanto quello vero: con un costo diverso
+     * (BCRYPT_ROUNDS cambiato) il tempo di risposta tornerebbe a distinguerli.
+     */
+    public function test_the_decoy_password_check_costs_the_configured_bcrypt_rounds(): void
+    {
+        config(['hashing.bcrypt.rounds' => 5]);
+        Hash::spy();
+
+        Livewire::test(Login::class)
+            ->set('email', 'nessuno@animalamo.it')
+            ->set('password', 'Qualsiasi123!')
+            ->call('login');
+
+        Hash::shouldHaveReceived('check')
+            ->once()
+            ->withArgs(fn ($value, $hashed) => password_get_info((string) $hashed)['options']['cost'] === 5);
+    }
+
     public function test_five_failures_lock_the_account_even_with_the_right_password(): void
     {
         $this->admin();

@@ -161,8 +161,20 @@ class CampaignSender
             ! $campaign->isDraft() => __('admin-newsletter.errors.not_draft'),
             ! $campaign->hasVersion('it') => __('admin-newsletter.errors.missing_italian'),
             $this->audienceCount($campaign->audience) === 0 => __('admin-newsletter.errors.empty_audience'),
-            app()->isProduction() && $this->sharesServiceMailDomain() => __('admin-newsletter.errors.shared_mailer'),
-            app()->isProduction() && $this->queueRunsInline() => __('admin-newsletter.errors.inline_queue'),
+            default => $this->productionSendBlocker(),
+        };
+    }
+
+    /**
+     * I controlli che valgono per ogni invio in produzione, lancio o ripresa:
+     * mailer con un dominio suo e una coda che rispetta il ritmo dei lotti.
+     */
+    private function productionSendBlocker(): ?string
+    {
+        return match (true) {
+            ! app()->isProduction() => null,
+            $this->sharesServiceMailDomain() => __('admin-newsletter.errors.shared_mailer'),
+            $this->queueRunsInline() => __('admin-newsletter.errors.inline_queue'),
             default => null,
         };
     }
@@ -191,15 +203,16 @@ class CampaignSender
     }
 
     /**
-     * Code che eseguono il job subito, nello stesso giro: ignorano il ritardo
-     * con cui queueNextBatch() distanzia i lotti.
+     * Code che eseguono il job subito, nello stesso giro, e ignorano il
+     * ritardo con cui queueNextBatch() distanzia i lotti; più la coda null,
+     * che i job li butta e lascerebbe la campagna "in invio" per sempre.
      */
     private function queueRunsInline(): bool
     {
         $connection = (string) config('queue.default');
         $driver = config("queue.connections.{$connection}.driver", $connection);
 
-        return in_array($driver, ['sync', 'deferred', 'background'], true);
+        return in_array($driver, ['sync', 'deferred', 'background', 'null'], true);
     }
 
     /**
@@ -335,9 +348,15 @@ class CampaignSender
      * fallito): chiude come fallite le righe interrotte a metà spedizione —
      * esito sconosciuto, non si rispedisce — e riavvia la catena sulle righe
      * ancora in coda. Ritorna quante sono.
+     *
+     * @throws CampaignNotLaunchable in produzione, con mailer o coda inadatti
      */
     public function resume(NewsletterCampaign $campaign): int
     {
+        if (($blocker = $this->productionSendBlocker()) !== null) {
+            throw new CampaignNotLaunchable($blocker);
+        }
+
         if ($campaign->recipients()->doesntExist()) {
             $this->buildRecipients($campaign);
 
