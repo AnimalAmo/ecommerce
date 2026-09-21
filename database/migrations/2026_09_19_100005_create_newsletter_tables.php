@@ -80,7 +80,8 @@ return new class extends Migration
             // La ripresa dopo un'interruzione si basa su questa chiave: un
             // destinatario già `sent` non riceve una seconda copia.
             $table->unique(['newsletter_campaign_id', 'newsletter_subscriber_id'], 'nl_campaign_subscriber_unique');
-            $table->index(['newsletter_campaign_id', 'status']);
+            // Nome esplicito: quello automatico fa 66 caratteri, MySQL ne accetta 64.
+            $table->index(['newsletter_campaign_id', 'status'], 'nl_campaign_status_index');
         });
 
         $now = now();
