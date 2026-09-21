@@ -7,6 +7,9 @@
 @endphp
 <footer class="mt-auto bg-white text-black">
     <div class="{{ $px }} border-b border-black pb-10 pt-16 max-lg:pt-10">
+        <div class="mb-12 max-lg:mb-10">
+            <livewire:newsletter.subscribe-form wire:key="newsletter-footer" />
+        </div>
         {{-- Mobile: 2 colonne invece di 4 --}}
         <div class="grid grid-cols-4 gap-10 max-lg:grid-cols-2 max-lg:gap-8">
             <div>

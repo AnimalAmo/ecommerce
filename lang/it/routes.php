@@ -30,6 +30,8 @@ return [
     'profilo.ordini.riepilogo' => 'profilo/i-miei-ordini/{order}',
     'profilo.eventi' => 'profilo/eventi-a-cui-partecipo',
     'password.reset' => 'reimposta-password/{token}',
+    'newsletter.confirm' => 'newsletter/conferma/{token}',
+    'newsletter.unsubscribe' => 'newsletter/disiscrizione/{subscriber}',
     'news' => 'news',
     'news.detail' => 'news/{article}',
     'work-with-us' => 'lavora-con-noi',

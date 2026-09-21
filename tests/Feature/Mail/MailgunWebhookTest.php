@@ -88,6 +88,33 @@ class MailgunWebhookTest extends TestCase
         ])->assertForbidden();
     }
 
+    /**
+     * La firma non copre l'evento: un token già visto si rifiuta, o una firma
+     * catturata potrebbe accompagnare un evento qualsiasi.
+     */
+    public function test_a_replayed_token_has_no_effect(): void
+    {
+        $delivery = MailDelivery::create([
+            'message_id' => 'abc@mg.animalamo.it',
+            'recipient' => 'info@babaresidences.comm',
+            'status' => MailDelivery::STATUS_SENT,
+        ]);
+        $timestamp = (string) time();
+        $signature = ['timestamp' => $timestamp, 'token' => 'token-unico', 'signature' => hash_hmac('sha256', $timestamp.'token-unico', self::KEY)];
+
+        $this->postJson(route('webhooks.mailgun'), [
+            'signature' => $signature,
+            'event-data' => ['event' => 'delivered', 'recipient' => 'info@babaresidences.comm', 'message' => ['headers' => ['message-id' => 'abc@mg.animalamo.it']]],
+        ])->assertOk()->assertJson(['status' => 'ok']);
+
+        $this->postJson(route('webhooks.mailgun'), [
+            'signature' => $signature,
+            'event-data' => $this->failureEvent('abc@mg.animalamo.it'),
+        ])->assertOk()->assertJson(['status' => 'duplicate']);
+
+        $this->assertSame(MailDelivery::STATUS_DELIVERED, $delivery->fresh()->status);
+    }
+
     public function test_a_permanent_failure_is_recorded_on_the_sent_message(): void
     {
         $delivery = MailDelivery::create([

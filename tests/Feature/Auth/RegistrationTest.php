@@ -3,12 +3,18 @@
 namespace Tests\Feature\Auth;
 
 use App\Livewire\Auth\RegisterModal;
+use App\Mail\Newsletter\NewsletterConfirmationMail;
+use App\Models\Newsletter\NewsletterSubscriber;
 use App\Models\User;
+use App\Services\Newsletter\SubscriptionService;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
+use RuntimeException;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -83,7 +89,10 @@ class RegistrationTest extends TestCase
 
         $this->assertSame('Mario Verdi', $user->name);
         $this->assertSame('1990-05-10', $user->birth_date->toDateString());
-        $this->assertTrue($user->newsletter);
+        // La casella chiede l'iscrizione: users.newsletter diventa vero solo
+        // dopo la conferma dal link della mail (double opt-in).
+        $this->assertFalse($user->newsletter);
+        $this->assertSame(NewsletterSubscriber::STATUS_PENDING, NewsletterSubscriber::where('user_id', $user->id)->sole()->status);
         $this->assertTrue($user->marketing_consent);
         $this->assertTrue($user->hasRole('client'));
         $this->assertSame('Cane', $user->pets()->sole()->species);
@@ -91,6 +100,75 @@ class RegistrationTest extends TestCase
         Event::assertDispatched(Registered::class, fn (Registered $event) => $event->user->is($user));
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    /**
+     * La casella della newsletter è una richiesta di iscrizione con double
+     * opt-in, e la prova del consenso è la frase della casella.
+     */
+    public function test_the_newsletter_box_requests_a_subscription_with_the_box_label_as_proof(): void
+    {
+        Mail::fake();
+
+        $this->registerAtStepFour('luisa.neri@example.com')
+            ->set('form.newsletter', true)
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $user = User::where('email', 'luisa.neri@example.com')->firstOrFail();
+        $subscriber = NewsletterSubscriber::sole();
+
+        $this->assertSame($user->id, $subscriber->user_id);
+        $this->assertSame(NewsletterSubscriber::STATUS_PENDING, $subscriber->status);
+        $this->assertSame(NewsletterSubscriber::SOURCE_REGISTRATION, $subscriber->source);
+        $this->assertSame(__('auth-modal.register.newsletter'), $subscriber->consent_text);
+        $this->assertSame('127.0.0.1', $subscriber->consent_ip);
+        $this->assertFalse($user->newsletter);
+
+        Mail::assertQueued(NewsletterConfirmationMail::class, fn (NewsletterConfirmationMail $mail) => $mail->hasTo('luisa.neri@example.com'));
+    }
+
+    public function test_an_unticked_newsletter_box_creates_no_subscription(): void
+    {
+        Mail::fake();
+
+        $this->registerAtStepFour('carlo.blu@example.com')
+            ->set('form.newsletter', false)
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame(0, NewsletterSubscriber::count());
+        Mail::assertNotQueued(NewsletterConfirmationMail::class);
+    }
+
+    /** La registrazione è già salvata: un errore della newsletter non la fa fallire. */
+    public function test_a_newsletter_failure_does_not_break_the_registration(): void
+    {
+        $this->mock(SubscriptionService::class)->shouldReceive('subscribe')->andThrow(new RuntimeException('coda giù'));
+
+        $this->registerAtStepFour('franco.gialli@example.com')
+            ->set('form.newsletter', true)
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertAuthenticatedAs(User::where('email', 'franco.gialli@example.com')->sole());
+    }
+
+    private function registerAtStepFour(string $email): Testable
+    {
+        return Livewire::test(RegisterModal::class, ['step' => 4])
+            ->set('form.firstName', 'Luisa')
+            ->set('form.lastName', 'Neri')
+            ->set('form.birthDate', '1985-01-15')
+            ->set('form.email', $email)
+            ->set('form.phone', '3399876543')
+            ->set('form.password', 'password123')
+            ->set('form.passwordConfirmation', 'password123')
+            ->set('form.address', 'Via Milano 2')
+            ->set('form.city', 'Brescia')
+            ->set('form.postalCode', '25121')
+            ->set('form.petType', 'Gatto');
     }
 
     public function test_marketing_consent_is_optional_and_persisted_as_declined(): void

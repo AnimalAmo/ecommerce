@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Newsletter\NewsletterSubscriber;
 use App\Models\User;
+use App\Services\Newsletter\SubscriptionService;
 use App\Support\Phone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Form;
+use Throwable;
 
 class RegisterForm extends Form
 {
@@ -120,7 +123,9 @@ class RegisterForm extends Form
                 'address' => $this->address,
                 'city' => $this->city,
                 'postal_code' => $this->postalCode,
-                'newsletter' => $this->newsletter,
+                // Vero solo a iscrizione confermata dal link della mail:
+                // lo allinea SubscriptionService.
+                'newsletter' => false,
                 'marketing_consent' => $this->privacyConsent,
             ]);
 
@@ -130,6 +135,25 @@ class RegisterForm extends Form
 
             return $user;
         });
+
+        // Casella spuntata = richiesta di iscrizione con double opt-in, e la
+        // prova è la frase della casella nella lingua in cui l'ha letta. Un
+        // errore qui non deve far fallire una registrazione già salvata.
+        if ($this->newsletter) {
+            try {
+                app(SubscriptionService::class)->subscribe(
+                    email: $user->email,
+                    locale: app()->getLocale(),
+                    source: NewsletterSubscriber::SOURCE_REGISTRATION,
+                    consentText: __('auth-modal.register.newsletter'),
+                    ip: request()->ip(),
+                    userAgent: request()->userAgent(),
+                    user: $user,
+                );
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
 
         event(new Registered($user));
 
