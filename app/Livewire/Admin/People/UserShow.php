@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\People;
 
-use App\Models\Order\Order;
 use App\Models\User;
 use App\Services\Admin\People\AnonymizeUser;
 use App\Services\Admin\People\UserAccountStatus;
@@ -11,7 +10,7 @@ use Flux\Flux;
 use Livewire\Component;
 use RuntimeException;
 
-/** Scheda di un iscritto: dati, stato account, newsletter, ordini, animali, candidature. */
+/** Scheda di un iscritto: dati, ruolo, stato account, newsletter, ordini e prenotazioni, animali, candidature. */
 class UserShow extends Component
 {
     public User $user;
@@ -36,7 +35,7 @@ class UserShow extends Component
             return;
         }
 
-        Flux::toast(text: $this->user->is_active ? 'Account riattivato.' : 'Account disattivato.', variant: 'success');
+        Flux::toast(text: __('admin-people.users.'.($this->user->is_active ? 'reactivated' : 'deactivated')), variant: 'success');
     }
 
     public function askAnonymize(): void
@@ -59,17 +58,20 @@ class UserShow extends Component
 
         $this->anonymizingId = null;
         Flux::modal('anonymize-user')->close();
-        Flux::toast(text: 'Dati personali cancellati. Gli ordini restano in archivio.', variant: 'success');
+        Flux::toast(text: __('admin-people.anonymize.done'), variant: 'success');
     }
 
     public function render(UserDirectory $directory, AnonymizeUser $anonymizer)
     {
         $user = $this->user;
 
+        $isPartner = $user->hasRole('partner');
+
         return view('livewire.admin.people.user-show', [
-            'isPartner' => $user->hasRole('partner'),
+            'isPartner' => $isPartner,
+            'partner' => $isPartner ? $directory->partnerSummary($user) : null,
             'newsletterState' => $directory->newsletterState($user),
-            'orders' => Order::query()->where('user_id', $user->id)->latest('id')->get(),
+            'orders' => $directory->orders($user),
             'pets' => $user->pets()->get(),
             'applications' => $user->partnerApplications()->latest('id')->get(),
             'anonymizing' => $this->anonymizingId !== null ? $user : null,

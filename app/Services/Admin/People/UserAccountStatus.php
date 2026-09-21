@@ -16,11 +16,11 @@ class UserAccountStatus
     public function setActive(User $user, bool $active): void
     {
         if ($user->anonymized_at !== null) {
-            throw new RuntimeException('Un account anonimizzato non si può riattivare.');
+            throw new RuntimeException(__('admin-people.users.errors.anonymized'));
         }
 
         if ($user->hasRole('superadmin')) {
-            throw new RuntimeException('Gli amministratori del pannello non si gestiscono da qui.');
+            throw new RuntimeException(__('admin-people.users.errors.superadmin'));
         }
 
         $user->forceFill(['is_active' => $active])->save();

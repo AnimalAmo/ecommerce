@@ -91,7 +91,7 @@ class UserIndex extends Component
 
         $this->anonymizingId = null;
         Flux::modal('anonymize-user')->close();
-        Flux::toast(text: 'Dati personali cancellati. Gli ordini restano in archivio.', variant: 'success');
+        Flux::toast(text: __('admin-people.anonymize.done'), variant: 'success');
     }
 
     /** @return array<string, string> */
@@ -121,7 +121,7 @@ class UserIndex extends Component
             'anonymizeBlock' => $pending !== null ? $anonymizer->blockReason($pending) : null,
         ])
             ->layout('layouts::admin')
-            ->title('Iscritti');
+            ->title(__('admin-people.users.title'));
     }
 
     private function anonymizingUser(): ?User

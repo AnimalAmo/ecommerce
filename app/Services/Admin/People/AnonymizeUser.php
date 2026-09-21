@@ -32,15 +32,15 @@ class AnonymizeUser
     public function blockReason(User $user): ?string
     {
         if ($user->anonymized_at !== null) {
-            return 'I dati di questo utente sono già stati cancellati.';
+            return __('admin-people.anonymize.blocked.already');
         }
 
         if ($user->hasRole('superadmin')) {
-            return 'Un amministratore del pannello non si può anonimizzare da qui.';
+            return __('admin-people.anonymize.blocked.superadmin');
         }
 
         if ($user->is_active && $user->hasRole('partner') && $this->liveCatalogItems($user) > 0) {
-            return 'È un partner attivo con schede a catalogo: sospendi prima le sue schede e disattiva l\'account, poi potrai cancellare i suoi dati.';
+            return __('admin-people.anonymize.blocked.partner');
         }
 
         return null;

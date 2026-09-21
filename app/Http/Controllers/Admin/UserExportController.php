@@ -23,33 +23,27 @@ class UserExportController
             $out = fopen('php://output', 'w');
 
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Nome', 'Cognome', 'Email', 'Ruolo', 'Iscritto il', 'Newsletter', 'Ordini pagati', 'Speso (€)', 'Stato'], ';');
+            fputcsv($out, array_values(__('admin-people.users.export_columns')), ';');
 
             // chunk() e non lazyById(): terrebbe l'ordinamento scelto in tabella.
             $query->chunk(500, fn ($users) => $users->each(function (User $user) use ($out): void {
+                $newsletter = in_array($user->newsletter_state, ['confirmed', 'pending'], true) ? $user->newsletter_state : 'none';
+
                 fputcsv($out, [
                     self::cell($user->first_name),
                     self::cell($user->last_name),
                     self::cell($user->email),
-                    $user->roles->contains('name', 'partner') ? 'Partner' : 'Cliente',
+                    __('admin-people.role.'.($user->roles->contains('name', 'partner') ? 'partner' : 'client')),
                     $user->created_at?->format('d/m/Y'),
-                    match ($user->newsletter_state) {
-                        'confirmed' => 'Sì',
-                        'pending' => 'In attesa',
-                        default => 'No',
-                    },
+                    __('admin-people.users.newsletter.'.$newsletter),
                     (int) $user->paid_orders_count,
                     number_format(((int) $user->spent_cents) / 100, 2, ',', ''),
-                    match (true) {
-                        $user->anonymized_at !== null => 'Anonimizzato',
-                        (bool) $user->is_active => 'Attivo',
-                        default => 'Disattivato',
-                    },
+                    __('admin-people.users.status.'.UserDirectory::status($user)),
                 ], ';');
             }));
 
             fclose($out);
-        }, 'iscritti-'.now()->format('Y-m-d').'.csv', [
+        }, __('admin-people.users.export_filename', ['date' => now()->format('Y-m-d')]), [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }

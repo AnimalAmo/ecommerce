@@ -3,8 +3,10 @@
 namespace App\Services\Admin\People;
 
 use App\Enums\OrderStatus;
+use App\Models\Order\Order;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +32,9 @@ class UserDirectory
     public const ROLE_FILTERS = ['all', 'client', 'partner'];
 
     public const SORTS = ['name', 'created_at', 'orders', 'spent'];
+
+    /** Tabelle del catalogo in cui un partner ha schede proprie (colonna user_id). */
+    public const CATALOG_TABLES = ['structures', 'events', 'smartbox_packages'];
 
     /** Stati della riga newsletter che contano come "ha chiesto la newsletter". */
     private const REQUESTED = ['confirmed', 'pending'];
@@ -138,6 +143,49 @@ class UserDirectory
         return $this->base()->whereKey($user->id)
             ->selectSub($this->newsletterStateSub(), 'state')
             ->value('state');
+    }
+
+    /**
+     * Ordini dell'utente con le righe (cosa ha prenotato e per quando), dal più recente.
+     *
+     * @return Collection<int, Order>
+     */
+    public function orders(User $user): Collection
+    {
+        return Order::query()->where('user_id', $user->id)->with('items')->latest('id')->get();
+    }
+
+    /**
+     * Riquadro "Partner" della scheda: ragione sociale, schede a catalogo
+     * (sospese comprese: qui servono tutte, quindi query builder e non i
+     * model con lo scope di visibilità) e prenotazioni pagate ricevute.
+     *
+     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int}
+     */
+    public function partnerSummary(User $user): array
+    {
+        $listings = collect(self::CATALOG_TABLES)->map(fn (string $table): QueryBuilder => DB::table($table)->where('user_id', $user->id));
+
+        return [
+            'business_name' => $user->partnerProfile?->business_name,
+            'listings' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->count()),
+            'suspended' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->whereNotNull('suspended_at')->count()),
+            'bookings' => DB::table('order_items')
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('order_items.partner_user_id', $user->id)
+                ->where('orders.status', OrderStatus::Paid->value)
+                ->count(),
+        ];
+    }
+
+    /** Stato mostrato nel pannello: active | inactive | anonymized. */
+    public static function status(User $user): string
+    {
+        return match (true) {
+            $user->anonymized_at !== null => 'anonymized',
+            (bool) $user->is_active => 'active',
+            default => 'inactive',
+        };
     }
 
     /** '€ 1.240' come nel design; '—' per chi non ha speso. */

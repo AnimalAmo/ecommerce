@@ -3,15 +3,15 @@
 
     $th = '!text-[13.5px] !font-semibold !text-gray-400';
     $initials = fn ($u) => mb_strtoupper(mb_substr((string) $u->first_name, 0, 1).mb_substr((string) $u->last_name, 0, 1));
+    $count = fn (int $n) => number_format($n, 0, ',', '.');
+    $sub = trans_choice('admin-people.users.subtitle_users', $totals['users'], ['count' => $count($totals['users'])])
+        .' '.trans_choice('admin-people.users.subtitle_newsletter', $totals['newsletter'], ['count' => $count($totals['newsletter'])]);
 @endphp
 
 <div class="flex flex-col gap-[18px]">
-    <x-admin.page-header
-        heading="Iscritti"
-        sub="{{ number_format($totals['users'], 0, ',', '.') }} {{ $totals['users'] === 1 ? 'utente registrato' : 'utenti registrati' }}. {{ number_format($totals['newsletter'], 0, ',', '.') }} {{ $totals['newsletter'] === 1 ? 'ha' : 'hanno' }} chiesto la newsletter."
-    >
+    <x-admin.page-header :heading="__('admin-people.users.title')" :sub="$sub">
         <x-slot:actions>
-            <x-admin.button tone="outline" icon="arrow-down-tray" :href="route('admin.users.export', $exportQuery)">Esporta in Excel</x-admin.button>
+            <x-admin.button tone="outline" icon="arrow-down-tray" :href="route('admin.users.export', $exportQuery)">{{ __('admin-people.users.export') }}</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -21,46 +21,46 @@
                 wire:model.live.debounce.300ms="q"
                 icon="magnifying-glass"
                 type="search"
-                placeholder="Cerca per nome o email"
-                aria-label="Cerca per nome o email"
+                :placeholder="__('admin-people.users.search')"
+                :aria-label="__('admin-people.users.search')"
                 class="min-w-[190px] flex-1 sm:max-w-[340px]"
             />
-            <flux:select wire:model.live="newsletter" aria-label="Newsletter" class="!w-auto min-w-[170px]">
-                <flux:select.option value="all">Tutti gli iscritti</flux:select.option>
-                <flux:select.option value="with">Con newsletter</flux:select.option>
-                <flux:select.option value="without">Senza newsletter</flux:select.option>
+            <flux:select wire:model.live="newsletter" :aria-label="__('admin-people.users.filter_newsletter')" class="!w-auto min-w-[170px]">
+                <flux:select.option value="all">{{ __('admin-people.users.newsletter_all') }}</flux:select.option>
+                <flux:select.option value="with">{{ __('admin-people.users.newsletter_with') }}</flux:select.option>
+                <flux:select.option value="without">{{ __('admin-people.users.newsletter_without') }}</flux:select.option>
             </flux:select>
-            <flux:select wire:model.live="status" aria-label="Stato" class="!w-auto min-w-[150px]">
-                <flux:select.option value="all">Tutti gli stati</flux:select.option>
-                <flux:select.option value="active">Attivo</flux:select.option>
-                <flux:select.option value="inactive">Disattivato</flux:select.option>
-                <flux:select.option value="anonymized">Anonimizzato</flux:select.option>
+            <flux:select wire:model.live="status" :aria-label="__('admin-people.users.filter_status')" class="!w-auto min-w-[150px]">
+                <flux:select.option value="all">{{ __('admin-people.users.status_all') }}</flux:select.option>
+                <flux:select.option value="active">{{ __('admin-people.users.status.active') }}</flux:select.option>
+                <flux:select.option value="inactive">{{ __('admin-people.users.status.inactive') }}</flux:select.option>
+                <flux:select.option value="anonymized">{{ __('admin-people.users.status.anonymized') }}</flux:select.option>
             </flux:select>
-            <flux:select wire:model.live="role" aria-label="Ruolo" class="!w-auto min-w-[140px]">
-                <flux:select.option value="all">Tutti i ruoli</flux:select.option>
-                <flux:select.option value="client">Clienti</flux:select.option>
-                <flux:select.option value="partner">Partner</flux:select.option>
+            <flux:select wire:model.live="role" :aria-label="__('admin-people.users.filter_role')" class="!w-auto min-w-[140px]">
+                <flux:select.option value="all">{{ __('admin-people.users.role_all') }}</flux:select.option>
+                <flux:select.option value="client">{{ __('admin-people.users.role_clients') }}</flux:select.option>
+                <flux:select.option value="partner">{{ __('admin-people.users.role_partners') }}</flux:select.option>
             </flux:select>
-            <flux:select wire:model.live="period" aria-label="Periodo di iscrizione" class="!w-auto min-w-[160px]">
-                <flux:select.option value="always">Iscritti: sempre</flux:select.option>
-                <flux:select.option value="30d">Ultimi 30 giorni</flux:select.option>
-                <flux:select.option value="year">Quest'anno</flux:select.option>
+            <flux:select wire:model.live="period" :aria-label="__('admin-people.users.filter_period')" class="!w-auto min-w-[160px]">
+                <flux:select.option value="always">{{ __('admin-people.users.period_always') }}</flux:select.option>
+                <flux:select.option value="30d">{{ __('admin-people.users.period_30d') }}</flux:select.option>
+                <flux:select.option value="year">{{ __('admin-people.users.period_year') }}</flux:select.option>
             </flux:select>
         </x-admin.filters>
 
         @if ($users->isEmpty())
-            <x-admin.empty>Nessun iscritto corrisponde ai filtri.</x-admin.empty>
+            <x-admin.empty>{{ __('admin-people.users.empty') }}</x-admin.empty>
         @else
             <div class="px-5 pb-2">
                 <flux:table :paginate="$users" class="min-w-[900px]">
                     <flux:table.columns>
-                        <flux:table.column :class="$th" sortable :sorted="$sort === 'name'" :direction="$dir" wire:click="sortBy('name')">Utente</flux:table.column>
-                        <flux:table.column :class="$th" sortable :sorted="$sort === 'created_at'" :direction="$dir" wire:click="sortBy('created_at')">Iscritto il</flux:table.column>
-                        <flux:table.column :class="$th">Newsletter</flux:table.column>
-                        <flux:table.column :class="$th" align="end" sortable :sorted="$sort === 'orders'" :direction="$dir" wire:click="sortBy('orders')">Ordini</flux:table.column>
-                        <flux:table.column :class="$th" align="end" sortable :sorted="$sort === 'spent'" :direction="$dir" wire:click="sortBy('spent')">Speso</flux:table.column>
-                        <flux:table.column :class="$th">Stato</flux:table.column>
-                        <flux:table.column :class="$th" align="end">Azioni</flux:table.column>
+                        <flux:table.column :class="$th" sortable :sorted="$sort === 'name'" :direction="$dir" wire:click="sortBy('name')">{{ __('admin-people.users.col_user') }}</flux:table.column>
+                        <flux:table.column :class="$th" sortable :sorted="$sort === 'created_at'" :direction="$dir" wire:click="sortBy('created_at')">{{ __('admin-people.users.col_since') }}</flux:table.column>
+                        <flux:table.column :class="$th">{{ __('admin-people.users.col_newsletter') }}</flux:table.column>
+                        <flux:table.column :class="$th" align="end" sortable :sorted="$sort === 'orders'" :direction="$dir" wire:click="sortBy('orders')">{{ __('admin-people.users.col_orders') }}</flux:table.column>
+                        <flux:table.column :class="$th" align="end" sortable :sorted="$sort === 'spent'" :direction="$dir" wire:click="sortBy('spent')">{{ __('admin-people.users.col_spent') }}</flux:table.column>
+                        <flux:table.column :class="$th">{{ __('admin-people.users.col_status') }}</flux:table.column>
+                        <flux:table.column :class="$th" align="end">{{ __('admin-people.users.col_actions') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -73,11 +73,7 @@
                                         <span class="flex min-w-0 flex-col gap-0.5">
                                             <span class="flex items-center gap-2">
                                                 <span class="text-[15px] font-bold text-admin-rail">{{ $u->name }}</span>
-                                                @if ($isPartner)
-                                                    <x-admin.badge tone="purple">Partner</x-admin.badge>
-                                                @else
-                                                    <x-admin.badge tone="muted">Cliente</x-admin.badge>
-                                                @endif
+                                                <x-admin.badge :tone="$isPartner ? 'purple' : 'muted'">{{ __('admin-people.role.'.($isPartner ? 'partner' : 'client')) }}</x-admin.badge>
                                             </span>
                                             <span class="text-[12.5px] text-gray-400">{{ $u->email }}</span>
                                         </span>
@@ -85,33 +81,20 @@
                                 </flux:table.cell>
                                 <flux:table.cell class="!text-gray-600">{{ $u->created_at?->locale('it')->isoFormat('D MMM YYYY') }}</flux:table.cell>
                                 <flux:table.cell>
-                                    @switch($u->newsletter_state)
-                                        @case('confirmed')
-                                            <x-admin.badge tone="success">Sì</x-admin.badge>
-                                            @break
-                                        @case('pending')
-                                            <x-admin.badge tone="warning">In attesa</x-admin.badge>
-                                            @break
-                                        @default
-                                            <x-admin.badge tone="muted">No</x-admin.badge>
-                                    @endswitch
+                                    @php $nl = in_array($u->newsletter_state, ['confirmed', 'pending'], true) ? $u->newsletter_state : 'none'; @endphp
+                                    <x-admin.badge :tone="['confirmed' => 'success', 'pending' => 'warning', 'none' => 'muted'][$nl]">{{ __('admin-people.users.newsletter.'.$nl) }}</x-admin.badge>
                                 </flux:table.cell>
                                 <flux:table.cell align="end">{{ (int) $u->paid_orders_count }}</flux:table.cell>
                                 <flux:table.cell align="end">{{ UserDirectory::money((int) $u->spent_cents) }}</flux:table.cell>
                                 <flux:table.cell>
-                                    @if ($u->anonymized_at !== null)
-                                        <x-admin.badge tone="muted">Anonimizzato</x-admin.badge>
-                                    @elseif ($u->is_active)
-                                        <x-admin.badge tone="info">Attivo</x-admin.badge>
-                                    @else
-                                        <x-admin.badge tone="warning">Disattivato</x-admin.badge>
-                                    @endif
+                                    @php $state = UserDirectory::status($u); @endphp
+                                    <x-admin.badge :tone="['active' => 'info', 'inactive' => 'warning', 'anonymized' => 'muted'][$state]">{{ __('admin-people.users.status.'.$state) }}</x-admin.badge>
                                 </flux:table.cell>
                                 <flux:table.cell align="end">
                                     <div class="flex items-center justify-end gap-2">
-                                        <x-admin.icon-action tone="view" icon="eye" label="Apri scheda" :href="route('admin.users.show', $u)" wire:navigate />
+                                        <x-admin.icon-action tone="view" icon="eye" :label="__('admin-people.users.open')" :href="route('admin.users.show', $u)" wire:navigate />
                                         @if ($u->anonymized_at === null)
-                                            <x-admin.icon-action tone="delete" icon="trash" label="Cancella su richiesta" wire:click="askAnonymize({{ $u->id }})" />
+                                            <x-admin.icon-action tone="delete" icon="trash" :label="__('admin-people.users.anonymize')" wire:click="askAnonymize({{ $u->id }})" />
                                         @endif
                                     </div>
                                 </flux:table.cell>
