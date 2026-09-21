@@ -13,3 +13,7 @@ Artisan::command('inspire', function () {
 // quindi ogni riga nasce con un netto provvisorio da confermare.
 Schedule::command('payouts:reconcile-net')->dailyAt('05:45');
 Schedule::command('payouts:release')->dailyAt('06:00');
+
+// Cache su database: le righe scadute delle chiavi usa e getta (anti-replay dei
+// webhook Mailgun, catena della newsletter) non le cancella nessun altro.
+Schedule::command('animalamo:prune-expired-cache')->dailyAt('04:30');
