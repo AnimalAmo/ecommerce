@@ -28,6 +28,8 @@ return [
     'profilo.ordini.riepilogo' => 'profile/my-orders/{order}',
     'profilo.eventi' => 'profile/my-events',
     'password.reset' => 'reset-password/{token}',
+    'newsletter.confirm' => 'newsletter/confirm/{token}',
+    'newsletter.unsubscribe' => 'newsletter/unsubscribe/{subscriber}',
     'news' => 'news',
     'news.detail' => 'news/{article}',
     'work-with-us' => 'work-with-us',

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LocaleSwitchController;
+use App\Http\Controllers\Newsletter\OneClickUnsubscribeController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Webhook\MailgunWebhookController;
 use App\Livewire\Auth\ResetPassword;
@@ -24,6 +25,8 @@ use App\Livewire\Content\LegalPage;
 use App\Livewire\Content\News;
 use App\Livewire\Content\NewsDetail;
 use App\Livewire\Content\PostDetail;
+use App\Livewire\Newsletter\ConfirmSubscription;
+use App\Livewire\Newsletter\Unsubscribe;
 use App\Livewire\Partner\Activity\ActivityAnimalServices as PartnerActivityAnimalServices;
 use App\Livewire\Partner\Activity\ActivityCancellation as PartnerActivityCancellation;
 use App\Livewire\Partner\Activity\ActivityCost as PartnerActivityCost;
@@ -129,6 +132,14 @@ Route::group([
     // (la richiesta del link parte dalla modale, non da una rotta dedicata).
     Route::get(LaravelLocalization::transRoute('routes.password.reset'), ResetPassword::class)->name('password.reset');
 
+    // Newsletter: conferma (double opt-in, il token è la credenziale) e
+    // disiscrizione (URL firmato da NewsletterUrls, nella lingua dell'iscritto).
+    Route::get(LaravelLocalization::transRoute('routes.newsletter.confirm'), ConfirmSubscription::class)->name('newsletter.confirm');
+    Route::get(LaravelLocalization::transRoute('routes.newsletter.unsubscribe'), Unsubscribe::class)
+        ->middleware('signed')
+        ->whereNumber('subscriber')
+        ->name('newsletter.unsubscribe');
+
     Route::get(LaravelLocalization::transRoute('routes.news'), News::class)->name('news');
     Route::get(LaravelLocalization::transRoute('routes.news.detail'), NewsDetail::class)->name('news.detail');
     Route::get(LaravelLocalization::transRoute('routes.work-with-us'), WorkWithUs::class)->name('work-with-us');
@@ -221,3 +232,14 @@ Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 // un prefisso di lingua lo romperebbe) ed esente da CSRF via `webhooks/*` in
 // bootstrap/app.php. L'autenticazione è la firma HMAC del payload.
 Route::post('webhooks/mailgun', MailgunWebhookController::class)->name('webhooks.mailgun');
+
+// Disiscrizione a un clic (RFC 8058, header List-Unsubscribe-Post): la chiama
+// il provider di posta, in POST, senza sessione né token CSRF. Sta sotto
+// `webhooks/` perché ne condivide la natura (richiesta macchina-macchina,
+// autenticata dalla firma dell'URL) e l'esenzione CSRF già dichiarata in
+// bootstrap/app.php, senza aprire un secondo prefisso esente. Il GET (client
+// di posta che aprono l'header nel browser) porta alla pagina con il pulsante.
+Route::match(['get', 'post'], 'webhooks/newsletter/unsubscribe/{subscriber}', OneClickUnsubscribeController::class)
+    ->middleware('signed')
+    ->whereNumber('subscriber')
+    ->name('newsletter.one-click');
