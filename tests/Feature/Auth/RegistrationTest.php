@@ -6,6 +6,7 @@ use App\Livewire\Auth\RegisterModal;
 use App\Mail\Newsletter\NewsletterConfirmationMail;
 use App\Models\Newsletter\NewsletterSubscriber;
 use App\Models\User;
+use App\Services\Newsletter\SubscriptionService;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
+use RuntimeException;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -137,6 +139,20 @@ class RegistrationTest extends TestCase
 
         $this->assertSame(0, NewsletterSubscriber::count());
         Mail::assertNotQueued(NewsletterConfirmationMail::class);
+    }
+
+    /** La registrazione è già salvata: un errore della newsletter non la fa fallire. */
+    public function test_a_newsletter_failure_does_not_break_the_registration(): void
+    {
+        $this->mock(SubscriptionService::class)->shouldReceive('subscribe')->andThrow(new RuntimeException('coda giù'));
+
+        $this->registerAtStepFour('franco.gialli@example.com')
+            ->set('form.newsletter', true)
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertAuthenticatedAs(User::where('email', 'franco.gialli@example.com')->sole());
     }
 
     private function registerAtStepFour(string $email): Testable

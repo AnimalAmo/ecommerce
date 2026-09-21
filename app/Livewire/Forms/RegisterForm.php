@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Form;
+use Throwable;
 
 class RegisterForm extends Form
 {
@@ -136,17 +137,22 @@ class RegisterForm extends Form
         });
 
         // Casella spuntata = richiesta di iscrizione con double opt-in, e la
-        // prova è la frase della casella nella lingua in cui l'ha letta.
+        // prova è la frase della casella nella lingua in cui l'ha letta. Un
+        // errore qui non deve far fallire una registrazione già salvata.
         if ($this->newsletter) {
-            app(SubscriptionService::class)->subscribe(
-                email: $user->email,
-                locale: app()->getLocale(),
-                source: NewsletterSubscriber::SOURCE_REGISTRATION,
-                consentText: __('auth-modal.register.newsletter'),
-                ip: request()->ip(),
-                userAgent: request()->userAgent(),
-                user: $user,
-            );
+            try {
+                app(SubscriptionService::class)->subscribe(
+                    email: $user->email,
+                    locale: app()->getLocale(),
+                    source: NewsletterSubscriber::SOURCE_REGISTRATION,
+                    consentText: __('auth-modal.register.newsletter'),
+                    ip: request()->ip(),
+                    userAgent: request()->userAgent(),
+                    user: $user,
+                );
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
 
         event(new Registered($user));
