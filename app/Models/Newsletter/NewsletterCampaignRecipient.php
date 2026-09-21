@@ -7,12 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Un indirizzo dentro un invio. La chiave unica (campagna, iscritto) rende
- * ripetibile la costruzione della lista, e lo stato `sent` impedisce la
- * seconda copia quando un lotto riparte dopo un'interruzione.
+ * ripetibile la costruzione della lista; il passaggio queued → sending,
+ * condizionato, impedisce che due lotti spediscano la stessa riga.
  */
 class NewsletterCampaignRecipient extends Model
 {
     public const STATUS_QUEUED = 'queued';
+
+    /**
+     * Preso da un lotto, mail in partenza. Una riga rimasta qui dopo
+     * un'interruzione ha un esito sconosciuto: non si rispedisce (meglio una
+     * mail in meno che una doppia), la ripresa la chiude come fallita.
+     */
+    public const STATUS_SENDING = 'sending';
 
     public const STATUS_SENT = 'sent';
 
