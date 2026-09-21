@@ -93,6 +93,50 @@ class NewsletterAdmin
         };
     }
 
+    /**
+     * "Prima di inviare": le voci della checklist dell'editor. `done` null =
+     * non ancora saputo (il DMARC arriva dopo il caricamento).
+     *
+     * @return list<array{done: bool|null, label: string}>
+     */
+    public function checklist(?NewsletterCampaign $campaign, NewsletterCampaign $draft, ?bool $dmarc, string $domain): array
+    {
+        $items = [['done' => true, 'label' => __('admin-newsletter.checklist.unsubscribe_link')]];
+
+        $items[] = match (true) {
+            $campaign?->test_sent_at === null => ['done' => false, 'label' => __('admin-newsletter.checklist.test_missing')],
+            $campaign->updated_at !== null && $campaign->test_sent_at->lt($campaign->updated_at) => [
+                'done' => false,
+                'label' => __('admin-newsletter.checklist.test_outdated', ['email' => $campaign->test_sent_to]),
+            ],
+            default => ['done' => true, 'label' => __('admin-newsletter.checklist.test_done', ['email' => $campaign->test_sent_to])],
+        };
+
+        $items[] = match (true) {
+            ! $draft->reachesEnglish() => ['done' => true, 'label' => __('admin-newsletter.checklist.english_not_needed')],
+            $draft->hasVersion('en') => ['done' => true, 'label' => __('admin-newsletter.checklist.english_done')],
+            default => ['done' => false, 'label' => __('admin-newsletter.checklist.english_missing')],
+        };
+
+        $items[] = match ($dmarc) {
+            null => ['done' => null, 'label' => __('admin-newsletter.checklist.dmarc_checking', ['domain' => $domain])],
+            true => ['done' => true, 'label' => __('admin-newsletter.checklist.dmarc_done', ['domain' => $domain])],
+            false => ['done' => false, 'label' => __('admin-newsletter.checklist.dmarc_missing', ['domain' => $domain])],
+        };
+
+        return $items;
+    }
+
+    /** "circa tre ore": quanto dura un invio, detto a parole. */
+    public function duration(int $minutes): string
+    {
+        return match (true) {
+            $minutes === 0 => __('admin-newsletter.duration.now'),
+            $minutes < 60 => trans_choice('admin-newsletter.duration.minutes', $minutes, ['count' => $minutes]),
+            default => trans_choice('admin-newsletter.duration.hours', $hours = (int) round($minutes / 60), ['count' => $hours]),
+        };
+    }
+
     /** Colore del badge di stato di un iscritto (x-admin.badge). */
     public static function statusTone(string $status): string
     {
