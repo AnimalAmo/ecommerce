@@ -17,7 +17,11 @@ use Illuminate\Support\Facades\Log;
  */
 class RecordMailgunEvent
 {
-    /** Eventi che cambiano lo stato. Aperture e click non ci servono: il tracking è spento. */
+    /**
+     * Eventi che cambiano lo stato. Aperture e click non sono uno stato di
+     * consegna: le aperture delle newsletter (le sole mail con il tracking
+     * acceso) le conta NewsletterFeedback.
+     */
     private const STATUSES = [
         'accepted' => MailDelivery::STATUS_ACCEPTED,
         'delivered' => MailDelivery::STATUS_DELIVERED,
