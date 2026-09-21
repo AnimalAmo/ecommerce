@@ -83,7 +83,7 @@ class ArticleEdit extends Component
 
     public function updatedCover(): void
     {
-        $this->validateOnly('cover', $this->rules(), [], $this->attributes());
+        $this->validateOnly('cover', $this->rules(), __('admin-content.validation'), $this->attributes());
     }
 
     public function saveDraft(ArticleService $articles): void
@@ -167,7 +167,7 @@ class ArticleEdit extends Component
         $this->resetErrorBag();
 
         try {
-            $this->validate($this->rules(), [], $this->attributes());
+            $this->validate($this->rules(), __('admin-content.validation'), $this->attributes());
         } catch (ValidationException $exception) {
             $this->focusLocaleOf(array_keys($exception->errors()));
 
@@ -177,7 +177,7 @@ class ArticleEdit extends Component
         $wanted = Str::slug($this->slug, '-', 'it');
 
         if ($wanted !== '' && $articles->slugTaken($wanted, $this->article?->id)) {
-            $this->addError('slug', __('validation.unique', ['attribute' => __('admin-content.articles.fields.slug')]));
+            $this->addError('slug', __('admin-content.validation.unique', ['attribute' => __('admin-content.articles.fields.slug')]));
 
             return;
         }

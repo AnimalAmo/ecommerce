@@ -60,7 +60,7 @@ class SitePageEdit extends Component
 
         $this->validate(
             ['values.*.*' => ['nullable', 'string', 'max:5000']],
-            [],
+            __('admin-content.validation'),
             ['values.*.*' => __('admin-content.site.field')],
         );
 

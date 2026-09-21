@@ -26,6 +26,7 @@ class LangParityTest extends TestCase
                 'checkout',
                 'community',
                 'events',
+                'faq',
                 'favorites',
                 'format',
                 'holiday',

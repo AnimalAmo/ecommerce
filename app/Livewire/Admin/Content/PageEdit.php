@@ -75,7 +75,7 @@ class PageEdit extends Component
         }
 
         try {
-            $this->validate($this->rules($legal), [], $this->attributes());
+            $this->validate($this->rules($legal), __('admin-content.validation'), $this->attributes());
         } catch (ValidationException $exception) {
             $this->focusLocaleOf(array_keys($exception->errors()));
 

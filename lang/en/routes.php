@@ -15,6 +15,7 @@ return [
     'terms.customers' => 'terms-and-conditions',
     'terms.suppliers' => 'supplier-terms-and-conditions',
     'privacy' => 'privacy-policy',
+    'faq' => 'faq',
     'page' => 'page/{slug}',
     'community' => 'community',
     'community.post' => 'community/{post}',

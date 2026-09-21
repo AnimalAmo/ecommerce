@@ -189,7 +189,8 @@ class ArticleEditTest extends TestCase
     {
         Livewire::test(ArticleEdit::class)
             ->set('cover', UploadedFile::fake()->create('documento.pdf', 100, 'application/pdf'))
-            ->assertHasErrors('cover');
+            ->assertHasErrors('cover')
+            ->assertSee('Copertina: serve un&#039;immagine.', false);
     }
 
     public function test_a_taken_address_is_refused_and_a_derived_one_gets_a_suffix(): void

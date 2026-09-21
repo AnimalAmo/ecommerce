@@ -36,6 +36,25 @@ return [
         'no_results' => 'Nessun risultato con questi filtri.',
     ],
 
+    // Messaggi di validazione dei form del modulo: lang/it/validation.php copre
+    // solo le regole dei form pubblici, e senza queste voci le altre uscirebbero
+    // in inglese (fallback_locale).
+    'validation' => [
+        'required' => 'Inserisci :attribute.',
+        'string' => 'Valore non valido.',
+        'in' => 'Il valore scelto per :attribute non è fra quelli possibili.',
+        'image' => ':Attribute: serve un\'immagine.',
+        'mimes' => ':Attribute: vanno bene solo file :values.',
+        'max' => [
+            'string' => ':Attribute: al massimo :max caratteri.',
+            'file' => ':Attribute: il file supera i :max kB.',
+        ],
+        'uploaded' => ':Attribute: il caricamento non è riuscito, riprova.',
+        'date' => 'Inserisci una data valida per :attribute.',
+        'date_format' => 'Inserisci una data valida per :attribute.',
+        'unique' => ':Attribute è già in uso.',
+    ],
+
     // Sezioni del sito modificabili (config/admin-content.php).
     'sections' => [
         'home' => 'Home',
@@ -326,6 +345,8 @@ return [
             'structure' => 'Struttura',
             'event' => 'Evento o attività',
         ],
+        'save' => 'Salva',
+        'invalid_target' => 'Scegli dove deve comparire la domanda: un argomento della pagina di assistenza o una scheda.',
         'saved' => 'Domanda salvata.',
         'deleted' => 'Domanda eliminata.',
         'reordered' => 'Ordine salvato.',

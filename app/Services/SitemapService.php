@@ -47,6 +47,7 @@ class SitemapService
         'community',
         'about',
         'contact',
+        'faq',
         'work-with-us',
     ];
 

@@ -2,6 +2,7 @@
 
 namespace App\Models\Faq;
 
+use App\Services\Content\FaqService;
 use Database\Factories\Faq\FaqFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,19 +16,23 @@ class Faq extends Model
     use HasFactory, HasTranslations;
 
     /**
-     * Argomenti della pagina di assistenza (FAQ di piattaforma, faqable nullo).
-     * Le FAQ agganciate a una scheda non hanno argomento.
+     * Argomenti della pagina di assistenza (FAQ di piattaforma, faqable nullo),
+     * nell'ordine della pagina. Le etichette stanno in lang/{it,en}/faq.php
+     * (topics.*). Le FAQ agganciate a una scheda non hanno argomento.
+     *
+     * @var list<string>
      */
-    public const TOPICS = [
-        'bookings' => 'Prenotazioni',
-        'smartbox' => 'Smartbox',
-        'payments' => 'Pagamenti',
-        'partners' => 'Partner',
-        'account' => 'Account',
-    ];
+    public const TOPICS = ['bookings', 'smartbox', 'payments', 'partners', 'account'];
 
     /** @var array<int, string> */
     public array $translatable = ['question', 'answer'];
+
+    protected static function booted(): void
+    {
+        // Il link "Domande frequenti" del piede dipende da una cache: ogni scrittura la invalida.
+        static::saved(fn () => FaqService::forgetPlatformFlag());
+        static::deleted(fn () => FaqService::forgetPlatformFlag());
+    }
 
     protected $fillable = [
         'question',
@@ -49,6 +54,17 @@ class Faq extends Model
     public function scopePlatform(Builder $query): Builder
     {
         return $query->whereNull('faqable_type');
+    }
+
+    /** FAQ agganciate a una scheda (struttura, evento o attività). */
+    public function scopeForProducts(Builder $query): Builder
+    {
+        return $query->whereNotNull('faqable_type');
+    }
+
+    public function isPlatform(): bool
+    {
+        return $this->faqable_type === null;
     }
 
     public function faqable(): MorphTo
