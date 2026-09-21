@@ -135,6 +135,26 @@ class NewsletterWebhookTest extends TestCase
         $this->assertNotNull($recipient->fresh()->opened_at);
     }
 
+    /**
+     * Le aperture arrivano per giorni: non devono far sembrare vivo un invio
+     * fermo (CampaignSender legge l'ultima attività da updated_at).
+     */
+    public function test_webhook_stamps_do_not_count_as_send_activity(): void
+    {
+        [, $recipient] = $this->sentRecipient('marta@example.com');
+        $before = $recipient->fresh()->updated_at;
+
+        $this->travel(2)->hours();
+        $this->postEvent([
+            'event' => 'opened',
+            'recipient' => 'marta@example.com',
+            'user-variables' => ['newsletter_recipient_id' => (string) $recipient->id],
+        ])->assertOk();
+
+        $this->assertNotNull($recipient->fresh()->opened_at);
+        $this->assertEquals($before, $recipient->fresh()->updated_at);
+    }
+
     /** Senza variabili (invio SMTP senza header) il message-id salvato all'invio basta. */
     public function test_an_open_is_matched_by_message_id_when_variables_are_missing(): void
     {

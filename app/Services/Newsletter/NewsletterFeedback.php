@@ -102,9 +102,13 @@ class NewsletterFeedback
 
         $at = isset($event['timestamp']) ? Carbon::createFromTimestamp((float) $event['timestamp']) : now();
 
+        // toBase(): senza toccare updated_at, che per CampaignSender è
+        // l'ultima attività dell'invio. Le aperture arrivano per giorni, e
+        // farebbero sembrare viva una catena ferma.
         $first = NewsletterCampaignRecipient::whereKey($recipient->getKey())
             ->whereNull($column)
-            ->update([$column => $at, 'updated_at' => now()]) === 1;
+            ->toBase()
+            ->update([$column => $at]) === 1;
 
         if ($first) {
             NewsletterCampaign::whereKey($recipient->newsletter_campaign_id)->increment($counter);

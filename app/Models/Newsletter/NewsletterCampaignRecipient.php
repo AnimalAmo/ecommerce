@@ -32,6 +32,7 @@ class NewsletterCampaignRecipient extends Model
         'newsletter_campaign_id',
         'newsletter_subscriber_id',
         'status',
+        'attempts',
         'message_id',
         'sent_at',
         'delivered_at',
@@ -42,6 +43,7 @@ class NewsletterCampaignRecipient extends Model
     protected function casts(): array
     {
         return [
+            'attempts' => 'integer',
             'sent_at' => 'datetime',
             'delivered_at' => 'datetime',
             'opened_at' => 'datetime',

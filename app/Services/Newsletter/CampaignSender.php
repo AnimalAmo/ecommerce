@@ -10,9 +10,12 @@ use App\Models\Newsletter\NewsletterCampaignRecipient;
 use App\Models\Newsletter\NewsletterSubscriber;
 use App\Services\Newsletter\Exceptions\CampaignNotLaunchable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\Mailer\Exception\HttpTransportException;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Throwable;
 
 /**
@@ -27,11 +30,28 @@ use Throwable;
  * condizionato prima della spedizione, quindi due lotti (una catena ripresa
  * mentre l'altra era viva, un job ritentato) non spediscono mai la stessa
  * riga. Una riga rimasta `sending` dopo un'interruzione non si rispedisce.
+ *
+ * Nessuna catena doppia: ogni anello (catena, passo) gira una volta sola. Un
+ * job ripreso dalla coda mentre era ancora in corso (retry_after scaduto)
+ * trova il passo già preso e non fa nulla, invece di spedire un lotto in più
+ * e mettere in coda un secondo anello successivo.
+ *
+ * Errori temporanei di Mailgun (429, 5xx, rete): la riga torna in coda, fino
+ * a MAX_ATTEMPTS tentativi, e il lotto si ferma per RETRY_BACKOFF_MINUTES.
  */
 class CampaignSender
 {
-    /** Lotto per "tutti subito": piccolo abbastanza da non tenere un job per ore. */
-    public const IMMEDIATE_BATCH = 100;
+    /**
+     * Lotto per "tutti subito": deve chiudersi ben dentro il timeout del job,
+     * a sua volta sotto il retry_after della coda (90 secondi).
+     */
+    public const IMMEDIATE_BATCH = 50;
+
+    /** Tentativi di spedizione per destinatario, di fronte a errori temporanei. */
+    public const MAX_ATTEMPTS = 3;
+
+    /** Pausa della catena dopo un errore temporaneo, anche in "tutti subito". */
+    public const RETRY_BACKOFF_MINUTES = 5;
 
     /** Minuti dopo i quali una riga `sending` è considerata interrotta. */
     public const STALE_SENDING_MINUTES = 15;
@@ -179,6 +199,13 @@ class CampaignSender
             return;
         }
 
+        // Lista già costruita: un secondo passaggio (job ritentato, ripresa
+        // arrivata prima del job) non avvia una seconda catena. Se il primo è
+        // morto prima di avviarla, la campagna risulta ferma e si riprende.
+        if ($campaign->recipients()->exists()) {
+            return;
+        }
+
         $now = now()->toDateTimeString();
 
         DB::table('newsletter_campaign_recipients')->insertOrIgnoreUsing(
@@ -201,13 +228,36 @@ class CampaignSender
     /**
      * Un anello della catena: prende i prossimi destinatari ancora in coda,
      * li spedisce, e mette in coda il lotto successivo (o chiude la campagna).
+     * `$chain` e `$step` identificano l'anello: senza, nessuna protezione dai
+     * doppioni (chiamata diretta).
      */
-    public function sendNextBatch(NewsletterCampaign $campaign): void
+    public function sendNextBatch(NewsletterCampaign $campaign, ?string $chain = null, int $step = 0): void
     {
         if ($campaign->status !== NewsletterCampaign::STATUS_SENDING) {
             return;
         }
 
+        $runKey = $chain === null ? null : "newsletter:chain:{$chain}:{$step}";
+
+        if ($runKey !== null && ! Cache::add($runKey, true, now()->addDay())) {
+            return;
+        }
+
+        try {
+            $this->runBatch($campaign, $chain, $step);
+        } catch (Throwable $exception) {
+            // Un'eccezione vera (non di spedizione): il job ritentato deve
+            // poter rifare questo anello.
+            if ($runKey !== null) {
+                Cache::forget($runKey);
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function runBatch(NewsletterCampaign $campaign, ?string $chain, int $step): void
+    {
         $recipients = $campaign->recipients()
             ->where('status', NewsletterCampaignRecipient::STATUS_QUEUED)
             ->with('subscriber')
@@ -215,14 +265,21 @@ class CampaignSender
             ->limit($this->batchSize($campaign->hourly_rate))
             ->get();
 
+        $retryLater = false;
+
         foreach ($recipients as $recipient) {
-            if ($this->claim($recipient)) {
-                $this->sendOne($campaign, $recipient);
+            if ($this->claim($recipient) && $this->sendOne($campaign, $recipient)) {
+                // Mailgun non risponde o rallenta: inutile insistere adesso.
+                $retryLater = true;
+
+                break;
             }
         }
 
         if ($campaign->recipients()->where('status', NewsletterCampaignRecipient::STATUS_QUEUED)->exists()) {
-            $this->queueNextBatch($campaign, $this->batchDelayMinutes($campaign->hourly_rate));
+            $delay = $this->batchDelayMinutes($campaign->hourly_rate);
+
+            $this->queueNextBatch($campaign, $retryLater ? max($delay, self::RETRY_BACKOFF_MINUTES) : $delay, $chain, $step);
 
             return;
         }
@@ -284,9 +341,10 @@ class CampaignSender
         return $last !== null && $last->gt(now()->subMinutes($window));
     }
 
-    private function queueNextBatch(NewsletterCampaign $campaign, int $delayMinutes = 0): void
+    /** Senza `$chain` nasce una catena nuova (partenza, ripresa). */
+    private function queueNextBatch(NewsletterCampaign $campaign, int $delayMinutes = 0, ?string $chain = null, int $step = -1): void
     {
-        $job = new SendCampaignBatch($campaign->getKey());
+        $job = new SendCampaignBatch($campaign->getKey(), $chain ?? Str::random(20), $chain === null ? 0 : $step + 1);
 
         if ($delayMinutes > 0) {
             $job->delay(now()->addMinutes($delayMinutes));
@@ -302,7 +360,11 @@ class CampaignSender
             ->update(['status' => NewsletterCampaignRecipient::STATUS_SENDING, 'updated_at' => now()]) === 1;
     }
 
-    private function sendOne(NewsletterCampaign $campaign, NewsletterCampaignRecipient $recipient): void
+    /**
+     * Spedisce una riga già presa dal lotto. True = errore temporaneo, la
+     * riga è tornata in coda e il lotto deve fermarsi.
+     */
+    private function sendOne(NewsletterCampaign $campaign, NewsletterCampaignRecipient $recipient): bool
     {
         $subscriber = $recipient->subscriber;
 
@@ -310,7 +372,7 @@ class CampaignSender
         if ($subscriber === null || ! $subscriber->isConfirmed()) {
             $this->mark($recipient, NewsletterCampaignRecipient::STATUS_SKIPPED);
 
-            return;
+            return false;
         }
 
         try {
@@ -319,25 +381,65 @@ class CampaignSender
                 new NewsletterCampaignMail($campaign, $subscriber->locale, $subscriber, $recipient),
             );
         } catch (Throwable $exception) {
+            $attempts = $recipient->attempts + 1;
+            $error = Str::limit($exception->getMessage(), 1000);
+
             Log::warning('Newsletter non partita', [
                 'campaign' => $campaign->getKey(),
                 'recipient' => $recipient->getKey(),
+                'attempt' => $attempts,
                 'error' => $exception->getMessage(),
             ]);
 
-            $this->mark($recipient, NewsletterCampaignRecipient::STATUS_FAILED, ['error' => Str::limit($exception->getMessage(), 1000)]);
+            if ($this->isTemporary($exception) && $attempts < self::MAX_ATTEMPTS) {
+                $this->mark($recipient, NewsletterCampaignRecipient::STATUS_QUEUED, ['attempts' => $attempts, 'error' => $error]);
+
+                return true;
+            }
+
+            $this->mark($recipient, NewsletterCampaignRecipient::STATUS_FAILED, ['attempts' => $attempts, 'error' => $error]);
             $campaign->increment('failed_count');
 
-            return;
+            return false;
         }
 
         $messageId = $sent?->getMessageId();
 
         $this->mark($recipient, NewsletterCampaignRecipient::STATUS_SENT, [
+            'attempts' => $recipient->attempts + 1,
+            'error' => null,
             'sent_at' => now(),
             'message_id' => $messageId === null ? null : trim($messageId, '<>'),
         ]);
         $campaign->increment('sent_count');
+
+        return false;
+    }
+
+    /**
+     * Vale la pena ritentare? Sì per 429 e 5xx dell'API, per i rifiuti
+     * temporanei SMTP (4xx) e quando il server non ha risposto affatto. No per
+     * il resto: una chiave sbagliata (401) resta sbagliata anche fra un'ora.
+     */
+    private function isTemporary(Throwable $exception): bool
+    {
+        if (! $exception instanceof TransportExceptionInterface) {
+            return false;
+        }
+
+        if ($exception instanceof HttpTransportException) {
+            try {
+                $status = $exception->getResponse()->getStatusCode();
+            } catch (Throwable) {
+                return true;
+            }
+
+            return $status === 429 || $status >= 500;
+        }
+
+        $code = (int) $exception->getCode();
+
+        return $code === 0 || ($code >= 400 && $code < 500);
     }
 
     /** @param  array<string, mixed>  $attributes */

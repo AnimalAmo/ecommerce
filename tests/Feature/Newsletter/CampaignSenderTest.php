@@ -15,6 +15,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Tests\TestCase;
 
 /**
@@ -253,6 +256,118 @@ class CampaignSenderTest extends TestCase
         $this->assertStringContainsString('domain not found', (string) $campaign->recipients()->value('error'));
     }
 
+    /**
+     * Un job ripreso dalla coda mentre girava ancora (retry_after scaduto) non
+     * spedisce un lotto in più né avvia un secondo anello: ogni passo della
+     * catena gira una volta.
+     */
+    public function test_each_step_of_the_chain_runs_once(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        config(['newsletter.batch_every_minutes' => 5]);
+        NewsletterSubscriber::factory()->confirmed()->count(3)->create();
+        // 12 all'ora = una mail ogni 5 minuti.
+        $campaign = NewsletterCampaign::factory()->create(['hourly_rate' => 12]);
+        $this->sender()->launch($campaign);
+        $this->sender()->buildRecipients($campaign->fresh());
+
+        $this->sender()->sendNextBatch($campaign->fresh(), 'catena', 4);
+        $this->sender()->sendNextBatch($campaign->fresh(), 'catena', 4);
+
+        Mail::assertSent(NewsletterCampaignMail::class, 1);
+        Queue::assertPushed(SendCampaignBatch::class, fn (SendCampaignBatch $job) => $job->chain === 'catena' && $job->step === 5);
+        Queue::assertPushed(SendCampaignBatch::class, 2);
+
+        $this->sender()->sendNextBatch($campaign->fresh(), 'catena', 5);
+        Mail::assertSent(NewsletterCampaignMail::class, 2);
+    }
+
+    public function test_building_the_list_twice_starts_a_single_chain(): void
+    {
+        Queue::fake();
+        NewsletterSubscriber::factory()->confirmed()->count(2)->create();
+        $campaign = NewsletterCampaign::factory()->create();
+        $this->sender()->launch($campaign);
+
+        $this->sender()->buildRecipients($campaign->fresh());
+        $this->sender()->buildRecipients($campaign->fresh());
+
+        Queue::assertPushed(SendCampaignBatch::class, 1);
+        $this->assertSame(2, $campaign->recipients()->count());
+    }
+
+    /** Mailgun rallenta o non risponde: la riga torna in coda e la catena si prende una pausa. */
+    public function test_a_temporary_mailgun_error_puts_the_recipient_back_in_the_queue(): void
+    {
+        Queue::fake();
+        $calls = 0;
+        $this->mock(NewsletterMailer::class)->shouldReceive('send')->andReturnUsing(function () use (&$calls) {
+            if (++$calls === 1) {
+                throw $this->mailgunError(503);
+            }
+
+            return null;
+        });
+        NewsletterSubscriber::factory()->confirmed()->count(2)->create();
+        $campaign = NewsletterCampaign::factory()->create(['hourly_rate' => 0]);
+        $this->sender()->launch($campaign);
+        $this->sender()->buildRecipients($campaign->fresh());
+
+        $this->sender()->sendNextBatch($campaign->fresh());
+
+        $first = $campaign->recipients()->orderBy('id')->first();
+        $this->assertSame(NewsletterCampaignRecipient::STATUS_QUEUED, $first->status);
+        $this->assertSame(1, $first->attempts);
+        $this->assertSame(1, $calls);
+        Queue::assertPushed(SendCampaignBatch::class, fn (SendCampaignBatch $job) => $job->delay !== null
+            && (int) round(now()->diffInMinutes($job->delay)) === CampaignSender::RETRY_BACKOFF_MINUTES);
+
+        $this->sender()->sendNextBatch($campaign->fresh());
+
+        $this->assertSame(NewsletterCampaignRecipient::STATUS_SENT, $first->fresh()->status);
+        $this->assertNull($first->fresh()->error);
+        $campaign->refresh();
+        $this->assertSame(2, $campaign->sent_count);
+        $this->assertSame(NewsletterCampaign::STATUS_SENT, $campaign->status);
+    }
+
+    public function test_after_the_last_attempt_the_recipient_fails(): void
+    {
+        Queue::fake();
+        $this->mock(NewsletterMailer::class)->shouldReceive('send')->andThrow($this->mailgunError(429));
+        NewsletterSubscriber::factory()->confirmed()->create();
+        $campaign = NewsletterCampaign::factory()->create();
+        $this->sender()->launch($campaign);
+        $this->sender()->buildRecipients($campaign->fresh());
+
+        foreach (range(1, CampaignSender::MAX_ATTEMPTS) as $attempt) {
+            $this->sender()->sendNextBatch($campaign->fresh());
+        }
+
+        $recipient = $campaign->recipients()->sole();
+        $this->assertSame(NewsletterCampaignRecipient::STATUS_FAILED, $recipient->status);
+        $this->assertSame(CampaignSender::MAX_ATTEMPTS, $recipient->attempts);
+        $this->assertSame(NewsletterCampaign::STATUS_FAILED, $campaign->fresh()->status);
+    }
+
+    /** Una chiave sbagliata resta sbagliata: niente tentativi a vuoto per ore. */
+    public function test_a_permanent_api_error_is_not_retried(): void
+    {
+        Queue::fake();
+        $this->mock(NewsletterMailer::class)->shouldReceive('send')->andThrow($this->mailgunError(401));
+        NewsletterSubscriber::factory()->confirmed()->count(2)->create();
+        $campaign = NewsletterCampaign::factory()->create();
+        $this->sender()->launch($campaign);
+        $this->sender()->buildRecipients($campaign->fresh());
+
+        $this->sender()->sendNextBatch($campaign->fresh());
+
+        $campaign->refresh();
+        $this->assertSame(2, $campaign->failed_count);
+        $this->assertSame(NewsletterCampaign::STATUS_FAILED, $campaign->status);
+    }
+
     public function test_a_campaign_cannot_start_twice_or_without_italian_or_without_audience(): void
     {
         Mail::fake();
@@ -288,6 +403,15 @@ class CampaignSenderTest extends TestCase
         $this->assertSame('silvia@animalamo.it', $campaign->test_sent_to);
         $this->assertNotNull($campaign->test_sent_at);
         $this->assertEquals($edited, $campaign->updated_at);
+    }
+
+    /** L'errore che il transport API di Mailgun lancia per una risposta HTTP. */
+    private function mailgunError(int $status): HttpTransportException
+    {
+        $response = (new MockHttpClient(new MockResponse('{"message":"errore"}', ['http_code' => $status])))
+            ->request('POST', 'https://api.eu.mailgun.net/v3/mg.animalamo.it/messages');
+
+        return new HttpTransportException("Unable to send an email (code {$status}).", $response);
     }
 
     private function assertLaunchRefused(NewsletterCampaign $campaign, string $message): void
