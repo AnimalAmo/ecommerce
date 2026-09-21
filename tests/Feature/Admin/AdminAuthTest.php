@@ -83,6 +83,41 @@ class AdminAuthTest extends TestCase
         $this->assertGuest();
     }
 
+    /**
+     * Il bcrypt costa ~200 ms: se girasse solo per gli amministratori, il
+     * tempo di risposta direbbe quale indirizzo lo è.
+     */
+    public function test_an_unknown_address_still_costs_a_password_check(): void
+    {
+        Hash::spy();
+
+        Livewire::test(Login::class)
+            ->set('email', 'nessuno@animalamo.it')
+            ->set('password', 'Qualsiasi123!')
+            ->call('login')
+            ->assertHasErrors('email');
+
+        Hash::shouldHaveReceived('check')->once();
+        $this->assertGuest();
+    }
+
+    public function test_a_customer_costs_a_password_check_that_never_uses_their_hash(): void
+    {
+        $customer = User::factory()->create(['email' => 'cliente@example.com', 'password' => 'Corretta123!', 'is_active' => true]);
+        Hash::spy();
+
+        Livewire::test(Login::class)
+            ->set('email', 'cliente@example.com')
+            ->set('password', 'Corretta123!')
+            ->call('login')
+            ->assertHasErrors('email');
+
+        Hash::shouldHaveReceived('check')
+            ->once()
+            ->withArgs(fn ($value, $hashed) => $value === 'Corretta123!' && $hashed !== $customer->password);
+        $this->assertGuest();
+    }
+
     public function test_five_failures_lock_the_account_even_with_the_right_password(): void
     {
         $this->admin();
@@ -106,6 +141,7 @@ class AdminAuthTest extends TestCase
 
     public function test_the_reset_link_is_mailed_to_an_admin_and_points_to_the_panel(): void
     {
+        $this->withoutDefer();
         Mail::fake();
         $this->admin();
 
@@ -116,6 +152,29 @@ class AdminAuthTest extends TestCase
             ->assertSee('Controlla la posta');
 
         Mail::assertSent(ResetPasswordMail::class, fn (ResetPasswordMail $mail) => str_contains($mail->link, '/admin/reset-password/'));
+    }
+
+    /**
+     * Token (un altro bcrypt) e handshake Mailgun solo per un amministratore:
+     * dentro la richiesta allungherebbero la risposta proprio per lui.
+     */
+    public function test_the_reset_link_is_created_and_mailed_after_the_answer(): void
+    {
+        Mail::fake();
+        $this->admin();
+
+        Livewire::test(ForgotPassword::class)
+            ->set('email', 'silvia@animalamo.it')
+            ->call('send')
+            ->assertSet('sent', true);
+
+        Mail::assertNothingSent();
+        $this->assertDatabaseCount('password_reset_tokens', 0);
+
+        defer()->invoke();
+
+        Mail::assertSent(ResetPasswordMail::class);
+        $this->assertDatabaseCount('password_reset_tokens', 1);
     }
 
     public function test_no_mail_leaves_for_a_non_admin_but_the_answer_is_the_same(): void

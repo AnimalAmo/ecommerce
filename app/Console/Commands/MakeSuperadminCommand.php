@@ -54,7 +54,9 @@ class MakeSuperadminCommand extends Command
         $this->info(($created ? 'Creato' : 'Promosso')." l'amministratore {$email}.");
 
         if (! $this->option('no-mail')) {
-            $auth->sendResetLink($email, '127.0.0.1');
+            // Subito, non dopo la risposta come dal form: qui non c'è una
+            // risposta da proteggere, e a comando finito la mail deve essere partita.
+            $auth->mailResetLink($email);
             $this->line('Inviata la mail per scegliere la password ('.route('admin.password.request').').');
         }
 

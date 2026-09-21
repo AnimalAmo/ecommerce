@@ -6,6 +6,7 @@ use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
@@ -32,6 +33,15 @@ class AdminAuthService
     private const MAX_RESET_REQUESTS_PER_IP = 5;
 
     /**
+     * Hash bcrypt di una stringa casuale che nessuno conosce: il login lo
+     * verifica quando l'indirizzo non è di un amministratore, così il bcrypt
+     * gira in ogni caso e il tempo di risposta non dice chi lo è. Costo 12,
+     * lo stesso di BCRYPT_ROUNDS in produzione: se cambia quello, va
+     * rigenerato con lo stesso costo (password_hash(..., ['cost' => N])).
+     */
+    private const DUMMY_HASH = '$2y$12$Tpt2puGq08xc3V6/7T8.XuhQvL7AL8h8ovhe/AjuifjkwhIt6.l9O';
+
+    /**
      * @throws ValidationException credenziali errate, account non amministratore, blocco attivo
      */
     public function attempt(string $email, string $password, bool $remember, string $ip): void
@@ -47,10 +57,16 @@ class AdminAuthService
         }
 
         $user = User::query()->where('email', $email)->first();
+        $admin = $user !== null && $this->canAccessPanel($user);
 
         // Un cliente o un partner con la password giusta vede lo stesso errore
         // di chi l'ha sbagliata: il pannello non conferma chi ha un account.
-        if ($user === null || ! $this->canAccessPanel($user) || ! Auth::validate(['email' => $email, 'password' => $password])) {
+        // E la password si verifica sempre, contro un hash fittizio se non è
+        // un amministratore: con il solo controllo del ruolo la risposta per
+        // gli altri arriverebbe un bcrypt prima.
+        $passwordMatches = Hash::check($password, $admin ? $user->getAuthPassword() : self::DUMMY_HASH);
+
+        if (! $admin || ! $passwordMatches) {
             RateLimiter::hit($key, self::LOCKOUT_SECONDS);
 
             throw ValidationException::withMessages([
@@ -86,8 +102,22 @@ class AdminAuthService
             return;
         }
 
-        // Callback del broker: il token lo crea Laravel (con il suo throttle
-        // per email), la mail e il link li decidiamo noi.
+        // Dopo la risposta: il token è un altro bcrypt e la mail un handshake
+        // Mailgun (0,5-2 s), e dentro la richiesta allungherebbero l'attesa
+        // solo per gli amministratori. defer() gira nello stesso processo,
+        // appena partita la risposta: non serve un worker della coda.
+        defer(fn () => $this->mailResetLink($email));
+    }
+
+    /**
+     * Spedisce subito il link, senza il limite per IP: per chi ha già
+     * stabilito che l'indirizzo è di un amministratore (sendResetLink qui
+     * sopra, il comando animalamo:make-superadmin). Callback del broker: il token lo
+     * crea Laravel (con il suo throttle per email), la mail e il link li
+     * decidiamo noi.
+     */
+    public function mailResetLink(string $email): void
+    {
         Password::sendResetLink(['email' => $email], function (User $user, string $token): void {
             $link = route('admin.password.reset', ['token' => $token, 'email' => $user->email]);
 
