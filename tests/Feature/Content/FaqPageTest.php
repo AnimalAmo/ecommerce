@@ -54,4 +54,16 @@ class FaqPageTest extends TestCase
 
         $this->get(route('home'))->assertOk()->assertSee('/domande-frequenti', false);
     }
+
+    public function test_the_sitemap_lists_the_page_only_when_it_has_questions(): void
+    {
+        $this->get('/sitemap.xml')->assertOk()->assertDontSee('/domande-frequenti', false);
+
+        Faq::factory()->platform()->create(['question' => ['it' => 'Domanda?'], 'answer' => ['it' => 'Risposta.']]);
+
+        $this->get('/sitemap.xml')
+            ->assertOk()
+            ->assertSee('/domande-frequenti', false)
+            ->assertSee('/en/faq', false);
+    }
 }
