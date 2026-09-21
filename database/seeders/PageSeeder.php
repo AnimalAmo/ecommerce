@@ -12,8 +12,9 @@ use Illuminate\Database\Seeder;
  * riscriverle (firstOrCreate, mai updateOrCreate).
  *
  * Una revisione del testo fatta da noi passa quindi dal pannello o da una
- * migration dedicata, non dalla modifica di questi file: su un database già
- * seminato non avrebbe effetto.
+ * migration dedicata, non dalla sola modifica di questi file: su un database
+ * già seminato non avrebbe effetto. La migration legge i testi da
+ * definitions(), come il seeder (es. 2026_09_21_100001).
  */
 class PageSeeder extends Seeder
 {
@@ -41,20 +42,37 @@ class PageSeeder extends Seeder
 
     public function run(): void
     {
-        foreach (self::PAGES as $slug => $attributes) {
-            $body = $this->bodies($slug);
-
-            if ($body === []) {
-                continue;
-            }
-
+        foreach (self::definitions() as $slug => $page) {
             Page::firstOrCreate(['slug' => $slug], [
                 'kind' => Page::KIND_LEGAL,
-                'title' => $attributes['title'],
-                'body' => $body,
-                'last_updated_at' => $attributes['last_updated_at'],
+                ...$page,
             ]);
         }
+    }
+
+    /**
+     * Le pagine legali versionate, con il corpo letto dai file. Una pagina
+     * senza nessun file resta fuori.
+     *
+     * @return array<string, array{title: array<string, string>, body: array<string, string>, last_updated_at: string}>
+     */
+    public static function definitions(): array
+    {
+        $pages = [];
+
+        foreach (self::PAGES as $slug => $attributes) {
+            $body = self::bodies($slug);
+
+            if ($body !== []) {
+                $pages[$slug] = [
+                    'title' => $attributes['title'],
+                    'body' => $body,
+                    'last_updated_at' => $attributes['last_updated_at'],
+                ];
+            }
+        }
+
+        return $pages;
     }
 
     /**
@@ -63,7 +81,7 @@ class PageSeeder extends Seeder
      *
      * @return array<string, string>
      */
-    private function bodies(string $slug): array
+    private static function bodies(string $slug): array
     {
         $bodies = [];
 
