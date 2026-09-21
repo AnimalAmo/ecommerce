@@ -44,13 +44,13 @@
 
                         <flux:input wire:model="title.{{ $lang }}" :label="__('admin-content.articles.field_title')" />
 
-                        <flux:textarea
-                            wire:model="excerpt.{{ $lang }}"
-                            :label="__('admin-content.articles.field_excerpt')"
-                            :description:trailing="__('admin-content.articles.excerpt_hint')"
-                            rows="2"
-                            resize="vertical"
-                        />
+                        {{-- Campo composto a mano: flux:description:trailing escapa due volte (l'inizio → l&#039;inizio). --}}
+                        <flux:field>
+                            <flux:label>{{ __('admin-content.articles.field_excerpt') }}</flux:label>
+                            <flux:textarea wire:model="excerpt.{{ $lang }}" rows="2" resize="vertical" />
+                            <flux:error name="excerpt.{{ $lang }}" />
+                            <flux:description>{{ __('admin-content.articles.excerpt_hint') }}</flux:description>
+                        </flux:field>
 
                         <flux:editor
                             wire:model="body.{{ $lang }}"
@@ -87,12 +87,12 @@
 
                     <p class="m-0 text-[12.5px] leading-normal text-gray-400">{{ __('admin-content.articles.cover_hint') }}</p>
 
-                    <flux:input
-                        wire:model="coverAlt.{{ $locale }}"
-                        wire:key="cover-alt-{{ $locale }}"
-                        :label="__('admin-content.articles.cover_alt').' · '.($locale === 'it' ? __('admin-content.common.lang_it') : __('admin-content.common.lang_en'))"
-                        :description:trailing="__('admin-content.articles.cover_alt_hint')"
-                    />
+                    <flux:field wire:key="cover-alt-{{ $locale }}">
+                        <flux:label>{{ __('admin-content.articles.cover_alt').' · '.($locale === 'it' ? __('admin-content.common.lang_it') : __('admin-content.common.lang_en')) }}</flux:label>
+                        <flux:input wire:model="coverAlt.{{ $locale }}" />
+                        <flux:error name="coverAlt.{{ $locale }}" />
+                        <flux:description>{{ __('admin-content.articles.cover_alt_hint') }}</flux:description>
+                    </flux:field>
                 </div>
             </x-admin.card>
 
@@ -105,13 +105,19 @@
                         @endforeach
                     </flux:select>
 
-                    <flux:input type="date" wire:model="publishedAt" :label="__('admin-content.articles.field_date')" :description:trailing="__('admin-content.articles.date_hint')" />
+                    <flux:field>
+                        <flux:label>{{ __('admin-content.articles.field_date') }}</flux:label>
+                        <flux:input type="date" wire:model="publishedAt" />
+                        <flux:error name="publishedAt" />
+                        <flux:description>{{ __('admin-content.articles.date_hint') }}</flux:description>
+                    </flux:field>
 
-                    <flux:input
-                        wire:model="slug"
-                        :label="__('admin-content.articles.field_slug')"
-                        :description:trailing="$slugPrefix.($slug !== '' ? $slug : '…').' — '.__('admin-content.articles.slug_hint')"
-                    />
+                    <flux:field>
+                        <flux:label>{{ __('admin-content.articles.field_slug') }}</flux:label>
+                        <flux:input wire:model="slug" />
+                        <flux:error name="slug" />
+                        <flux:description>{{ $slugPrefix.($slug !== '' ? $slug : '…').' — '.__('admin-content.articles.slug_hint') }}</flux:description>
+                    </flux:field>
                 </div>
             </x-admin.card>
 

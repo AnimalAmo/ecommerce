@@ -65,18 +65,20 @@
                             <p class="mt-1 text-[12.5px] leading-normal text-gray-400">{{ __('admin-content.pages.slug_fixed') }}</p>
                         </div>
 
-                        <flux:input
-                            type="date"
-                            wire:model="lastUpdatedAt"
-                            :label="__('admin-content.pages.revision_date')"
-                            :description:trailing="__('admin-content.pages.revision_hint')"
-                        />
+                        {{-- Campo composto a mano: flux:description:trailing escapa due volte (l'inizio → l&#039;inizio). --}}
+                        <flux:field>
+                            <flux:label>{{ __('admin-content.pages.revision_date') }}</flux:label>
+                            <flux:input type="date" wire:model="lastUpdatedAt" />
+                            <flux:error name="lastUpdatedAt" />
+                            <flux:description>{{ __('admin-content.pages.revision_hint') }}</flux:description>
+                        </flux:field>
                     @else
-                        <flux:input
-                            wire:model.blur="slug"
-                            :label="__('admin-content.common.address')"
-                            :description:trailing="__('admin-content.pages.slug_prefix', ['url' => $slugUrl]).' '.__('admin-content.pages.slug_hint')"
-                        />
+                        <flux:field>
+                            <flux:label>{{ __('admin-content.common.address') }}</flux:label>
+                            <flux:input wire:model.blur="slug" />
+                            <flux:error name="slug" />
+                            <flux:description>{{ __('admin-content.pages.slug_prefix', ['url' => $slugUrl]).' '.__('admin-content.pages.slug_hint') }}</flux:description>
+                        </flux:field>
 
                         <flux:select wire:model="footerColumn" :label="__('admin-content.pages.footer')">
                             <flux:select.option value="">{{ __('admin-content.pages.footer_none') }}</flux:select.option>
