@@ -2,8 +2,10 @@
 
 namespace App\Models\Article;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -26,6 +28,16 @@ class Article extends Model implements HasMedia
 
     public const COVER = 'cover';
 
+    /** Stati nel pannello: la data di pubblicazione decide tutto. */
+    public const DRAFT = 'draft';
+
+    public const SCHEDULED = 'scheduled';
+
+    public const PUBLISHED = 'published';
+
+    /** Categorie del magazine (etichette in admin-content.articles.categories). */
+    public const CATEGORIES = ['travel', 'puppies', 'partners'];
+
     /** Lingua in cui la cliente scrive gli articoli: è lei a fare da rete. */
     public const SOURCE_LOCALE = 'it';
 
@@ -33,10 +45,10 @@ class Article extends Model implements HasMedia
     private const EXCERPT_LENGTH = 200;
 
     /** @var array<int, string> */
-    public array $translatable = ['title', 'body', 'cover_alt'];
+    public array $translatable = ['title', 'excerpt', 'body', 'cover_alt'];
 
     /** @var list<string> */
-    protected $fillable = ['slug', 'title', 'body', 'published_at', 'category', 'cover_alt', 'author_id'];
+    protected $fillable = ['slug', 'title', 'excerpt', 'body', 'published_at', 'category', 'cover_alt', 'author_id'];
 
     public function registerMediaCollections(): void
     {
@@ -73,6 +85,33 @@ class Article extends Model implements HasMedia
             ->orderByDesc('id');
     }
 
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /** In bozza senza data, programmato con una data futura, pubblicato altrimenti. */
+    public function status(): string
+    {
+        return match (true) {
+            $this->published_at === null => self::DRAFT,
+            $this->published_at->isAfter(today()) => self::SCHEDULED,
+            default => self::PUBLISHED,
+        };
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status() === self::PUBLISHED;
+    }
+
+    /** Lingue in cui l'articolo è scritto davvero (titolo e testo), non per ripiego. */
+    public function hasLocale(string $locale): bool
+    {
+        return trim((string) $this->getTranslation('title', $locale, false)) !== ''
+            && trim((string) $this->getTranslation('body', $locale, false)) !== '';
+    }
+
     public function titleFor(?string $locale = null): string
     {
         return $this->translationOr('title', $locale);
@@ -83,9 +122,25 @@ class Article extends Model implements HasMedia
         return $this->translationOr('body', $locale);
     }
 
-    /** Primo paragrafo ripulito dai tag: nessuna colonna da tenere allineata al corpo. */
+    /**
+     * Le righe sotto il titolo nelle card: il sommario scritto dalla cliente
+     * o, se manca, il primo paragrafo ripulito dai tag. Una lingua senza
+     * testo proprio ripiega per intero sull'italiano, sommario compreso.
+     */
     public function excerptFor(?string $locale = null): string
     {
+        $locale ??= app()->getLocale();
+
+        if (! $this->hasOwnBody($locale)) {
+            $locale = self::SOURCE_LOCALE;
+        }
+
+        $written = trim((string) $this->getTranslation('excerpt', $locale, false));
+
+        if ($written !== '') {
+            return $written;
+        }
+
         preg_match('/<p>(.*?)<\/p>/su', $this->bodyFor($locale), $matches);
 
         $text = html_entity_decode(strip_tags($matches[1] ?? ''), ENT_QUOTES);
@@ -114,6 +169,11 @@ class Article extends Model implements HasMedia
     public function coverAlt(?string $locale = null): string
     {
         return $this->translationOr('cover_alt', $locale) ?: $this->titleFor($locale);
+    }
+
+    private function hasOwnBody(string $locale): bool
+    {
+        return trim((string) $this->getTranslation('body', $locale, false)) !== '';
     }
 
     /**
