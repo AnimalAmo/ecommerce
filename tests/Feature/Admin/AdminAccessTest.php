@@ -30,6 +30,7 @@ class AdminAccessTest extends TestCase
             'faq' => ['admin.faqs'],
             'community' => ['admin.community'],
             'iscritti' => ['admin.users.index'],
+            'nuovo partner' => ['admin.users.create'],
             'contatti' => ['admin.inbox'],
             'newsletter' => ['admin.newsletter.index'],
             'nuova newsletter' => ['admin.newsletter.create'],

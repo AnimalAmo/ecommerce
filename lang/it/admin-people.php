@@ -142,6 +142,41 @@ return [
     ],
 
     'partner_create' => [
+        'title' => 'Nuovo partner',
+        'sub' => 'Crea l\'account di un partner: gli arriverà una mail per scegliere la password. Se l\'email è di un cliente, il suo account diventa anche partner.',
+        'new_button' => 'Nuovo partner',
+        'sections' => [
+            'person' => 'Referente',
+            'business' => 'Attività',
+            'payment' => 'Pagamento',
+        ],
+        'fields' => [
+            'firstName' => 'Nome',
+            'lastName' => 'Cognome',
+            'email' => 'Email',
+            'phone' => 'Cellulare',
+            'businessName' => 'Ragione sociale',
+            'vat' => 'Partita IVA',
+            'taxCode' => 'Codice fiscale',
+            'address' => 'Indirizzo',
+            'province' => 'Provincia',
+            'zip' => 'CAP',
+            'paymentMode' => 'Come pagano i clienti',
+            'paymentUrl' => 'Sito dove pagare o prenotare (facoltativo)',
+        ],
+        'province_placeholder' => 'Scegli la provincia',
+        // Diverse di proposito dai badge users.payment_mode.*: la modale sta nella
+        // stessa pagina dei badge, e testi uguali renderebbero ciechi i test.
+        'payment' => [
+            'online' => 'Con carta sul sito: per pubblicare serve il collegamento del conto',
+            'on_site' => 'Il cliente paga in struttura o sul sito del partner',
+            'url_help' => 'Lo vede il cliente nella conferma della prenotazione. Solo indirizzi http o https.',
+        ],
+        'submit' => 'Crea il partner',
+        'created' => 'Partner creato: gli abbiamo inviato la mail per scegliere la password.',
+        'promoted' => 'Il cliente ora è anche partner: gli abbiamo inviato una mail per avvisarlo.',
+        'payment_mode_failed' => 'Partner creato, ma la modalità di pagamento non è stata salvata: impostala dalla scheda con "Cambia".',
+        'welcome_failed' => 'Partner creato, ma la mail non è partita: usa "Invia di nuovo il link" dalla scheda.',
         'errors' => [
             'superadmin' => 'Questo indirizzo è di un amministratore del pannello: non può diventare partner.',
             'already_partner' => 'Questo indirizzo è già di un partner.',

@@ -23,6 +23,7 @@ use App\Livewire\Admin\Money\Payouts;
 use App\Livewire\Admin\Newsletter\CampaignEdit;
 use App\Livewire\Admin\Newsletter\NewsletterIndex;
 use App\Livewire\Admin\People\Inbox;
+use App\Livewire\Admin\People\PartnerCreate;
 use App\Livewire\Admin\People\UserIndex;
 use App\Livewire\Admin\People\UserShow;
 use App\Livewire\Admin\Reviews\ReviewIndex;
@@ -70,6 +71,8 @@ Route::middleware(['auth', 'superadmin'])->group(function () {
 
     // Persone
     Route::get('users', UserIndex::class)->name('users.index');
+    // Prima di users/{user}: quella è whereNumber e non ci sarebbe conflitto, ma così si legge.
+    Route::get('users/new', PartnerCreate::class)->name('users.create');
     Route::get('users/export', UserExportController::class)->name('users.export');
     Route::get('users/{user}', UserShow::class)->whereNumber('user')->name('users.show');
     Route::get('inbox', Inbox::class)->name('inbox');
