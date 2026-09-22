@@ -127,16 +127,20 @@ return [
 
     // Field names with article, so "Enter :attribute." reads naturally.
     'attributes' => [
+        'accountHolder' => 'the account holder',
         'address' => 'your address',
+        'bic' => 'the BIC',
         'birthDate' => 'your date of birth',
         'businessName' => 'your business name',
         'city' => 'your city',
         'description' => 'a description',
         'email' => 'your email',
         'firstName' => 'your first name',
+        'iban' => 'the IBAN',
         'lastName' => 'your last name',
         'offerType' => 'your offer type',
         'password' => 'your password',
+        'paymentUrl' => 'the website address',
         'petType' => 'your pet type',
         'phone' => 'your mobile number',
         'postalCode' => 'your postal code',

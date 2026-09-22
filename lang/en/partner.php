@@ -9,6 +9,15 @@ return [
 
     // Partner payment mode: online on AnimalAmo or paid directly to the partner.
     'payment_mode' => [
+        'section' => 'How you get paid',
+        'help' => 'Choose whether customers pay online on AnimalAmo or pay you directly, on site or on your website. Bookings already made stay as they are.',
+        'online' => 'Online on AnimalAmo',
+        'on_site' => 'Directly to me, on site or on my website',
+        'url_label' => 'Website for payment or booking (optional)',
+        'url_help' => 'We show it to the customer in the booking confirmation.',
+        'save' => 'Save payment option',
+        'saved' => 'Payment option updated',
+        'online_needs_stripe' => 'To choose online payment, first connect your Stripe account in the box below.',
         'errors' => [
             'stripe_required' => 'To receive online payments you first need to finish connecting your Stripe account.',
         ],
@@ -108,6 +117,7 @@ return [
             'disconnected' => 'Connect your account to get paid',
             'incomplete' => 'Connection not finished',
             'help' => 'Customers pay you directly: the money lands in your Stripe account, and AnimalAmo only keeps its commission. Until the connection is complete you cannot publish your services.',
+            'help_on_site' => 'Right now your customers pay you directly. If you want to switch to online payment, connect your Stripe account here: you can do it whenever you like.',
             'connect' => 'Connect account',
             'resume' => 'Resume connection',
         ],

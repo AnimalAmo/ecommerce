@@ -126,16 +126,20 @@ return [
 
     // Nomi campo con articolo, così "Inserisci :attribute." resta naturale.
     'attributes' => [
+        'accountHolder' => 'il titolare del conto',
         'address' => 'l\'indirizzo',
+        'bic' => 'il BIC',
         'birthDate' => 'la data di nascita',
         'businessName' => 'la ragione sociale',
         'city' => 'la città',
         'description' => 'una descrizione',
         'email' => 'l\'email',
         'firstName' => 'il nome',
+        'iban' => 'l\'IBAN',
         'lastName' => 'il cognome',
         'offerType' => 'il tipo di offerta',
         'password' => 'la password',
+        'paymentUrl' => 'l\'indirizzo del sito',
         'petType' => 'la tipologia di animale',
         'phone' => 'il numero di cellulare',
         'postalCode' => 'il CAP',

@@ -9,6 +9,15 @@ return [
 
     // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.
     'payment_mode' => [
+        'section' => 'Come ricevi i pagamenti',
+        'help' => 'Scegli se i clienti pagano online su AnimalAmo o direttamente a te, in struttura o sul tuo sito. Le prenotazioni già fatte restano come sono.',
+        'online' => 'Online su AnimalAmo',
+        'on_site' => 'Direttamente a me, in struttura o sul mio sito',
+        'url_label' => 'Sito dove pagare o prenotare (facoltativo)',
+        'url_help' => 'Lo mostriamo al cliente nella conferma della prenotazione.',
+        'save' => 'Salva la modalità',
+        'saved' => 'Modalità di pagamento aggiornata',
+        'online_needs_stripe' => 'Per scegliere il pagamento online collega prima il tuo conto Stripe dal riquadro qui sotto.',
         'errors' => [
             'stripe_required' => 'Per ricevere i pagamenti online devi prima completare il collegamento del conto su Stripe.',
         ],
@@ -108,6 +117,7 @@ return [
             'disconnected' => 'Collega il tuo conto per ricevere i pagamenti',
             'incomplete' => 'Collegamento da completare',
             'help' => 'I clienti pagano direttamente te: il denaro arriva sul tuo conto Stripe, e AnimalAmo trattiene solo la propria provvigione. Finché il collegamento non è completo non puoi pubblicare i tuoi servizi.',
+            'help_on_site' => 'Oggi i tuoi clienti ti pagano direttamente. Se vuoi passare al pagamento online, collega qui il tuo conto Stripe: puoi farlo quando vuoi.',
             'connect' => 'Collega il conto',
             'resume' => 'Riprendi il collegamento',
         ],
