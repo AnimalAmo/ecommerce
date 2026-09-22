@@ -3,15 +3,12 @@
 namespace App\Listeners\Order;
 
 use App\Events\OrderPaid;
+use App\Listeners\Order\Concerns\SendsOrderMails;
 use App\Mail\OrderConfirmationMail;
 use App\Mail\SmartboxGiftMail;
 use App\Models\OrderItem\OrderItem;
-use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Throwable;
 
 /**
  * Mail post-incasso (auto-discovery, come MergeCartOnLogin): conferma ordine
@@ -21,7 +18,7 @@ use Throwable;
  */
 class SendOrderPaidMails implements ShouldQueue
 {
-    use InteractsWithQueue;
+    use InteractsWithQueue, SendsOrderMails;
 
     /** Mai mail per ordini poi rollbackati: il job si accoda al commit. */
     public bool $afterCommit = true;
@@ -30,11 +27,8 @@ class SendOrderPaidMails implements ShouldQueue
     {
         $order = $event->order->loadMissing('items');
 
-        // Ogni invio è isolato: con la coda sync il listener gira in-process
-        // dentro handlePaymentCallback, quindi un mailer che esplode (SMTP giù,
-        // destinatario irraggiungibile) NON deve far vedere un errore a chi ha
-        // già pagato, né bloccare gli altri invii, né far fallire il job (un
-        // retry duplicherebbe le mail già partite).
+        // Ogni invio è isolato (SendsOrderMails::sendSilently): chi ha già
+        // pagato non deve vedere l'errore di un mailer.
         $this->sendSilently(new OrderConfirmationMail($order), $order->email, $order->id);
 
         $order->items
@@ -43,22 +37,5 @@ class SendOrderPaidMails implements ShouldQueue
             ->each(function (OrderItem $item) use ($order): void {
                 $this->sendSilently(new SmartboxGiftMail($item), $item->options['gift']['recipient_email'], $order->id);
             });
-    }
-
-    /** Invia riportando (report + log) ogni fallimento senza propagarlo. */
-    private function sendSilently(Mailable $mailable, string $recipient, int $orderId): void
-    {
-        try {
-            Mail::to($recipient)->send($mailable);
-        } catch (Throwable $exception) {
-            report($exception);
-
-            Log::warning('Mail post-pagamento non inviata, il flusso prosegue', [
-                'order_id' => $orderId,
-                'mailable' => $mailable::class,
-                'recipient' => $recipient,
-                'error' => $exception->getMessage(),
-            ]);
-        }
     }
 }

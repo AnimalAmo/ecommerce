@@ -27,6 +27,15 @@ return [
             'closing' => 'A presto',
             'signature' => 'Il team AnimalAmo',
         ],
+        // Variante "da pagare in struttura" di OrderConfirmationMail (saluto, tabella e chiusura restano in confirmation)
+        'on_site' => [
+            'subject' => 'Prenotazione confermata :order_number',
+            'title' => 'Prenotazione confermata!',
+            'intro' => 'la tua prenotazione :order_number è confermata: ecco il riepilogo. Su AnimalAmo non hai pagato nulla, il pagamento avviene direttamente con il partner.',
+            'amount_due' => 'Da pagare direttamente al partner :partner, in struttura o sul suo sito: :amount',
+            'pay_on_website' => 'Paga sul sito del partner',
+            'partner' => 'Indirizzo: :name, :address',
+        ],
     ],
     // Profilo — i miei ordini: conteggio articoli della riga lista
     'items_count' => '{1} 1 articolo|[2,*] :count articoli',

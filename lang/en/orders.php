@@ -27,6 +27,15 @@ return [
             'closing' => 'See you soon',
             'signature' => 'The AnimalAmo team',
         ],
+        // "Pay at the property" variant of OrderConfirmationMail (greeting, table and closing stay in confirmation)
+        'on_site' => [
+            'subject' => 'Booking confirmed :order_number',
+            'title' => 'Booking confirmed!',
+            'intro' => 'your booking :order_number is confirmed: here is the summary. You have not paid anything on AnimalAmo, you pay the partner directly.',
+            'amount_due' => 'To be paid directly to the partner :partner, at the property or on their website: :amount',
+            'pay_on_website' => 'Pay on the partner website',
+            'partner' => 'Address: :name, :address',
+        ],
     ],
     // Profile — my orders: item count of the list row
     'items_count' => '{1} 1 item|[2,*] :count items',
