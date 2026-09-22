@@ -158,4 +158,76 @@ class StructureCreateTest extends TestCase
 
         $this->assertSame(['pernottamento', 'benessere'], StructureDraft::query()->sole()->smartbox_types);
     }
+
+    public function test_the_page_shows_one_card_per_wizard_step(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->get(route('admin.catalog.create', ['family' => 'structure', 'partner' => $partner->id]))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Categoria e tipologia',
+                'Nome della scheda',
+                'Luogo',
+                'Descrizione',
+                'Camere',
+                'Cancellazione',
+                'Servizi della struttura',
+                'Servizi per gli animali',
+                'Smartbox',
+                'Foto',
+                'Coordinate bancarie',
+            ])
+            // Etichette delle opzioni: restano quelle del percorso partner.
+            ->assertSee('Agriturismo')
+            ->assertSee('Wi-fi gratuito')
+            ->assertSee('Pet sitting')
+            ->assertSee('Tutta la struttura')
+            // Provincia dalla tabella, non da un elenco scritto a mano.
+            ->assertSee('Brescia (BS)')
+            // Riquadro laterale: modalità di pagamento E stato Stripe (spec
+            // §5.3). Il testo è quello che il partial stampa davvero —
+            // «Stripe: Collegato e pagabile» — non una stringa che vive solo
+            // in una chiave lang che nessuno usa.
+            ->assertSee(__('admin-catalog.create.stripe_status.payable'))
+            // Nessuna chiave lang grezza a video: è l'unico modo di accorgersi
+            // che un blocco `create.*` è stato dichiarato e mai definito.
+            ->assertDontSee('admin-catalog.create.');
+    }
+
+    public function test_a_rejected_save_shows_the_error_and_jumps_to_the_language_that_has_it(): void
+    {
+        $partner = $this->payablePartner();
+
+        Livewire::withQueryParams(['partner' => $partner->id])
+            ->test(StructureCreate::class, ['family' => 'structure'])
+            ->set('lang', 'it')
+            ->set('name.it', 'Hotel Bau Resort')
+            ->set('name.en', str_repeat('a', 111))
+            ->call('save')
+            ->assertHasErrors(['name.en' => 'max'])
+            ->assertSet('lang', 'en')
+            // La coda del messaggio, non il suo inizio: «Massimo 110
+            // caratteri» compare anche in `structure.name_help`, che la pagina
+            // stampa sempre — un assertSee su quel pezzo passerebbe pure
+            // cancellando la regola.
+            ->assertSee('il nome italiano e quello inglese vivono nello stesso campo del catalogo');
+    }
+
+    /**
+     * I gruppi di checkbox falliscono su chiavi indicizzate
+     * (`services.services.1`): se la vista non le mostra, il salvataggio si
+     * blocca e il bottone sembra morto. È il difetto che la spec §5.3 chiede
+     * di evitare.
+     */
+    public function test_an_option_group_shows_its_own_error(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->filled($partner)
+            ->set('services.services', ['wifi', 'elicottero'])
+            ->call('save')
+            ->assertHasErrors('services.services.1')
+            ->assertSee('Questa opzione non esiste più');
+    }
 }
