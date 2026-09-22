@@ -10,6 +10,7 @@ use App\Models\OrderItem\OrderItem;
 use App\Models\OrderPayment\OrderPayment;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Support\Format;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -88,6 +89,30 @@ class PartnerNewBookingMailTest extends TestCase
         Mail::assertSent(PartnerNewBookingMail::class, 2);
         Mail::assertSent(PartnerNewBookingMail::class, fn (PartnerNewBookingMail $mail): bool => $mail->hasTo('anna@example.com'));
         Mail::assertSent(PartnerNewBookingMail::class, fn (PartnerNewBookingMail $mail): bool => $mail->hasTo('bruno@example.com'));
+    }
+
+    public function test_each_partner_sees_only_its_own_lines_and_their_subtotal(): void
+    {
+        // Titoli e prezzi di un partner non devono finire nella mail di un altro.
+        $anna = User::factory()->create(['email' => 'anna@example.com']);
+        $bruno = User::factory()->create(['email' => 'bruno@example.com']);
+        $order = Order::factory()->create(['total_cents' => 100000]);
+        OrderItem::factory()->for($order)->create(['partner_user_id' => $anna->id, 'title' => 'Camera Anna', 'price_cents' => 20000]);
+        OrderItem::factory()->for($order)->create(['partner_user_id' => $bruno->id, 'title' => 'Suite Bruno', 'price_cents' => 70000]);
+        OrderItem::factory()->for($order)->create(['partner_user_id' => $anna->id, 'title' => 'Cena Anna', 'price_cents' => 10000]);
+
+        OrderPayment::factory()->for($order)->completed()->create();
+
+        $html = Mail::sent(PartnerNewBookingMail::class, fn (PartnerNewBookingMail $mail): bool => $mail->hasTo('anna@example.com'))
+            ->first()
+            ->render();
+
+        $this->assertStringContainsString('Camera Anna', $html);
+        $this->assertStringContainsString('Cena Anna', $html);
+        $this->assertStringContainsString(Format::money(30000), $html);
+        $this->assertStringNotContainsString('Suite Bruno', $html);
+        $this->assertStringNotContainsString(Format::money(70000), $html);
+        $this->assertStringNotContainsString(Format::money(100000), $html);
     }
 
     public function test_a_line_without_partner_sends_no_partner_mail(): void
