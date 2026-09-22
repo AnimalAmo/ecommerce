@@ -62,6 +62,9 @@
                 <p class="mt-[9px] text-[25px] italic leading-[34px] text-black">{{ __('format.free') }}</p>
             @else
                 <p class="mt-[9px] text-[25px] font-light leading-[34px] text-black">{!! $event->price_cents !== null ? __('format.per_person', ['price' => '<span class="font-bold">'.e(\App\Support\Format::money($event->price_cents)).'</span>']) : __('format.from_price', ['price' => '<span class="font-bold">'.e(\App\Support\Format::money(0)).'</span>']) !!}</p>
+                @if ($paysOnSite)
+                    @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-2 mb-4'])
+                @endif
             @endif
 
             {{-- 3. Intestazione di sezione + azioni Preferiti / Aggiungi al carrello.

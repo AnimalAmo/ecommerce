@@ -330,6 +330,9 @@
                             <span>{{ __('holiday.total') }}</span>
                             <span>{{ \App\Support\Format::money($totalCents) }}</span>
                         </div>
+                        @if ($paysOnSite)
+                            @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
+                        @endif
                     </div>
                 </aside>
             </div>
@@ -339,8 +342,12 @@
     @include('partials.site-footer', ['hideMobileTabbar' => true])
 
     {{-- Barra fissa mobile (XD app "Dettaglio struttura"): sulla scheda la tabbar lascia il posto alla CTA carrello --}}
-    <div class="fixed inset-x-0 bottom-0 z-40 flex h-20 items-center justify-center border-t border-gray-150 bg-white lg:hidden">
+    {{-- Su mobile la card con il totale non c'è: la dicitura offline va nella barra, sotto la CTA --}}
+    <div class="fixed inset-x-0 bottom-0 z-40 flex h-20 flex-col items-center justify-center gap-1 border-t border-gray-150 bg-white px-4 lg:hidden">
         <flux:button wire:click="addToCart" class="!h-[39px] !w-[189px] !rounded-full !border-0 !bg-brand-cyan !text-sm !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('holiday.add_to_cart') }}</flux:button>
+        @if ($paysOnSite)
+            <p class="text-center text-xs leading-[14px] text-[#627277]">{{ __('catalog.pay_on_site') }}</p>
+        @endif
     </div>
     {{-- Spaziatore: evita che la barra CTA copra il fondo pagina --}}
     <div class="h-20 lg:hidden"></div>

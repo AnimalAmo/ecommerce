@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Support\Format;
 use Flux\Flux;
 use Livewire\Component;
@@ -109,6 +111,9 @@ class EventDetail extends Component
             'popupPrice' => $event->price_cents !== null ? Format::money($event->price_cents) : null,
             'includedColumns' => [$event->amenityRows('hotel'), $event->amenityRows('animal')],
             'faqs' => $event->faqs,
+            // Solo gli eventi acquistabili: i gratuiti hanno la CTA Partecipa.
+            'paysOnSite' => ! $event->hasJoinCta()
+                && app(PartnerPaymentModeService::class)->forPurchasable($event) === OrderPaymentMode::OnSite,
         ])->title('AnimalAmo — '.$event->title);
     }
 }

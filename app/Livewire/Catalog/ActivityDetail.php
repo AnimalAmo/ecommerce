@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
 use Flux\Flux;
@@ -185,6 +187,10 @@ class ActivityDetail extends Component
             'animalsAtMax' => $this->animalsAtMax(),
             'includedColumns' => [$activity->amenityRows('hotel'), $activity->amenityRows('animal')],
             'faqs' => $activity->faqs,
+            // Solo le attività acquistabili: quelle gratuite restano "Partecipa" e
+            // non passano mai dal carrello, quindi non serve nemmeno la query.
+            'paysOnSite' => ! $activity->hasJoinCta()
+                && app(PartnerPaymentModeService::class)->forPurchasable($activity) === OrderPaymentMode::OnSite,
         ])->title('AnimalAmo — '.$activity->title);
     }
 }

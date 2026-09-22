@@ -48,4 +48,6 @@ return [
     'show_results' => 'Mostra :count risultati',
     // A zero il bottone non può promettere risultati: dice cosa fa davvero.
     'close_filters' => 'Chiudi i filtri',
+    // Schede dettaglio di un partner senza pagamento online: il totale si salda a lui.
+    'pay_on_site' => 'Pagamento direttamente al partner, in struttura o sul suo sito',
 ];

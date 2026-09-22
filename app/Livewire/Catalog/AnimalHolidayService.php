@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
@@ -9,6 +10,7 @@ use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use DateTimeImmutable;
 use Flux\Flux;
@@ -134,6 +136,8 @@ class AnimalHolidayService extends Component
             'calendarLabel' => $this->calendarLabel(),
             'animalsAtMax' => $this->animalsAtMax(),
             'bookingHours' => self::bookingHours(),
+            // Service memoizzato per user_id: una query per richiesta.
+            'paysOnSite' => app(PartnerPaymentModeService::class)->forPurchasable($service) === OrderPaymentMode::OnSite,
         ])->title('AnimalAmo — '.$service->name);
     }
 
