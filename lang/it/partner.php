@@ -7,6 +7,13 @@ return [
         'stripe_onboarding_required' => 'Per pubblicare un servizio devi prima completare il collegamento del conto su Stripe.',
     ],
 
+    // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.
+    'payment_mode' => [
+        'errors' => [
+            'stripe_required' => 'Per ricevere i pagamenti online devi prima completare il collegamento del conto su Stripe.',
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Partner — Lavora con noi

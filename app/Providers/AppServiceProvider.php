@@ -10,6 +10,7 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Admin\AdminCounters;
+use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Layout e home del pannello chiedono gli stessi contatori: una volta per request.
         $this->app->scoped(AdminCounters::class);
+
+        // Schede, carrello e checkout chiedono la modalità dello stesso partner
+        // più volte: una lettura per request, e nessuna memoria fra una request e l'altra.
+        $this->app->scoped(PartnerPaymentModeService::class);
     }
 
     /**

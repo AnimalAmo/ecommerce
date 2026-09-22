@@ -7,6 +7,13 @@ return [
         'stripe_onboarding_required' => 'Before publishing a service you need to finish connecting your Stripe account.',
     ],
 
+    // Partner payment mode: online on AnimalAmo or paid directly to the partner.
+    'payment_mode' => [
+        'errors' => [
+            'stripe_required' => 'To receive online payments you first need to finish connecting your Stripe account.',
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Partner — Work with us
