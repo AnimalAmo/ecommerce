@@ -15,7 +15,12 @@ final readonly class CreatedPartner
     public function __construct(
         public User $user,
         public bool $promoted,
-        /** false: set() è fallito, il profilo ha la modalità di default (online). */
+        /**
+         * false: set() è fallito. Il link di pagamento non è stato scritto;
+         * la modalità, se il profilo è nato ora, ce l'ha già (la scrive
+         * RegisterPartnerAccount), mentre su un profilo preesistente è
+         * rimasta quella di prima.
+         */
         public bool $paymentModeSaved = true,
         /** false: la mail di benvenuto non è partita, va rimandata dalla scheda. */
         public bool $welcomeSent = true,

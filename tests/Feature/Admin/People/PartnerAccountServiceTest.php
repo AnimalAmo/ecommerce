@@ -271,8 +271,13 @@ class PartnerAccountServiceTest extends TestCase
 
         $this->assertTrue($created->user->exists);
         $this->assertTrue($created->user->fresh()->hasRole('partner'));
-        // Chi chiama deve poterlo dire all'admin: la modalità scelta non è stata salvata.
+        // Chi chiama deve poterlo dire all'admin: le impostazioni di pagamento
+        // non sono a posto. Qui il profilo nasce ora, quindi la modalità
+        // scelta c'è (la scrive la registrazione) e a mancare è il link.
         $this->assertFalse($created->paymentModeSaved);
+        $profile = $created->user->partnerProfile->fresh();
+        $this->assertFalse($profile->online_payment);
+        $this->assertNull($profile->payment_url);
         Exceptions::assertReported(RuntimeException::class);
     }
 

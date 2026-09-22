@@ -188,7 +188,10 @@ return [
         'submit' => 'Crea il partner',
         'created' => 'Partner creato: gli abbiamo inviato la mail per scegliere la password.',
         'promoted' => 'Il cliente ora è anche partner: gli abbiamo inviato una mail per avvisarlo.',
-        'payment_mode_failed' => 'Partner creato, ma la modalità di pagamento non è stata salvata: impostala dalla scheda con "Cambia".',
+        // Non "la modalità": quella, per un profilo nuovo, la scrive già la
+        // registrazione. A restare indietro è il link, e su un profilo che
+        // esisteva già anche la modalità.
+        'payment_mode_failed' => 'Partner creato, ma le impostazioni di pagamento non sono state salvate: controllale dalla scheda con "Cambia".',
         'welcome_failed' => 'Partner creato, ma la mail non è partita: usa "Invia di nuovo il link" dalla scheda.',
         'errors' => [
             'superadmin' => 'Questo indirizzo è di un amministratore del pannello: non può diventare partner.',
