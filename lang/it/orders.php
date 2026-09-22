@@ -33,7 +33,13 @@ return [
     // Label OrderStatus
     'status' => [
         'cancelled' => 'Annullato',
+        'confirmed' => 'Confermato',
         'paid' => 'Pagato',
         'pending' => 'In attesa',
+    ],
+    // Label OrderPaymentMode
+    'payment_mode' => [
+        'online' => 'Pagamento online',
+        'on_site' => 'Pagamento in struttura',
     ],
 ];

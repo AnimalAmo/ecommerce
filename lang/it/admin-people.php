@@ -112,6 +112,7 @@ return [
         'order_items' => 'Prenotazioni',
         'order_statuses' => [
             'paid' => 'Pagato',
+            'confirmed' => 'Confermato',
             'pending' => 'In attesa',
             'cancelled' => 'Annullato',
         ],

@@ -51,4 +51,17 @@ abstract class TestCase extends BaseTestCase
 
         return $partner;
     }
+
+    /**
+     * Partner che si fa pagare direttamente (in struttura o sul suo sito):
+     * senza Stripe, eppure pubblica.
+     */
+    protected function actingAsOfflinePartner(array $attributes = []): User
+    {
+        $partner = $this->actingAsActivePartner($attributes);
+
+        PartnerProfile::factory()->offline()->for($partner)->create();
+
+        return $partner;
+    }
 }

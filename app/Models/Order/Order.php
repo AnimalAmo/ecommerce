@@ -2,6 +2,7 @@
 
 namespace App\Models\Order;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\OrderStatus;
 use App\Models\Order\Concerns\OrderHasBootAttributes;
 use App\Models\Order\Concerns\OrderHasRelationships;
@@ -31,15 +32,25 @@ class Order extends Model
         'phone',
         'country',
         'total_cents',
+        'payment_mode',
+        'partner_payment_url',
+        'checkout_token',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => OrderStatus::class,
+            'payment_mode' => OrderPaymentMode::class,
             'is_gift' => 'boolean',
             'total_cents' => 'integer',
         ];
+    }
+
+    /** Da pagare al partner fuori piattaforma: letto dalla copia salvata sull'ordine. */
+    public function isOnSite(): bool
+    {
+        return $this->payment_mode === OrderPaymentMode::OnSite;
     }
 
     /** Snapshot buyer in formato canonico: il telefono si salva sempre in E.164. */

@@ -32,6 +32,10 @@ class PartnerProfileFactory extends Factory
             'stripe_requirements_due' => null,
             'commission_rate_bp' => null,
             'commission_min_cents' => null,
+            // Esplicito come is_active in UserFactory: il model restituito da
+            // create() non rilegge il default della colonna.
+            'online_payment' => true,
+            'payment_url' => null,
         ];
     }
 
@@ -39,10 +43,24 @@ class PartnerProfileFactory extends Factory
     public function connected(): static
     {
         return $this->state(fn (): array => [
+            'online_payment' => true,
             'stripe_account_id' => 'acct_'.fake()->unique()->regexify('[A-Za-z0-9]{16}'),
             'stripe_charges_enabled' => true,
             'stripe_payouts_enabled' => true,
             'stripe_requirements_due' => [],
+        ]);
+    }
+
+    /** Si fa pagare direttamente (in struttura o sul suo sito): nessun conto Stripe. */
+    public function offline(): static
+    {
+        return $this->state(fn (): array => [
+            'online_payment' => false,
+            'payment_url' => null,
+            'stripe_account_id' => null,
+            'stripe_charges_enabled' => false,
+            'stripe_payouts_enabled' => false,
+            'stripe_requirements_due' => null,
         ]);
     }
 }
