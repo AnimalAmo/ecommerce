@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\Support\Payment\FakePaymentGateway;
 use Tests\TestCase;
@@ -115,6 +116,34 @@ class CheckoutOnSiteTest extends TestCase
         $this->assertSame([], $this->gateway->refundCalls);
 
         Events::assertDispatched(OnSiteOrderConfirmed::class);
+    }
+
+    /**
+     * La copia del link salvata sull'ordine è già pulita: un profilo scritto
+     * saltando il service non porta un javascript: dentro l'ordine.
+     */
+    #[DataProvider('partnerPaymentLinks')]
+    public function test_the_order_stores_only_an_http_partner_link(string $profileUrl, ?string $storedUrl): void
+    {
+        $this->actingAs($this->buyer());
+        $this->offlineSeller()->partnerProfile()->update(['payment_url' => $profileUrl]);
+        $this->addStructureLine($this->offlineStructure());
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('confirmBooking')
+            ->assertSet('step', 3);
+
+        $this->assertSame($storedUrl, Order::sole()->partner_payment_url);
+    }
+
+    /** @return array<string, array{string, ?string}> */
+    public static function partnerPaymentLinks(): array
+    {
+        return [
+            'javascript scheme' => ['javascript:alert(1)', null],
+            'https link' => ['https://example.com/paga', 'https://example.com/paga'],
+        ];
     }
 
     public function test_a_guest_with_an_offline_seller_is_sent_to_the_login(): void

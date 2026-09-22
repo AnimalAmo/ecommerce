@@ -518,7 +518,8 @@ class Checkout extends Component
             items: $items,
             totalCents: $this->cart()->total(false),
             checkoutToken: $this->checkoutToken,
-            partnerPaymentUrl: $modes->profileFor($sellerUserId)?->payment_url,
+            // Copia salvata sull'ordine già pulita: solo http(s), come ogni href che la stampa.
+            partnerPaymentUrl: SafeUrl::http($modes->profileFor($sellerUserId)?->payment_url),
         );
 
         try {
