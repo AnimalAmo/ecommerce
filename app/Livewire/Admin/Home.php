@@ -22,6 +22,7 @@ class Home extends Component
             'catalog' => $overview->catalogCounts(),
             'subscribers' => $overview->subscribers(),
             'sales' => $overview->monthSales(),
+            'onSite' => $overview->monthOnSiteBookings(),
             'partners' => $overview->partners(),
             'latest' => $overview->latestListings()->map(fn (Model $item): array => $presenter->row($item) + [
                 'when' => $item->created_at?->locale(app()->getLocale())->diffForHumans(),

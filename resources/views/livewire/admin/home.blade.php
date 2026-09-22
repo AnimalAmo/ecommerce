@@ -80,6 +80,11 @@
         />
     </div>
 
+    {{-- "Ordini del mese" conta solo gli incassi: le prenotazioni offline si dicono a parte --}}
+    @if ($onSite['count'] > 0)
+        <p class="m-0 -mt-2 text-[13px] text-gray-400">{{ trans_choice('admin-dashboard.on_site_note', $onSite['count'], ['count' => $number($onSite['count']), 'amount' => Format::money($onSite['value_cents'])]) }}</p>
+    @endif
+
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] items-start gap-3.5">
         <x-admin.card :heading="__('admin-dashboard.home.latest.heading')" class="overflow-hidden">
             <x-slot:aside>

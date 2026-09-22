@@ -7,6 +7,9 @@
 */
 
 return [
+    // Sotto i numeri della home: le prenotazioni in struttura non sono in "Ordini del mese".
+    'on_site_note' => '{1} In più :count prenotazione da pagare in struttura, per :amount: non entra negli incassi.|[2,*] In più :count prenotazioni da pagare in struttura, per :amount: non entrano negli incassi.',
+
     'home' => [
         'title' => 'Dashboard',
 
