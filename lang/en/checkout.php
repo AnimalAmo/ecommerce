@@ -16,6 +16,7 @@ return [
         'notice' => 'You will pay :amount directly to :partner, at the property or on their website.',
         'pay_on_website' => 'Go to the partner\'s website to pay or book',
         'confirm_cta' => 'Confirm booking',
+        'failed' => 'We could not record your booking. Please try again in a moment.',
         'thank_you' => 'Booking confirmed!',
         'thank_you_sub' => 'Here is the summary, check your email: you will pay the partner directly.',
     ],

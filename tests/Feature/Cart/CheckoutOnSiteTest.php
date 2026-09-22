@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Cart;
 
+use App\Actions\Order\PlaceOrderAction;
+use App\Data\Checkout\PlaceOrderData;
 use App\Enums\OrderPaymentMode;
 use App\Enums\OrderStatus;
 use App\Events\OnSiteOrderConfirmed;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Locked;
 use Livewire\Livewire;
 use ReflectionProperty;
+use RuntimeException;
 use Tests\Support\Payment\FakePaymentGateway;
 use Tests\TestCase;
 
@@ -329,6 +332,46 @@ class CheckoutOnSiteTest extends TestCase
 
         $this->assertDatabaseCount('orders', 0);
         $this->assertSame([], $this->gateway->initCalls);
+    }
+
+    public function test_confirm_booking_revalidates_the_buyer_details(): void
+    {
+        $this->actingAs($this->buyer());
+        $this->addStructureLine($this->offlineStructure());
+
+        // I campi dello step 1 non sono bloccati: il client può cambiarli dopo la validazione.
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->set('email', 'non-una-email')
+            ->call('confirmBooking')
+            ->assertHasErrors(['email'])
+            ->assertSet('step', 2);
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertCount(1, $this->cart()->items());
+    }
+
+    public function test_an_unexpected_error_on_confirm_keeps_step_two_with_a_toast(): void
+    {
+        $this->actingAs($this->buyer());
+        $this->addStructureLine($this->offlineStructure());
+
+        $this->app->instance(PlaceOrderAction::class, new class extends PlaceOrderAction
+        {
+            public function execute(PlaceOrderData $data): Order
+            {
+                throw new RuntimeException('Order total mismatch.');
+            }
+        });
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->call('confirmBooking')
+            ->assertSet('step', 2)
+            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.failed')));
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertCount(1, $this->cart()->items());
     }
 
     public function test_a_gift_flag_set_after_step_two_never_books_the_gift_lines(): void

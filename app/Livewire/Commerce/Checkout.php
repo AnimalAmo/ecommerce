@@ -184,15 +184,7 @@ class Checkout extends Component
         }
 
         if ($step === 2) {
-            $this->validate([
-                'firstName' => ['required'],
-                'lastName' => ['required'],
-                'email' => ['required', 'email'],
-                // Il telefono resta facoltativo (orders.phone è nullable), ma se
-                // c'è dev'essere un numero vero: finisce nello snapshot ordine.
-                'phone' => ['nullable', ...Phone::rules()],
-                ...($this->gift ? ['recipientEmail' => ['required', 'email']] : []),
-            ]);
+            $this->validate($this->personalDataRules());
 
             if ($this->gift) {
                 foreach ($this->cart()->items(true) as $item) {
@@ -465,6 +457,11 @@ class Checkout extends Component
             return;
         }
 
+        // I dati dello step 1 non sono bloccati: validati al passaggio allo
+        // step 2, il client li può cambiare dopo. Finiscono nello snapshot
+        // dell'ordine e nella mail di conferma, quindi si rivalidano qui.
+        $this->validate($this->personalDataRules());
+
         $throttleKey = $this->onSiteThrottleKey();
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::ON_SITE_MAX_ATTEMPTS)) {
@@ -530,6 +527,17 @@ class Checkout extends Component
         } catch (CartValidationException $exception) {
             // Nessun incasso da stornare: basta dire cosa non va, si resta allo step 2.
             Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return;
+        } catch (Throwable $exception) {
+            // Qualsiasi altro errore (totale disallineato fra le due letture del
+            // carrello, prodotto sparito nella pipeline): rollback già avvenuto,
+            // nessun denaro da stornare. Toast invece di un 500, si resta allo step 2.
+            Log::error('Checkout: conferma in struttura fallita', [
+                'checkout_token' => $this->checkoutToken,
+                'error' => $exception->getMessage(),
+            ]);
+            Flux::toast(text: __('checkout.on_site.failed'), variant: 'danger');
 
             return;
         }
@@ -794,6 +802,25 @@ class Checkout extends Component
         $this->initPaymentSession();
 
         return true;
+    }
+
+    /**
+     * Regole dei dati personali dello step 1: al passaggio allo step 2 e di
+     * nuovo alla conferma in struttura.
+     *
+     * @return array<string, list<mixed>>
+     */
+    private function personalDataRules(): array
+    {
+        return [
+            'firstName' => ['required'],
+            'lastName' => ['required'],
+            'email' => ['required', 'email'],
+            // Il telefono resta facoltativo (orders.phone è nullable), ma se
+            // c'è dev'essere un numero vero: finisce nello snapshot ordine.
+            'phone' => ['nullable', ...Phone::rules()],
+            ...($this->gift ? ['recipientEmail' => ['required', 'email']] : []),
+        ];
     }
 
     /** Ospite sul ramo in struttura: toast e modale di login, come preferiti e community. */

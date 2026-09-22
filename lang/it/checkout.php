@@ -16,6 +16,7 @@ return [
         'notice' => 'Pagherai direttamente a :partner l\'importo di :amount, in struttura o sul suo sito.',
         'pay_on_website' => 'Vai al sito del partner per pagare o prenotare',
         'confirm_cta' => 'Conferma prenotazione',
+        'failed' => 'Non siamo riusciti a registrare la prenotazione. Riprova tra qualche istante.',
         'thank_you' => 'Prenotazione confermata!',
         'thank_you_sub' => 'Ecco il riepilogo, controlla l\'email: il pagamento lo farai direttamente al partner.',
     ],
