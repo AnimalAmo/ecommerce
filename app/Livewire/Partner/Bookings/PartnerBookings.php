@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Partner\Bookings;
 
+use App\Enums\OrderStatus;
 use App\Enums\ProductType;
 use App\Models\Event\Event;
 use App\Models\OrderItem\OrderItem;
@@ -143,7 +144,13 @@ class PartnerBookings extends Component
             'date_from' => $item->booked_from?->toDateString(),
             'date_to' => $item->booked_until?->toDateString(),
             // Dalla copia sull'ordine, mai dalla modalità attuale del partner.
-            'payment' => $order->isOnSite() ? __('partner.bookings.pay_on_site') : __('partner.bookings.paid_online'),
+            // Pagato/da incassare vale solo per Paid e Confirmed: un ordine
+            // annullato (o rimasto in attesa) mostra il suo stato.
+            'payment' => match (true) {
+                $order->status === OrderStatus::Paid => __('partner.bookings.paid_online'),
+                $order->status === OrderStatus::Confirmed && $order->isOnSite() => __('partner.bookings.pay_on_site'),
+                default => $order->status->label(),
+            },
         ];
     }
 

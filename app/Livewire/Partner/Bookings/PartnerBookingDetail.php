@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Partner\Bookings;
 
+use App\Enums\OrderStatus;
 use App\Enums\ProductType;
 use App\Models\OrderItem\OrderItem;
 use App\Services\Pricing\BookingPricingService;
@@ -67,9 +68,12 @@ class PartnerBookingDetail extends Component
             // Un ordine in struttura non ha OrderPayment: la riga vuota sparisce da array_filter.
             'detail_payment_method' => $item->order->payment?->payment_method?->label(),
             // L'importo è quello della riga: il dettaglio è per prenotazione, non per ordine.
-            'detail_payment' => $item->order->isOnSite()
-                ? __('partner.bookings.to_collect', ['amount' => Format::money($item->price_cents)])
-                : __('partner.bookings.paid_online'),
+            // Come nella lista: fuori da Paid/Confirmed si legge lo stato dell'ordine.
+            'detail_payment' => match (true) {
+                $item->order->status === OrderStatus::Paid => __('partner.bookings.paid_online'),
+                $item->order->status === OrderStatus::Confirmed && $item->order->isOnSite() => __('partner.bookings.to_collect', ['amount' => Format::money($item->price_cents)]),
+                default => $item->order->status->label(),
+            },
         ];
 
         if ($this->family() === 'smartbox') {

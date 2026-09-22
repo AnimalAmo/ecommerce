@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Partner;
 
+use App\Enums\OrderPaymentMode;
+use App\Enums\OrderStatus;
 use App\Enums\ProductType;
 use App\Models\Event\Event;
 use App\Models\Order\Order;
@@ -160,6 +162,27 @@ class PartnerBookingDetailTest extends TestCase
             ->assertSee(__('partner.bookings.detail_payment'))
             ->assertSee(__('partner.bookings.paid_online'))
             ->assertSee(__('payment.methods.card'));
+    }
+
+    public function test_a_cancelled_booking_shows_its_status_instead_of_the_payment(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $online = $this->structureBooking($partner);
+        $online->order->update(['status' => OrderStatus::Cancelled]);
+
+        $this->get(route('partner.bookings.show', $online->id))
+            ->assertOk()
+            ->assertSee(__('partner.bookings.detail_payment'))
+            ->assertSee(OrderStatus::Cancelled->label())
+            ->assertDontSee(__('partner.bookings.paid_online'));
+
+        $onSite = $this->structureBooking($partner);
+        $onSite->order->update(['status' => OrderStatus::Cancelled, 'payment_mode' => OrderPaymentMode::OnSite]);
+
+        $this->get(route('partner.bookings.show', $onSite->id))
+            ->assertOk()
+            ->assertSee(OrderStatus::Cancelled->label())
+            ->assertDontSee(__('partner.bookings.to_collect', ['amount' => Format::money(13500)]));
     }
 
     public function test_bookings_of_other_partners_products_are_forbidden(): void
