@@ -996,4 +996,19 @@ return [
         'signature' => 'See you soon,',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Welcome to a partner created in the admin panel
+    |--------------------------------------------------------------------------
+    */
+    'welcome_mail' => [
+        'subject' => 'Welcome to AnimalAmo: your partner account is ready',
+        'title' => 'Welcome to AnimalAmo, :name!',
+        'intro' => 'We have created the partner account of :business. To enter your area, choose a password from the button below.',
+        'set_password_cta' => 'Choose your password',
+        'expires' => 'The link is valid for :days days. If it expires, use “Forgot password” in the partner login.',
+        'promoted_intro' => 'Your AnimalAmo account is now also the partner account of :business. Sign in with your usual email and password to open the partner area.',
+        'login_cta' => 'Go to the partner area',
+    ],
+
 ];

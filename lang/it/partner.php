@@ -1002,4 +1002,19 @@ return [
         'signature' => 'A presto,',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Benvenuto al partner creato dal pannello
+    |--------------------------------------------------------------------------
+    */
+    'welcome_mail' => [
+        'subject' => 'Benvenuto su AnimalAmo: il tuo account partner è pronto',
+        'title' => 'Benvenuto su AnimalAmo, :name!',
+        'intro' => 'Abbiamo creato l’account partner di :business. Per entrare nella tua area scegli una password dal pulsante qui sotto.',
+        'set_password_cta' => 'Scegli la password',
+        'expires' => 'Il link è valido per :days giorni. Se scade, usa “Password dimenticata” nell’accesso partner.',
+        'promoted_intro' => 'Il tuo account AnimalAmo ora è anche l’account partner di :business. Accedi con la tua email e la password di sempre per aprire l’area partner.',
+        'login_cta' => 'Vai all’area partner',
+    ],
+
 ];

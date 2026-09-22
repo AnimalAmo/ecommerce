@@ -4,15 +4,23 @@ namespace Tests\Feature\Admin\People;
 
 use App\Exceptions\PartnerAccountException;
 use App\Exceptions\PaymentModeException;
+use App\Livewire\Auth\ResetPassword;
+use App\Mail\PartnerWelcomeMail;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use App\Services\Admin\People\PartnerAccountService;
 use App\Services\Partner\PartnerPaymentModeService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Mockery\MockInterface;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
@@ -250,5 +258,153 @@ class PartnerAccountServiceTest extends TestCase
         // Chi chiama deve poterlo dire all'admin: la modalità scelta non è stata salvata.
         $this->assertFalse($created->paymentModeSaved);
         Exceptions::assertReported(RuntimeException::class);
+    }
+
+    private function sentWelcome(string $email): PartnerWelcomeMail
+    {
+        return Mail::sent(PartnerWelcomeMail::class, fn (PartnerWelcomeMail $mail): bool => $mail->hasTo($email))->last();
+    }
+
+    private function tokenOf(string $url): string
+    {
+        return Str::afterLast((string) parse_url($url, PHP_URL_PATH), '/');
+    }
+
+    public function test_a_new_partner_gets_the_link_to_choose_the_password(): void
+    {
+        $created = $this->service()->create($this->data());
+        $partner = $created->user;
+
+        $this->assertTrue($created->welcomeSent);
+        Mail::assertSent(PartnerWelcomeMail::class, 1);
+        $mail = $this->sentWelcome('marco@example.com');
+
+        $this->assertNotNull($mail->setPasswordUrl);
+        $this->assertStringContainsString('welcome=1', $mail->setPasswordUrl);
+        $this->assertStringContainsString('email=marco%40example.com', $mail->setPasswordUrl);
+        $this->assertTrue(Password::broker('partner_welcome')->tokenExists($partner, $this->tokenOf($mail->setPasswordUrl)));
+    }
+
+    public function test_the_welcome_link_opens_the_welcome_page_and_sets_the_password(): void
+    {
+        $partner = $this->service()->create($this->data())->user;
+        $url = $this->sentWelcome('marco@example.com')->setPasswordUrl;
+
+        $this->get($url)
+            ->assertOk()
+            ->assertSee(__('auth-modal.partner_welcome.title'));
+
+        Livewire::test(ResetPassword::class, ['token' => $this->tokenOf($url), 'email' => $partner->email, 'welcome' => true])
+            ->set('password', 'password-scelta')
+            ->set('passwordConfirm', 'password-scelta')
+            ->call('save')
+            ->assertSet('done', true);
+
+        $this->assertTrue(Hash::check('password-scelta', $partner->fresh()->password));
+    }
+
+    public function test_a_promoted_customer_gets_the_mail_without_a_password_link(): void
+    {
+        $client = User::factory()->create(['email' => 'marco@example.com']);
+        $client->assignRole('client');
+
+        $this->service()->create($this->data(['email' => 'Marco@Example.com']));
+
+        $this->assertNull($this->sentWelcome('marco@example.com')->setPasswordUrl);
+        // Ha già la sua password: nessun token da consumare.
+        $this->assertDatabaseMissing('password_reset_tokens', ['email' => 'marco@example.com']);
+    }
+
+    public function test_the_welcome_mail_leaves_even_when_the_payment_mode_save_fails(): void
+    {
+        Exceptions::fake();
+
+        $this->mock(PartnerPaymentModeService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('set')->once()->andThrow(new RuntimeException('publish job failed'));
+        });
+
+        $this->service()->create($this->data(['paymentMode' => 'on_site', 'paymentUrl' => 'https://lecorti.example']));
+
+        Mail::assertSent(PartnerWelcomeMail::class, 1);
+    }
+
+    public function test_the_mail_is_sent_at_once_in_the_default_language(): void
+    {
+        app()->setLocale('en');
+        $partner = User::factory()->offlinePartner()->create();
+
+        $mail = new PartnerWelcomeMail($partner, 'https://animalamo.test/reimposta-password/abc');
+
+        // Come ResetPasswordMail: senza un worker garantito, il benvenuto non deve aspettare la coda.
+        $this->assertNotInstanceOf(ShouldQueue::class, $mail);
+        $this->assertSame(LaravelLocalization::getDefaultLocale(), $mail->locale);
+    }
+
+    public function test_the_mail_renders_both_variants(): void
+    {
+        // La mail esce nella lingua di default: le attese si calcolano in quella, non in 'it'.
+        $locale = LaravelLocalization::getDefaultLocale();
+        $partner = User::factory()->offlinePartner()->create(['first_name' => 'Marco']);
+        $partner->partnerProfile->update(['business_name' => 'Agriturismo Le Corti']);
+
+        $withLink = new PartnerWelcomeMail($partner, 'https://animalamo.test/reimposta-password/abc?welcome=1');
+        $withLink->assertHasSubject(__('partner.welcome_mail.subject', [], $locale));
+        $withLink->assertSeeInHtml(__('partner.welcome_mail.set_password_cta', [], $locale));
+        $withLink->assertSeeInHtml('https://animalamo.test/reimposta-password/abc?welcome=1', false);
+        $withLink->assertSeeInHtml(__('partner.welcome_mail.expires', ['days' => 7], $locale));
+
+        $promoted = new PartnerWelcomeMail($partner, null);
+        $promoted->assertSeeInHtml(__('partner.welcome_mail.login_cta', [], $locale));
+        $promoted->assertDontSeeInHtml(__('partner.welcome_mail.set_password_cta', [], $locale));
+    }
+
+    public function test_the_link_can_be_sent_again_but_not_twice_in_a_minute(): void
+    {
+        $partner = $this->service()->create($this->data())->user;
+        $first = DB::table('password_reset_tokens')->where('email', $partner->email)->value('token');
+
+        $this->service()->resendWelcome($partner);
+
+        Mail::assertSent(PartnerWelcomeMail::class, 2);
+        $this->assertNotSame($first, DB::table('password_reset_tokens')->where('email', $partner->email)->value('token'));
+
+        try {
+            $this->service()->resendWelcome($partner);
+            $this->fail('Il secondo reinvio entro un minuto va rifiutato.');
+        } catch (PartnerAccountException $e) {
+            $this->assertSame(__('admin-people.partner_create.errors.throttled'), $e->getMessage());
+        }
+
+        Mail::assertSent(PartnerWelcomeMail::class, 2);
+    }
+
+    public function test_a_deactivated_partner_gets_no_new_link(): void
+    {
+        $partner = User::factory()->offlinePartner()->inactive()->create();
+
+        $this->expectException(PartnerAccountException::class);
+        $this->expectExceptionMessage(__('admin-people.partner_create.errors.inactive'));
+
+        try {
+            $this->service()->resendWelcome($partner);
+        } finally {
+            Mail::assertNothingSent();
+        }
+    }
+
+    public function test_an_account_that_is_not_a_partner_gets_no_welcome_link(): void
+    {
+        $client = User::factory()->create();
+        $client->assignRole('client');
+
+        $this->expectException(PartnerAccountException::class);
+        $this->expectExceptionMessage(__('admin-people.partner_create.errors.not_partner'));
+
+        try {
+            $this->service()->resendWelcome($client);
+        } finally {
+            Mail::assertNothingSent();
+            $this->assertDatabaseMissing('password_reset_tokens', ['email' => $client->email]);
+        }
     }
 }

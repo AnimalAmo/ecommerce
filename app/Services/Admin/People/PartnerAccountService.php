@@ -5,13 +5,19 @@ namespace App\Services\Admin\People;
 use App\Enums\OrderPaymentMode;
 use App\Exceptions\PartnerAccountException;
 use App\Exceptions\PaymentModeException;
+use App\Mail\PartnerWelcomeMail;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Partner\RegisterPartnerAccount;
+use App\Services\PasswordResetService;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Throwable;
 
 /**
@@ -28,6 +34,9 @@ use Throwable;
  */
 class PartnerAccountService
 {
+    /** "Invia di nuovo il link": uno al minuto per partner, contro i doppi clic e le raffiche. */
+    public const RESEND_DECAY_SECONDS = 60;
+
     public function __construct(
         private readonly RegisterPartnerAccount $registrar,
         private readonly PartnerPaymentModeService $modes,
@@ -100,7 +109,67 @@ class PartnerAccountService
             $paymentModeSaved = $this->applyPaymentMode($profile, $online, $url);
         }
 
-        return new CreatedPartner($user, $existing !== null, $paymentModeSaved);
+        $promoted = $existing !== null;
+
+        // Registrazione già committata: token e mail non possono anticiparla.
+        // L'account esiste comunque: se la mail non parte, l'admin la rimanda dalla scheda.
+        try {
+            $this->sendWelcome($user, $promoted);
+            $welcomeSent = true;
+        } catch (Throwable $e) {
+            report($e);
+            $welcomeSent = false;
+        }
+
+        return new CreatedPartner($user, $promoted, $paymentModeSaved, $welcomeSent);
+    }
+
+    /**
+     * Token con createToken() e non sendResetLink(): niente throttle del
+     * broker per email e niente limite per IP di PasswordResetService, che
+     * fermerebbe un admin che crea più partner di fila. Un token precedente
+     * della stessa email (anche di "password dimenticata") viene sostituito.
+     *
+     * @param  bool  $promoted  cliente promosso: ha già una password, riceve solo l'avviso
+     */
+    public function sendWelcome(User $partner, bool $promoted = false): void
+    {
+        $url = $promoted
+            ? null
+            : $this->setPasswordUrl($partner, Password::broker(PasswordResetService::WELCOME_BROKER)->createToken($partner));
+
+        Mail::to($partner->email)->send(new PartnerWelcomeMail($partner, $url));
+    }
+
+    /**
+     * Nuovo link "scegli la password" dalla scheda del partner: il primo è
+     * scaduto, finito nello spam, o il partner ha perso la mail. Anche a un
+     * cliente promosso: un link per scegliere una password nuova non gli
+     * toglie quella che ha. Solo per partner attivi: un disattivato non
+     * entrerebbe comunque nell'area partner, e a chi non è partner la pagina
+     * non darebbe i 7 giorni (PasswordResetService::acceptsWelcome).
+     *
+     * @throws PartnerAccountException notPartner(), inactive() o throttled()
+     */
+    public function resendWelcome(User $partner): void
+    {
+        if (! $partner->hasRole('partner')) {
+            throw PartnerAccountException::notPartner();
+        }
+
+        if (! $partner->is_active || $partner->anonymized_at !== null) {
+            throw PartnerAccountException::inactive();
+        }
+
+        $key = 'partner-welcome|'.$partner->id;
+
+        if (RateLimiter::tooManyAttempts($key, 1)) {
+            throw PartnerAccountException::throttled();
+        }
+
+        RateLimiter::hit($key, self::RESEND_DECAY_SECONDS);
+
+        $this->sendWelcome($partner);
     }
 
     /** @throws PartnerAccountException */
@@ -139,5 +208,22 @@ class PartnerAccountService
 
             return false;
         }
+    }
+
+    /**
+     * La pagina pubblica di reset, nella lingua di default, come fa
+     * PartnerNewBookingMail. Con route() il link seguirebbe le rotte
+     * registrate dalla richiesta, e l'admin è fuori da mcamara. Email e
+     * `welcome` in query, come le legge ResetPassword::mount().
+     */
+    private function setPasswordUrl(User $partner, string $token): string
+    {
+        $page = (string) LaravelLocalization::getURLFromRouteNameTranslated(
+            LaravelLocalization::getDefaultLocale(),
+            'routes.password.reset',
+            ['token' => $token],
+        );
+
+        return $page.'?'.http_build_query(['email' => $partner->email, 'welcome' => 1]);
     }
 }
