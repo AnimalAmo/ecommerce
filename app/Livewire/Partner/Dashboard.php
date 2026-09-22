@@ -59,10 +59,8 @@ class Dashboard extends Component
      */
     private function bookings(array $statuses): int
     {
-        $values = array_map(fn (OrderStatus $status): string => $status->value, $statuses);
-
         return OrderItem::query()
-            ->whereHas('order', fn (Builder $query) => $query->whereIn('status', $values))
+            ->whereHas('order', fn (Builder $query) => $query->whereIn('status', $statuses))
             ->whereHasMorph('purchasable', self::OWNED_TYPES, $this->ownedBy(...))
             ->count();
     }

@@ -165,7 +165,7 @@ class CatalogAdmin
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.purchasable_type', $this->family($item))
             ->where('order_items.purchasable_id', $item->getKey())
-            ->whereIn('orders.status', array_map(fn (OrderStatus $status): string => $status->value, OrderStatus::bookingStatuses()));
+            ->whereIn('orders.status', OrderStatus::bookingStatuses());
 
         return [
             'total' => (clone $booked)->count(),

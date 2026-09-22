@@ -176,7 +176,7 @@ class UserDirectory
             'bookings' => DB::table('order_items')
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('order_items.partner_user_id', $user->id)
-                ->whereIn('orders.status', array_map(fn (OrderStatus $status): string => $status->value, OrderStatus::bookingStatuses()))
+                ->whereIn('orders.status', OrderStatus::bookingStatuses())
                 ->count(),
             // Profilo assente = Online, la stessa regola di PartnerPaymentModeService::forOwner().
             'payment_mode' => ($user->partnerProfile?->paymentMode() ?? OrderPaymentMode::Online)->value,
