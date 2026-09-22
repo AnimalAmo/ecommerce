@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 /**
@@ -105,6 +106,28 @@ class PartnerPaymentModeServiceTest extends TestCase
 
         $this->modes()->set($profile, false, '  https://www.hotelrosovino.it  ');
         $this->assertSame('https://www.hotelrosovino.it', $profile->fresh()->payment_url);
+    }
+
+    /**
+     * Il link finisce come href nelle pagine B2C e nelle mail: il service lo
+     * garantisce http/https per ogni chiamante, non solo per il form del profilo.
+     */
+    public function test_il_service_rifiuta_un_link_che_non_e_web(): void
+    {
+        $profile = PartnerProfile::factory()->create(['payment_url' => 'https://vecchio.it']);
+
+        foreach (['javascript:alert(1)', 'ftp://www.hotelrosovino.it', 'https://'.str_repeat('a', 250).'.it'] as $url) {
+            try {
+                $this->modes()->set($profile, false, $url);
+                $this->fail("Atteso il rifiuto del link {$url}.");
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('paymentUrl', $exception->errors());
+            }
+        }
+
+        $fresh = $profile->fresh();
+        $this->assertTrue($fresh->online_payment);
+        $this->assertSame('https://vecchio.it', $fresh->payment_url);
     }
 
     public function test_senza_profilo_la_modalita_e_online(): void

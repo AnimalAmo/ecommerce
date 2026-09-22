@@ -6,6 +6,8 @@ use App\Enums\OrderPaymentMode;
 use App\Exceptions\PaymentModeException;
 use App\Models\Partner\PartnerProfile;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Modalità di pagamento del partner (richiesta della cliente, 22/09/2026):
@@ -29,7 +31,11 @@ class PartnerPaymentModeService
      * permesso: gli ordini online passati continuano a essere bonificati,
      * perché canBePaid() non cambia.
      *
+     * Il link finisce come href nelle pagine B2C e nelle mail: lo si verifica
+     * qui, per ogni chiamante, anche se il form lo ha già validato.
+     *
      * @throws PaymentModeException
+     * @throws ValidationException link non http/https o troppo lungo, sotto la chiave `paymentUrl`
      */
     public function set(PartnerProfile $profile, bool $online, ?string $paymentUrl): PartnerProfile
     {
@@ -38,10 +44,13 @@ class PartnerPaymentModeService
         }
 
         $url = trim((string) $paymentUrl);
+        $url = $url === '' ? null : $url;
+
+        Validator::make(['paymentUrl' => $url], ['paymentUrl' => self::PAYMENT_URL_RULES])->validate();
 
         $profile->fill([
             'online_payment' => $online,
-            'payment_url' => $url === '' ? null : $url,
+            'payment_url' => $url,
         ])->save();
 
         $this->profiles[(int) $profile->user_id] = $profile;
