@@ -154,7 +154,14 @@ class DraftCompleterTest extends TestCase
         try {
             $this->completer()->complete($draft, 12);
         } finally {
-            $this->assertSame(StructureDraft::STATUS_COMPLETED, $draft->fresh()->status);
+            // Lo status era già `completed`: da solo passerebbe anche senza
+            // transazione. Il rollback si vede su current_step (11 → 12 dentro
+            // la transazione) e sull'assenza di riga a catalogo.
+            $fresh = $draft->fresh();
+            $this->assertSame(StructureDraft::STATUS_COMPLETED, $fresh->status);
+            $this->assertSame(11, $fresh->current_step);
+            $this->assertNull($fresh->publish_requested_at);
+            $this->assertSame(0, $this->packagesOf($draft));
         }
     }
 

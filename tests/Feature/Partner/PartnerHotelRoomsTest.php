@@ -85,8 +85,10 @@ class PartnerHotelRoomsTest extends TestCase
     /**
      * Casa vacanza: si affitta l'alloggio intero, quindi lo step perde le
      * righe stanza ripetibili e chiede posti letto + prezzo a notte.
+     *
+     * Da partner loggato la bozza dev'essere sua: il wizard non apre quelle
+     * altrui.
      */
-    /** Da partner loggato la bozza dev'essere sua: il wizard non apre quelle altrui. */
     private function wholePropertyDraft(?int $userId = null): void
     {
         $draft = StructureDraft::create(['user_id' => $userId, 'status' => 'draft', 'current_step' => 5, 'type' => 'casa_vacanza']);
