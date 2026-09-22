@@ -98,7 +98,7 @@ class PartnerProfilePayment extends Component
     public function savePaymentMode(PartnerPaymentModeService $modes): void
     {
         $this->validate([
-            'paymentMode' => ['required', 'string', Rule::in(array_column(OrderPaymentMode::cases(), 'value'))],
+            'paymentMode' => ['required', Rule::enum(OrderPaymentMode::class)],
             'paymentUrl' => PartnerPaymentModeService::PAYMENT_URL_RULES,
         ]);
 

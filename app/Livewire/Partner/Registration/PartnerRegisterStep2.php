@@ -52,7 +52,7 @@ class PartnerRegisterStep2 extends Component
         $this->validate(
             [
                 'service' => ['required', 'string', 'in:struttura,attivita,servizi'],
-                'paymentMode' => ['required', 'string', Rule::in(array_column(OrderPaymentMode::cases(), 'value'))],
+                'paymentMode' => ['required', Rule::enum(OrderPaymentMode::class)],
             ],
             ['service.required' => __('partner.register2.error_required'), 'service.in' => __('partner.register2.error_required')],
         );

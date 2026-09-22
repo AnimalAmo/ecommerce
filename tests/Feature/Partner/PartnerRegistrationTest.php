@@ -211,7 +211,19 @@ class PartnerRegistrationTest extends TestCase
             ->set('service', 'struttura')
             ->set('paymentMode', 'bonifico')
             ->call('createAccount')
-            ->assertHasErrors('paymentMode');
+            ->assertHasErrors('paymentMode')
+            ->assertSee('Valore non valido.');
+    }
+
+    /** Solo da richiesta manomessa, ma il testo deve restare leggibile: niente "payment mode". */
+    public function test_step_2_asks_again_for_a_missing_payment_mode(): void
+    {
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->set('paymentMode', '')
+            ->call('createAccount')
+            ->assertHasErrors(['paymentMode' => 'required'])
+            ->assertSee('Scegli la modalità di pagamento.');
     }
 
     public function test_a_new_partner_is_online_by_default(): void

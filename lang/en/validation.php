@@ -48,6 +48,7 @@ return [
     'dimensions' => 'The image dimensions are not valid.',
     'distinct' => 'This value is repeated.',
     'ends_with' => 'Must end with: :values.',
+    'enum' => 'Invalid value.',
     'exists' => 'Invalid value.',
     'file' => 'Upload a file.',
     'filled' => 'This field cannot be empty.',
@@ -107,6 +108,10 @@ return [
         ],
         'giftMessage.*' => [
             'max' => 'The message cannot be longer than 500 characters.',
+        ],
+        // Partner payment option: it is a choice, "Enter" does not read well.
+        'paymentMode' => [
+            'required' => 'Choose a payment option.',
         ],
         'passwordConfirmation' => [
             'required' => 'Repeat the password.',

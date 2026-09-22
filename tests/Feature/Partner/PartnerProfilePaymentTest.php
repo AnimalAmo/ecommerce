@@ -192,6 +192,24 @@ class PartnerProfilePaymentTest extends TestCase
             ->assertSee('Inserisci un indirizzo web valido.');
     }
 
+    /** Solo da richiesta manomessa: messaggi in italiano, niente "payment mode" grezzo. */
+    public function test_a_tampered_payment_mode_is_refused_in_italian(): void
+    {
+        $partner = $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', '')
+            ->call('savePaymentMode')
+            ->assertHasErrors(['paymentMode' => 'required'])
+            ->assertSee('Scegli la modalità di pagamento.')
+            ->set('paymentMode', 'bonifico')
+            ->call('savePaymentMode')
+            ->assertHasErrors('paymentMode')
+            ->assertSee('Valore non valido.');
+
+        $this->assertFalse($partner->partnerProfile->fresh()->online_payment);
+    }
+
     public function test_a_partner_without_profile_gets_one_when_saving_the_mode(): void
     {
         $partner = $this->actingAsActivePartner();

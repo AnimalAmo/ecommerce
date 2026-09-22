@@ -47,6 +47,7 @@ return [
     'dimensions' => 'Le dimensioni dell\'immagine non sono valide.',
     'distinct' => 'Questo valore è ripetuto.',
     'ends_with' => 'Deve finire con: :values.',
+    'enum' => 'Valore non valido.',
     'exists' => 'Valore non valido.',
     'file' => 'Carica un file.',
     'filled' => 'Questo campo non può essere vuoto.',
@@ -106,6 +107,10 @@ return [
         ],
         'giftMessage.*' => [
             'max' => 'Il messaggio non può superare i 500 caratteri.',
+        ],
+        // Modalità di pagamento del partner: è una scelta, "Inserisci" non si legge.
+        'paymentMode' => [
+            'required' => 'Scegli la modalità di pagamento.',
         ],
         'passwordConfirmation' => [
             'required' => 'Ripeti la password.',
