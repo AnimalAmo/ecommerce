@@ -103,7 +103,9 @@ class GiftOnlinePaymentTest extends TestCase
         $this->ownedBy(User::factory()->offlinePartner()->create());
 
         $this->expectException(CartValidationException::class);
-        $this->expectExceptionMessage(__('cart.gift_requires_online_payment'));
+        // Testo letterale: con __() su entrambi i lati una chiave assente in
+        // tutte e due le lingue passerebbe lo stesso (e LangParityTest non la vede).
+        $this->expectExceptionMessage('Questa Smartbox non si può regalare: il partner la fa pagare direttamente in struttura. Puoi acquistarla per te.');
 
         app(CartManager::class)->addItem('smartbox_package', $this->box->id, $this->giftOptions(), isGift: true);
     }
