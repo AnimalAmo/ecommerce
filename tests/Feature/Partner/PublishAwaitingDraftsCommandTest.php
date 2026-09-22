@@ -74,5 +74,8 @@ class PublishAwaitingDraftsCommandTest extends TestCase
         $this->assertNotNull($event, 'Il comando non è schedulato.');
         $this->assertSame('*/10 * * * *', $event->expression);
         $this->assertTrue($event->withoutOverlapping);
+        // Il lucchetto di default dura un giorno: un comando ucciso a metà
+        // spegnerebbe la rete di sicurezza fino al giorno dopo.
+        $this->assertSame(10, $event->expiresAt);
     }
 }
