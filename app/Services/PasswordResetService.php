@@ -71,12 +71,26 @@ class PasswordResetService
      * giorni anche il link di reset di un superadmin (AdminAuthService, 60
      * minuti) e gli farebbe scegliere la password con la regola del sito,
      * più debole di quella del pannello.
+     *
+     * Col token, l'esito dipende anche da lui. La pagina è pubblica e la
+     * risposta decide la copia a schermo: senza questa seconda condizione,
+     * `?email=…&welcome=1` con un token inventato scriverebbe "Benvenuto su
+     * AnimalAmo" solo per gli indirizzi che hanno un account partner — un
+     * oracolo di enumerazione, proprio quello che sendResetLink() evita
+     * ingoiando l'esito del broker. Chi ha ricevuto la mail il token ce
+     * l'ha, quindi per lui non cambia niente.
+     *
+     * @param  string|null  $token  token del link; null = solo email e ruoli (guardia lato server di reset())
      */
-    public function acceptsWelcome(string $email): bool
+    public function acceptsWelcome(string $email, ?string $token = null): bool
     {
         $user = User::query()->whereRaw('lower(email) = ?', [Str::lower(trim($email))])->first();
 
-        return $user !== null && $user->hasRole('partner') && ! $user->hasRole('superadmin');
+        if ($user === null || ! $user->hasRole('partner') || $user->hasRole('superadmin')) {
+            return false;
+        }
+
+        return $token === null || Password::broker(self::WELCOME_BROKER)->tokenExists($user, $token);
     }
 
     /**

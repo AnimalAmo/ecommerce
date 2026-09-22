@@ -87,6 +87,26 @@ class PartnerWelcomePasswordTest extends TestCase
             ->assertDontSee(__('auth-modal.reset.submit'));
     }
 
+    public function test_a_made_up_token_does_not_say_whether_the_address_is_a_partner(): void
+    {
+        $partner = User::factory()->offlinePartner()->create();
+        $client = User::factory()->create();
+        $client->assignRole('client');
+
+        // Stessa pagina per tutti e tre: senza un token valido, `welcome=1`
+        // non cambia una parola. Altrimenti la pagina pubblica direbbe a
+        // chiunque quali indirizzi hanno un account partner.
+        foreach ([$partner->email, $client->email, 'mai-vista@example.com'] as $email) {
+            $this->get(route('password.reset', ['token' => 'token-inventato', 'email' => $email, 'welcome' => 1]))
+                ->assertOk()
+                ->assertSee(__('auth-modal.reset.title'))
+                ->assertDontSee(__('auth-modal.partner_welcome.title'));
+        }
+
+        Livewire::test(ResetPassword::class, ['token' => 'token-inventato', 'email' => $partner->email, 'welcome' => true])
+            ->assertSet('welcome', false);
+    }
+
     public function test_after_the_welcome_the_partner_is_sent_to_the_partner_login(): void
     {
         $partner = User::factory()->offlinePartner()->create();
