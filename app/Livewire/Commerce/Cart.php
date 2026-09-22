@@ -205,7 +205,9 @@ class Cart extends Component
 
     public function render()
     {
-        $items = $this->cart()->items($this->gift)
+        $cartItems = $this->cart()->items($this->gift);
+
+        $items = $cartItems
             ->map(fn (CartItemData $item): array => $this->presentItem($item))
             ->values()
             ->all();
@@ -226,10 +228,11 @@ class Cart extends Component
             'bookingHours' => self::bookingHours(),
             // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
             'suggestions' => $items === [] ? app(FavoriteService::class)->topFavorited() : [],
-            // Un carrello = un partner (CartManager::guardSinglePartner): una sola
-            // lettura basta per tutta la pagina. Carrello vuoto → null → Online.
+            // Un carrello = un partner (CartManager::guardSinglePartner): basta la
+            // prima riga già caricata, senza rileggere il carrello. Nessuna riga
+            // → null → Online (e la vista non stampa il riepilogo).
             'paysOnSite' => app(PartnerPaymentModeService::class)
-                ->forOwner($this->cart()->currentPartnerUserId()) === OrderPaymentMode::OnSite,
+                ->forOwner($cartItems->first()?->partnerUserId) === OrderPaymentMode::OnSite,
         ])->title(__('cart.ui.page_title'));
     }
 
