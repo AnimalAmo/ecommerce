@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Partner\Publishing;
 
+use App\Enums\DraftCompletion;
 use App\Models\Partner\PartnerProfile;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Services\Partner\Publishing\AwaitingDraftPublisher;
+use App\Services\Partner\Publishing\DraftCompleter;
 use App\Services\Partner\Publishing\DraftPublisher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
@@ -172,6 +175,47 @@ class AwaitingDraftPublisherTest extends TestCase
             ->once()
             ->with('Bozza in attesa di Stripe non pubblicabile', Mockery::on(
                 fn (array $context): bool => $context['structure_draft_id'] === $draft->id,
+            ));
+    }
+
+    public function test_una_bozza_che_esplode_non_ferma_le_altre_dello_stesso_partner(): void
+    {
+        Log::spy();
+        $partner = User::factory()->stripeConnected()->create();
+        $poisoned = $this->awaitingSmartboxOf($partner);
+        $healthy = $this->awaitingSmartboxOf($partner, ['name' => ['it' => 'Secondo cofanetto']]);
+
+        // Le bozze si scorrono per id: senza protezione la prima che esplode
+        // (collisione di slug, dato legacy) tiene ferme tutte le successive,
+        // e il job riparte tre volte sempre sulla stessa.
+        $this->app->bind(DraftCompleter::class, fn (): DraftCompleter => new class(app(DraftPublisher::class), $poisoned->id) extends DraftCompleter
+        {
+            public function __construct(DraftPublisher $publisher, private readonly int $poisonedId)
+            {
+                parent::__construct($publisher);
+            }
+
+            public function complete(StructureDraft $draft, int $finalStep): DraftCompletion
+            {
+                if ((int) $draft->getKey() === $this->poisonedId) {
+                    throw new RuntimeException('Collisione di slug');
+                }
+
+                return parent::complete($draft, $finalStep);
+            }
+        });
+
+        $this->assertSame(1, $this->publisher()->publishFor($partner->id));
+
+        $this->assertTrue($poisoned->fresh()->isAwaitingPublication());
+        $this->assertSame(0, $this->packagesOf($poisoned));
+        $this->assertSame(1, $this->packagesOf($healthy));
+        $this->assertNull($healthy->fresh()->publish_requested_at);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->with('Pubblicazione della bozza in attesa fallita', Mockery::on(
+                fn (array $context): bool => $context['structure_draft_id'] === $poisoned->id,
             ));
     }
 }

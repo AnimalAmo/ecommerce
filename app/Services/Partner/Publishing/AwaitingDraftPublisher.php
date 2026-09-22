@@ -8,6 +8,7 @@ use App\Models\Structure\StructureDraft;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Pubblica le bozze che un partner ha chiuso quando non poteva ancora essere
@@ -41,8 +42,16 @@ class AwaitingDraftPublisher
         $published = 0;
 
         foreach ($draftIds as $draftId) {
-            if ($this->publishOne((int) $draftId)) {
-                $published++;
+            try {
+                if ($this->publishOne((int) $draftId)) {
+                    $published++;
+                }
+            } catch (Throwable $exception) {
+                // Una bozza avvelenata non ferma le altre: le si scorre per id,
+                // quindi senza questo catch il job (tries = 3) morirebbe sempre
+                // sulla prima e le successive non andrebbero mai a catalogo.
+                // Stessa scelta del comando, che isola i partner fra loro.
+                $this->reportFailure((int) $draftId, $exception);
             }
         }
 
@@ -92,6 +101,18 @@ class AwaitingDraftPublisher
         }
 
         Log::warning('Bozza in attesa di Stripe non pubblicabile', [
+            'structure_draft_id' => $draftId,
+            'error' => $exception->getMessage(),
+        ]);
+    }
+
+    /**
+     * Errore imprevisto su una bozza: non è il caso previsto della bozza
+     * incompleta, quindi si logga ogni volta e senza sconti.
+     */
+    private function reportFailure(int $draftId, Throwable $exception): void
+    {
+        Log::warning('Pubblicazione della bozza in attesa fallita', [
             'structure_draft_id' => $draftId,
             'error' => $exception->getMessage(),
         ]);
