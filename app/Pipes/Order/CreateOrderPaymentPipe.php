@@ -6,6 +6,7 @@ use App\Data\Checkout\OrderPipelineData;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use Closure;
+use LogicException;
 
 /**
  * Registra il pagamento già catturato (capture-first: quando la pipeline gira
@@ -18,6 +19,12 @@ class CreateOrderPaymentPipe
     public function handle(OrderPipelineData $data, Closure $next): mixed
     {
         $input = $data->input;
+
+        // Solo ordini online: senza incasso verificato non c'è un pagamento da
+        // registrare, e un Completed qui farebbe partire OrderPaid a vuoto.
+        if ($input->paymentMethod === null || $input->capture === null) {
+            throw new LogicException('CreateOrderPaymentPipe runs only for online orders with a verified capture.');
+        }
 
         $data->order->update(['status' => OrderStatus::Paid]);
 

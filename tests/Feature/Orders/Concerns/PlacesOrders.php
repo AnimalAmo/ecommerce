@@ -12,6 +12,7 @@ use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Costruzione di un ordine attraverso la pipeline vera (carrello →
@@ -22,6 +23,8 @@ use Illuminate\Support\Collection;
 trait PlacesOrders
 {
     private ?User $seller = null;
+
+    private ?User $offlineSeller = null;
 
     private function cart(): CartManager
     {
@@ -55,6 +58,37 @@ trait PlacesOrders
         );
 
         return app(PlaceOrderAction::class)->execute($data);
+    }
+
+    /**
+     * Prenotazione "paga in struttura" attraverso la pipeline vera: nessun
+     * capture, l'idempotenza la dà il token del checkout.
+     */
+    private function placeOnSiteOrder(
+        ?string $checkoutToken = null,
+        ?int $totalCentsOverride = null,
+        ?Collection $itemsOverride = null,
+        ?string $partnerPaymentUrl = null,
+    ): Order {
+        $data = PlaceOrderData::onSite(
+            firstName: 'Giulia',
+            lastName: 'Rossi',
+            email: 'giulia.rossi@gmail.com',
+            phone: '340 5738920',
+            country: 'Italia',
+            items: $itemsOverride ?? $this->cart()->items(),
+            totalCents: $totalCentsOverride ?? $this->cart()->total(),
+            checkoutToken: $checkoutToken ?? (string) Str::ulid(),
+            partnerPaymentUrl: $partnerPaymentUrl,
+        );
+
+        return app(PlaceOrderAction::class)->execute($data);
+    }
+
+    /** Venditore senza pagamento online: pubblica senza Stripe, il cliente lo paga fuori piattaforma. */
+    private function offlineSeller(): User
+    {
+        return $this->offlineSeller ??= User::factory()->offlinePartner()->create();
     }
 
     /** Riga struttura: 01/08 → 06/08 (5 notti), 2 adulti e 1 cane. */
