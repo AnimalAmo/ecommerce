@@ -6,6 +6,14 @@ return [
     // JS: conferma Stripe terminata senza esito positivo
     'payment_incomplete' => 'Il pagamento non è stato completato. Riprova.',
 
+    // Ramo "paga in struttura" (partner senza pagamento online): lo step 2 è una conferma, niente Stripe
+    'on_site' => [
+        'step_label' => 'Conferma',
+        'login_required' => 'Per prenotare con pagamento diretto al partner devi accedere al tuo account.',
+        'mode_changed' => 'Il partner ora accetta il pagamento online: completa la prenotazione pagando qui.',
+        'throttle' => 'Troppi tentativi di conferma. Riprova tra :seconds secondi.',
+    ],
+
     // Stringhe di UI del funnel Checkout (blade commerce/checkout)
     'ui' => [
         'page_title' => 'Checkout — AnimalAmo',

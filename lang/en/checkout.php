@@ -6,6 +6,14 @@ return [
     // JS: Stripe confirmation finished without a successful outcome
     'payment_incomplete' => 'The payment was not completed. Please try again.',
 
+    // "Pay at the property" branch (partner without online payment): step 2 is a confirmation, no Stripe
+    'on_site' => [
+        'step_label' => 'Confirm',
+        'login_required' => 'To book and pay the partner directly you need to sign in to your account.',
+        'mode_changed' => 'The partner now accepts online payment: complete your booking by paying here.',
+        'throttle' => 'Too many confirmation attempts. Please try again in :seconds seconds.',
+    ],
+
     // Checkout funnel UI strings (blade commerce/checkout)
     'ui' => [
         'page_title' => 'Checkout — AnimalAmo',
