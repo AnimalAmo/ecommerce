@@ -39,7 +39,7 @@ class PlaceOrderAction
      * @throws OrderAlreadyPlacedException capture o token hanno GIÀ un ordine: esito idempotente, NIENTE refund
      * @throws CartValidationException riga non più disponibile (rollback totale)
      * @throws RuntimeException nessuna riga, o totale ≠ somma righe (mai ordini disallineati)
-     * @throws InvalidArgumentException dati incompleti per la modalità scelta
+     * @throws InvalidArgumentException dati incompleti per la modalità scelta, o regalo in struttura
      */
     public function execute(PlaceOrderData $data): Order
     {
@@ -116,6 +116,12 @@ class PlaceOrderAction
     {
         if ($data->checkoutToken === null || $data->checkoutToken === '') {
             throw new InvalidArgumentException('An on-site order needs the checkout token.');
+        }
+
+        // Un buono "da pagare in struttura" non ha nessuno che lo incassi per il
+        // destinatario: la regola vale per ogni chiamante, non solo per il checkout.
+        if ($data->gift || $data->items->contains(fn (CartItemData $item): bool => $item->isGift)) {
+            throw new InvalidArgumentException('An on-site booking is never a gift.');
         }
 
         $token = $data->checkoutToken;

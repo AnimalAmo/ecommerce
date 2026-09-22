@@ -12,6 +12,7 @@ use App\Exceptions\CartValidationException;
 use App\Exceptions\OrderAlreadyPlacedException;
 use App\Models\Event\Event;
 use App\Models\Order\Order;
+use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -247,6 +248,58 @@ class PlaceOnSiteOrderTest extends TestCase
             totalCents: $this->cart()->total(),
             paymentMode: OrderPaymentMode::OnSite,
         ));
+    }
+
+    public function test_on_site_data_flagged_as_gift_is_refused(): void
+    {
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->offlineSeller()->id, 'price_cents' => 10000]));
+
+        try {
+            app(PlaceOrderAction::class)->execute(new PlaceOrderData(
+                firstName: 'Giulia',
+                lastName: 'Rossi',
+                email: 'giulia.rossi@gmail.com',
+                phone: null,
+                country: 'Italia',
+                gift: true,
+                paymentMethod: null,
+                capture: null,
+                items: $this->cart()->items(),
+                totalCents: $this->cart()->total(),
+                paymentMode: OrderPaymentMode::OnSite,
+                checkoutToken: self::TOKEN,
+            ));
+            $this->fail('Attesa InvalidArgumentException: in struttura non si regala.');
+        } catch (InvalidArgumentException) {
+            // atteso
+        }
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertCount(1, $this->cart()->items());
+        Events::assertNotDispatched(OnSiteOrderConfirmed::class);
+    }
+
+    public function test_on_site_data_carrying_gift_lines_is_refused(): void
+    {
+        // onSite() dice gift=false, ma le righe sono del flusso regalo.
+        $this->addGiftSmartboxLine(SmartboxPackage::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 21500]));
+
+        try {
+            $this->placeOnSiteOrder(
+                checkoutToken: self::TOKEN,
+                itemsOverride: $this->cart()->items(true),
+                totalCentsOverride: $this->cart()->total(true),
+            );
+            $this->fail('Attesa InvalidArgumentException: righe regalo in una prenotazione in struttura.');
+        } catch (InvalidArgumentException) {
+            // atteso
+        }
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertCount(1, $this->cart()->items(true));
+        Events::assertNotDispatched(OnSiteOrderConfirmed::class);
     }
 
     private function offlineEvent(): Event

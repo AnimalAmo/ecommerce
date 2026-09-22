@@ -331,6 +331,33 @@ class CheckoutOnSiteTest extends TestCase
         $this->assertSame([], $this->gateway->initCalls);
     }
 
+    public function test_a_gift_flag_set_after_step_two_never_books_the_gift_lines(): void
+    {
+        $this->actingAs($this->buyer());
+        $seller = User::factory()->stripeConnected()->create();
+        $this->addStructureLine(Structure::factory()->create(['user_id' => $seller->id, 'price_cents' => 10000]));
+        $this->cart()->addItem('smartbox_package', SmartboxPackage::factory()->create([
+            'user_id' => $seller->id, 'price_cents' => 21500])->id, [
+                'animals' => ['cane' => 1],
+                'gift' => ['dedication' => 'Marco', 'message' => 'Tanti auguri!'],
+            ], true);
+
+        // Righe messe in carrello quando il partner era online; poi è passato offline.
+        $seller->partnerProfile()->update(['online_payment' => false]);
+        $this->app->forgetScopedInstances();
+
+        // Lo step 2 si apre sul flusso normale, poi il client ribalta ?regalo.
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSet('paymentMode', OrderPaymentMode::OnSite->value)
+            ->set('gift', true)
+            ->call('confirmBooking')
+            ->assertSet('step', 2);
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertCount(2, $this->cart()->items());
+    }
+
     public function test_payment_mode_and_checkout_token_are_locked(): void
     {
         foreach (['paymentMode', 'checkoutToken'] as $property) {

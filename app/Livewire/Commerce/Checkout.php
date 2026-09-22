@@ -451,7 +451,9 @@ class Checkout extends Component
      */
     public function confirmBooking(PlaceOrderAction $action, PartnerPaymentModeService $modes): void
     {
-        if ($this->step !== 2 || $this->processing || ! $this->paysOnSite() || $this->checkoutToken === null) {
+        // In struttura non si regala mai: preparePaymentStep rifiuta il flusso
+        // regalo, ma ?regalo non è bloccato e il client può ribaltarlo dopo.
+        if ($this->step !== 2 || $this->processing || $this->gift || ! $this->paysOnSite() || $this->checkoutToken === null) {
             return;
         }
 
@@ -474,7 +476,8 @@ class Checkout extends Component
 
         RateLimiter::hit($throttleKey, 60);
 
-        $items = $this->cart()->items($this->gift);
+        // Solo il flusso normale: le righe regalo non entrano mai in una prenotazione in struttura.
+        $items = $this->cart()->items(false);
 
         // Carrello già vuoto: se l'ha svuotato questo token è un secondo click
         // arrivato dopo il primo, altrimenti non resta niente da prenotare.
@@ -485,7 +488,7 @@ class Checkout extends Component
                 return;
             }
 
-            $this->redirectRoute('carrello', $this->gift ? ['regalo' => 1] : []);
+            $this->redirectRoute('carrello');
 
             return;
         }
@@ -511,7 +514,7 @@ class Checkout extends Component
             phone: $this->phone !== '' ? $this->phone : null,
             country: $this->country,
             items: $items,
-            totalCents: $this->cart()->total($this->gift),
+            totalCents: $this->cart()->total(false),
             checkoutToken: $this->checkoutToken,
             partnerPaymentUrl: $modes->profileFor($sellerUserId)?->payment_url,
         );
