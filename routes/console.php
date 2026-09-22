@@ -17,3 +17,8 @@ Schedule::command('payouts:release')->dailyAt('06:00');
 // Cache su database: le righe scadute delle chiavi usa e getta (anti-replay dei
 // webhook Mailgun, catena della newsletter) non le cancella nessun altro.
 Schedule::command('animalamo:prune-expired-cache')->dailyAt('04:30');
+
+// Pubblicazione automatica al collegamento Stripe (P4): la rete di sicurezza
+// del job lanciato da account.updated, per un webhook perso o un worker che in
+// produzione non c'è. Idempotente, e senza sovrapposizioni tra due giri lenti.
+Schedule::command('animalamo:publish-awaiting-drafts')->everyTenMinutes()->withoutOverlapping();
