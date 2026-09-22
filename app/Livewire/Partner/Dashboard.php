@@ -9,6 +9,7 @@ use App\Models\OrderItem\OrderItem;
 use App\Models\Scopes\CatalogVisibleScope;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -29,7 +30,29 @@ class Dashboard extends Component
         return view('livewire.partner.dashboard', [
             'partnerName' => Auth::user()->first_name,
             'stats' => $this->stats(),
+            // Avviso lasciato da completeDraft: un toast prima del redirect si perdeva.
+            'notice' => session('partner.notice'),
+            'awaitingCount' => $this->awaitingCount(),
         ])->title(__('partner.dashboard.title'));
+    }
+
+    /**
+     * Servizi chiusi dal partner quando non poteva ancora essere pagato (P4):
+     * li pubblica il collegamento Stripe. Senza questo numero il partner finiva
+     * il wizard e non trovava il servizio né a catalogo né qui. Zero per chi
+     * può già pubblicare: le sue bozze in attesa sono bozze non pubblicabili,
+     * e "Collega Stripe" gli chiederebbe qualcosa che ha già fatto.
+     */
+    private function awaitingCount(): int
+    {
+        if (Auth::user()->partnerProfile?->canPublish() === true) {
+            return 0;
+        }
+
+        return StructureDraft::query()
+            ->where('user_id', Auth::id())
+            ->awaitingPublication()
+            ->count();
     }
 
     /**

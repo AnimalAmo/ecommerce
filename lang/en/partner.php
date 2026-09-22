@@ -16,6 +16,11 @@ return [
         'awaiting_stripe_changes' => 'Changes saved: the version already published stays as it was, and we will publish your changes automatically as soon as you finish connecting your Stripe account.',
     ],
 
+    // "My services": drafts closed by the partner and held until Stripe can pay them.
+    'my_services' => [
+        'awaiting_stripe' => 'Waiting for the Stripe connection',
+    ],
+
     // Partner payment mode: online on AnimalAmo or paid directly to the partner.
     'payment_mode' => [
         'section' => 'How you get paid',
@@ -971,6 +976,9 @@ return [
         'stat_sold' => 'Experiences sold',
         'stat_cancelled' => 'Experiences cancelled',
         'stat_saved' => 'Experiences saved',
+        // P4: services closed before connecting Stripe, published automatically afterwards.
+        'awaiting_stripe_banner' => ':count service is waiting for the Stripe connection: we will publish it as soon as your account is active.|:count services are waiting for the Stripe connection: we will publish them as soon as your account is active.',
+        'awaiting_stripe_cta' => 'Connect Stripe',
     ],
 
     /*

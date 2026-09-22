@@ -41,6 +41,50 @@ class PartnerMyServicesTest extends TestCase
             ->assertDontSee('Altrui Resort');
     }
 
+    public function test_it_lists_the_drafts_awaiting_stripe_with_a_badge(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        $this->service($partner->id, [
+            'name' => 'Rifugio in attesa',
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+        ]);
+        $this->service($partner->id, ['name' => 'Hotel Brescia']);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee('Rifugio in attesa')
+            ->assertSee('Hotel Brescia')
+            ->assertSeeHtmlInOrder(['Rifugio in attesa', e(__('partner.my_services.awaiting_stripe'))]);
+    }
+
+    public function test_the_badge_is_only_on_drafts_awaiting_stripe(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        $this->service($partner->id, ['name' => 'Hotel Brescia']);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee('Hotel Brescia')
+            ->assertDontSee(__('partner.my_services.awaiting_stripe'));
+    }
+
+    public function test_edit_reopens_a_draft_awaiting_stripe(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, [
+            'status' => StructureDraft::STATUS_DRAFT,
+            'service_category' => 'smartbox',
+            'publish_requested_at' => now(),
+        ]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('edit', $draft->id)
+            ->assertRedirect(route('partner.smartbox.type'));
+
+        $this->assertSame($draft->id, session('structure_draft_id'));
+    }
+
     public function test_empty_state_when_no_services(): void
     {
         $this->actingAsActivePartner();

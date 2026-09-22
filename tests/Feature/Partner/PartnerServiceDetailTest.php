@@ -73,4 +73,30 @@ class PartnerServiceDetailTest extends TestCase
 
         $this->get(route('partner.services.show', $draft))->assertForbidden();
     }
+
+    public function test_owner_sees_a_draft_awaiting_stripe_with_the_badge(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, [
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+        ]);
+
+        $this->get(route('partner.services.show', $draft))
+            ->assertOk()
+            ->assertSee('Hotel Brescia')
+            ->assertSee(__('partner.my_services.awaiting_stripe'));
+    }
+
+    public function test_another_users_draft_awaiting_stripe_is_forbidden(): void
+    {
+        $this->actingAsActivePartner();
+        $draft = $this->service(User::factory()->create()->id, [
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+        ]);
+
+        $this->get(route('partner.services.show', $draft))->assertForbidden();
+    }
 }

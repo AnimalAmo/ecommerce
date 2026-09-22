@@ -28,7 +28,7 @@ class DeleteServiceModal extends Component
     #[On('delete-service')]
     public function open(int $id): void
     {
-        $draft = StructureDraft::completedFor(Auth::id())->firstWhere('id', $id);
+        $draft = StructureDraft::listableFor(Auth::id())->firstWhere('id', $id);
         if (! $draft) {
             return;
         }
@@ -43,9 +43,10 @@ class DeleteServiceModal extends Component
 
     public function delete(): void
     {
-        // Vincolato all'utente: nessuno può eliminare i servizi altrui.
+        // Vincolato all'utente e a ciò che la lista mostra: nessuno elimina i
+        // servizi altrui, né una bozza a metà con un serviceId riscritto.
         $draft = $this->serviceId !== null
-            ? StructureDraft::query()->where('user_id', Auth::id())->find($this->serviceId)
+            ? StructureDraft::listableFor(Auth::id())->find($this->serviceId)
             : null;
 
         if ($draft !== null) {

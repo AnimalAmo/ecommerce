@@ -16,6 +16,11 @@ return [
         'awaiting_stripe_changes' => "Modifiche salvate: la versione già pubblicata resta com'era e pubblicheremo le modifiche in automatico appena completi il collegamento del conto su Stripe.",
     ],
 
+    // "I miei servizi": bozze chiuse dal partner e ferme finché non è pagabile su Stripe.
+    'my_services' => [
+        'awaiting_stripe' => 'In attesa del collegamento Stripe',
+    ],
+
     // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.
     'payment_mode' => [
         'section' => 'Come ricevi i pagamenti',
@@ -977,6 +982,9 @@ return [
         'stat_sold' => 'Esperienze vendute',
         'stat_cancelled' => 'Esperienze cancellate',
         'stat_saved' => 'Esperienze salvate',
+        // P4: servizi chiusi prima del collegamento Stripe, pubblicati in automatico dopo.
+        'awaiting_stripe_banner' => ':count servizio è in attesa del collegamento Stripe: lo pubblicheremo appena il conto è attivo.|:count servizi sono in attesa del collegamento Stripe: li pubblicheremo appena il conto è attivo.',
+        'awaiting_stripe_cta' => 'Collega Stripe',
     ],
 
     /*

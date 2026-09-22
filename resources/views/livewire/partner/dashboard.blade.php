@@ -25,6 +25,19 @@
                     </div>
                 </div>
 
+                {{-- Fuori dal mockup XD (P4): l'avviso di fine wizard e i servizi in attesa di Stripe. --}}
+                @if ($notice)
+                    <flux:callout variant="success" icon="check-circle" class="mt-3.5" :heading="$notice" />
+                @endif
+
+                @if ($awaitingCount > 0)
+                    <flux:callout variant="warning" icon="clock" class="mt-3.5" :heading="trans_choice('partner.dashboard.awaiting_stripe_banner', $awaitingCount, ['count' => $awaitingCount])">
+                        <x-slot name="actions">
+                            <flux:button size="sm" href="{{ route('partner.profile.payment') }}" class="!rounded-full !border-0 !bg-[#232A2C] !px-5 !font-bold !text-white hover:!bg-[#0D171A]">{{ __('partner.dashboard.awaiting_stripe_cta') }}</flux:button>
+                        </x-slot>
+                    </flux:callout>
+                @endif
+
                 {{-- Statistiche (XD: 3 card 294x105, r10, bordo #E9E9E9). Numeri reali del
                      partner; senza il badge di variazione % del mockup, che non ha una
                      fonte (nessuno storico da confrontare). --}}

@@ -156,10 +156,6 @@ class CompleteDraftOutcomeTest extends TestCase
 
     public function test_la_dashboard_mostra_l_avviso_dopo_la_chiusura_in_attesa(): void
     {
-        // Il flash c'è già (test sopra), ma la dashboard lo legge solo dal
-        // Task 7 di P4 (Dashboard::render, variabile `$notice`): lì va tolto lo skip.
-        $this->markTestSkipped('La dashboard mostra partner.notice dal Task 7 di P4.');
-
         $partner = $this->actingAsUnpayablePartner();
         $this->hotelOf($partner);
 

@@ -116,14 +116,6 @@ class StructureDraft extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** Servizi completati dell'utente, dal più recente. */
-    public function scopeCompletedFor(Builder $query, int $userId): Builder
-    {
-        return $query->where('user_id', $userId)
-            ->where('status', self::STATUS_COMPLETED)
-            ->latest();
-    }
-
     /** Bozze chiuse dal partner e ferme in attesa che possa pubblicare (P4). */
     public function scopeAwaitingPublication(Builder $query): Builder
     {
