@@ -164,7 +164,53 @@ return [
     | posto del partner, e la scheda nasce a nome suo.
     */
     'create' => [
+        // Partner
+        'partner_label' => 'Partner',
+        'partner_help' => 'La scheda nasce intestata a lui: la ritrova in «I miei servizi» e la modifica dal suo percorso.',
+        'partner_placeholder' => 'Cerca un partner',
+        'partner_required' => 'Scegli il partner a cui intestare la scheda.',
         'not_eligible' => '«:name» non può ricevere schede: serve un partner attivo, non anonimizzato e con un profilo aziendale.',
+        'listings_count' => 'Schede a catalogo: :count',
+
+        // Stato del partner nel riquadro laterale. Il badge scrive
+        // «Stripe: <stripe_status.*>»: non esistono chiavi `stripe_ok` /
+        // `stripe_missing`, ed è su `stripe_status.*` che si asseriscono le
+        // pagine (Task 4 e 6).
+        'mode_label' => 'Pagamento',
+        'stripe_label' => 'Stripe',
+        'stripe_status' => [
+            'payable' => 'Collegato e pagabile',
+            'incomplete' => 'Collegamento incompleto',
+            'none' => 'Non collegato',
+        ],
+        // Avviso PREVENTIVO, senza segnaposto: lo si asserisce nei test di pagina.
+        'stripe_missing_notice' => 'Questo partner chiede il pagamento online e non ha ancora collegato Stripe: la scheda nascerà in attesa e andrà online da sola appena lo collega.',
+        'awaiting_stripe_heading' => 'Questo partner non può ancora essere pagato',
+
+        // Esiti
+        'submit' => 'Crea la scheda',
+        'published' => 'Scheda creata e pubblicata.',
+        'awaiting_stripe' => 'La scheda è pronta, ma resta in attesa: :name chiede il pagamento online e non ha ancora collegato Stripe. Va online da sola appena lo collega.',
+        'awaiting_open_partner' => 'Apri la scheda del partner',
+        'awaiting_back' => 'Torna al catalogo',
+        'moderation_note' => 'L’approvazione preventiva è accesa, ma una scheda inserita da qui nasce già pubblicata e il partner non riceve nessuna mail.',
+
+        // Foto
+        'photos_help' => 'Carica almeno 4 foto. La prima è la copertina della scheda.',
+        'photos_min' => 'Servono almeno 4 foto.',
+        'cover' => 'Copertina',
+
+        // Messaggi di validazione propri del pannello (quelli del wizard
+        // restano in partner.*: il partner deve poter risalvare la scheda).
+        'validation' => [
+            'name_max' => 'Massimo 110 caratteri: il nome italiano e quello inglese vivono nello stesso campo del catalogo.',
+            'text_max' => 'Il testo supera la lunghezza massima consentita.',
+            'province_exists' => 'Scegli una provincia dall’elenco: questa sigla non esiste.',
+            'option_unknown' => 'Questa opzione non esiste più: scegline una dall’elenco.',
+            'room_type_unknown' => 'Scegli una tipologia di camera dall’elenco.',
+            'photo_image' => 'Carica solo immagini.',
+            'photo_max' => 'Ogni foto deve pesare meno di 8 MB.',
+        ],
     ],
 
     'export' => [
