@@ -5,6 +5,8 @@ return [
     // Errori del flusso partner (toast danger / eccezioni di dominio).
     'errors' => [
         'stripe_onboarding_required' => 'Before publishing a service you need to finish connecting your Stripe account.',
+        // Draft closed without the minimum catalogue data (name, rooms, date or price).
+        'draft_not_publishable' => "We can't publish this service yet: some required details are missing. Check the steps and try again.",
     ],
 
     // Partner payment mode: online on AnimalAmo or paid directly to the partner.
