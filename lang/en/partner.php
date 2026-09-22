@@ -874,6 +874,7 @@ return [
         'type_double' => 'Double',
         'type_triple' => 'Triple',
         'type_suite' => 'Suite',
+        'type_whole' => 'Whole property',
         'add_rooms' => 'Add rooms',
         'checkin' => 'Check in',
         'checkout' => 'Check out',

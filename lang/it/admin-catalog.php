@@ -159,6 +159,14 @@ return [
         ],
     ],
 
+    /*
+    | Creazione di una scheda dal pannello (P3): l'admin compila il wizard al
+    | posto del partner, e la scheda nasce a nome suo.
+    */
+    'create' => [
+        'not_eligible' => '«:name» non può ricevere schede: serve un partner attivo, non anonimizzato e con un profilo aziendale.',
+    ],
+
     'export' => [
         'filename' => 'catalogo-:date.csv',
         'columns' => [

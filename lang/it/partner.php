@@ -874,6 +874,9 @@ return [
         'type_double' => 'Doppia',
         'type_triple' => 'Tripla',
         'type_suite' => 'Suite',
+        // Tipologia fittizia della riga unica in modalità alloggio intero
+        // (HotelRoomsForm::WHOLE_PROPERTY_TYPE): finora nessuno la mostrava.
+        'type_whole' => 'Alloggio intero',
         'add_rooms' => 'Aggiungi stanze',
         'checkin' => 'Check in',
         'checkout' => 'Check out',
