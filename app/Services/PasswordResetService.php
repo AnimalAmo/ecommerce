@@ -26,6 +26,12 @@ class PasswordResetService
     private const MAX_REQUESTS_PER_IP = 5;
 
     /**
+     * Broker del link di benvenuto dei partner creati dal pannello
+     * (config/auth.php → passwords.partner_welcome, 7 giorni).
+     */
+    public const WELCOME_BROKER = 'partner_welcome';
+
+    /**
      * Accoda l'invio del link di reimpostazione.
      *
      * L'esito del broker NON viene propagato: che l'email sia registrata, che
@@ -59,13 +65,43 @@ class PasswordResetService
     }
 
     /**
+     * Il broker di benvenuto vale solo per un partner che non sia anche
+     * amministratore. Il token non sa quale broker l'ha creato, e la tabella
+     * è condivisa: senza questo controllo, `?welcome=1` allungherebbe a 7
+     * giorni anche il link di reset di un superadmin (AdminAuthService, 60
+     * minuti) e gli farebbe scegliere la password con la regola del sito,
+     * più debole di quella del pannello.
+     */
+    public function acceptsWelcome(string $email): bool
+    {
+        $user = User::query()->whereRaw('lower(email) = ?', [Str::lower(trim($email))])->first();
+
+        return $user !== null && $user->hasRole('partner') && ! $user->hasRole('superadmin');
+    }
+
+    /**
      * Consuma il token e imposta la nuova password.
      *
+     * Il broker va scelto da chi chiama: la scadenza la verifica il broker con
+     * la SUA durata, e la tabella è condivisa. Un token di benvenuto
+     * consumato col broker di default scadrebbe dopo 60 minuti.
+     * WELCOME_BROKER per un account che non è partner, o che è anche
+     * amministratore, torna al default (acceptsWelcome()).
+     *
+     * Rischio residuo accettato: per un partner, aggiungere `welcome=1` a un
+     * link di "password dimenticata" ne allunga la finestra a 7 giorni. Il
+     * token resta segreto, monouso e recapitato solo al titolare dell'email.
+     *
+     * @param  string|null  $broker  null = broker di default (`users`); self::WELCOME_BROKER per il benvenuto
      * @return string una costante di Password (PASSWORD_RESET, INVALID_TOKEN, INVALID_USER)
      */
-    public function reset(string $email, string $token, string $password): string
+    public function reset(string $email, string $token, string $password, ?string $broker = null): string
     {
-        return Password::reset(
+        if ($broker === self::WELCOME_BROKER && ! $this->acceptsWelcome($email)) {
+            $broker = null;
+        }
+
+        return Password::broker($broker)->reset(
             [
                 'email' => $email,
                 'password' => $password,

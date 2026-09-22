@@ -99,6 +99,22 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        /*
+        | Link di benvenuto dei partner creati dal pannello: sette giorni, perché
+        | la mail la legge chi non se l'aspettava, non chi ha appena chiesto un
+        | reset. Stessa tabella del broker `users`, indicizzata per email: una
+        | "password dimenticata" successiva sostituisce il token (accettato).
+        | Il token si consuma con questo stesso broker: il controllo di
+        | scadenza è il suo, e con `users` scadrebbe dopo 60 minuti.
+        | Solo per partner non amministratori: PasswordResetService::acceptsWelcome().
+        */
+        'partner_welcome' => [
+            'provider' => 'users',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 10080,
+            'throttle' => 60,
+        ],
     ],
 
     /*

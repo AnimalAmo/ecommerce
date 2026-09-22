@@ -64,6 +64,17 @@ return [
         'title_page' => 'Reset your password',
     ],
 
+    // Same page, from the welcome link of a partner created in the admin panel (?welcome=1).
+    // Not 'welcome': that key is already the heading of the sign-in modal.
+    'partner_welcome' => [
+        'title' => 'Welcome to AnimalAmo',
+        'sub' => 'Choose the password for the :email account: you will use it to sign in to the partner area.',
+        'submit' => 'Choose password',
+        'done_title' => 'Password chosen',
+        'done_text' => 'Your partner account is ready: sign in with your email and the password you just chose.',
+        'done_cta' => 'Log in as Partner',
+    ],
+
     // Reset link email (no XD design: Laravel markdown)
     'reset_mail' => [
         'subject' => 'Reset your AnimalAmo password',

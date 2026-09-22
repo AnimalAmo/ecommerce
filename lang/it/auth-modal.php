@@ -64,6 +64,17 @@ return [
         'title_page' => 'Reimposta la password',
     ],
 
+    // Stessa pagina, dal link di benvenuto di un partner creato dal pannello (?welcome=1).
+    // Non 'welcome': quella chiave è già il titolo della modale di accesso.
+    'partner_welcome' => [
+        'title' => 'Benvenuto su AnimalAmo',
+        'sub' => 'Scegli la password per l’account :email: la userai per entrare nell’area partner.',
+        'submit' => 'Scegli la password',
+        'done_title' => 'Password scelta',
+        'done_text' => 'Il tuo account partner è pronto: accedi con la tua email e la password appena scelta.',
+        'done_cta' => 'Accedi come Partner',
+    ],
+
     // Email con il link di reimpostazione (nessun design XD: markdown Laravel)
     'reset_mail' => [
         'subject' => 'Reimposta la tua password AnimalAmo',
