@@ -23,6 +23,18 @@ class UserShowTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Il pannello è solo italiano e `lang/en/admin-people.php` non esiste:
+     * sotto APP_LOCALE=en ogni __('admin-people.*') tornerebbe la chiave sia
+     * nella vista sia nell'attesa, e gli assert passerebbero a vuoto.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app()->setLocale('it');
+    }
+
     public function test_the_profile_shows_orders_pets_and_applications(): void
     {
         $this->actingAsSuperadmin();
@@ -262,7 +274,6 @@ class UserShowTest extends TestCase
 
     public function test_an_offline_partner_without_stripe_cannot_go_back_online(): void
     {
-        app()->setLocale('it');
         $this->actingAsSuperadmin();
         $partner = User::factory()->offlinePartner()->create();
 
@@ -279,7 +290,6 @@ class UserShowTest extends TestCase
 
     public function test_an_online_partner_can_switch_to_on_site_with_a_link(): void
     {
-        app()->setLocale('it');
         $this->actingAsSuperadmin();
         $partner = $this->onlinePartner();
 
@@ -309,7 +319,6 @@ class UserShowTest extends TestCase
 
     public function test_a_non_http_link_is_refused_on_the_field(): void
     {
-        app()->setLocale('it');
         $this->actingAsSuperadmin();
         $partner = $this->onlinePartner();
 
@@ -327,7 +336,6 @@ class UserShowTest extends TestCase
 
     public function test_a_customer_with_an_orphan_profile_keeps_its_payment_mode(): void
     {
-        app()->setLocale('it');
         $this->actingAsSuperadmin();
         Role::findOrCreate('client', 'web');
 
@@ -353,7 +361,6 @@ class UserShowTest extends TestCase
 
     public function test_the_welcome_link_can_be_sent_again_once_a_minute(): void
     {
-        app()->setLocale('it');
         Mail::fake();
         $this->actingAsSuperadmin();
         $partner = User::factory()->offlinePartner()->create();
