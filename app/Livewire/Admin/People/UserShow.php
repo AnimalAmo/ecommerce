@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\People;
 use App\Enums\OrderPaymentMode;
 use App\Exceptions\PartnerAccountException;
 use App\Exceptions\PaymentModeException;
+use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use App\Services\Admin\People\AnonymizeUser;
 use App\Services\Admin\People\PartnerAccountService;
@@ -49,10 +50,22 @@ class UserShow extends Component
         Flux::toast(text: __('admin-people.users.'.($this->user->is_active ? 'reactivated' : 'deactivated')), variant: 'success');
     }
 
+    /**
+     * Il profilo su cui agisce la card partner, con la stessa condizione con
+     * cui render() decide di disegnarla: il ruolo, non la sola riga di
+     * partner_profiles. Un cliente con un profilo rimasto da prima (il caso
+     * che PartnerAccountService::create() gestisce) non mostra né il bottone
+     * né la modale, e non deve rispondere nemmeno ai metodi.
+     */
+    private function partnerProfile(): ?PartnerProfile
+    {
+        return $this->user->hasRole('partner') ? $this->user->partnerProfile : null;
+    }
+
     /** Apre la modale con la modalità e il link di oggi. */
     public function editPaymentMode(): void
     {
-        $profile = $this->user->partnerProfile;
+        $profile = $this->partnerProfile();
 
         if ($profile === null) {
             return;
@@ -73,7 +86,7 @@ class UserShow extends Component
      */
     public function setPaymentMode(PartnerPaymentModeService $modes): void
     {
-        $profile = $this->user->partnerProfile;
+        $profile = $this->partnerProfile();
 
         if ($profile === null) {
             return;

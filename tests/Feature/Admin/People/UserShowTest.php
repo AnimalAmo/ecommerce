@@ -325,6 +325,32 @@ class UserShowTest extends TestCase
         $this->assertNull($profile->payment_url);
     }
 
+    public function test_a_customer_with_an_orphan_profile_keeps_its_payment_mode(): void
+    {
+        app()->setLocale('it');
+        $this->actingAsSuperadmin();
+        Role::findOrCreate('client', 'web');
+
+        // Cliente con un profilo partner rimasto da prima (il caso che
+        // PartnerAccountService::create() gestisce): la scheda non mostra la
+        // card partner, quindi nemmeno i suoi metodi devono rispondere.
+        $client = User::factory()->create();
+        $client->assignRole('client');
+        PartnerProfile::factory()->for($client)->create();
+
+        Livewire::test(UserShow::class, ['user' => $client])
+            ->call('editPaymentMode')
+            ->assertNotDispatched('modal-show')
+            ->set('paymentMode', 'on_site')
+            ->set('paymentUrl', 'https://non-suo.example/prenota')
+            ->call('setPaymentMode')
+            ->assertNotDispatched('toast-show');
+
+        $profile = $client->partnerProfile->fresh();
+        $this->assertTrue($profile->online_payment);
+        $this->assertNull($profile->payment_url);
+    }
+
     public function test_the_welcome_link_can_be_sent_again_once_a_minute(): void
     {
         app()->setLocale('it');
