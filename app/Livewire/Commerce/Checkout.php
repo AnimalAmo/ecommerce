@@ -21,6 +21,7 @@ use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
 use App\Support\Phone;
+use App\Support\SafeUrl;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Auth;
@@ -563,7 +564,8 @@ class Checkout extends Component
             // Ramo in struttura: niente Stripe allo step 2, riquadro col partner da pagare.
             'paysOnSite' => $this->paysOnSite(),
             'partnerName' => $onSiteSeller?->business_name,
-            'partnerPaymentUrl' => $onSiteSeller?->payment_url,
+            // Solo http(s): un javascript: scritto senza passare dal service non arriva all'href.
+            'partnerPaymentUrl' => SafeUrl::http($onSiteSeller?->payment_url),
             // Righe metodo: solo i PaymentMethod il cui gateway è abilitato.
             'hasCardMethod' => in_array(PaymentMethod::Card, $methods, true),
             // Carta salvata a profilo: solo il mascherato serve alla riga.

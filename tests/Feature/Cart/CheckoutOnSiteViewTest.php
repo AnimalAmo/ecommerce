@@ -92,6 +92,20 @@ class CheckoutOnSiteViewTest extends TestCase
             ->assertDontSee(__('checkout.on_site.pay_on_website'));
     }
 
+    public function test_an_unsafe_payment_url_is_never_printed(): void
+    {
+        $this->actingAs(User::factory()->create());
+        // Scritto dritto sul profilo, saltando la validazione del service: è la
+        // difesa in profondità per le scritture che non passano da lì.
+        $this->addStructureLine($this->offlineStructure('javascript:alert(1)'));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertDontSeeHtml('javascript:')
+            ->assertDontSee(__('checkout.on_site.pay_on_website'))
+            ->assertSee(__('checkout.on_site.confirm_cta'));
+    }
+
     public function test_step_three_shows_the_on_site_confirmation(): void
     {
         $this->actingAs(User::factory()->create());
