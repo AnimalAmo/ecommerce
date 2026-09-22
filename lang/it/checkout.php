@@ -17,6 +17,8 @@ return [
         'pay_on_website' => 'Vai al sito del partner per pagare o prenotare',
         'confirm_cta' => 'Conferma prenotazione',
         'failed' => 'Non siamo riusciti a registrare la prenotazione. Riprova tra qualche istante.',
+        'already_placed' => 'Questa prenotazione risulta già registrata: non serve confermarla di nuovo.',
+        'gift_not_allowed' => 'Il partner ora si fa pagare direttamente e non online: questo regalo non si può più acquistare. Rimuovilo dal carrello.',
         'thank_you' => 'Prenotazione confermata!',
         'thank_you_sub' => 'Ecco il riepilogo, controlla l\'email: il pagamento lo farai direttamente al partner.',
     ],

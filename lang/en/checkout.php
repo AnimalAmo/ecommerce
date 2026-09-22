@@ -17,6 +17,8 @@ return [
         'pay_on_website' => 'Go to the partner\'s website to pay or book',
         'confirm_cta' => 'Confirm booking',
         'failed' => 'We could not record your booking. Please try again in a moment.',
+        'already_placed' => 'This booking has already been recorded: there is no need to confirm it again.',
+        'gift_not_allowed' => 'The partner now takes payment directly, not online: this gift can no longer be bought. Please remove it from your cart.',
         'thank_you' => 'Booking confirmed!',
         'thank_you_sub' => 'Here is the summary, check your email: you will pay the partner directly.',
     ],

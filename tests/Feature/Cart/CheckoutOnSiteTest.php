@@ -301,8 +301,10 @@ class CheckoutOnSiteTest extends TestCase
             ->assertSet('step', 3);
 
         // Secondo click arrivato dopo il primo (step manomesso, carrello già vuoto).
+        // Nessun pagamento è passato di qui: il toast parla di prenotazione, non di addebiti.
         $component->set('step', 2)
             ->call('confirmBooking')
+            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.already_placed')))
             ->assertRedirect(route('profilo.ordini'));
 
         $this->assertSame(1, Order::count());
@@ -328,9 +330,35 @@ class CheckoutOnSiteTest extends TestCase
             ->set('recipientEmail', 'marco@example.com')
             ->call('goToStep', 2)
             ->assertSet('step', 1)
-            ->assertDispatched('toast-show', $this->toast(__('payment.errors.seller_unavailable')));
+            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.gift_not_allowed')));
 
         $this->assertDatabaseCount('orders', 0);
+        $this->assertSame([], $this->gateway->initCalls);
+    }
+
+    public function test_a_guest_with_a_gift_of_a_seller_gone_offline_is_told_before_any_login(): void
+    {
+        $seller = User::factory()->stripeConnected()->create();
+        $this->cart()->addItem('smartbox_package', SmartboxPackage::factory()->create([
+            'user_id' => $seller->id, 'price_cents' => 21500])->id, [
+                'animals' => ['cane' => 1],
+                'gift' => ['dedication' => 'Marco', 'message' => 'Tanti auguri!'],
+            ], true); // carrello di sessione guest
+
+        $seller->partnerProfile()->update(['online_payment' => false]);
+        $this->app->forgetScopedInstances();
+
+        // Accedere non servirebbe a niente: il regalo resta non acquistabile.
+        Livewire::withQueryParams(['regalo' => 1])->test(Checkout::class)
+            ->set('firstName', 'Mario')
+            ->set('lastName', 'Verdi')
+            ->set('email', 'mario@example.com')
+            ->set('recipientEmail', 'marco@example.com')
+            ->call('goToStep', 2)
+            ->assertSet('step', 1)
+            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.gift_not_allowed')))
+            ->assertNotDispatched('modal-show');
+
         $this->assertSame([], $this->gateway->initCalls);
     }
 

@@ -770,18 +770,19 @@ class Checkout extends Component
     private function preparePaymentStep(): bool
     {
         if ($this->sellerMode() === OrderPaymentMode::OnSite) {
-            // Una prenotazione gratuita da ospite non sarebbe né visibile né
-            // annullabile da nessuno: serve un account.
-            if (! Auth::check()) {
-                $this->askToLogIn();
+            // Regalo rimasto in carrello da quando il partner era online: un buono
+            // "da pagare in struttura" non ha nessuno che lo incassi. Prima del
+            // login, perché accedere non lo renderebbe acquistabile.
+            if ($this->gift) {
+                Flux::toast(text: __('checkout.on_site.gift_not_allowed'), variant: 'danger');
 
                 return false;
             }
 
-            // Regalo rimasto in carrello da quando il partner era online: un buono
-            // "da pagare in struttura" non ha nessuno che lo incassi.
-            if ($this->gift) {
-                Flux::toast(text: __('payment.errors.seller_unavailable'), variant: 'danger');
+            // Una prenotazione gratuita da ospite non sarebbe né visibile né
+            // annullabile da nessuno: serve un account.
+            if (! Auth::check()) {
+                $this->askToLogIn();
 
                 return false;
             }
@@ -879,7 +880,8 @@ class Checkout extends Component
     private function finishAsAlreadyPlaced(): void
     {
         $this->processing = false;
-        Flux::toast(text: __('payment.errors.already_placed'));
+        // In struttura non è passato alcun pagamento: il toast parla di prenotazione, non di addebiti.
+        Flux::toast(text: $this->paysOnSite() ? __('checkout.on_site.already_placed') : __('payment.errors.already_placed'));
         $this->redirectRoute(Auth::check() ? 'profilo.ordini' : 'home');
     }
 
