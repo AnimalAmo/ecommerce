@@ -4,12 +4,16 @@ namespace Tests\Feature\Partner;
 
 use App\Enums\OrderPaymentMode;
 use App\Exceptions\PaymentModeException;
+use App\Jobs\PublishAwaitingDrafts;
 use App\Models\Partner\PartnerProfile;
+use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -201,5 +205,62 @@ class PartnerPaymentModeServiceTest extends TestCase
         app()->forgetScopedInstances();
 
         $this->assertNotSame($before, app(PartnerPaymentModeService::class));
+    }
+
+    private function awaitingSmartboxOf(PartnerProfile $profile): StructureDraft
+    {
+        return StructureDraft::create([
+            'user_id' => $profile->user_id,
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'name' => ['it' => 'Cofanetto in attesa'],
+            'price' => '120',
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 12,
+            'publish_requested_at' => now(),
+        ]);
+    }
+
+    public function test_passare_in_struttura_mette_in_coda_la_pubblicazione_delle_bozze_in_attesa(): void
+    {
+        Queue::fake();
+        $profile = PartnerProfile::factory()->create();
+        $this->awaitingSmartboxOf($profile);
+
+        $this->modes()->set($profile, false, null);
+
+        Queue::assertPushed(PublishAwaitingDrafts::class, fn (PublishAwaitingDrafts $job): bool => $job->partnerId === $profile->user_id);
+    }
+
+    public function test_senza_bozze_in_attesa_non_mette_in_coda_nulla(): void
+    {
+        Queue::fake();
+        $profile = PartnerProfile::factory()->create();
+
+        $this->modes()->set($profile, false, null);
+
+        Queue::assertNotPushed(PublishAwaitingDrafts::class);
+    }
+
+    public function test_chi_resta_online_senza_stripe_non_mette_in_coda(): void
+    {
+        Queue::fake();
+        $profile = PartnerProfile::factory()->create();
+        $this->awaitingSmartboxOf($profile);
+
+        $this->modes()->set($profile, true, 'https://www.hotelrosovino.it');
+
+        Queue::assertNotPushed(PublishAwaitingDrafts::class);
+    }
+
+    public function test_passare_in_struttura_pubblica_le_bozze_in_attesa(): void
+    {
+        $profile = PartnerProfile::factory()->create();
+        $draft = $this->awaitingSmartboxOf($profile);
+
+        $this->modes()->set($profile, false, null);
+
+        $this->assertSame(StructureDraft::STATUS_COMPLETED, $draft->fresh()->status);
+        $this->assertSame(1, SmartboxPackage::withHidden()->where('structure_draft_id', $draft->id)->count());
     }
 }

@@ -4,10 +4,14 @@ namespace App\Services\Partner;
 
 use App\Enums\OrderPaymentMode;
 use App\Exceptions\PaymentModeException;
+use App\Jobs\PublishAwaitingDrafts;
 use App\Models\Partner\PartnerProfile;
+use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Modalità di pagamento del partner (richiesta della cliente, 22/09/2026):
@@ -55,6 +59,8 @@ class PartnerPaymentModeService
 
         $this->profiles[(int) $profile->user_id] = $profile;
 
+        $this->publishAwaitingDrafts($profile);
+
         return $profile;
     }
 
@@ -84,5 +90,41 @@ class PartnerPaymentModeService
         }
 
         return $this->profiles[$userId];
+    }
+
+    /**
+     * Passare al pagamento diretto, o tornare online da pagabile, può
+     * sbloccare i servizi rimasti in attesa di Stripe (P4). La dispatch parte
+     * solo se ce n'è almeno uno. Stessa protezione di StripeConnectService:
+     * con la coda sync il job gira qui dentro, e un suo errore non deve far
+     * sembrare fallito un cambio di modalità già salvato.
+     *
+     * Attenzione per P2/P3: se set() viene chiamato dentro un DB::transaction
+     * esterno, con afterCommit il job gira al commit, fuori da questo
+     * try/catch, e un suo errore risale al chiamante.
+     */
+    private function publishAwaitingDrafts(PartnerProfile $profile): void
+    {
+        if ($profile->user_id === null || ! $profile->canPublish()) {
+            return;
+        }
+
+        $awaiting = StructureDraft::query()
+            ->where('user_id', $profile->user_id)
+            ->awaitingPublication()
+            ->exists();
+
+        if (! $awaiting) {
+            return;
+        }
+
+        try {
+            PublishAwaitingDrafts::dispatch((int) $profile->user_id);
+        } catch (Throwable $exception) {
+            Log::warning('Pubblicazione delle bozze in attesa non avviata', [
+                'partner_user_id' => $profile->user_id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 }

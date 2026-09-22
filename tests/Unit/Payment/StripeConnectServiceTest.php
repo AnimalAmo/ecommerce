@@ -2,12 +2,17 @@
 
 namespace Tests\Unit\Payment;
 
+use App\Jobs\PublishAwaitingDrafts;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
+use App\Services\Partner\Publishing\AwaitingDraftPublisher;
 use App\Services\Payment\StripeConnectService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Mockery\MockInterface;
+use RuntimeException;
 use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Exception\InvalidRequestException;
@@ -221,6 +226,90 @@ class StripeConnectServiceTest extends TestCase
         $this->connect->syncAccountState('acct_ignoto');
 
         $this->assertDatabaseCount('partner_profiles', 0);
+    }
+
+    /** Account pienamente operativo e già su manuale: nessun update di pianificazione. */
+    private function payableAccount(string $id): Account
+    {
+        return Account::constructFrom([
+            'id' => $id,
+            'charges_enabled' => true,
+            'payouts_enabled' => true,
+            'requirements' => ['currently_due' => []],
+            'settings' => ['payouts' => ['schedule' => ['interval' => 'manual']]],
+        ]);
+    }
+
+    public function test_il_sync_che_rende_pagabile_mette_in_coda_la_pubblicazione(): void
+    {
+        Queue::fake();
+        $partner = $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')->once()->with('acct_existing')
+            ->andReturn($this->payableAccount('acct_existing'));
+
+        $this->connect->syncAccountState('acct_existing');
+
+        Queue::assertPushed(PublishAwaitingDrafts::class, fn (PublishAwaitingDrafts $job): bool => $job->partnerId === $partner->id);
+    }
+
+    public function test_un_sync_senza_cambi_dei_flag_non_rimette_in_coda(): void
+    {
+        Queue::fake();
+        $this->partner([
+            'stripe_account_id' => 'acct_existing',
+            'stripe_charges_enabled' => true,
+            'stripe_payouts_enabled' => true,
+        ]);
+
+        $this->accounts->shouldReceive('retrieve')->once()->with('acct_existing')
+            ->andReturn($this->payableAccount('acct_existing'));
+
+        $this->connect->syncAccountState('acct_existing');
+
+        Queue::assertNotPushed(PublishAwaitingDrafts::class);
+    }
+
+    public function test_un_onboarding_ancora_a_meta_non_mette_in_coda(): void
+    {
+        Queue::fake();
+        $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')->once()->with('acct_existing')
+            ->andReturn(Account::constructFrom([
+                'id' => 'acct_existing',
+                'charges_enabled' => true,
+                'payouts_enabled' => false,
+                'requirements' => ['currently_due' => ['external_account']],
+            ]));
+
+        $this->connect->syncAccountState('acct_existing');
+
+        Queue::assertNotPushed(PublishAwaitingDrafts::class);
+    }
+
+    public function test_un_errore_della_pubblicazione_non_fa_fallire_il_sync(): void
+    {
+        // Coda sync (come nei test, e in una produzione configurata così): il
+        // job gira qui dentro. Se l'errore risalisse, il webhook risponderebbe 400.
+        Log::spy();
+        $this->mock(AwaitingDraftPublisher::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('publishFor')->once()->andThrow(new RuntimeException('database irraggiungibile'));
+        });
+        $partner = $this->partner(['stripe_account_id' => 'acct_existing']);
+
+        $this->accounts->shouldReceive('retrieve')->once()->with('acct_existing')
+            ->andReturn($this->payableAccount('acct_existing'));
+
+        $this->connect->syncAccountState('acct_existing');
+
+        $this->assertTrue($partner->partnerProfile->fresh()->stripe_payouts_enabled);
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->with('Pubblicazione delle bozze in attesa non avviata', Mockery::on(
+                fn (array $context): bool => $context['partner_user_id'] === $partner->id
+                    && $context['error'] === 'database irraggiungibile',
+            ));
     }
 
     private function partner(array $profile = []): User

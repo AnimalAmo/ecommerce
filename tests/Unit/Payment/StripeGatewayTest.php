@@ -5,16 +5,20 @@ namespace Tests\Unit\Payment;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Exceptions\PaymentConfigurationException;
+use App\Jobs\PublishAwaitingDrafts;
 use App\Models\OrderPayment\OrderPayment;
 use App\Models\Partner\PartnerProfile;
+use App\Services\Partner\Publishing\AwaitingDraftPublisher;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\StripeConnectService;
 use App\Services\Payment\StripeGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use InvalidArgumentException;
 use Mockery;
 use Mockery\MockInterface;
+use RuntimeException;
 use Stripe\Account;
 use Stripe\Exception\ApiConnectionException;
 use Stripe\Exception\SignatureVerificationException;
@@ -471,6 +475,58 @@ class StripeGatewayTest extends TestCase
             'account' => self::ACCOUNT,
             'data' => ['object' => ['id' => self::ACCOUNT]],
         ]));
+    }
+
+    public function test_account_updated_che_rende_pagabile_mette_in_coda_la_pubblicazione(): void
+    {
+        Queue::fake();
+        $profile = PartnerProfile::factory()->create(['stripe_account_id' => self::ACCOUNT]);
+
+        $this->accounts->shouldReceive('retrieve')->once()->with(self::ACCOUNT)
+            ->andReturn(Account::constructFrom([
+                'id' => self::ACCOUNT,
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+                'settings' => ['payouts' => ['schedule' => ['interval' => 'manual']]],
+            ]));
+
+        $this->assertNull($this->handleSignedWebhook([
+            'id' => 'evt_account_ready',
+            'type' => 'account.updated',
+            'account' => self::ACCOUNT,
+            'data' => ['object' => ['id' => self::ACCOUNT]],
+        ]));
+
+        Queue::assertPushed(PublishAwaitingDrafts::class, fn (PublishAwaitingDrafts $job): bool => $job->partnerId === $profile->user_id);
+    }
+
+    public function test_un_errore_della_pubblicazione_non_diventa_un_400(): void
+    {
+        // StripeWebhookController risponde 400 a qualunque Throwable esca da
+        // handleWebhook: con la coda sync il job gira qui, e non deve uscirne.
+        $this->mock(AwaitingDraftPublisher::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('publishFor')->once()->andThrow(new RuntimeException('database irraggiungibile'));
+        });
+        $profile = PartnerProfile::factory()->create(['stripe_account_id' => self::ACCOUNT]);
+
+        $this->accounts->shouldReceive('retrieve')->once()->with(self::ACCOUNT)
+            ->andReturn(Account::constructFrom([
+                'id' => self::ACCOUNT,
+                'charges_enabled' => true,
+                'payouts_enabled' => true,
+                'requirements' => ['currently_due' => []],
+                'settings' => ['payouts' => ['schedule' => ['interval' => 'manual']]],
+            ]));
+
+        $this->assertNull($this->handleSignedWebhook([
+            'id' => 'evt_account_ready_ko',
+            'type' => 'account.updated',
+            'account' => self::ACCOUNT,
+            'data' => ['object' => ['id' => self::ACCOUNT]],
+        ]));
+
+        $this->assertTrue($profile->fresh()->stripe_payouts_enabled);
     }
 
     public function test_un_incasso_di_un_account_connesso_viene_riconciliato(): void
