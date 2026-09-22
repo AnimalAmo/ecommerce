@@ -136,6 +136,22 @@ class PartnerProfilePaymentTest extends TestCase
         $this->assertFalse($partner->partnerProfile->fresh()->online_payment);
     }
 
+    /**
+     * Il rifiuto (payouts spenti fra il render e il submit, o richiesta
+     * manomessa) non deve lasciare la radio su un "online" disabilitato che il
+     * database non ha: salvando di nuovo solo il link tornerebbe lo stesso errore.
+     */
+    public function test_a_refused_switch_shows_the_mode_that_was_saved(): void
+    {
+        $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', 'online')
+            ->call('savePaymentMode')
+            ->assertHasErrors('paymentMode')
+            ->assertSet('paymentMode', 'on_site');
+    }
+
     public function test_an_offline_partner_with_stripe_goes_back_online(): void
     {
         $partner = $this->actingAsActivePartner();

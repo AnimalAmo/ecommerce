@@ -110,6 +110,9 @@ class PartnerProfilePayment extends Component
         try {
             $modes->set($profile, $this->paymentMode === OrderPaymentMode::Online->value, $this->paymentUrl);
         } catch (PaymentModeException $exception) {
+            // La radio torna alla modalità salvata: lasciata su "online" (disabilitato)
+            // ripeterebbe lo stesso errore anche a chi poi cambia solo il link.
+            $this->paymentMode = $profile->paymentMode()->value;
             $this->addError('paymentMode', $exception->getMessage());
 
             return;
