@@ -129,6 +129,30 @@ class PlaceOnSiteOrderTest extends TestCase
         $this->placeOnSiteOrder(checkoutToken: self::TOKEN, itemsOverride: collect(), totalCentsOverride: 0);
     }
 
+    public function test_a_second_tab_that_read_the_cart_before_the_first_booking_books_nothing(): void
+    {
+        $event = $this->offlineEvent();
+        $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
+
+        // Due tab dello stesso utente, ognuna col suo token, leggono lo stesso carrello.
+        $snapshot = $this->cart()->items();
+        $total = $this->cart()->total();
+
+        $first = $this->placeOnSiteOrder(itemsOverride: $snapshot, totalCentsOverride: $total);
+
+        // La seconda entra nella transaction dopo il commit della prima: le sue righe non sono più in carrello.
+        try {
+            $this->placeOnSiteOrder(itemsOverride: $snapshot, totalCentsOverride: $total);
+            $this->fail('Attesa CartValidationException: le righe le ha già prenotate la prima tab.');
+        } catch (CartValidationException $exception) {
+            $this->assertSame(__('cart.changed_elsewhere'), $exception->getMessage());
+        }
+
+        $this->assertTrue(Order::sole()->is($first));
+        $this->assertSame(2, $event->refresh()->booked_participants);
+        Events::assertDispatchedTimes(OnSiteOrderConfirmed::class, 1);
+    }
+
     public function test_an_order_already_holding_the_token_wins(): void
     {
         $existing = Order::factory()->onSite()->create(['checkout_token' => self::TOKEN]);

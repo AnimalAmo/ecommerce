@@ -443,8 +443,9 @@ class Checkout extends Component
      * quindi niente capture e niente storni. Il token bloccato allo step 2
      * rende idempotenti il doppio click e il replay dello stesso snapshot; una
      * seconda tab monta un componente col suo token, e la ferma il carrello
-     * già svuotato dal primo ordine. Il limite per utente frena chi accaparra
-     * posti gratis a raffica.
+     * svuotato dal primo ordine: letto qui se il primo ha già finito, riletto
+     * sotto lock da PlaceOrderAction se le due conferme si sovrappongono. Il
+     * limite per utente frena chi accaparra posti gratis a raffica.
      */
     public function confirmBooking(PlaceOrderAction $action, PartnerPaymentModeService $modes): void
     {

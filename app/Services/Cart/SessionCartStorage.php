@@ -103,6 +103,17 @@ class SessionCartStorage
     }
 
     /**
+     * Quante di queste righe sono ancora in sessione. Il carrello ospite non
+     * ha righe a db da bloccare: si controlla solo che ci siano ancora.
+     *
+     * @param  list<int|string>  $keys
+     */
+    public function lockItems(array $keys): int
+    {
+        return count(array_intersect_key($this->getSessionCart(), array_flip($keys)));
+    }
+
+    /**
      * Righe presentate, filtrabili per flusso regalo (null = tutte). Prodotti
      * bulk-loaded per tipo; le entry orfane vengono saltate.
      *

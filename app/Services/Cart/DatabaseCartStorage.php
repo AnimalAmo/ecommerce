@@ -87,6 +87,18 @@ class DatabaseCartStorage
         $this->findItem($key)?->delete();
     }
 
+    /**
+     * Quante di queste righe sono ancora nel carrello dell'utente, lette con
+     * FOR UPDATE: dentro una transaction la seconda lettura concorrente aspetta
+     * che la prima finisca, e poi vede le righe che quella ha tolto.
+     *
+     * @param  list<int|string>  $keys
+     */
+    public function lockItems(array $keys): int
+    {
+        return $this->resolveCart()?->items()->whereKey($keys)->lockForUpdate()->get(['id'])->count() ?? 0;
+    }
+
     /** Svuota le righe mantenendo la riga carts. */
     public function clear(): void
     {

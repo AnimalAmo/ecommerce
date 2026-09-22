@@ -207,6 +207,42 @@ class CartStorageTest extends TestCase
         $this->assertDatabaseCount('carts', 1);
     }
 
+    public function test_still_holds_tells_whether_a_snapshot_is_still_in_the_database_cart(): void
+    {
+        $owner = User::factory()->create();
+        $this->actingAs($owner);
+
+        $manager = $this->manager();
+        $item = $manager->addItem('structure', $this->structure()->id, $this->structureOptions(), false);
+        $manager->addItem('smartbox_package', $this->smartbox()->id, ['animals' => ['cane' => 1]], false);
+        $snapshot = $manager->items();
+
+        $this->assertTrue($manager->stillHolds($snapshot));
+        $this->assertTrue($manager->stillHolds(collect()));
+
+        // Lo stesso snapshot letto da un altro utente non è nel suo carrello.
+        $this->actingAs(User::factory()->create());
+        $this->assertFalse($manager->stillHolds($snapshot));
+
+        // Basta una riga tolta (prenotata o eliminata altrove) perché lo snapshot non valga più.
+        $this->actingAs($owner);
+        $manager->removeItem($item->key);
+        $this->assertFalse($manager->stillHolds($snapshot));
+    }
+
+    public function test_still_holds_tells_whether_a_snapshot_is_still_in_the_session_cart(): void
+    {
+        $manager = $this->manager();
+        $item = $manager->addItem('structure', $this->structure()->id, $this->structureOptions(), false);
+        $manager->addItem('smartbox_package', $this->smartbox()->id, ['animals' => ['cane' => 1]], false);
+        $snapshot = $manager->items();
+
+        $this->assertTrue($manager->stillHolds($snapshot));
+
+        $manager->removeItem($item->key);
+        $this->assertFalse($manager->stillHolds($snapshot));
+    }
+
     public function test_reads_never_create_a_carts_row(): void
     {
         $this->actingAs(User::factory()->create());

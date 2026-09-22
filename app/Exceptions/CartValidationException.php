@@ -71,6 +71,12 @@ class CartValidationException extends RuntimeException
         return new self(__('cart.invalid_participants'));
     }
 
+    /** Le righe da ordinare non sono più in carrello: prenotate o tolte in un'altra finestra. */
+    public static function changedElsewhere(): self
+    {
+        return new self(__('cart.changed_elsewhere'));
+    }
+
     /** Regalo da un partner che incassa in struttura: il destinatario si troverebbe a pagare. */
     public static function giftRequiresOnlinePayment(): self
     {

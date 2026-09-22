@@ -19,6 +19,7 @@ use App\Pipes\Order\CreateOrderPaymentPipe;
 use App\Pipes\Order\CreateOrderPayoutsPipe;
 use App\Pipes\Order\CreateOrderPipe;
 use App\Pipes\Order\ReserveAvailabilityPipe;
+use App\Services\Cart\CartManager;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
@@ -130,13 +131,20 @@ class PlaceOrderAction
             $carrier = DB::transaction(function () use ($data, $token): OrderPipelineData {
                 // Senza gateway non c'è un incasso che faccia da chiave: il token
                 // del checkout ferma il doppio click e il replay dello stesso
-                // snapshot. Una seconda tab ha un componente e un token suoi: la
-                // ferma solo il carrello già svuotato dal primo ordine.
+                // snapshot.
                 if (($existing = $this->findOnSiteOrder($token)) !== null) {
                     throw OrderAlreadyPlacedException::forOrder($existing);
                 }
 
                 $this->guardLines($data, checkTotal: true);
+
+                // Una seconda tab ha un token suo e può aver letto il carrello
+                // prima che la prima lo svuotasse. Le righe si rileggono qui con
+                // il lock: fra due conferme concorrenti la seconda aspetta la
+                // prima, poi le trova già prenotate e non prenota niente.
+                if (! app(CartManager::class)->stillHolds($data->items)) {
+                    throw CartValidationException::changedElsewhere();
+                }
 
                 // Niente payout né pagamento: nessuna commissione e nessuna
                 // riga che resterebbe Pending per sempre nel registro.
@@ -153,9 +161,10 @@ class PlaceOrderAction
         } catch (UniqueConstraintViolationException|CartValidationException $exception) {
             // Due conferme concorrenti con lo stesso token hanno superato
             // entrambe la ricerca: l'unique su checkout_token fa perdere la
-            // seconda. Sugli ultimi posti di un evento la seconda si ferma
-            // prima, sul lock della reserve, e poi vede i posti presi dalla
-            // prima: anche quello è un "già registrato", non un sold-out.
+            // seconda. Di solito la seconda si ferma prima, sul lock delle righe
+            // del carrello (o della reserve, sugli ultimi posti di un evento), e
+            // poi le trova prese dalla prima: anche quello è un "già
+            // registrato", non un carrello cambiato né un sold-out.
             if (($existing = $this->findOnSiteOrder($token)) !== null) {
                 throw OrderAlreadyPlacedException::forOrder($existing);
             }

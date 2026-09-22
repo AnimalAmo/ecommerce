@@ -125,6 +125,21 @@ class CartManager implements CartStorageInterface
         return $this->driver()->total($gift);
     }
 
+    /**
+     * Le righe di questo snapshot sono ancora tutte nel carrello? Si chiama
+     * dentro la transaction dell'ordine: a db le righe si leggono con un lock,
+     * così due conferme concorrenti dello stesso carrello si mettono in fila e
+     * la seconda le trova già tolte da ClearCartPipe della prima.
+     *
+     * @param  Collection<int, CartItemData>  $items
+     */
+    public function stillHolds(Collection $items): bool
+    {
+        $keys = $items->map(fn (CartItemData $item): int|string => $item->key)->unique()->values()->all();
+
+        return $keys === [] || $this->driver()->lockItems($keys) === count($keys);
+    }
+
     /** Proprietario del carrello corrente: null se vuoto. */
     public function currentPartnerUserId(): ?int
     {
