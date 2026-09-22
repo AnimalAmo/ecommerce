@@ -85,6 +85,22 @@ class ConnectReadinessCommandTest extends TestCase
             ->assertSuccessful();
     }
 
+    /**
+     * Chi si fa pagare in struttura non ha bisogno di Stripe: non è un blocco
+     * per il passaggio in live. Una sola aspettativa sull'output: due
+     * expectsOutputToContain nello stesso comando si annullano.
+     */
+    public function test_non_segnala_i_partner_che_si_fanno_pagare_in_struttura(): void
+    {
+        $offline = User::factory()->create();
+        PartnerProfile::factory()->offline()->for($offline)->create(['business_name' => 'Agriturismo In Loco']);
+        Structure::factory()->create(['user_id' => $offline->id]);
+
+        $this->artisan('animalamo:connect-readiness')
+            ->expectsOutputToContain('Tutti i partner con prodotti a catalogo possono incassare.')
+            ->assertSuccessful();
+    }
+
     private function draftFor(?User $owner): StructureDraft
     {
         return StructureDraft::create([
