@@ -213,7 +213,7 @@ return [
         'col_payment' => 'Pagamento',
         'detail_payment' => 'Pagamento:',
         'paid_online' => 'Pagato online',
-        'pay_on_site' => 'Da incassare in struttura',
+        'pay_on_site' => 'Pagamento diretto',
         'to_collect' => 'Da incassare in struttura: :amount',
     ],
 

@@ -213,7 +213,7 @@ return [
         'col_payment' => 'Payment',
         'detail_payment' => 'Payment:',
         'paid_online' => 'Paid online',
-        'pay_on_site' => 'To collect on site',
+        'pay_on_site' => 'Paid to you directly',
         'to_collect' => 'To collect on site: :amount',
     ],
 

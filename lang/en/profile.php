@@ -131,7 +131,7 @@ return [
 
     // Badge of orders confirmed without online payment (copy saved on the order).
     'orders' => [
-        'pay_on_site' => 'To pay on site',
+        'pay_on_site' => 'Paid to the partner',
     ],
 
 ];

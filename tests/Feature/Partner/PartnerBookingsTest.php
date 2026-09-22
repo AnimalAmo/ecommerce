@@ -193,7 +193,7 @@ class PartnerBookingsTest extends TestCase
 
         $rows = collect(Livewire::test(PartnerBookings::class)->viewData('panels')['strutture']['rows'])->keyBy('title');
 
-        // "Pagato online" o "Da incassare" su una prenotazione annullata direbbero il falso.
+        // "Pagato online" o "Pagamento diretto" su una prenotazione annullata direbbero il falso.
         $this->assertSame(OrderStatus::Cancelled->label(), $rows['Hotel Annullato Online']['payment']);
         $this->assertSame(OrderStatus::Cancelled->label(), $rows['Hotel Annullato In Struttura']['payment']);
     }

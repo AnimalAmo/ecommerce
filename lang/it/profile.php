@@ -131,7 +131,7 @@ return [
 
     // Badge degli ordini confermati senza pagamento online (copia salvata sull'ordine).
     'orders' => [
-        'pay_on_site' => 'Da pagare in struttura',
+        'pay_on_site' => 'Pagamento al partner',
     ],
 
 ];
