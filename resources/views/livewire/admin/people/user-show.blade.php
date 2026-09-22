@@ -1,4 +1,5 @@
 @php
+    use App\Enums\OrderPaymentMode;
     use App\Enums\OrderStatus;
     use App\Services\Admin\People\UserDirectory;
     use Illuminate\Support\Carbon;
@@ -111,7 +112,7 @@
                 </div>
                 <div class="{{ $row }}">
                     <span class="{{ $label }}">{{ __('admin-people.users.payment_mode_label') }}</span>
-                    <span class="{{ $value }}"><x-admin.badge :tone="$partner['payment_mode'] === 'on_site' ? 'warning' : 'info'">{{ __('admin-people.users.payment_mode.'.$partner['payment_mode']) }}</x-admin.badge></span>
+                    <span class="{{ $value }}"><x-admin.badge :tone="$partner['payment_mode'] === OrderPaymentMode::OnSite->value ? 'warning' : 'info'">{{ __('admin-people.users.payment_mode.'.$partner['payment_mode']) }}</x-admin.badge></span>
                 </div>
             </div>
         </x-admin.card>
