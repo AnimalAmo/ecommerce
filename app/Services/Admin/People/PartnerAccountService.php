@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Partner\RegisterPartnerAccount;
 use App\Services\PasswordResetService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
@@ -84,7 +85,7 @@ class PartnerAccountService
             throw PaymentModeException::stripeRequired();
         }
 
-        $user = $this->registrar->register([
+        $user = $this->register($email, $existing, [
             'firstName' => (string) $data['firstName'],
             'lastName' => (string) $data['lastName'],
             'businessName' => (string) $data['businessName'],
@@ -96,7 +97,7 @@ class PartnerAccountService
             'vat' => (string) $data['vat'],
             'taxCode' => (string) $data['taxCode'],
             'onlinePayment' => $online,
-        ], $existing, null);
+        ]);
 
         // Rilettura: per un cliente promosso la relazione era già caricata
         // (vuota) dal controllo qui sopra.
@@ -173,6 +174,32 @@ class PartnerAccountService
         RateLimiter::hit($key, self::RESEND_DECAY_SECONDS);
 
         $this->sendWelcome($partner);
+    }
+
+    /**
+     * Fra il controllo e la scrittura c'è una finestra: due admin sullo stesso
+     * indirizzo passano entrambi guard(), e il secondo trova l'unique di
+     * users.email. Senza questo, chi perde la corsa vedrebbe un 500 invece del
+     * messaggio del flusso. Si rilegge la riga: se ora è di un partner, è la
+     * corsa persa; altrimenti il vincolo parla d'altro e l'errore risale.
+     *
+     * @param  array<string, mixed>  $step1
+     *
+     * @throws PartnerAccountException
+     */
+    private function register(string $email, ?User $existing, array $step1): User
+    {
+        try {
+            return $this->registrar->register($step1, $existing, null);
+        } catch (UniqueConstraintViolationException $e) {
+            $winner = User::query()->whereRaw('lower(email) = ?', [$email])->first();
+
+            if ($winner === null || ! $winner->hasRole('partner')) {
+                throw $e;
+            }
+
+            throw PartnerAccountException::alreadyPartner($winner);
+        }
     }
 
     /** @throws PartnerAccountException */

@@ -10,7 +10,9 @@ use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use App\Services\Admin\People\PartnerAccountService;
 use App\Services\Partner\PartnerPaymentModeService;
+use App\Services\Partner\RegisterPartnerAccount;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
@@ -22,6 +24,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Mockery\MockInterface;
+use PDOException;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -138,6 +141,34 @@ class PartnerAccountServiceTest extends TestCase
         }
 
         $this->assertSame('Nome originale', $partner->partnerProfile->fresh()->business_name);
+    }
+
+    public function test_losing_a_race_on_the_same_email_gives_the_partner_error(): void
+    {
+        // Due admin sullo stesso indirizzo: il secondo passa il controllo e
+        // trova l'unique di users.email quando scrive. Deve vedere il
+        // messaggio del flusso, con il link alla scheda, non un 500.
+        $this->mock(RegisterPartnerAccount::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('register')->once()->andReturnUsing(function (): User {
+                $winner = User::factory()->create(['email' => 'marco@example.com']);
+                $winner->assignRole('partner');
+
+                throw new UniqueConstraintViolationException(
+                    'mysql',
+                    'insert into `users` (`email`) values (?)',
+                    ['marco@example.com'],
+                    new PDOException('Duplicate entry'),
+                );
+            });
+        });
+
+        try {
+            $this->service()->create($this->data());
+            $this->fail('La corsa persa deve diventare un errore del flusso.');
+        } catch (PartnerAccountException $e) {
+            $this->assertSame(__('admin-people.partner_create.errors.already_partner'), $e->getMessage());
+            $this->assertSame('marco@example.com', $e->user?->email);
+        }
     }
 
     public function test_a_deactivated_account_is_refused_and_stays_deactivated(): void
