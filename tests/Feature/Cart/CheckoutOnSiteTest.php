@@ -455,13 +455,15 @@ class CheckoutOnSiteTest extends TestCase
         $seller->partnerProfile()->update(['online_payment' => false]);
         $this->app->forgetScopedInstances();
 
-        // Lo step 2 si apre sul flusso normale, poi il client ribalta ?regalo.
+        // Lo step 2 si apre sul flusso normale, poi il client ribalta ?regalo:
+        // il bottone non resta muto, dice perché non prenota.
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
             ->assertSet('paymentMode', OrderPaymentMode::OnSite->value)
             ->set('gift', true)
             ->call('confirmBooking')
-            ->assertSet('step', 2);
+            ->assertSet('step', 2)
+            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.gift_not_allowed')));
 
         $this->assertDatabaseCount('orders', 0);
         $this->assertCount(2, $this->cart()->items());

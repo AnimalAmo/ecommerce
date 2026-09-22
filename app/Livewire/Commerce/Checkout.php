@@ -449,9 +449,16 @@ class Checkout extends Component
      */
     public function confirmBooking(PlaceOrderAction $action, PartnerPaymentModeService $modes): void
     {
+        if ($this->step !== 2 || $this->processing || ! $this->paysOnSite() || $this->checkoutToken === null) {
+            return;
+        }
+
         // In struttura non si regala mai: preparePaymentStep rifiuta il flusso
         // regalo, ma ?regalo non è bloccato e il client può ribaltarlo dopo.
-        if ($this->step !== 2 || $this->processing || $this->gift || ! $this->paysOnSite() || $this->checkoutToken === null) {
+        // Il bottone non resta muto: stesso avviso del passaggio allo step 2.
+        if ($this->gift) {
+            Flux::toast(text: __('checkout.on_site.gift_not_allowed'), variant: 'danger');
+
             return;
         }
 
