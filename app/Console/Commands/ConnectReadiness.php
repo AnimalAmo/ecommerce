@@ -146,7 +146,7 @@ class ConnectReadiness extends Command
 
         PartnerProfile::query()->with('user')->get()
             ->each(function (PartnerProfile $profile) use (&$rows): void {
-                if (! $profile->requiresOnlinePayment() || $profile->canBePaid()) {
+                if ($profile->canPublish()) {
                     return;
                 }
 
