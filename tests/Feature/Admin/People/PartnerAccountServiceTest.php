@@ -197,6 +197,22 @@ class PartnerAccountServiceTest extends TestCase
         $this->assertSame('https://lecorti.example/prenota', $profile->payment_url);
     }
 
+    public function test_an_empty_link_clears_the_one_left_on_an_old_profile(): void
+    {
+        // Ex partner offline col suo link: l'admin lo promuove di nuovo e
+        // lascia il campo vuoto. Il vecchio link non deve sopravvivere, o
+        // continuerebbe a comparire nella conferma di prenotazione B2C.
+        $client = User::factory()->create(['email' => 'marco@example.com']);
+        $client->assignRole('client');
+        PartnerProfile::factory()->offline()->for($client)->create(['payment_url' => 'https://vecchio.example/prenota']);
+
+        $created = $this->service()->create($this->data(['paymentMode' => 'on_site', 'paymentUrl' => '']));
+
+        $profile = $created->user->partnerProfile->fresh();
+        $this->assertFalse($profile->online_payment);
+        $this->assertNull($profile->payment_url);
+    }
+
     public function test_a_javascript_link_is_refused_before_anything_is_written(): void
     {
         try {

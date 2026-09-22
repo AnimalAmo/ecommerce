@@ -105,7 +105,10 @@ class PartnerAccountService
 
         $paymentModeSaved = true;
 
-        if ($url !== null || $profile->requiresOnlinePayment() !== $online) {
+        // Anche il link va confrontato, non solo "è stato scritto qualcosa":
+        // su un profilo che esisteva già, un campo lasciato vuoto deve
+        // cancellare il link di prima, non lasciarlo vivo.
+        if ($url !== $profile->payment_url || $profile->requiresOnlinePayment() !== $online) {
             $paymentModeSaved = $this->applyPaymentMode($profile, $online, $url);
         }
 
