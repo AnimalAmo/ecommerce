@@ -446,8 +446,10 @@ class Checkout extends Component
     /**
      * "Conferma prenotazione" del ramo in struttura. Non si muove denaro,
      * quindi niente capture e niente storni. Il token bloccato allo step 2
-     * rende idempotenti doppio click e seconda tab, e il limite per utente
-     * frena chi accaparra posti gratis a raffica.
+     * rende idempotenti il doppio click e il replay dello stesso snapshot; una
+     * seconda tab monta un componente col suo token, e la ferma il carrello
+     * già svuotato dal primo ordine. Il limite per utente frena chi accaparra
+     * posti gratis a raffica.
      */
     public function confirmBooking(PlaceOrderAction $action, PartnerPaymentModeService $modes): void
     {

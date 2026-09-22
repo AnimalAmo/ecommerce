@@ -101,7 +101,7 @@ class PlaceOnSiteOrderTest extends TestCase
         $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
         $first = $this->placeOnSiteOrder(checkoutToken: self::TOKEN);
 
-        // Secondo click con le righe di nuovo in carrello (altra tab): stesso token, nessun secondo ordine.
+        // Replay dello stesso snapshot con le righe di nuovo in carrello: stesso token, nessun secondo ordine.
         $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
 
         try {

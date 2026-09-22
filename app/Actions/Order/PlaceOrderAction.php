@@ -129,7 +129,9 @@ class PlaceOrderAction
         try {
             $carrier = DB::transaction(function () use ($data, $token): OrderPipelineData {
                 // Senza gateway non c'è un incasso che faccia da chiave: il token
-                // del checkout ferma doppio click e seconda tab.
+                // del checkout ferma il doppio click e il replay dello stesso
+                // snapshot. Una seconda tab ha un componente e un token suoi: la
+                // ferma solo il carrello già svuotato dal primo ordine.
                 if (($existing = $this->findOnSiteOrder($token)) !== null) {
                     throw OrderAlreadyPlacedException::forOrder($existing);
                 }
