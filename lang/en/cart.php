@@ -42,6 +42,7 @@ return [
         'taxes_included' => 'Taxes and fees included',
         'promo_code' => 'Enter promo code',
         'secure_payment' => 'Secure payment method',
+        'pay_on_site' => 'You will pay the partner directly',
         'free_cancellation' => 'Free cancellation',
         'free_cancellation_note' => '(No later than 2 weeks before the event)',
         'go_to_checkout' => 'Go to checkout',

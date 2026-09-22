@@ -3,12 +3,14 @@
 namespace App\Livewire\Commerce;
 
 use App\Data\Cart\CartItemData;
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
 use App\Services\FavoriteService;
+use App\Services\Partner\PartnerPaymentModeService;
 use DateTimeImmutable;
 use Flux\Flux;
 use Livewire\Attributes\Url;
@@ -224,6 +226,10 @@ class Cart extends Component
             'bookingHours' => self::bookingHours(),
             // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
             'suggestions' => $items === [] ? app(FavoriteService::class)->topFavorited() : [],
+            // Un carrello = un partner (CartManager::guardSinglePartner): una sola
+            // lettura basta per tutta la pagina. Carrello vuoto → null → Online.
+            'paysOnSite' => app(PartnerPaymentModeService::class)
+                ->forOwner($this->cart()->currentPartnerUserId()) === OrderPaymentMode::OnSite,
         ])->title(__('cart.ui.page_title'));
     }
 

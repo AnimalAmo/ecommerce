@@ -297,8 +297,14 @@
 
                                 <div class="px-[15px] {{ $gift ? 'pt-[10px]' : 'pt-5' }}">
                                     <div class="flex items-center gap-5">
-                                        <flux:icon.lock class="h-5 w-5 shrink-0 text-[#1E2E33]" />
-                                        <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.secure_payment') }}</span>
+                                        @if ($paysOnSite)
+                                            {{-- Partner senza pagamento online: nessun addebito qui, si paga a lui --}}
+                                            <flux:icon.pin class="h-5 w-5 shrink-0 text-[#1E2E33]" />
+                                            <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.pay_on_site') }}</span>
+                                        @else
+                                            <flux:icon.lock class="h-5 w-5 shrink-0 text-[#1E2E33]" />
+                                            <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.secure_payment') }}</span>
+                                        @endif
                                     </div>
                                     @unless ($gift)
                                         <div class="mt-5 flex items-start gap-5">
@@ -340,6 +346,9 @@
                 <span>{{ __('cart.ui.total') }}</span>
                 <span>{{ \App\Support\Format::money($total) }}</span>
             </div>
+            @if ($paysOnSite)
+                <p class="mt-2 text-sm leading-none text-[#627277]">{{ __('cart.ui.pay_on_site') }}</p>
+            @endif
             @if ($gift)
                 <flux:button wire:click="goToCheckout" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
             @else

@@ -42,6 +42,7 @@ return [
         'taxes_included' => 'Tasse e commissioni comprese',
         'promo_code' => 'Inserisci codice promozionale',
         'secure_payment' => 'Metodo di pagamento sicuro',
+        'pay_on_site' => 'Pagherai direttamente al partner',
         'free_cancellation' => 'Cancellazione gratuita',
         'free_cancellation_note' => '(Non oltre 2 settimane prima dell’evento)',
         'go_to_checkout' => 'Vai al checkout',
