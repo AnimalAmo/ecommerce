@@ -147,6 +147,9 @@ class Checkout extends Component
 
     private bool $sellerProfileResolved = false;
 
+    /** @var array<int, ?int> memo per richiesta del venditore, per flusso (0 normale, 1 regalo) */
+    private array $sellerUserIdMemo = [];
+
     /** Tab dello stepper (statici: si avanza solo con le CTA, i tab non sono cliccabili). */
     public const STEPS = [1 => 'I tuoi dati', 2 => 'Pagamento', 3 => 'Fatto!'];
 
@@ -734,10 +737,20 @@ class Checkout extends Component
         return $this->sellerProfileMemo;
     }
 
-    /** Proprietario delle righe del flusso corrente (null a carrello vuoto). */
+    /**
+     * Proprietario delle righe del flusso corrente (null a carrello vuoto).
+     * Memo per richiesta e per flusso: allo step 1 l'etichetta dello stepper lo
+     * chiede a ogni render, cioè a ogni tasto dei campi wire:model.live.
+     */
     private function sellerUserId(): ?int
     {
-        return $this->cart()->items($this->gift)->first()?->partnerUserId;
+        $flow = (int) $this->gift;
+
+        if (! array_key_exists($flow, $this->sellerUserIdMemo)) {
+            $this->sellerUserIdMemo[$flow] = $this->cart()->items($this->gift)->first()?->partnerUserId;
+        }
+
+        return $this->sellerUserIdMemo[$flow];
     }
 
     /** Modalità attuale del venditore, riletta dal profilo (profilo assente = online). */
