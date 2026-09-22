@@ -107,7 +107,7 @@ class UserShow extends Component
         }
 
         Flux::modal('payment-mode')->close();
-        Flux::toast(text: __('admin-people.users.payment_mode_saved'), variant: 'success');
+        Flux::toast(text: __('admin-people.users.payment_mode_saved', [], 'it'), variant: 'success');
     }
 
     /** Ruolo e stato li verifica il service: qui solo l'esito a schermo. */
@@ -121,7 +121,7 @@ class UserShow extends Component
             return;
         }
 
-        Flux::toast(text: __('admin-people.users.welcome_sent', ['email' => $this->user->email]), variant: 'success');
+        Flux::toast(text: __('admin-people.users.welcome_sent', ['email' => $this->user->email], 'it'), variant: 'success');
     }
 
     /** @return array<string, string> */
