@@ -5,6 +5,7 @@ namespace App\Services\Admin\People;
 use App\Enums\OrderPaymentMode;
 use App\Enums\OrderStatus;
 use App\Models\Order\Order;
+use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -160,10 +161,11 @@ class UserDirectory
      * Riquadro "Partner" della scheda: ragione sociale, schede a catalogo
      * (sospese comprese: qui servono tutte, quindi query builder e non i
      * model con lo scope di visibilità), prenotazioni valide ricevute
-     * (pagate o confermate in struttura) e modalità di pagamento. Lo "speso"
-     * dei clienti resta invece solo Paid: sono soldi passati da AnimalAmo.
+     * (pagate o confermate in struttura), modalità di pagamento con il link
+     * del partner e stato del collegamento Stripe. Lo "speso" dei clienti
+     * resta invece solo Paid: sono soldi passati da AnimalAmo.
      *
-     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string}
+     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string, payment_url: ?string, stripe_status: string}
      */
     public function partnerSummary(User $user): array
     {
@@ -180,7 +182,26 @@ class UserDirectory
                 ->count(),
             // Profilo assente = Online, la stessa regola di PartnerPaymentModeService::forOwner().
             'payment_mode' => ($user->partnerProfile?->paymentMode() ?? OrderPaymentMode::Online)->value,
+            'payment_url' => $user->partnerProfile?->payment_url,
+            'stripe_status' => self::stripeStatus($user->partnerProfile),
         ];
+    }
+
+    /**
+     * payable | incomplete | none. "Incompleto" è chi ha aperto l'account
+     * Stripe ma non riceve ancora bonifici: è il caso che l'admin deve
+     * sollecitare, e con un solo "non collegato" sparirebbe. Chi ha già
+     * canSell() (incassi attivi) ma non i bonifici resta "incompleto": per
+     * pubblicare online serve canBePaid(), e un terzo stato non cambierebbe
+     * cosa deve fare l'admin.
+     */
+    public static function stripeStatus(?PartnerProfile $profile): string
+    {
+        return match (true) {
+            $profile?->canBePaid() === true => 'payable',
+            $profile?->stripe_account_id !== null => 'incomplete',
+            default => 'none',
+        };
     }
 
     /** Stato mostrato nel pannello: active | inactive | anonymized. */

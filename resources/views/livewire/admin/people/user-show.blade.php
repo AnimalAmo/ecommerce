@@ -92,6 +92,12 @@
 
     @if ($partner !== null)
         <x-admin.card :heading="__('admin-people.users.partner')">
+            {{-- Un disattivato non entrerebbe comunque: niente link da rimandare. --}}
+            @if ($user->is_active && $anonymizedAt === null)
+                <x-slot:aside>
+                    <x-admin.button tone="outline" icon="envelope" wire:click="resendWelcome">{{ __('admin-people.users.resend_welcome') }}</x-admin.button>
+                </x-slot:aside>
+            @endif
             <div class="px-5 py-3">
                 <div class="{{ $row }}"><span class="{{ $label }}">{{ __('admin-people.users.business_name') }}</span><span class="{{ $value }}">{{ $partner['business_name'] ?: '—' }}</span></div>
                 <div class="{{ $row }} items-center">
@@ -110,9 +116,24 @@
                     <span class="{{ $label }}">{{ __('admin-people.users.bookings_received') }}</span>
                     <span class="{{ $value }}">{{ trans_choice('admin-people.users.bookings_count', $partner['bookings'], ['count' => $partner['bookings']]) }}</span>
                 </div>
-                <div class="{{ $row }}">
+                <div class="{{ $row }} items-center">
                     <span class="{{ $label }}">{{ __('admin-people.users.payment_mode_label') }}</span>
-                    <span class="{{ $value }}"><x-admin.badge :tone="$partner['payment_mode'] === OrderPaymentMode::OnSite->value ? 'warning' : 'info'">{{ __('admin-people.users.payment_mode.'.$partner['payment_mode']) }}</x-admin.badge></span>
+                    <span class="{{ $value }}">
+                        <x-admin.badge :tone="$partner['payment_mode'] === OrderPaymentMode::OnSite->value ? 'warning' : 'info'">{{ __('admin-people.users.payment_mode.'.$partner['payment_mode']) }}</x-admin.badge>
+                        {{-- Link già verificato http/https da PartnerPaymentModeService: sicuro come href. --}}
+                        @if ($partner['payment_url'] !== null)
+                            <a href="{{ $partner['payment_url'] }}" target="_blank" rel="noopener noreferrer" class="ml-2 text-[13.5px] font-normal break-all text-admin-teal hover:underline">{{ $partner['payment_url'] }}</a>
+                        @endif
+                    </span>
+                    @if ($user->partnerProfile !== null)
+                        <x-admin.button tone="ghost" icon="pencil-square" wire:click="editPaymentMode">{{ __('admin-people.users.payment_mode_change') }}</x-admin.button>
+                    @endif
+                </div>
+                <div class="{{ $row }}">
+                    <span class="{{ $label }}">{{ __('admin-people.users.stripe_label') }}</span>
+                    <span class="{{ $value }}">
+                        <x-admin.badge :tone="['payable' => 'success', 'incomplete' => 'warning', 'none' => 'muted'][$partner['stripe_status']]">{{ __('admin-people.users.stripe_status.'.$partner['stripe_status']) }}</x-admin.badge>
+                    </span>
                 </div>
             </div>
         </x-admin.card>
@@ -193,4 +214,8 @@
     </div>
 
     @include('livewire.admin.people.partials.anonymize-modal')
+
+    @if ($partner !== null)
+        @include('livewire.admin.people.partials.payment-mode-modal')
+    @endif
 </div>
