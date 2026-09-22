@@ -125,6 +125,30 @@ class PartnerNewBookingMailTest extends TestCase
         Mail::assertSent(PartnerNewBookingMail::class, fn (PartnerNewBookingMail $mail): bool => $mail->hasTo('fido@example.com'));
     }
 
+    // ── Lingua ───────────────────────────────────────────────────────────────
+
+    public function test_the_partner_mail_ignores_the_language_of_the_buyer(): void
+    {
+        // Coda sync: il listener gira dentro la richiesta del checkout, con la
+        // lingua di chi compra. Il partner non ha una lingua salvata.
+        $partner = User::factory()->offlinePartner()->create(['first_name' => 'Marco']);
+        $order = Order::factory()->onSite()->create();
+        $item = OrderItem::factory()->for($order)->create(['partner_user_id' => $partner->id]);
+
+        app()->setLocale('en');
+        OnSiteOrderConfirmed::dispatch($order->fresh());
+
+        $mail = Mail::sent(PartnerNewBookingMail::class)->first();
+        $mail->assertHasSubject('Nuova prenotazione '.$order->order_number);
+
+        $html = $mail->render();
+
+        $this->assertStringContainsString('Hai una nuova prenotazione!', $html);
+        $this->assertStringContainsString('Da incassare tu', $html);
+        $this->assertStringNotContainsString('You have a new booking!', $html);
+        $this->assertStringContainsString('href="'.url('/partner/prenotazioni/'.$item->id).'"', $html);
+    }
+
     // ── Render ───────────────────────────────────────────────────────────────
 
     public function test_online_mail_renders_lines_paid_online_and_the_booking_link(): void
