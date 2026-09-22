@@ -40,7 +40,7 @@
 
                 {{-- Azioni: Indietro (a crea servizio) + Avanti (pill scuro) --}}
                 <div class="mt-8 flex items-center justify-end gap-6">
-                    <flux:button href="{{ route('partner.service.create') }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.structure_type.back') }}</flux:button>
+                    <flux:button href="{{ $backUrl }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.structure_type.back') }}</flux:button>
                     <flux:button wire:click="next" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.structure_type.next') }}</flux:button>
                 </div>
             </div>

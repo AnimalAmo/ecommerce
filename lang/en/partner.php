@@ -9,6 +9,13 @@ return [
         'draft_not_publishable' => "We can't publish this service yet: some required details are missing. Check the steps and try again.",
     ],
 
+    // Automatic publishing once Stripe is connected (P4): dashboard notice after the wizard.
+    'publish' => [
+        'awaiting_stripe' => 'Your service is ready: we will publish it automatically as soon as you finish connecting your Stripe account.',
+        // Edit of a service already completed: the previous version stays the published one.
+        'awaiting_stripe_changes' => 'Changes saved: the version already published stays as it was, and we will publish your changes automatically as soon as you finish connecting your Stripe account.',
+    ],
+
     // Partner payment mode: online on AnimalAmo or paid directly to the partner.
     'payment_mode' => [
         'section' => 'How you get paid',

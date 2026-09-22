@@ -72,7 +72,9 @@ class PartnerSmartboxStructuresTest extends TestCase
         $partner = $this->actingAsActivePartner();
         $structure = $this->structureOf($partner);
 
+        // La bozza è del partner loggato: il wizard non apre quelle altrui.
         $draft = StructureDraft::create([
+            'user_id' => $partner->id,
             'status' => 'draft',
             'current_step' => 10,
             'smartbox_structures' => [(string) $structure->id],
@@ -93,7 +95,9 @@ class PartnerSmartboxStructuresTest extends TestCase
         $partner = $this->actingAsActivePartner();
         $structure = $this->structureOf($partner);
 
+        // La bozza è del partner loggato: il wizard non apre quelle altrui.
         $draft = StructureDraft::create([
+            'user_id' => $partner->id,
             'status' => 'draft',
             'current_step' => 10,
             'smartbox_structures' => ['hotel_brescia', (string) $structure->id],

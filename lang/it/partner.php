@@ -9,6 +9,13 @@ return [
         'draft_not_publishable' => 'Non possiamo ancora pubblicare questo servizio: mancano alcuni dati obbligatori. Ricontrolla gli step e riprova.',
     ],
 
+    // Pubblicazione automatica al collegamento Stripe (P4): avviso in dashboard dopo il wizard.
+    'publish' => [
+        'awaiting_stripe' => 'Il tuo servizio è pronto: lo pubblicheremo in automatico appena completi il collegamento del conto su Stripe.',
+        // Modifica di un servizio già completato: la versione precedente resta quella pubblicata.
+        'awaiting_stripe_changes' => "Modifiche salvate: la versione già pubblicata resta com'era e pubblicheremo le modifiche in automatico appena completi il collegamento del conto su Stripe.",
+    ],
+
     // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.
     'payment_mode' => [
         'section' => 'Come ricevi i pagamenti',

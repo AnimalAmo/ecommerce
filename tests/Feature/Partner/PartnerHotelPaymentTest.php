@@ -4,6 +4,7 @@ namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Structure\HotelPayment;
 use App\Models\Structure\StructureDraft;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -34,10 +35,31 @@ class PartnerHotelPaymentTest extends TestCase
             ->assertHasErrors(['form.accountHolder', 'form.iban', 'form.bic']);
     }
 
+    /**
+     * Bozza hotel pubblicabile (nome + stanze) del partner, in sessione come
+     * nel wizard. Una bozza vuota ora è un errore (DraftNotPublishableException)
+     * e non più una bozza "completed" senza riga a catalogo.
+     */
+    private function publishableDraftOf(User $partner): StructureDraft
+    {
+        $draft = StructureDraft::create([
+            'user_id' => $partner->id,
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 10,
+            'service_category' => 'struttura',
+            'type' => 'hotel',
+            'name' => ['it' => 'Hotel Zampa Felice'],
+            'rooms' => [['type' => 'doppia', 'count' => 2, 'price' => '75']],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        return $draft;
+    }
+
     public function test_next_saves_and_completes_to_the_dashboard(): void
     {
         // La bozza va a catalogo solo se il partner può essere pagato.
-        $this->actingAsPayablePartner();
+        $this->publishableDraftOf($this->actingAsPayablePartner());
 
         Livewire::test(HotelPayment::class)
             ->set('form.accountHolder', 'Mario Rossi')
@@ -57,7 +79,7 @@ class PartnerHotelPaymentTest extends TestCase
     public function test_skip_completes_the_draft_and_redirects(): void
     {
         // La bozza va a catalogo solo se il partner può essere pagato.
-        $this->actingAsPayablePartner();
+        $this->publishableDraftOf($this->actingAsPayablePartner());
 
         Livewire::test(HotelPayment::class)
             ->call('skip')

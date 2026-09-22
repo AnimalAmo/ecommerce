@@ -86,9 +86,10 @@ class PartnerHotelRoomsTest extends TestCase
      * Casa vacanza: si affitta l'alloggio intero, quindi lo step perde le
      * righe stanza ripetibili e chiede posti letto + prezzo a notte.
      */
-    private function wholePropertyDraft(): void
+    /** Da partner loggato la bozza dev'essere sua: il wizard non apre quelle altrui. */
+    private function wholePropertyDraft(?int $userId = null): void
     {
-        $draft = StructureDraft::create(['status' => 'draft', 'current_step' => 5, 'type' => 'casa_vacanza']);
+        $draft = StructureDraft::create(['user_id' => $userId, 'status' => 'draft', 'current_step' => 5, 'type' => 'casa_vacanza']);
         session(['structure_draft_id' => $draft->id]);
     }
 
@@ -119,9 +120,9 @@ class PartnerHotelRoomsTest extends TestCase
     public function test_whole_property_page_swaps_the_room_copy_for_the_unit_copy(): void
     {
         // Il wizard vive dentro il gruppo ['auth','partner']: da ospite è un redirect.
-        $this->actingAsActivePartner();
+        $partner = $this->actingAsActivePartner();
 
-        $this->wholePropertyDraft();
+        $this->wholePropertyDraft($partner->id);
 
         $this->get(route('partner.structure.hotel.rooms'))
             ->assertOk()

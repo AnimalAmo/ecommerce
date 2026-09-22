@@ -32,7 +32,8 @@ class SmartboxType extends Component
 
     public function render()
     {
-        return view('livewire.partner.smartbox.smartbox-type')
-            ->title(__('partner.smartbox_type.title'));
+        return view('livewire.partner.smartbox.smartbox-type', [
+            'backUrl' => $this->serviceChoiceBackUrl(),
+        ])->title(__('partner.smartbox_type.title'));
     }
 }

@@ -32,7 +32,8 @@ class ActivityType extends Component
 
     public function render()
     {
-        return view('livewire.partner.activity.activity-type')
-            ->title(__('partner.activity_type.title'));
+        return view('livewire.partner.activity.activity-type', [
+            'backUrl' => $this->serviceChoiceBackUrl(),
+        ])->title(__('partner.activity_type.title'));
     }
 }

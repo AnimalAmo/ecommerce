@@ -37,8 +37,19 @@ class PartnerActivityCancellationTest extends TestCase
 
     public function test_accepts_a_valid_window_and_completes_the_draft(): void
     {
-        // La bozza va a catalogo solo se il partner può essere pagato.
-        $this->actingAsPayablePartner();
+        // La bozza va a catalogo solo se il partner può essere pagato, e solo
+        // se ha nome e data: una bozza vuota ora è un errore.
+        $partner = $this->actingAsPayablePartner();
+        $draft = StructureDraft::create([
+            'user_id' => $partner->id,
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 9,
+            'service_category' => 'attivita',
+            'type' => 'attivita',
+            'name' => ['it' => 'Passeggiata a sei zampe'],
+            'date_start' => '2026-10-10',
+        ]);
+        session(['structure_draft_id' => $draft->id]);
 
         Livewire::test(ActivityCancellation::class)
             ->set('when', '7')

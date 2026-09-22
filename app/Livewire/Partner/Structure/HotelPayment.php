@@ -22,16 +22,21 @@ class HotelPayment extends Component
         $this->form->validate();
         $this->saveStep($this->form->toDraft(), 11);
 
-        // Ultimo step: onboarding struttura completato (stato -> completed).
-        $this->completeDraft();
-        $this->redirectRoute('partner.dashboard');
+        // Ultimo step: pubblica o mette in attesa di Stripe. Si resta qui solo
+        // se la bozza non è pubblicabile, col toast che lo spiega.
+        if ($this->completeDraft()) {
+            $this->redirectRoute('partner.dashboard');
+        }
     }
 
     public function skip(): void
     {
-        // "Inserisci più tardi": completa senza i dati di pagamento.
-        $this->completeDraft();
-        $this->redirectRoute('partner.dashboard');
+        // "Inserisci più tardi": completa senza i dati di pagamento. Nessun
+        // saveStep: lo step finale (11) lo scrive DraftCompleter, anche quando
+        // la bozza resta in attesa di Stripe (prima restava a 10).
+        if ($this->completeDraft()) {
+            $this->redirectRoute('partner.dashboard');
+        }
     }
 
     public function render()
