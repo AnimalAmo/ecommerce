@@ -64,6 +64,11 @@
                     <span>{{ $header['price'] }}</span>
                 </div>
 
+                {{-- Unico per tutte le viste: la testata mobile sopra è lg:hidden --}}
+                @if ($header['paysOnSite'])
+                    <flux:badge size="sm" color="amber" class="mt-4">{{ __('profile.orders.pay_on_site') }}</flux:badge>
+                @endif
+
                 {{-- Box articolo (XD "Box ordine scrivi recensione" 468x206): divider sotto il titolo e
                      "Scrivi una recensione" sotto la foto. 3 per riga con gap 10.
                      Il controllo c'è su ogni card a prescindere dal bucket: gli artboard desktop

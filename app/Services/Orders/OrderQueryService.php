@@ -2,6 +2,7 @@
 
 namespace App\Services\Orders;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
@@ -23,7 +24,7 @@ class OrderQueryService
      * già presentate per il blade (data ordine, conteggio articoli, strip
      * foto dagli snapshot, totale via Format::money).
      *
-     * @return list<array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string}>
+     * @return list<array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, status: string, paymentMode: string, paysOnSite: bool}>
      */
     public function listFor(User $user, bool $past): array
     {
@@ -56,8 +57,8 @@ class OrderQueryService
      * a "I miei ordini" (un ordine è atomico: mai spezzato tra due sezioni).
      * I regali restano sugli ordini: chi compra non partecipa.
      *
-     * NOTA: ProfileEvents è ancora mock (TODO "eventi reali da backend"), quindi
-     * finché non legge dal db l'evento acquistato non comparirà nella lista.
+     * ProfileEvents legge le righe evento dagli snapshot di order_items (come
+     * "I miei ordini"): l'evento appena acquistato compare subito nella lista.
      *
      * @param  list<ProductType|null>  $types  tipologie delle righe acquistate
      * @return string nome della rotta (mai un path: la locale la mette route())
@@ -87,7 +88,7 @@ class OrderQueryService
      * Testata del riepilogo (conteggio | data | totale): stessa riga della lista,
      * usata dall'artboard app "Profilo – i miei ordini - riepilogo ordine".
      *
-     * @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string}
+     * @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, status: string, paymentMode: string, paysOnSite: bool}
      */
     public function presentHeader(Order $order): array
     {
@@ -102,12 +103,12 @@ class OrderQueryService
     public function presentItems(Order $order): array
     {
         return $order->items
-            ->map(fn (OrderItem $item): array => $this->presentItem($item))
+            ->map(fn (OrderItem $item): array => $this->presentItem($item, $order))
             ->values()
             ->all();
     }
 
-    /** @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string} */
+    /** @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, status: string, paymentMode: string, paysOnSite: bool} */
     private function presentRow(Order $order): array
     {
         return [
@@ -116,6 +117,27 @@ class OrderQueryService
             'itemsLabel' => trans_choice('orders.items_count', $order->items->count(), ['count' => $order->items->count()]),
             'photos' => $order->items->pluck('photo_url')->filter()->values()->all(),
             'price' => Format::money($order->total_cents),
+            ...$this->paymentSnapshot($order),
+        ];
+    }
+
+    /**
+     * Stato e modalità di pagamento dalla copia scritta sull'ordine alla sua
+     * nascita, mai dal flag attuale del partner: se il partner cambia
+     * modalità, gli ordini passati restano come sono stati confermati. Un
+     * model appena uscito da create() senza la colonna vale Online, come il
+     * default della migration.
+     *
+     * @return array{status: string, paymentMode: string, paysOnSite: bool}
+     */
+    private function paymentSnapshot(Order $order): array
+    {
+        $mode = $order->payment_mode ?? OrderPaymentMode::Online;
+
+        return [
+            'status' => $order->status->value,
+            'paymentMode' => $mode->value,
+            'paysOnSite' => $mode === OrderPaymentMode::OnSite,
         ];
     }
 
@@ -126,7 +148,7 @@ class OrderQueryService
      *
      * @return array<string, mixed>
      */
-    private function presentItem(OrderItem $item): array
+    private function presentItem(OrderItem $item, Order $order): array
     {
         $options = $item->options ?? [];
 
@@ -143,6 +165,7 @@ class OrderQueryService
             'price' => Format::money($item->price_cents),
             'giftDedication' => $options['gift']['dedication'] ?? null,
             'giftMessage' => $options['gift']['message'] ?? null,
+            ...$this->paymentSnapshot($order),
         ];
     }
 

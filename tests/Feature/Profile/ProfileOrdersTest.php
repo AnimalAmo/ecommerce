@@ -23,6 +23,7 @@ class ProfileOrdersTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        app()->setLocale('it');
 
         // Oggi fisso: mercoledì 15/07/2026 a mezzogiorno — le date relative a
         // now() restano coerenti tra arrange e assert anche a cavallo di mezzanotte.
@@ -263,6 +264,83 @@ class ProfileOrdersTest extends TestCase
             ->assertSee('Dedicato a: Per Anna')
             ->assertSee('Messaggio: Buon compleanno!')
             ->assertDontSee('anna@example.com');
+    }
+
+    public function test_an_on_site_order_shows_the_pay_on_site_badge_in_list_and_summary(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->onSite()->for($user)->create();
+        OrderItem::factory()->for($order)->create([
+            'booked_from' => now()->addDays(5),
+            'booked_until' => now()->addDays(7),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrders::class)
+            ->assertSee($order->order_number)
+            ->assertSee(__('profile.orders.pay_on_site'));
+
+        $this->actingAs($user)
+            ->get(route('profilo.ordini.riepilogo', $order->order_number))
+            ->assertOk()
+            ->assertSee(__('profile.orders.pay_on_site'));
+    }
+
+    public function test_an_online_order_has_no_pay_on_site_badge(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderWithWindow($user, now()->addDays(5), now()->addDays(10));
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrders::class)
+            ->assertSee($order->order_number)
+            ->assertDontSee(__('profile.orders.pay_on_site'));
+
+        $this->actingAs($user)
+            ->get(route('profilo.ordini.riepilogo', $order->order_number))
+            ->assertOk()
+            ->assertDontSee(__('profile.orders.pay_on_site'));
+    }
+
+    /**
+     * La modalità si legge dalla copia salvata sull'ordine, mai dal flag
+     * attuale del partner: un cambio di modalità non riscrive la storia.
+     */
+    public function test_the_badge_follows_the_order_snapshot_not_the_partner_current_mode(): void
+    {
+        $user = User::factory()->create();
+        $nowOnline = User::factory()->stripeConnected()->create();
+        $nowOffline = User::factory()->offlinePartner()->create();
+
+        $onSite = Order::factory()->onSite()->for($user)->create();
+        OrderItem::factory()->for($onSite)->create([
+            'partner_user_id' => $nowOnline->id,
+            'booked_from' => now()->addDays(5),
+            'booked_until' => now()->addDays(7),
+        ]);
+
+        $online = Order::factory()->paid()->for($user)->create();
+        OrderItem::factory()->for($online)->create([
+            'partner_user_id' => $nowOffline->id,
+            'booked_from' => now()->addDays(8),
+            'booked_until' => now()->addDays(9),
+        ]);
+
+        $rows = collect(app(OrderQueryService::class)->listFor($user, false))->keyBy('number');
+
+        $this->assertTrue($rows[$onSite->order_number]['paysOnSite']);
+        $this->assertSame('on_site', $rows[$onSite->order_number]['paymentMode']);
+        $this->assertSame('confirmed', $rows[$onSite->order_number]['status']);
+
+        $this->assertFalse($rows[$online->order_number]['paysOnSite']);
+        $this->assertSame('online', $rows[$online->order_number]['paymentMode']);
+        $this->assertSame('paid', $rows[$online->order_number]['status']);
+
+        $items = app(OrderQueryService::class)->presentItems($onSite->fresh()->load('items'));
+
+        $this->assertTrue($items[0]['paysOnSite']);
+        $this->assertSame('on_site', $items[0]['paymentMode']);
+        $this->assertSame('confirmed', $items[0]['status']);
     }
 
     public function test_demo_order_seeder_is_idempotent_and_matches_the_mock(): void

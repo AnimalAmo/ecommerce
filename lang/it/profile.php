@@ -129,4 +129,9 @@ return [
     'events_empty' => 'Qui compariranno gli eventi a cui parteciperai, appena ne prenoterai uno.',
     'events_empty_cta' => 'Leggi le storie di Animal Times',
 
+    // Badge degli ordini confermati senza pagamento online (copia salvata sull'ordine).
+    'orders' => [
+        'pay_on_site' => 'Da pagare in struttura',
+    ],
+
 ];

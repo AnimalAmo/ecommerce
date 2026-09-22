@@ -129,4 +129,9 @@ return [
     'events_empty' => 'The events you sign up for will show up here, as soon as you book your first one.',
     'events_empty_cta' => 'Read the Animal Times stories',
 
+    // Badge of orders confirmed without online payment (copy saved on the order).
+    'orders' => [
+        'pay_on_site' => 'To pay on site',
+    ],
+
 ];

@@ -46,6 +46,9 @@
                                             <span class="h-[13px] w-px shrink-0 bg-[#DEDEDE]" aria-hidden="true"></span>
                                             <span>{{ $order['price'] }}</span>
                                         </div>
+                                        @if ($order['paysOnSite'])
+                                            <flux:badge size="sm" color="amber" class="mt-3">{{ __('profile.orders.pay_on_site') }}</flux:badge>
+                                        @endif
 
                                         <div class="mt-[17px] flex gap-2 overflow-hidden">
                                             @foreach ($order['photos'] as $photo)
@@ -70,6 +73,9 @@
                                     <div class="flex shrink-0 flex-col items-end">
                                         <p class="text-[13px] leading-none text-[#555555]">{{ $order['date'] }}</p>
                                         <p class="mt-2 text-2xl font-semibold leading-none text-[#2B2B2B]">{{ $order['price'] }}</p>
+                                        @if ($order['paysOnSite'])
+                                            <flux:badge size="sm" color="amber" class="mt-2">{{ __('profile.orders.pay_on_site') }}</flux:badge>
+                                        @endif
                                         <flux:icon.arrow-forward class="mt-3 h-[17px] w-[10px] text-[#2B2B2B]" />
                                     </div>
                                 </a>
