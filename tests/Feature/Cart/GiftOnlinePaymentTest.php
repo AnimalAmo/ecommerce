@@ -73,6 +73,29 @@ class GiftOnlinePaymentTest extends TestCase
             ->assertSeeHtml('setGift(false)');
     }
 
+    public function test_il_regalo_scelto_prima_che_il_partner_passi_offline_viene_rifiutato_non_convertito(): void
+    {
+        $owner = User::factory()->stripeConnected()->create();
+        $this->ownedBy($owner);
+
+        $page = Livewire::withQueryParams(['regalo' => '1'])
+            ->test(SmartboxDetail::class, ['box' => 'relax-lombardia'])
+            ->assertSet('gift', true);
+
+        // Il partner passa a "in struttura" con la pagina già aperta. La
+        // richiesta successiva è nuova: niente memoizzazione di quella prima.
+        $owner->partnerProfile->update(['online_payment' => false]);
+        app()->forgetScopedInstances();
+
+        $page->call('addToCart')
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null)
+                === 'Questa Smartbox non si può regalare: il partner la fa pagare direttamente in struttura. Puoi acquistarla per te.')
+            ->assertSet('cartPopupOpen', false)
+            ->assertSet('gift', false);
+
+        $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
+    }
+
     // ── CartManager ──────────────────────────────────────────────────────────
 
     public function test_add_item_rifiuta_il_regalo_di_un_partner_offline(): void

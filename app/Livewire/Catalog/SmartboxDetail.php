@@ -64,11 +64,10 @@ class SmartboxDetail extends Component
     {
         $box = SmartboxPackage::where('slug', $this->boxSlug)->firstOrFail();
 
-        // Il toggle è nascosto, ma setGift(true) resta chiamabile a mano.
-        if ($this->paysOnSite($box)) {
-            $this->gift = false;
-        }
-
+        // Nessuna conversione silenziosa in acquisto per sé: se il partner è
+        // passato "in struttura" dopo che la pagina ha mostrato Regala,
+        // CartManager rifiuta il regalo e il toast lo dice (render() poi
+        // riporta la card su Acquista).
         $options = ['animals' => $this->editAnimals];
 
         if ($this->gift) {
