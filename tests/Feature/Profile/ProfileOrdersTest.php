@@ -368,18 +368,11 @@ class ProfileOrdersTest extends TestCase
         $rows = collect(app(OrderQueryService::class)->listFor($user, false))->keyBy('number');
 
         $this->assertTrue($rows[$onSite->order_number]['paysOnSite']);
-        $this->assertSame('on_site', $rows[$onSite->order_number]['paymentMode']);
-        $this->assertSame('confirmed', $rows[$onSite->order_number]['status']);
-
         $this->assertFalse($rows[$online->order_number]['paysOnSite']);
-        $this->assertSame('online', $rows[$online->order_number]['paymentMode']);
-        $this->assertSame('paid', $rows[$online->order_number]['status']);
 
-        $items = app(OrderQueryService::class)->presentItems($onSite->fresh()->load('items'));
-
-        $this->assertTrue($items[0]['paysOnSite']);
-        $this->assertSame('on_site', $items[0]['paymentMode']);
-        $this->assertSame('confirmed', $items[0]['status']);
+        // Il riepilogo legge la stessa testata della lista.
+        $this->assertTrue(app(OrderQueryService::class)->presentHeader($onSite->fresh()->load('items'))['paysOnSite']);
+        $this->assertFalse(app(OrderQueryService::class)->presentHeader($online->fresh()->load('items'))['paysOnSite']);
     }
 
     public function test_demo_order_seeder_is_idempotent_and_matches_the_mock(): void

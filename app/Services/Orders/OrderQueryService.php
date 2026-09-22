@@ -2,7 +2,6 @@
 
 namespace App\Services\Orders;
 
-use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
@@ -24,7 +23,7 @@ class OrderQueryService
      * già presentate per il blade (data ordine, conteggio articoli, strip
      * foto dagli snapshot, totale via Format::money).
      *
-     * @return list<array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, status: string, paymentMode: string, paysOnSite: bool}>
+     * @return list<array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, paysOnSite: bool}>
      */
     public function listFor(User $user, bool $past): array
     {
@@ -88,7 +87,7 @@ class OrderQueryService
      * Testata del riepilogo (conteggio | data | totale): stessa riga della lista,
      * usata dall'artboard app "Profilo – i miei ordini - riepilogo ordine".
      *
-     * @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, status: string, paymentMode: string, paysOnSite: bool}
+     * @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, paysOnSite: bool}
      */
     public function presentHeader(Order $order): array
     {
@@ -103,12 +102,12 @@ class OrderQueryService
     public function presentItems(Order $order): array
     {
         return $order->items
-            ->map(fn (OrderItem $item): array => $this->presentItem($item, $order))
+            ->map(fn (OrderItem $item): array => $this->presentItem($item))
             ->values()
             ->all();
     }
 
-    /** @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, status: string, paymentMode: string, paysOnSite: bool} */
+    /** @return array{number: string, date: string, itemsLabel: string, photos: list<string>, price: string, paysOnSite: bool} */
     private function presentRow(Order $order): array
     {
         return [
@@ -117,27 +116,9 @@ class OrderQueryService
             'itemsLabel' => trans_choice('orders.items_count', $order->items->count(), ['count' => $order->items->count()]),
             'photos' => $order->items->pluck('photo_url')->filter()->values()->all(),
             'price' => Format::money($order->total_cents),
-            ...$this->paymentSnapshot($order),
-        ];
-    }
-
-    /**
-     * Stato e modalità di pagamento dalla copia scritta sull'ordine alla sua
-     * nascita, mai dal flag attuale del partner: se il partner cambia
-     * modalità, gli ordini passati restano come sono stati confermati. Un
-     * model appena uscito da create() senza la colonna vale Online, come il
-     * default della migration. Il badge "pagamento al partner" vale solo per
-     * una prenotazione confermata: annullata, non la paga nessuno.
-     *
-     * @return array{status: string, paymentMode: string, paysOnSite: bool}
-     */
-    private function paymentSnapshot(Order $order): array
-    {
-        $mode = $order->payment_mode ?? OrderPaymentMode::Online;
-
-        return [
-            'status' => $order->status->value,
-            'paymentMode' => $mode->value,
+            // Badge "pagamento al partner" dalla copia scritta sull'ordine, mai dal
+            // flag attuale del partner: un cambio di modalità non riscrive gli
+            // ordini già confermati. Annullata, la prenotazione non la paga nessuno.
             'paysOnSite' => $order->isConfirmedOnSite(),
         ];
     }
@@ -149,7 +130,7 @@ class OrderQueryService
      *
      * @return array<string, mixed>
      */
-    private function presentItem(OrderItem $item, Order $order): array
+    private function presentItem(OrderItem $item): array
     {
         $options = $item->options ?? [];
 
@@ -166,7 +147,6 @@ class OrderQueryService
             'price' => Format::money($item->price_cents),
             'giftDedication' => $options['gift']['dedication'] ?? null,
             'giftMessage' => $options['gift']['message'] ?? null,
-            ...$this->paymentSnapshot($order),
         ];
     }
 
