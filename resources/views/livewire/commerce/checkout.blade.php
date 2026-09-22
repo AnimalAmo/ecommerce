@@ -76,7 +76,9 @@
                                 <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.on_site.title') }}</h1>
 
                                 <div class="mt-5 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[15px] leading-6 text-[#0D171A]">
-                                    <p>{{ __('checkout.on_site.notice', ['partner' => $partnerName ?? '', 'amount' => \App\Support\Format::money($total)]) }}</p>
+                                    <p>{{ $partnerName !== null
+                                        ? __('checkout.on_site.notice', ['partner' => $partnerName, 'amount' => \App\Support\Format::money($total)])
+                                        : __('checkout.on_site.notice_without_partner', ['amount' => \App\Support\Format::money($total)]) }}</p>
                                     @if ($partnerPaymentUrl !== null)
                                         <p class="mt-2">
                                             <a href="{{ $partnerPaymentUrl }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#68CDEB] underline">{{ __('checkout.on_site.pay_on_website') }}</a>

@@ -14,6 +14,8 @@ return [
         'throttle' => 'Too many confirmation attempts. Please try again in :seconds seconds.',
         'title' => 'Confirm your booking',
         'notice' => 'You will pay :amount directly to :partner, at the property or on their website.',
+        // Same box when the partner has not given a company name
+        'notice_without_partner' => 'You will pay :amount directly to the partner, at the property or on their website.',
         'pay_on_website' => 'Go to the partner\'s website to pay or book',
         'confirm_cta' => 'Confirm booking',
         'failed' => 'We could not record your booking. Please try again in a moment.',

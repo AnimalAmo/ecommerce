@@ -92,6 +92,19 @@ class CheckoutOnSiteViewTest extends TestCase
             ->assertDontSee(__('checkout.on_site.pay_on_website'));
     }
 
+    public function test_without_a_business_name_the_notice_still_reads_well(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $seller = User::factory()->offlinePartner()->create();
+        $seller->partnerProfile()->update(['business_name' => null]);
+        $this->addStructureLine(Structure::factory()->create(['user_id' => $seller->id, 'price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSee(__('checkout.on_site.notice_without_partner', ['amount' => Format::money(50000)]))
+            ->assertDontSee('direttamente a  ');
+    }
+
     public function test_an_unsafe_payment_url_is_never_printed(): void
     {
         $this->actingAs(User::factory()->create());

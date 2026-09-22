@@ -14,6 +14,8 @@ return [
         'throttle' => 'Troppi tentativi di conferma. Riprova tra :seconds secondi.',
         'title' => 'Conferma la tua prenotazione',
         'notice' => 'Pagherai direttamente a :partner l\'importo di :amount, in struttura o sul suo sito.',
+        // Stesso riquadro quando il partner non ha indicato la ragione sociale
+        'notice_without_partner' => 'Pagherai direttamente al partner l\'importo di :amount, in struttura o sul suo sito.',
         'pay_on_website' => 'Vai al sito del partner per pagare o prenotare',
         'confirm_cta' => 'Conferma prenotazione',
         'failed' => 'Non siamo riusciti a registrare la prenotazione. Riprova tra qualche istante.',

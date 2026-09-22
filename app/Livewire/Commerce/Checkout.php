@@ -576,7 +576,8 @@ class Checkout extends Component
             ],
             // Ramo in struttura: niente Stripe allo step 2, riquadro col partner da pagare.
             'paysOnSite' => $this->paysOnSite(),
-            'partnerName' => $onSiteSeller?->business_name,
+            // Ragione sociale facoltativa a profilo: vuota = variante del riquadro senza nome.
+            'partnerName' => filled($onSiteSeller?->business_name) ? $onSiteSeller->business_name : null,
             // Solo http(s): un javascript: scritto senza passare dal service non arriva all'href.
             'partnerPaymentUrl' => SafeUrl::http($onSiteSeller?->payment_url),
             // Righe metodo: solo i PaymentMethod il cui gateway è abilitato.
