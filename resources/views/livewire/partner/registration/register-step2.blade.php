@@ -45,6 +45,19 @@
                     <p class="mt-3 text-sm text-red-500">{{ $message }}</p>
                 @enderror
 
+                {{-- Come vuole essere pagato (richiesta della cliente, 22/09/2026; non è nel mockup XD):
+                     stesse card della tipologia, "Online" preselezionato. Si cambia poi dal profilo. --}}
+                <h2 class="mt-8 text-lg font-medium text-[#0D171A] max-lg:mt-6 max-lg:text-[15px]">{{ __('partner.register2.payment_mode.label') }}</h2>
+
+                <flux:radio.group wire:model="paymentMode" variant="cards" class="radio-check mt-4 flex-col [--color-accent:#68CDEB] [&_[data-flux-radio-cards]]:flex-row-reverse [&_[data-flux-radio-cards]]:justify-end [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33] [&_[data-flux-subheading]]:!text-sm [&_[data-flux-subheading]]:!text-[#627277]">
+                    <flux:radio value="online" wire:key="pay-online" :label="__('partner.register2.payment_mode.online_title')" :description="__('partner.register2.payment_mode.online_subtitle')" />
+                    <flux:radio value="on_site" wire:key="pay-on-site" :label="__('partner.register2.payment_mode.on_site_title')" :description="__('partner.register2.payment_mode.on_site_subtitle')" />
+                </flux:radio.group>
+
+                @error('paymentMode')
+                    <p class="mt-3 text-sm text-red-500">{{ $message }}</p>
+                @enderror
+
                 {{-- Azioni: Indietro (link a step 1) + Crea un account (pill scuro) --}}
                 {{-- Su mobile: CTA a tutta larghezza sopra, "Indietro" centrato sotto (pattern work-with-us) --}}
                 <div class="mt-8 flex items-center justify-end gap-6 max-lg:flex-col-reverse max-lg:items-stretch max-lg:gap-3">

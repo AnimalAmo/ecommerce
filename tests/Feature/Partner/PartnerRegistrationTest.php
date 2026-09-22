@@ -4,6 +4,9 @@ namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Registration\PartnerRegisterStep1;
 use App\Livewire\Partner\Registration\PartnerRegisterStep2;
+use App\Models\Partner\PartnerProfile;
+use App\Models\User;
+use App\Services\Partner\RegisterPartnerAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -11,6 +14,30 @@ use Tests\TestCase;
 class PartnerRegistrationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app()->setLocale('it');
+    }
+
+    /** @return array<string, string> */
+    private function step1Data(array $overrides = []): array
+    {
+        return array_merge([
+            'firstName' => 'Susanna',
+            'lastName' => 'Rossi',
+            'businessName' => 'Hotel Rosovino',
+            'email' => 'susanna@example.com',
+            'address' => 'Via C. Pacini 19',
+            'province' => 'MI',
+            'zip' => '20131',
+            'phone' => '3498798828',
+            'vat' => '86334519757',
+            'taxCode' => 'RSSSNN98A41F205X',
+        ], $overrides);
+    }
 
     public function test_step_1_page_renders(): void
     {
@@ -164,5 +191,147 @@ class PartnerRegistrationTest extends TestCase
             ->set('service', 'attivita')
             ->call('createAccount')
             ->assertHasNoErrors();
+    }
+
+    public function test_step_2_asks_how_the_partner_wants_to_be_paid(): void
+    {
+        $this->get(route('partner.register.step2'))
+            ->assertOk()
+            ->assertSee(__('partner.register2.payment_mode.label'))
+            ->assertSee(__('partner.register2.payment_mode.online_title'))
+            ->assertSee(__('partner.register2.payment_mode.on_site_title'));
+
+        // Preselezionato online: chi non sceglie resta come i partner di prima.
+        Livewire::test(PartnerRegisterStep2::class)->assertSet('paymentMode', 'online');
+    }
+
+    public function test_step_2_rejects_an_unknown_payment_mode(): void
+    {
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->set('paymentMode', 'bonifico')
+            ->call('createAccount')
+            ->assertHasErrors('paymentMode');
+    }
+
+    public function test_a_new_partner_is_online_by_default(): void
+    {
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->call('createAccount')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertTrue(User::where('email', 'susanna@example.com')->firstOrFail()->partnerProfile->online_payment);
+    }
+
+    public function test_a_new_partner_can_choose_to_be_paid_directly(): void
+    {
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->set('paymentMode', 'on_site')
+            ->call('createAccount')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.dashboard'));
+
+        $profile = User::where('email', 'susanna@example.com')->firstOrFail()->partnerProfile;
+        $this->assertFalse($profile->online_payment);
+        $this->assertTrue($profile->canPublish());
+
+        // Consumata con il resto della sessione di registrazione.
+        $this->assertNull(session('partner_registration.payment_mode'));
+    }
+
+    public function test_a_promoted_client_without_a_profile_gets_the_chosen_mode(): void
+    {
+        $client = User::factory()->create(['email' => 'susanna@example.com']);
+        $client->syncRoles(['client']);
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::actingAs($client)
+            ->test(PartnerRegisterStep2::class)
+            ->set('service', 'attivita')
+            ->set('paymentMode', 'on_site')
+            ->call('createAccount')
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertFalse($client->fresh()->partnerProfile->online_payment);
+    }
+
+    /**
+     * Rifare l'iscrizione su un profilo esistente non cambia la modalità:
+     * riportare online un partner senza Stripe con schede vive le
+     * renderebbe invendibili.
+     */
+    public function test_registering_again_does_not_change_an_existing_mode(): void
+    {
+        $partner = User::factory()->create(['email' => 'susanna@example.com']);
+        $partner->syncRoles(['client']);
+        PartnerProfile::factory()->offline()->for($partner)->create();
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::actingAs($partner)
+            ->test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->set('paymentMode', 'online')
+            ->call('createAccount')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertFalse($partner->fresh()->partnerProfile->online_payment);
+    }
+
+    public function test_the_registrar_writes_the_mode_only_on_a_new_profile(): void
+    {
+        $registrar = app(RegisterPartnerAccount::class);
+
+        $new = $registrar->register($this->step1Data(['email' => 'nuovo@example.com']) + ['onlinePayment' => false]);
+        $this->assertFalse($new->partnerProfile->fresh()->online_payment);
+
+        $existing = User::factory()->create(['email' => 'esistente@example.com']);
+        PartnerProfile::factory()->for($existing)->create();
+        $registrar->register($this->step1Data(['email' => 'esistente@example.com']) + ['onlinePayment' => false], $existing);
+        $this->assertTrue($existing->fresh()->partnerProfile->online_payment);
+
+        // Senza la chiave (chiamanti di prima) si resta online.
+        $legacy = $registrar->register($this->step1Data(['email' => 'legacy@example.com']));
+        $this->assertTrue($legacy->partnerProfile->fresh()->online_payment);
+    }
+
+    public function test_the_choice_survives_the_email_conflict_bounce(): void
+    {
+        User::factory()->create(['email' => 'susanna@example.com']);
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->set('paymentMode', 'on_site')
+            ->call('createAccount')
+            ->assertRedirect(route('partner.register'));
+
+        $this->assertSame('on_site', session('partner_registration.payment_mode'));
+
+        Livewire::test(PartnerRegisterStep2::class)->assertSet('paymentMode', 'on_site');
+    }
+
+    public function test_the_choice_survives_a_disabled_account(): void
+    {
+        $user = User::factory()->inactive()->create(['email' => 'susanna@example.com']);
+        $user->syncRoles(['client']);
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::actingAs($user)
+            ->test(PartnerRegisterStep2::class)
+            ->set('service', 'struttura')
+            ->set('paymentMode', 'on_site')
+            ->call('createAccount')
+            ->assertSet('accountInactive', true)
+            ->assertNoRedirect();
+
+        $this->assertSame('on_site', session('partner_registration.payment_mode'));
     }
 }

@@ -287,6 +287,13 @@ return [
         'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
         'submit' => 'Crea un account',
         'error_required' => 'Seleziona almeno un servizio.',
+        'payment_mode' => [
+            'label' => 'Come vuoi essere pagato?',
+            'online_title' => 'Online su AnimalAmo',
+            'online_subtitle' => 'Il cliente paga con carta al momento della prenotazione. Per pubblicare dovrai collegare il tuo conto Stripe.',
+            'on_site_title' => 'Direttamente da me, in struttura o sul mio sito',
+            'on_site_subtitle' => 'Il cliente prenota su AnimalAmo e paga te, senza pagamento online. Puoi cambiare idea dal tuo profilo.',
+        ],
     ],
 
     /*

@@ -287,6 +287,13 @@ return [
         'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
         'submit' => 'Create an account',
         'error_required' => 'Select at least one service.',
+        'payment_mode' => [
+            'label' => 'How do you want to be paid?',
+            'online_title' => 'Online on AnimalAmo',
+            'online_subtitle' => 'The customer pays by card when booking. To publish you will need to connect your Stripe account.',
+            'on_site_title' => 'Directly to me, on site or on my website',
+            'on_site_subtitle' => 'The customer books on AnimalAmo and pays you, with no online payment. You can change this from your profile.',
+        ],
     ],
 
     /*

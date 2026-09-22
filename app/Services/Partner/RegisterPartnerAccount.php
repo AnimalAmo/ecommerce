@@ -23,7 +23,8 @@ use Illuminate\Support\Str;
 class RegisterPartnerAccount
 {
     /**
-     * @param  array<string, string>  $step1  dati validati dello step 1 (camelCase)
+     * @param  array<string, mixed>  $step1  dati validati dello step 1 (camelCase), più
+     *                                       `onlinePayment` (bool) scelto allo step 2
      * @param  User|null  $account  account B2C da promuovere; null = nuovo utente
      */
     public function register(array $step1, ?User $account = null, ?int $applicationId = null): User
@@ -35,7 +36,7 @@ class RegisterPartnerAccount
 
             // updateOrCreate: un utente promosso potrebbe già avere il profilo
             // (seconda attività, oppure ritorno sullo step 2).
-            $user->partnerProfile()->updateOrCreate([], [
+            $profile = $user->partnerProfile()->updateOrCreate([], [
                 'business_name' => $step1['businessName'],
                 'vat' => $step1['vat'],
                 'tax_code' => $step1['taxCode'],
@@ -43,6 +44,14 @@ class RegisterPartnerAccount
                 'province' => $step1['province'],
                 'zip' => $step1['zip'],
             ]);
+
+            // La modalità di pagamento si sceglie una volta, quando il profilo
+            // nasce. Rifare l'iscrizione su un profilo esistente non deve
+            // cambiarla: riportare online un partner senza Stripe con schede
+            // vive le renderebbe invendibili. Il cambio passa dal profilo.
+            if ($profile->wasRecentlyCreated) {
+                $profile->update(['online_payment' => (bool) ($step1['onlinePayment'] ?? true)]);
+            }
 
             if ($applicationId !== null) {
                 PartnerApplication::whereKey($applicationId)->update([
