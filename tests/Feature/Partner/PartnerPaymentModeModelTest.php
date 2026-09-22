@@ -69,6 +69,24 @@ class PartnerPaymentModeModelTest extends TestCase
         $this->assertTrue($offlinePayable->canBePaid());
     }
 
+    /**
+     * Una regola sola per il service (che rifiuta) e per la pagina profilo (che
+     * disabilita la scelta): resta fuori solo chi è offline e non è pagabile.
+     */
+    public function test_can_switch_to_online_nelle_quattro_combinazioni(): void
+    {
+        $onlinePayable = PartnerProfile::factory()->connected()->make(['user_id' => null]);
+        $onlineNotPayable = PartnerProfile::factory()->make(['user_id' => null]);
+        $offlineNotPayable = PartnerProfile::factory()->offline()->make(['user_id' => null]);
+        $offlinePayable = PartnerProfile::factory()->connected()->make(['user_id' => null, 'online_payment' => false]);
+
+        $this->assertTrue($onlinePayable->canSwitchToOnline());
+        // Restare online senza Stripe non è un passaggio.
+        $this->assertTrue($onlineNotPayable->canSwitchToOnline());
+        $this->assertFalse($offlineNotPayable->canSwitchToOnline());
+        $this->assertTrue($offlinePayable->canSwitchToOnline());
+    }
+
     public function test_l_ordine_in_struttura_legge_la_modalita_come_enum(): void
     {
         $order = Order::factory()->onSite()->create()->fresh();

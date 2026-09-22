@@ -39,7 +39,7 @@ class PartnerPaymentModeService
      */
     public function set(PartnerProfile $profile, bool $online, ?string $paymentUrl): PartnerProfile
     {
-        if ($online && ! $profile->requiresOnlinePayment() && ! $profile->canBePaid()) {
+        if ($online && ! $profile->canSwitchToOnline()) {
             throw PaymentModeException::stripeRequired();
         }
 

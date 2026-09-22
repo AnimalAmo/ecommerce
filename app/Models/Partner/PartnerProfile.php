@@ -83,6 +83,17 @@ class PartnerProfile extends Model
         return ! $this->requiresOnlinePayment() || $this->canBePaid();
     }
 
+    /**
+     * Può scegliere (o tenere) il pagamento online. Resta online chi lo è già,
+     * anche senza Stripe (appena iscritto, o creato dall'admin); chi è offline
+     * ci torna solo da pagabile. Una sola regola per il service, che rifiuta,
+     * e per la pagina profilo, che disabilita la scelta.
+     */
+    public function canSwitchToOnline(): bool
+    {
+        return $this->requiresOnlinePayment() || $this->canBePaid();
+    }
+
     public function paymentMode(): OrderPaymentMode
     {
         return $this->requiresOnlinePayment() ? OrderPaymentMode::Online : OrderPaymentMode::OnSite;

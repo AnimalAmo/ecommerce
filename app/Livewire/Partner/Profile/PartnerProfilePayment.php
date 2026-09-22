@@ -133,8 +133,8 @@ class PartnerProfilePayment extends Component
             'stripeStarted' => $profile?->stripe_account_id !== null,
             'stripeRequirements' => $profile?->stripe_requirements_due ?? [],
             'paysOnSite' => $paysOnSite,
-            // Solo chi è già offline e non è pagabile resta chiuso fuori da "online".
-            'onlineLocked' => $paysOnSite && ! $profile->canBePaid(),
+            // Stessa regola con cui il service rifiuta il passaggio: il disabled è solo grafica.
+            'onlineLocked' => $profile !== null && ! $profile->canSwitchToOnline(),
         ])
             ->title(__('partner.profile.payment_title'));
     }
