@@ -106,7 +106,8 @@ class UserShowTest extends TestCase
         $user = User::factory()->create();
         $order = Order::factory()->onSite()->for($user)->create(['total_cents' => 9000]);
 
-        // Prima del fallback i toni erano indicizzati senza "?? …": uno stato nuovo dava 500.
+        // "confirmed" ha il suo tono in $orderTones: qui si verifica che l'ordine esca con la sua etichetta.
+        // Il ramo "?? 'muted'" (stato senza tono) non è esercitato da questo test.
         $this->get(route('admin.users.show', $user))
             ->assertOk()
             ->assertSee($order->order_number)
