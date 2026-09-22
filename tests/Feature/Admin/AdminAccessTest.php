@@ -140,4 +140,11 @@ class AdminAccessTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_a_partner_cannot_open_the_new_listing_page(): void
+    {
+        $this->actingAsActivePartner();
+
+        $this->get(route('admin.catalog.create', ['family' => 'structure']))->assertForbidden();
+    }
 }
