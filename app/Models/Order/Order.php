@@ -53,6 +53,12 @@ class Order extends Model
         return $this->payment_mode === OrderPaymentMode::OnSite;
     }
 
+    /** Prenotazione valida da pagare al partner: un'annullata non la paga nessuno. */
+    public function isConfirmedOnSite(): bool
+    {
+        return $this->isOnSite() && $this->status === OrderStatus::Confirmed;
+    }
+
     /** Snapshot buyer in formato canonico: il telefono si salva sempre in E.164. */
     protected function phone(): Attribute
     {

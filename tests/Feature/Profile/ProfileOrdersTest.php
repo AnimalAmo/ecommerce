@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Profile;
 
+use App\Enums\OrderStatus;
 use App\Livewire\Profile\ProfileOrders;
 use App\Livewire\Profile\ProfileOrderSummary;
 use App\Models\Order\Order;
@@ -283,6 +284,44 @@ class ProfileOrdersTest extends TestCase
         $this->actingAs($user)
             ->get(route('profilo.ordini.riepilogo', $order->order_number))
             ->assertOk()
+            ->assertSee(__('profile.orders.pay_on_site'));
+    }
+
+    /** Annullata, la prenotazione non si paga a nessuno: il badge direbbe il falso. */
+    public function test_a_cancelled_on_site_order_has_no_pay_on_site_badge(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->onSite()->for($user)->create(['status' => OrderStatus::Cancelled]);
+        OrderItem::factory()->for($order)->create([
+            'booked_from' => now()->addDays(5),
+            'booked_until' => now()->addDays(7),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrders::class)
+            ->assertSee($order->order_number)
+            ->assertDontSee(__('profile.orders.pay_on_site'));
+
+        $this->actingAs($user)
+            ->get(route('profilo.ordini.riepilogo', $order->order_number))
+            ->assertOk()
+            ->assertDontSee(__('profile.orders.pay_on_site'));
+    }
+
+    /** "Pagamento al partner" dice come si paga, non un debito aperto: resta vero anche dopo il soggiorno. */
+    public function test_a_past_on_site_order_keeps_the_pay_on_site_badge(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->onSite()->for($user)->create();
+        OrderItem::factory()->for($order)->create([
+            'booked_from' => now()->subDays(10),
+            'booked_until' => now()->subDays(5),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileOrders::class)
+            ->set('tab', 'passati')
+            ->assertSee($order->order_number)
             ->assertSee(__('profile.orders.pay_on_site'));
     }
 

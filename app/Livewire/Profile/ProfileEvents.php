@@ -95,8 +95,9 @@ class ProfileEvents extends Component
             'location' => $item->location,
             // Evento gratuito: "Gratis" come nelle card del catalogo, non "0,00 €".
             'price' => $item->price_cents === 0 ? __('format.free') : Format::money($item->price_cents),
-            // Dalla copia sull'ordine, mai dal partner di oggi (come OrderQueryService).
-            'paysOnSite' => (bool) $item->order?->isOnSite(),
+            // Dalla copia sull'ordine, mai dal partner di oggi (come OrderQueryService);
+            // annullato, l'evento non si paga a nessuno.
+            'paysOnSite' => (bool) $item->order?->isConfirmedOnSite(),
         ];
     }
 }

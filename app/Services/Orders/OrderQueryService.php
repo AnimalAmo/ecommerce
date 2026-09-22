@@ -126,7 +126,8 @@ class OrderQueryService
      * nascita, mai dal flag attuale del partner: se il partner cambia
      * modalità, gli ordini passati restano come sono stati confermati. Un
      * model appena uscito da create() senza la colonna vale Online, come il
-     * default della migration.
+     * default della migration. Il badge "pagamento al partner" vale solo per
+     * una prenotazione confermata: annullata, non la paga nessuno.
      *
      * @return array{status: string, paymentMode: string, paysOnSite: bool}
      */
@@ -137,7 +138,7 @@ class OrderQueryService
         return [
             'status' => $order->status->value,
             'paymentMode' => $mode->value,
-            'paysOnSite' => $mode === OrderPaymentMode::OnSite,
+            'paysOnSite' => $order->isConfirmedOnSite(),
         ];
     }
 
