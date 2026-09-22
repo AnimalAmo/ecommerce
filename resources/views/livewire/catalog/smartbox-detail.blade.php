@@ -119,7 +119,9 @@
                 {{-- 2c. Card "Box acquista": stesso pt-10 della colonna sinistra così i due top si allineano su desktop. --}}
                 <aside class="relative z-10 w-full max-w-[453px] shrink-0 lg:w-[453px] lg:pt-10">
                     <div class="rounded-[4px] border border-[#DEDEDE] bg-white">
-                        {{-- Acquista / Regala (toggle server-driven: ?regalo=1 preseleziona Regala, la riga nasce con is_gift) --}}
+                        {{-- Acquista / Regala (toggle server-driven: ?regalo=1 preseleziona Regala, la riga nasce con is_gift).
+                             Assente per i partner che incassano in struttura: il regalo arriverebbe come già pagato. --}}
+                        @unless ($paysOnSite)
                         <div class="flex h-[57px] items-stretch">
                             <flux:button variant="ghost" wire:click="setGift(false)" aria-pressed="{{ $gift ? 'false' : 'true' }}" class="!h-full !flex-1 !rounded-none !px-0 !text-[17px] !font-normal !text-[#2B2B2B] hover:!bg-transparent [&>span]:flex [&>span]:items-center [&>span]:justify-center [&>span]:gap-2.5">
                                 <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full {{ $gift ? 'border border-[#C8C8C8] bg-white' : 'bg-brand-yellow' }}">
@@ -140,6 +142,7 @@
                             </flux:button>
                         </div>
                         <div class="mx-[22px] border-b border-[#DEDEDE]" aria-hidden="true"></div>
+                        @endunless
 
                         <p class="mt-[22px] text-center text-[28px] font-bold leading-[38px] text-[#2B2B2B]">{{ \App\Support\Format::money($box->price_cents) }}</p>
 

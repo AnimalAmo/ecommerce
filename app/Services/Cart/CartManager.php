@@ -4,9 +4,11 @@ namespace App\Services\Cart;
 
 use App\Data\Cart\CartData;
 use App\Data\Cart\CartItemData;
+use App\Enums\OrderPaymentMode;
 use App\Exceptions\CartValidationException;
 use App\Services\Availability\AvailabilityService;
 use App\Services\Partner\PartnerOwnerResolver;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -55,6 +57,7 @@ class CartManager implements CartStorageInterface
         }
 
         $this->guardSinglePartner($partnerUserId);
+        $this->guardGiftIsPaidOnline($partnerUserId, $isGift);
 
         $this->availability->ensureAvailable($purchasable, $options);
         $priceCents = $this->pricing->quote($purchasable, $options);
@@ -138,6 +141,19 @@ class CartManager implements CartStorageInterface
 
         if ($current !== null && $current !== $partnerUserId) {
             throw CartValidationException::singlePartner();
+        }
+    }
+
+    /**
+     * Una smartbox regalata arriva al destinatario come già pagata: con un
+     * partner che incassa in struttura non l'avrebbe pagata nessuno. Il service
+     * si risolve qui e non nel costruttore: il manager è singleton, il service è
+     * scoped (memoizza per richiesta) e catturato una volta resterebbe stantio.
+     */
+    private function guardGiftIsPaidOnline(int $partnerUserId, bool $isGift): void
+    {
+        if ($isGift && app(PartnerPaymentModeService::class)->forOwner($partnerUserId) === OrderPaymentMode::OnSite) {
+            throw CartValidationException::giftRequiresOnlinePayment();
         }
     }
 

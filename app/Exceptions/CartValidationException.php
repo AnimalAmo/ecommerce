@@ -70,4 +70,10 @@ class CartValidationException extends RuntimeException
     {
         return new self(__('cart.invalid_participants'));
     }
+
+    /** Regalo da un partner che incassa in struttura: il destinatario si troverebbe a pagare. */
+    public static function giftRequiresOnlinePayment(): self
+    {
+        return new self(__('cart.gift_requires_online_payment'));
+    }
 }

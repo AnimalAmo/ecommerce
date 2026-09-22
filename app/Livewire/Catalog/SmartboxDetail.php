@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerPaymentModeService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
@@ -62,6 +64,11 @@ class SmartboxDetail extends Component
     {
         $box = SmartboxPackage::where('slug', $this->boxSlug)->firstOrFail();
 
+        // Il toggle è nascosto, ma setGift(true) resta chiamabile a mano.
+        if ($this->paysOnSite($box)) {
+            $this->gift = false;
+        }
+
         $options = ['animals' => $this->editAnimals];
 
         if ($this->gift) {
@@ -89,6 +96,13 @@ class SmartboxDetail extends Component
     public function render()
     {
         $box = SmartboxPackage::where('slug', $this->boxSlug)->firstOrFail();
+        $paysOnSite = $this->paysOnSite($box);
+
+        // ?regalo=1 può arrivare da un link condiviso: per un partner che
+        // incassa in struttura il regalo non esiste, si riparte da Acquista.
+        if ($paysOnSite) {
+            $this->gift = false;
+        }
 
         return view('livewire.catalog.smartbox-detail', [
             'box' => $box,
@@ -96,6 +110,13 @@ class SmartboxDetail extends Component
             'hotelServices' => $box->amenityRows('hotel'),
             'animalServices' => $box->amenityRows('animal'),
             'animalsAtMax' => $this->animalsAtMax(),
+            'paysOnSite' => $paysOnSite,
         ])->title('AnimalAmo — '.$box->title);
+    }
+
+    /** Il partner incassa in struttura: niente "Regala" (la stessa regola la applica CartManager::addItem). */
+    private function paysOnSite(SmartboxPackage $box): bool
+    {
+        return app(PartnerPaymentModeService::class)->forPurchasable($box) === OrderPaymentMode::OnSite;
     }
 }

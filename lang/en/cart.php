@@ -12,6 +12,7 @@ return [
     'product_without_owner' => 'This product cannot be purchased right now. Please try again later.',
     'not_purchasable' => 'This product cannot be purchased.',
     'invalid_participants' => 'The selected number of participants is not valid.',
+    'gift_requires_online_payment' => 'This Smartbox cannot be given as a gift: the partner takes payment directly at the property. You can buy it for yourself.',
     // Add-to-cart confirmation toast
     'added' => 'Added to cart.',
     // Validity line of the smartbox card ('Smartbox valid for 12 months', :validity via Format::validity)
