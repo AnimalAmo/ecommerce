@@ -5,6 +5,8 @@ namespace Tests\Feature\Partner;
 use App\Livewire\Partner\Profile\PartnerProfilePayment;
 use App\Models\Partner\PartnerProfile;
 use Closure;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -150,6 +152,37 @@ class PartnerProfilePaymentTest extends TestCase
             ->call('savePaymentMode')
             ->assertHasErrors('paymentMode')
             ->assertSet('paymentMode', 'on_site');
+    }
+
+    /**
+     * Il titolo della sezione è l'etichetta del gruppo di radio: senza, un
+     * lettore di schermo annuncia due scelte senza nome. L'errore lo mette Flux
+     * dentro lo stesso campo, una volta sola.
+     */
+    public function test_the_payment_mode_choice_is_a_named_group(): void
+    {
+        $this->actingAsOfflinePartner();
+
+        $html = Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', 'online')
+            ->call('savePaymentMode')
+            ->html();
+
+        $dom = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $section = __('partner.payment_mode.section');
+        $error = __('partner.payment_mode.errors.stripe_required');
+
+        $fields = (new DOMXPath($dom))->query(
+            "//ui-field[ui-label[normalize-space(.) = '{$section}'] and ui-radio-group and *[@data-flux-error][contains(normalize-space(.), '{$error}')]]"
+        );
+
+        $this->assertSame(1, $fields->length);
+        $this->assertSame(1, substr_count($html, $error));
     }
 
     public function test_an_offline_partner_with_stripe_goes_back_online(): void

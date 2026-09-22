@@ -23,15 +23,19 @@
                          oppure direttamente al partner. "Online" senza Stripe operativo è disabilitato qui e
                          rifiutato anche dal service: il disabled è solo grafica. --}}
                     <form wire:submit="savePaymentMode" class="mt-6 rounded-[10px] border border-[#C8C8C8] p-5">
-                        <p class="text-base font-bold text-[#0D171A]">{{ __('partner.payment_mode.section') }}</p>
-                        <p class="mt-2 text-sm text-[#555555]">{{ __('partner.payment_mode.help') }}</p>
-
-                        <flux:radio.group wire:model="paymentMode" class="mt-4 [--color-accent:#68CDEB]">
+                        {{-- Titolo e aiuto come label/description del gruppo: danno il nome alle radio
+                             per i lettori di schermo, e Flux mette da sé l'errore dentro il campo. --}}
+                        <flux:radio.group
+                            wire:model="paymentMode"
+                            :label="__('partner.payment_mode.section')"
+                            :description="__('partner.payment_mode.help')"
+                            label:class="!text-base !font-bold !text-[#0D171A]"
+                            description:class="!mb-4 !text-sm !text-[#555555]"
+                            class="[--color-accent:#68CDEB]"
+                        >
                             <flux:radio value="online" :label="__('partner.payment_mode.online')" :disabled="$onlineLocked" />
                             <flux:radio value="on_site" :label="__('partner.payment_mode.on_site')" />
                         </flux:radio.group>
-                        {{-- Senza label come prop Flux non inietta l'errore: va messo a mano. --}}
-                        <flux:error name="paymentMode" />
 
                         @if ($onlineLocked)
                             <p class="mt-2 text-sm text-[#555555]">{{ __('partner.payment_mode.online_needs_stripe') }}</p>
