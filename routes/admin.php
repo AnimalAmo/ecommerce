@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CatalogCreateController;
 use App\Http\Controllers\Admin\CatalogExportController;
 use App\Http\Controllers\Admin\LogoutController;
 use App\Http\Controllers\Admin\NewsletterExportController;
@@ -28,6 +29,7 @@ use App\Livewire\Admin\People\UserIndex;
 use App\Livewire\Admin\People\UserShow;
 use App\Livewire\Admin\Reviews\ReviewIndex;
 use App\Livewire\Admin\Search;
+use App\Services\Admin\Catalog\AdminServiceCreator;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,6 +53,11 @@ Route::middleware(['auth', 'superadmin'])->group(function () {
     // Catalogo
     Route::get('catalog', CatalogIndex::class)->name('catalog.index');
     Route::get('catalog/export', CatalogExportController::class)->name('catalog.export');
+    // Le famiglie creabili si elencano in un posto solo: allargarle senza
+    // toccare la rotta darebbe un 404 muto sul link del menù.
+    Route::get('catalog/new/{family}', CatalogCreateController::class)
+        ->whereIn('family', AdminServiceCreator::CREATABLE_FAMILIES)
+        ->name('catalog.create');
     Route::get('catalog/{type}/{id}', CatalogShow::class)
         ->whereIn('type', ['structure', 'event', 'smartbox_package'])
         ->whereNumber('id')
