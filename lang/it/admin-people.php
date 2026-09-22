@@ -141,6 +141,16 @@ return [
         ],
     ],
 
+    'partner_create' => [
+        'errors' => [
+            'superadmin' => 'Questo indirizzo è di un amministratore del pannello: non può diventare partner.',
+            'already_partner' => 'Questo indirizzo è già di un partner.',
+            'inactive' => 'Questo indirizzo è di un account disattivato o anonimizzato: non può diventare partner da qui.',
+            'not_partner' => 'Questo account non è un partner: non c\'è un link di benvenuto da inviare.',
+            'throttled' => 'Il link è appena partito: aspetta un minuto prima di inviarlo di nuovo.',
+        ],
+    ],
+
     'anonymize' => [
         'title' => 'Cancellare questo contatto?',
         'body' => 'L\'indirizzo :email e i dati personali di :name verranno cancellati: profilo, animali, preferiti, carrello, carta salvata e iscrizione alla newsletter. I post e le recensioni restano, senza il suo nome.',
