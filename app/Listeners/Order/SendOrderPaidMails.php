@@ -13,7 +13,8 @@ use Illuminate\Queue\InteractsWithQueue;
 /**
  * Mail post-incasso (auto-discovery, come MergeCartOnLogin): conferma ordine
  * al buyer + una mail regalo per ogni riga gift con destinatario nelle
- * options. In coda e afterCommit: parte solo a ordine visibile a db (la
+ * options + "nuova prenotazione" a ogni partner delle righe. In coda e
+ * afterCommit: parte solo a ordine visibile a db (la
  * pipeline gira in DB::transaction).
  */
 class SendOrderPaidMails implements ShouldQueue
@@ -37,5 +38,7 @@ class SendOrderPaidMails implements ShouldQueue
             ->each(function (OrderItem $item) use ($order): void {
                 $this->sendSilently(new SmartboxGiftMail($item), $item->options['gift']['recipient_email'], $order->id);
             });
+
+        $this->sendPartnerBookingMails($order);
     }
 }

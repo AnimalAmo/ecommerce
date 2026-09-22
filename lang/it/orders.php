@@ -36,6 +36,16 @@ return [
             'pay_on_website' => 'Paga sul sito del partner',
             'partner' => 'Indirizzo: :name, :address',
         ],
+        // Mail al partner a ogni nuova prenotazione (PartnerNewBookingMail), online e in struttura
+        'partner_booking' => [
+            'subject' => 'Nuova prenotazione :order_number',
+            'title' => 'Hai una nuova prenotazione!',
+            'intro' => 'un cliente ha prenotato su AnimalAmo: ordine :order_number del :date. Ecco il dettaglio.',
+            'table_people' => 'Persone',
+            'paid_online' => 'Pagato online',
+            'to_collect' => 'Da incassare tu: :amount',
+            'cta' => 'Vedi la prenotazione',
+        ],
     ],
     // Profilo — i miei ordini: conteggio articoli della riga lista
     'items_count' => '{1} 1 articolo|[2,*] :count articoli',

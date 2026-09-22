@@ -27,5 +27,8 @@ class SendOnSiteOrderMails implements ShouldQueue
         $order = $event->order->loadMissing('items');
 
         $this->sendSilently(new OrderConfirmationMail($order), $order->email, $order->id);
+
+        // Senza addebito Stripe il partner non ha altro modo di saperlo.
+        $this->sendPartnerBookingMails($order);
     }
 }

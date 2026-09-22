@@ -2,6 +2,9 @@
 
 namespace App\Listeners\Order\Concerns;
 
+use App\Mail\PartnerNewBookingMail;
+use App\Models\Order\Order;
+use App\Models\User;
 use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +19,28 @@ use Throwable;
  */
 trait SendsOrderMails
 {
+    /**
+     * Una mail per ogni partner distinto delle righe. Oggi un carrello ha un
+     * solo venditore, ma le righe della piattaforma (partner_user_id null) non
+     * hanno nessuno da avvisare e un utente senza email non è raggiungibile.
+     */
+    private function sendPartnerBookingMails(Order $order): void
+    {
+        $partnerIds = $order->items->pluck('partner_user_id')->filter()->unique()->values();
+
+        if ($partnerIds->isEmpty()) {
+            return;
+        }
+
+        User::query()
+            ->whereKey($partnerIds->all())
+            ->get()
+            ->filter(fn (User $partner): bool => filled($partner->email))
+            ->each(function (User $partner) use ($order): void {
+                $this->sendSilently(new PartnerNewBookingMail($order, $partner), $partner->email, $order->id);
+            });
+    }
+
     /** Invia riportando (report + log) ogni fallimento senza propagarlo. */
     private function sendSilently(Mailable $mailable, string $recipient, int $orderId): void
     {

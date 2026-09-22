@@ -36,6 +36,16 @@ return [
             'pay_on_website' => 'Pay on the partner website',
             'partner' => 'Address: :name, :address',
         ],
+        // Mail to the partner on every new booking (PartnerNewBookingMail), online and at the property
+        'partner_booking' => [
+            'subject' => 'New booking :order_number',
+            'title' => 'You have a new booking!',
+            'intro' => 'a customer has booked on AnimalAmo: order :order_number of :date. Here are the details.',
+            'table_people' => 'People',
+            'paid_online' => 'Paid online',
+            'to_collect' => 'For you to collect: :amount',
+            'cta' => 'View the booking',
+        ],
     ],
     // Profile — my orders: item count of the list row
     'items_count' => '{1} 1 item|[2,*] :count items',
