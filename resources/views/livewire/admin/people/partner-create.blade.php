@@ -46,8 +46,8 @@
                         <flux:input wire:model="form.address" :label="$f('address')" />
                     </div>
                     <flux:select variant="listbox" searchable wire:model="form.province" :label="$f('province')" :placeholder="__('admin-people.partner_create.province_placeholder')">
-                        @foreach ($provinces as $province)
-                            <flux:select.option value="{{ $province->short_name }}" wire:key="province-{{ $province->id }}">{{ $province->name }} ({{ $province->short_name }})</flux:select.option>
+                        @foreach ($this->provinces as $province)
+                            <flux:select.option value="{{ $province['short'] }}" wire:key="province-{{ $province['short'] }}">{{ $province['name'] }} ({{ $province['short'] }})</flux:select.option>
                         @endforeach
                     </flux:select>
                     <flux:input wire:model="form.zip" inputmode="numeric" :label="$f('zip')" />

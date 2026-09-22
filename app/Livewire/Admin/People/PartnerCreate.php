@@ -8,6 +8,7 @@ use App\Livewire\Forms\Admin\PartnerCreateForm;
 use App\Models\Region\Province;
 use App\Services\Admin\People\PartnerAccountService;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -63,11 +64,31 @@ class PartnerCreate extends Component
         $this->redirectRoute('admin.users.show', $created->user, navigate: true);
     }
 
+    /**
+     * Anagrafica ferma (ProvinceSeeder): letta una volta e tenuta in cache,
+     * o la tabella intera tornerebbe a ogni round trip del form. Array di
+     * scalari e non model: con `cache.serializable_classes` a false una
+     * Collection di Eloquent non si rileggerebbe dalla cache, e il giro
+     * sarebbe inutile.
+     *
+     * @return list<array{name: string, short: string}>
+     */
+    #[Computed(persist: true)]
+    public function provinces(): array
+    {
+        return Province::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'short_name'])
+            ->map(fn (Province $province): array => [
+                'name' => (string) $province->name,
+                'short' => (string) $province->short_name,
+            ])
+            ->all();
+    }
+
     public function render()
     {
-        return view('livewire.admin.people.partner-create', [
-            'provinces' => Province::orderBy('name')->get(),
-        ])
+        return view('livewire.admin.people.partner-create')
             ->layout('layouts::admin')
             ->title(__('admin-people.partner_create.title'));
     }
