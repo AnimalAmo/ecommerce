@@ -24,9 +24,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event as Events;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
-use Livewire\Attributes\Locked;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
-use ReflectionProperty;
 use RuntimeException;
 use Tests\Support\Payment\FakePaymentGateway;
 use Tests\TestCase;
@@ -247,9 +246,13 @@ class CheckoutOnSiteTest extends TestCase
 
     public function test_the_stripe_actions_are_refused_on_site(): void
     {
-        $this->actingAs($this->buyer());
+        // Con una carta salvata useSavedCard parte true: selectSavedCard(false)
+        // cambia davvero stato e arriva alla guardia sul ramo in struttura.
+        $this->actingAs($this->buyerWithSavedCard());
         $this->addStructureLine($this->offlineStructure());
 
+        // Senza le guardie, initPaymentSession sul venditore offline (che non
+        // può incassare) accenderebbe il box "pagamento non disponibile".
         Livewire::test(Checkout::class)
             ->call('goToStep', 2)
             ->call('processPayment')
@@ -258,7 +261,13 @@ class CheckoutOnSiteTest extends TestCase
             ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
             ->assertSet('step', 2)
             ->call('selectPayment', 'apple_pay')
-            ->call('selectSavedCard', false);
+            ->assertSet('paymentMethod', 'apple_pay')
+            ->assertSet('paymentUnavailable', false)
+            ->assertNotDispatched('toast-show', $this->toast(__('payment.errors.seller_unavailable')))
+            ->call('selectSavedCard', false)
+            ->assertSet('useSavedCard', false)
+            ->assertSet('paymentUnavailable', false)
+            ->assertNotDispatched('toast-show', $this->toast(__('payment.errors.seller_unavailable')));
 
         $this->assertSame([], $this->gateway->initCalls);
         $this->assertSame([], $this->gateway->captureCalls);
@@ -429,14 +438,28 @@ class CheckoutOnSiteTest extends TestCase
         $this->assertCount(2, $this->cart()->items());
     }
 
-    public function test_payment_mode_and_checkout_token_are_locked(): void
+    public function test_payment_mode_and_checkout_token_cannot_be_set_by_the_client(): void
     {
-        foreach (['paymentMode', 'checkoutToken'] as $property) {
-            $this->assertNotEmpty(
-                (new ReflectionProperty(Checkout::class, $property))->getAttributes(Locked::class),
-                "{$property} deve essere #[Locked]: il client non può dettarla.",
-            );
+        $this->actingAs($this->buyer());
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => User::factory()->stripeConnected()->create()->id, 'price_cents' => 10000]));
+
+        // Da un checkout online: dire "on_site" vorrebbe dire prenotare senza pagare.
+        foreach (['paymentMode' => OrderPaymentMode::OnSite->value, 'checkoutToken' => '01J8Z3K4M5N6P7Q8R9S0T1V2W3'] as $property => $value) {
+            $component = Livewire::test(Checkout::class)->call('goToStep', 2);
+
+            try {
+                $component->set($property, $value);
+                $this->fail("{$property} deve essere #[Locked]: il client non può dettarla.");
+            } catch (CannotUpdateLockedPropertyException) {
+                // atteso
+            }
+
+            $component->assertSet('paymentMode', OrderPaymentMode::Online->value)
+                ->assertSet('checkoutToken', null);
         }
+
+        $this->assertDatabaseCount('orders', 0);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -460,6 +483,24 @@ class CheckoutOnSiteTest extends TestCase
             'email' => 'giulia@example.com',
             'phone' => '340 5738920',
         ]);
+    }
+
+    /** Acquirente con una carta già salvata a profilo (Stripe customer + payment method). */
+    private function buyerWithSavedCard(): User
+    {
+        $buyer = $this->buyer();
+
+        $buyer->forceFill([
+            'stripe_customer_id' => 'cus_test',
+            'stripe_payment_method_id' => 'pm_test',
+            'card_brand' => 'visa',
+            'card_last4' => '4242',
+            'card_exp_month' => 12,
+            'card_exp_year' => 2030,
+            'card_holder' => 'Giulia Rossi',
+        ])->save();
+
+        return $buyer;
     }
 
     private function offlineSeller(): User
