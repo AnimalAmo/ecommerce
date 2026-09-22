@@ -11,8 +11,11 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * Bozza di onboarding di un servizio partner (wizard multi-step: hotel 11,
- * attività/eventi 10, smartbox 12). Resta `draft` finché l'utente non completa
- * l'ultimo step del flusso, così uno stato parziale è sempre salvato se interrompe.
+ * attività/eventi 10 step ma chiusura a 11, smartbox 12). Resta `draft` finché
+ * l'utente non completa l'ultimo step del flusso, così uno stato parziale è
+ * sempre salvato se interrompe. `publish_requested_at` valorizzato = il partner
+ * l'ha chiusa quando non poteva ancora essere pagato: la pubblica
+ * AwaitingDraftPublisher appena Stripe è collegato (P4).
  */
 class StructureDraft extends Model
 {
@@ -39,6 +42,7 @@ class StructureDraft extends Model
     protected $fillable = [
         'user_id',
         'status',
+        'publish_requested_at',
         'current_step',
         'service_category',
         'type',
@@ -87,6 +91,7 @@ class StructureDraft extends Model
     protected function casts(): array
     {
         return [
+            'publish_requested_at' => 'datetime',
             'current_step' => 'integer',
             'duration_days' => 'integer',
             'date_start' => 'date',
@@ -117,6 +122,45 @@ class StructureDraft extends Model
         return $query->where('user_id', $userId)
             ->where('status', self::STATUS_COMPLETED)
             ->latest();
+    }
+
+    /** Bozze chiuse dal partner e ferme in attesa che possa pubblicare (P4). */
+    public function scopeAwaitingPublication(Builder $query): Builder
+    {
+        return $query->whereNotNull('publish_requested_at');
+    }
+
+    /**
+     * Ciò che "I miei servizi" mostra, apre, modifica ed elimina: i servizi
+     * completati e quelli in attesa di Stripe. Una sola scope per lista,
+     * modifica, eliminazione e dettaglio, così i quattro punti non divergono.
+     */
+    public function scopeListableFor(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId)
+            ->where(fn (Builder $query): Builder => $query
+                ->where('status', self::STATUS_COMPLETED)
+                ->orWhereNotNull('publish_requested_at'))
+            ->latest();
+    }
+
+    public function isAwaitingPublication(): bool
+    {
+        return $this->publish_requested_at !== null;
+    }
+
+    /**
+     * Step con cui il wizard chiude la famiglia. Le attività hanno 10 step ma
+     * da sempre si chiudono a 11 (default di completeDraft, verificato da
+     * PartnerActivityCancellationTest): si resta su 11 perché è ciò che è già
+     * scritto nelle bozze esistenti.
+     */
+    public function finalStep(): int
+    {
+        return match ($this->family()) {
+            'smartbox' => 12,
+            default => 11,
+        };
     }
 
     /** URL pubblico della prima foto caricata, o null. */
