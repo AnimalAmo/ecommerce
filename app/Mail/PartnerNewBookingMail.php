@@ -50,6 +50,7 @@ class PartnerNewBookingMail extends Mailable
         return new Content(
             markdown: 'emails.partner-new-booking',
             with: [
+                'greetingName' => $this->greetingName(),
                 'lines' => $lines,
                 'linesTotal' => (int) $lines->sum('price_cents'),
                 // Il dettaglio è per riga: con più righe si apre la prima, l'elenco mostra le altre.
@@ -58,6 +59,14 @@ class PartnerNewBookingMail extends Mailable
                     : $this->localizedUrl('routes.partner.bookings.show', ['booking' => $lines->first()->id]),
             ],
         );
+    }
+
+    /** Nome, poi ragione sociale (come CatalogModerationMail); null = saluto senza nome, mai "Ciao ,". */
+    private function greetingName(): ?string
+    {
+        $name = $this->partner->first_name ?: $this->partner->partnerProfile?->business_name;
+
+        return filled($name) ? $name : null;
     }
 
     /**

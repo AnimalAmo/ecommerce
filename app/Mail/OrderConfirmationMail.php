@@ -62,9 +62,16 @@ class OrderConfirmationMail extends Mailable
         return app(PartnerPaymentModeService::class)->profileFor($this->order->items->first()?->partner_user_id);
     }
 
-    private function partnerName(PartnerProfile $profile): string
+    /**
+     * Ragione sociale, poi nome e cognome. Niente di tutto questo (o profilo
+     * sparito) = null, e la vista usa le diciture senza nome invece di
+     * stampare "al partner , in struttura".
+     */
+    private function partnerName(PartnerProfile $profile): ?string
     {
-        return $profile->business_name ?: trim($profile->user?->first_name.' '.$profile->user?->last_name);
+        $name = $profile->business_name ?: trim($profile->user?->first_name.' '.$profile->user?->last_name);
+
+        return $name === '' ? null : $name;
     }
 
     /** "Via Roma 1, 25121 Brescia (BS)": i pezzi mancanti si saltano, mai virgole appese. */

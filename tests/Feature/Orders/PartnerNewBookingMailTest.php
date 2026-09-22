@@ -222,6 +222,30 @@ class PartnerNewBookingMailTest extends TestCase
         $this->assertStringNotContainsString('Pagato online', $html);
     }
 
+    public function test_the_greeting_falls_back_to_the_business_name(): void
+    {
+        $partner = User::factory()->offlinePartner()->create(['first_name' => '']);
+        $partner->partnerProfile->update(['business_name' => 'Agriturismo Fido']);
+        $order = Order::factory()->onSite()->create();
+        OrderItem::factory()->for($order)->create(['partner_user_id' => $partner->id]);
+
+        $html = (new PartnerNewBookingMail($order->fresh(), $partner->fresh()))->render();
+
+        $this->assertStringContainsString('Ciao Agriturismo Fido,', $html);
+    }
+
+    public function test_without_any_name_the_greeting_has_no_dangling_comma(): void
+    {
+        $partner = User::factory()->create(['first_name' => '', 'last_name' => '']);
+        $order = Order::factory()->paid()->create();
+        OrderItem::factory()->for($order)->create(['partner_user_id' => $partner->id]);
+
+        $html = (new PartnerNewBookingMail($order->fresh(), $partner))->render();
+
+        $this->assertStringContainsString('Ciao,', $html);
+        $this->assertStringNotContainsString('Ciao ,', $html);
+    }
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     /**

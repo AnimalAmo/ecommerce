@@ -146,6 +146,30 @@ class OnSiteOrderMailTest extends TestCase
         $this->assertStringNotContainsString('Paga sul sito del partner', $html);
     }
 
+    public function test_on_site_confirmation_without_the_partner_profile_still_reads_well(): void
+    {
+        $order = $this->onSiteOrder();
+        $this->fido->partnerProfile->delete();
+
+        $html = (new OrderConfirmationMail($order))->render();
+
+        $this->assertStringContainsString("Da pagare direttamente al partner, in struttura o sul suo sito: 500\u{A0}€", $html);
+        $this->assertStringNotContainsString('partner ,', $html);
+        $this->assertStringNotContainsString('Indirizzo:', $html);
+    }
+
+    public function test_on_site_confirmation_without_a_partner_name_keeps_the_address_readable(): void
+    {
+        $this->fido->partnerProfile->update(['business_name' => null]);
+        $this->fido->update(['first_name' => '', 'last_name' => '']);
+
+        $html = (new OrderConfirmationMail($this->onSiteOrder()))->render();
+
+        $this->assertStringContainsString("Da pagare direttamente al partner, in struttura o sul suo sito: 500\u{A0}€", $html);
+        $this->assertStringContainsString('Indirizzo: Via Roma 1, 25121 Brescia (BS)', $html);
+        $this->assertStringNotContainsString('Indirizzo: ,', $html);
+    }
+
     public function test_online_confirmation_keeps_the_purchase_copy(): void
     {
         $order = Order::factory()->paid()->create(['first_name' => 'Giulia']);

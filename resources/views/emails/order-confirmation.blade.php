@@ -16,10 +16,18 @@
 </x-mail::table>
 
 @if ($order->isOnSite())
-{{ __('orders.mail.on_site.amount_due', ['partner' => $partnerName ?? '', 'amount' => Format::money($order->total_cents)]) }}
+@if ($partnerName !== null)
+{{ __('orders.mail.on_site.amount_due', ['partner' => $partnerName, 'amount' => Format::money($order->total_cents)]) }}
+@else
+{{ __('orders.mail.on_site.amount_due_without_partner', ['amount' => Format::money($order->total_cents)]) }}
+@endif
 
 @if ($partnerAddress !== null)
-{{ __('orders.mail.on_site.partner', ['name' => $partnerName ?? '', 'address' => $partnerAddress]) }}
+@if ($partnerName !== null)
+{{ __('orders.mail.on_site.partner', ['name' => $partnerName, 'address' => $partnerAddress]) }}
+@else
+{{ __('orders.mail.on_site.address', ['address' => $partnerAddress]) }}
+@endif
 
 @endif
 @if ($partnerPaymentUrl !== null)

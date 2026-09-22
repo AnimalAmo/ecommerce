@@ -3,7 +3,11 @@
 <x-mail::message>
 # {{ __('orders.mail.partner_booking.title') }}
 
-{{ __('orders.mail.confirmation.greeting', ['name' => $partner->first_name]) }}
+@if ($greetingName !== null)
+{{ __('orders.mail.confirmation.greeting', ['name' => $greetingName]) }}
+@else
+{{ __('orders.mail.partner_booking.greeting_without_name') }}
+@endif
 
 {{ __('orders.mail.partner_booking.intro', ['order_number' => $order->order_number, 'date' => Format::dateShort($order->created_at ?? now())]) }}
 
