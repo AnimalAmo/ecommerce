@@ -230,14 +230,17 @@ class PayoutLedger
     }
 
     /**
-     * Voci del selettore: i mesi dal primo ordine pagato a oggi, poi "Ultimi
-     * 12 mesi". Un mese scelto a mano dall'URL e più vecchio resta in elenco.
+     * Voci del selettore: i mesi dalla prima prenotazione valida (pagata o
+     * confermata in struttura) a oggi, poi "Ultimi 12 mesi". Le confermate
+     * contano perché la pagina mostra anche "Da pagare in struttura": con un
+     * avvio di soli partner offline quei mesi resterebbero fuori elenco. Un
+     * mese scelto a mano dall'URL e più vecchio resta in elenco.
      *
      * @return array<string, string>
      */
     public function periodOptions(?Period $selected = null): array
     {
-        $first = DB::table('orders')->where('status', OrderStatus::Paid->value)->min('created_at');
+        $first = DB::table('orders')->whereIn('status', OrderStatus::bookingStatuses())->min('created_at');
         $current = Period::current();
         $oldest = $first === null
             ? $current->start

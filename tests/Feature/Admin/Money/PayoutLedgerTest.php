@@ -255,6 +255,18 @@ class PayoutLedgerTest extends TestCase
         $this->assertSame('Settembre 2026', $this->ledger->periodOptions()['2026-09']);
     }
 
+    public function test_period_options_also_start_from_a_first_on_site_booking(): void
+    {
+        // Partenza con soli partner offline: la prima prenotazione è in struttura, il primo ordine pagato arriva dopo.
+        $this->onSiteOrder('2026-06-15 10:00', 9000);
+        $this->order('2026-08-10 10:00', 1000);
+
+        $this->assertSame(
+            ['2026-09', '2026-08', '2026-07', '2026-06', Period::LAST_12_MONTHS],
+            array_keys($this->ledger->periodOptions()),
+        );
+    }
+
     public function test_an_unknown_or_future_period_falls_back_to_this_month(): void
     {
         foreach (['2026-13', '2026-10', 'abc', '', null] as $key) {
