@@ -12,6 +12,12 @@ return [
         'login_required' => 'Per prenotare con pagamento diretto al partner devi accedere al tuo account.',
         'mode_changed' => 'Il partner ora accetta il pagamento online: completa la prenotazione pagando qui.',
         'throttle' => 'Troppi tentativi di conferma. Riprova tra :seconds secondi.',
+        'title' => 'Conferma la tua prenotazione',
+        'notice' => 'Pagherai direttamente a :partner l\'importo di :amount, in struttura o sul suo sito.',
+        'pay_on_website' => 'Vai al sito del partner per pagare o prenotare',
+        'confirm_cta' => 'Conferma prenotazione',
+        'thank_you' => 'Prenotazione confermata!',
+        'thank_you_sub' => 'Ecco il riepilogo, controlla l\'email: il pagamento lo farai direttamente al partner.',
     ],
 
     // Stringhe di UI del funnel Checkout (blade commerce/checkout)

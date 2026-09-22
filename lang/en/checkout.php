@@ -12,6 +12,12 @@ return [
         'login_required' => 'To book and pay the partner directly you need to sign in to your account.',
         'mode_changed' => 'The partner now accepts online payment: complete your booking by paying here.',
         'throttle' => 'Too many confirmation attempts. Please try again in :seconds seconds.',
+        'title' => 'Confirm your booking',
+        'notice' => 'You will pay :amount directly to :partner, at the property or on their website.',
+        'pay_on_website' => 'Go to the partner\'s website to pay or book',
+        'confirm_cta' => 'Confirm booking',
+        'thank_you' => 'Booking confirmed!',
+        'thank_you_sub' => 'Here is the summary, check your email: you will pay the partner directly.',
     ],
 
     // Checkout funnel UI strings (blade commerce/checkout)
