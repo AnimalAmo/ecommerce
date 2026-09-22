@@ -41,6 +41,8 @@ return [
         'gift_message_placeholder' => 'Messaggio',
         'total' => 'Totale',
         'taxes_included' => 'Tasse e commissioni comprese',
+        // Venditore pagato direttamente: nessuna commissione AnimalAmo sul totale.
+        'taxes_included_on_site' => 'Tasse comprese',
         'promo_code' => 'Inserisci codice promozionale',
         'secure_payment' => 'Metodo di pagamento sicuro',
         'pay_on_site' => 'Pagherai direttamente al partner',

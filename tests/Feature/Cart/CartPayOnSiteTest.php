@@ -56,4 +56,25 @@ class CartPayOnSiteTest extends TestCase
             ->assertSee(__('cart.ui.secure_payment'))
             ->assertDontSee(__('cart.ui.pay_on_site'));
     }
+
+    public function test_un_carrello_di_un_partner_offline_non_parla_di_commissioni(): void
+    {
+        // Chi paga il partner direttamente non paga commissioni ad AnimalAmo.
+        $this->addEventOf(User::factory()->offlinePartner()->create());
+
+        Livewire::test(Cart::class)
+            ->assertOk()
+            ->assertSee(__('cart.ui.taxes_included_on_site'))
+            ->assertDontSee(__('cart.ui.taxes_included'));
+    }
+
+    public function test_un_carrello_di_un_partner_online_resta_tasse_e_commissioni(): void
+    {
+        $this->addEventOf(User::factory()->stripeConnected()->create());
+
+        Livewire::test(Cart::class)
+            ->assertOk()
+            ->assertSee(__('cart.ui.taxes_included'))
+            ->assertDontSee(__('cart.ui.taxes_included_on_site'));
+    }
 }

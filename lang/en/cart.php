@@ -41,6 +41,8 @@ return [
         'gift_message_placeholder' => 'Message',
         'total' => 'Total',
         'taxes_included' => 'Taxes and fees included',
+        // Seller paid directly: no AnimalAmo fee on the total.
+        'taxes_included_on_site' => 'Taxes included',
         'promo_code' => 'Enter promo code',
         'secure_payment' => 'Secure payment method',
         'pay_on_site' => 'You will pay the partner directly',

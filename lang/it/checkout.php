@@ -9,6 +9,8 @@ return [
     // Ramo "paga in struttura" (partner senza pagamento online): lo step 2 è una conferma, niente Stripe
     'on_site' => [
         'step_label' => 'Conferma',
+        // Riga sotto il totale del riepilogo: nessuna commissione AnimalAmo.
+        'taxes_included' => 'Tasse comprese',
         'login_required' => 'Per prenotare con pagamento diretto al partner devi accedere al tuo account.',
         'mode_changed' => 'Il partner ora accetta il pagamento online: completa la prenotazione pagando qui.',
         'throttle' => 'Troppi tentativi di conferma. Riprova tra :seconds secondi.',

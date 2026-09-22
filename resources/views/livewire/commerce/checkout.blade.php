@@ -265,7 +265,7 @@
                                 <span class="text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.total') }}</span>
                                 <div class="text-right">
                                     <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
-                                    <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ __('checkout.ui.taxes_included') }}</div>
+                                    <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ $paysOnSite ? __('checkout.on_site.taxes_included') : __('checkout.ui.taxes_included') }}</div>
                                 </div>
                             </div>
                         </div>

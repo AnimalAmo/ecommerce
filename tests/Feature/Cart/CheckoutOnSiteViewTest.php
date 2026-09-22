@@ -92,6 +92,17 @@ class CheckoutOnSiteViewTest extends TestCase
             ->assertDontSee(__('checkout.on_site.pay_on_website'));
     }
 
+    public function test_the_summary_says_taxes_included_without_fees(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $this->addStructureLine($this->offlineStructure(null));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSee(__('checkout.on_site.taxes_included'))
+            ->assertDontSee(__('checkout.ui.taxes_included'));
+    }
+
     public function test_without_a_business_name_the_notice_still_reads_well(): void
     {
         $this->actingAs(User::factory()->create());

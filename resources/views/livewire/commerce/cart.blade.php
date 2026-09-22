@@ -281,7 +281,7 @@
                                     <span class="text-sm leading-none text-[#555555]">{{ __('cart.ui.total') }} ({{ $count }} {{ $count === 1 ? __('cart.ui.item_one') : __('cart.ui.item_many') }})</span>
                                     <div class="text-right">
                                         <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
-                                        <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ __('cart.ui.taxes_included') }}</div>
+                                        <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ $paysOnSite ? __('cart.ui.taxes_included_on_site') : __('cart.ui.taxes_included') }}</div>
                                     </div>
                                 </div>
 

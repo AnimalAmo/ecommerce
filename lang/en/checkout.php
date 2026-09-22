@@ -9,6 +9,8 @@ return [
     // "Pay at the property" branch (partner without online payment): step 2 is a confirmation, no Stripe
     'on_site' => [
         'step_label' => 'Confirm',
+        // Line under the summary total: no AnimalAmo fee.
+        'taxes_included' => 'Taxes included',
         'login_required' => 'To book and pay the partner directly you need to sign in to your account.',
         'mode_changed' => 'The partner now accepts online payment: complete your booking by paying here.',
         'throttle' => 'Too many confirmation attempts. Please try again in :seconds seconds.',
