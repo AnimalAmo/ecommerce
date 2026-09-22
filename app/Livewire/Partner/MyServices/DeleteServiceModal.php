@@ -43,16 +43,29 @@ class DeleteServiceModal extends Component
 
     public function delete(): void
     {
-        // Vincolato all'utente e a ciò che la lista mostra: nessuno elimina i
-        // servizi altrui, né una bozza a metà con un serviceId riscritto.
-        $draft = $this->serviceId !== null
-            ? StructureDraft::listableFor(Auth::id())->find($this->serviceId)
-            : null;
-
-        if ($draft !== null) {
+        if ($this->serviceId !== null) {
             // Senza unpublish la riga catalogo resterebbe live per sempre
             // (FK nullOnDelete: il delete del draft la orfanerebbe soltanto).
-            DB::transaction(function () use ($draft): void {
+            //
+            // La bozza si rilegge col lucchetto dentro la transazione perché
+            // con P4 la pubblicazione arriva anche da job e comando: senza
+            // serializzare, la delete leggerebbe uno stato ancora "non
+            // pubblicato", il publisher committerebbe la riga a catalogo e
+            // questa resterebbe viva e orfana. Col lucchetto la delete aspetta
+            // e trova la riga da togliere; se arriva prima lei, è il publisher
+            // a trovare la bozza sparita.
+            //
+            // Vincolato all'utente e a ciò che la lista mostra: nessuno elimina
+            // i servizi altrui, né una bozza a metà con un serviceId riscritto.
+            DB::transaction(function (): void {
+                $draft = StructureDraft::listableFor(Auth::id())
+                    ->lockForUpdate()
+                    ->find($this->serviceId);
+
+                if ($draft === null) {
+                    return;
+                }
+
                 app(DraftPublisher::class)->unpublish($draft);
                 $draft->delete();
             });
