@@ -148,9 +148,12 @@ class PlaceOrderAction
                     ])
                     ->thenReturn();
             });
-        } catch (UniqueConstraintViolationException $exception) {
-            // Due conferme concorrenti hanno superato entrambe la ricerca:
-            // l'unique su checkout_token fa perdere la seconda.
+        } catch (UniqueConstraintViolationException|CartValidationException $exception) {
+            // Due conferme concorrenti con lo stesso token hanno superato
+            // entrambe la ricerca: l'unique su checkout_token fa perdere la
+            // seconda. Sugli ultimi posti di un evento la seconda si ferma
+            // prima, sul lock della reserve, e poi vede i posti presi dalla
+            // prima: anche quello è un "già registrato", non un sold-out.
             if (($existing = $this->findOnSiteOrder($token)) !== null) {
                 throw OrderAlreadyPlacedException::forOrder($existing);
             }

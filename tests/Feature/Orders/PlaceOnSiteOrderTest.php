@@ -147,6 +147,45 @@ class PlaceOnSiteOrderTest extends TestCase
         Events::assertNotDispatched(OnSiteOrderConfirmed::class);
     }
 
+    public function test_a_sold_out_caused_by_the_same_token_is_already_placed(): void
+    {
+        $event = $this->offlineEvent();
+        $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
+
+        // Il primo click ha preso gli ultimi posti e ha committato mentre il
+        // secondo, con lo stesso token, aspettava il lock della reserve.
+        $first = Order::factory()->onSite()->create(['checkout_token' => self::TOKEN]);
+        $event->update(['booked_participants' => 9]);
+
+        $this->app->instance(PlaceOrderAction::class, new class extends PlaceOrderAction
+        {
+            private bool $searched = false;
+
+            public function findOnSiteOrder(string $checkoutToken): ?Order
+            {
+                // La ricerca dentro la transaction arriva prima di quel commit.
+                if (! $this->searched) {
+                    $this->searched = true;
+
+                    return null;
+                }
+
+                return parent::findOnSiteOrder($checkoutToken);
+            }
+        });
+
+        try {
+            $this->placeOnSiteOrder(checkoutToken: self::TOKEN);
+            $this->fail('Attesa OrderAlreadyPlacedException, non "posti esauriti".');
+        } catch (OrderAlreadyPlacedException $exception) {
+            $this->assertTrue($exception->order->is($first));
+        }
+
+        $this->assertSame(1, Order::count());
+        $this->assertSame(9, $event->refresh()->booked_participants);
+        Events::assertNotDispatched(OnSiteOrderConfirmed::class);
+    }
+
     public function test_an_on_site_order_without_lines_is_refused(): void
     {
         try {
