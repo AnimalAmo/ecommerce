@@ -10,6 +10,7 @@ use App\Models\OrderPayment\OrderPayment;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Support\Format;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -122,6 +123,43 @@ class PartnerBookingDetailTest extends TestCase
             ->assertOk()
             ->assertSee('01/04/2026 - 03/04/2026')
             ->assertSee(trans_choice('partner.bookings.duration_days', 3, ['count' => 3]));
+    }
+
+    public function test_an_on_site_booking_says_how_much_to_collect(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $structure = Structure::factory()->create(['user_id' => $partner->id]);
+        $order = Order::factory()->onSite()->create();
+
+        $item = OrderItem::factory()->create([
+            'order_id' => $order->id,
+            'purchasable_type' => 'structure',
+            'purchasable_id' => $structure->id,
+            'title' => 'Agriturismo Offline',
+            'price_cents' => 13500,
+            'booked_from' => '2026-02-20',
+            'booked_until' => '2026-02-25',
+        ]);
+
+        $this->get(route('partner.bookings.show', $item->id))
+            ->assertOk()
+            ->assertSee(__('partner.bookings.detail_payment'))
+            ->assertSee(__('partner.bookings.to_collect', ['amount' => Format::money(13500)]))
+            // Nessun pagamento registrato: la riga "Metodo di pagamento" sparisce.
+            ->assertDontSee(__('partner.bookings.detail_payment_method'))
+            ->assertDontSee(__('partner.bookings.paid_online'));
+    }
+
+    public function test_an_online_booking_says_it_was_paid_online(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $item = $this->structureBooking($partner);
+
+        $this->get(route('partner.bookings.show', $item->id))
+            ->assertOk()
+            ->assertSee(__('partner.bookings.detail_payment'))
+            ->assertSee(__('partner.bookings.paid_online'))
+            ->assertSee(__('payment.methods.card'));
     }
 
     public function test_bookings_of_other_partners_products_are_forbidden(): void

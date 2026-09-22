@@ -64,7 +64,12 @@ class PartnerBookingDetail extends Component
 
         $rows = [
             'detail_id' => $item->order->order_number,
+            // Un ordine in struttura non ha OrderPayment: la riga vuota sparisce da array_filter.
             'detail_payment_method' => $item->order->payment?->payment_method?->label(),
+            // L'importo è quello della riga: il dettaglio è per prenotazione, non per ordine.
+            'detail_payment' => $item->order->isOnSite()
+                ? __('partner.bookings.to_collect', ['amount' => Format::money($item->price_cents)])
+                : __('partner.bookings.paid_online'),
         ];
 
         if ($this->family() === 'smartbox') {

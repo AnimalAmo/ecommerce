@@ -209,6 +209,12 @@ return [
         'duration_nights' => '{1} 1 night|[2,*] :count nights',
         'duration_days' => '{1} 1 day|[2,*] :count days',
         'duration_hours' => '{1} 1 hour|[2,*] :count hours',
+        // How the booking is paid (copy saved on the order).
+        'col_payment' => 'Payment',
+        'detail_payment' => 'Payment:',
+        'paid_online' => 'Paid online',
+        'pay_on_site' => 'To collect on site',
+        'to_collect' => 'To collect on site: :amount',
     ],
 
     /*

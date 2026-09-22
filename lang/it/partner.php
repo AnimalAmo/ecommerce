@@ -209,6 +209,12 @@ return [
         'duration_nights' => '{1} 1 notte|[2,*] :count notti',
         'duration_days' => '{1} 1 giorno|[2,*] :count giorni',
         'duration_hours' => '{1} 1 ora|[2,*] :count ore',
+        // Come è pagata la prenotazione (copia salvata sull'ordine).
+        'col_payment' => 'Pagamento',
+        'detail_payment' => 'Pagamento:',
+        'paid_online' => 'Pagato online',
+        'pay_on_site' => 'Da incassare in struttura',
+        'to_collect' => 'Da incassare in struttura: :amount',
     ],
 
     /*

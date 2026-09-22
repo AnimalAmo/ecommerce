@@ -45,17 +45,24 @@ class Dashboard extends Component
     private function stats(): array
     {
         return [
-            ['label' => 'partner.dashboard.stat_sold', 'value' => $this->bookings(OrderStatus::Paid)],
-            ['label' => 'partner.dashboard.stat_cancelled', 'value' => $this->bookings(OrderStatus::Cancelled)],
+            // Venduto = prenotazione valida: pagata online o confermata da pagare in struttura.
+            ['label' => 'partner.dashboard.stat_sold', 'value' => $this->bookings(OrderStatus::bookingStatuses())],
+            ['label' => 'partner.dashboard.stat_cancelled', 'value' => $this->bookings([OrderStatus::Cancelled])],
             ['label' => 'partner.dashboard.stat_saved', 'value' => $this->saved()],
         ];
     }
 
-    /** Righe ordine dei prodotti del partner con la testata nello stato dato. */
-    private function bookings(OrderStatus $status): int
+    /**
+     * Righe ordine dei prodotti del partner con la testata in uno degli stati dati.
+     *
+     * @param  list<OrderStatus>  $statuses
+     */
+    private function bookings(array $statuses): int
     {
+        $values = array_map(fn (OrderStatus $status): string => $status->value, $statuses);
+
         return OrderItem::query()
-            ->whereHas('order', fn (Builder $query) => $query->where('status', $status))
+            ->whereHas('order', fn (Builder $query) => $query->whereIn('status', $values))
             ->whereHasMorph('purchasable', self::OWNED_TYPES, $this->ownedBy(...))
             ->count();
     }
