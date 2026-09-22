@@ -36,6 +36,13 @@ return [
         'empty_note' => '—',
     ],
 
+    // Prenotazioni confermate senza pagamento online: il partner incassa da sé,
+    // quindi stanno fuori da incassato, provvigioni e bonifici.
+    'on_site' => [
+        'kpi_label' => 'Da pagare in struttura',
+        'kpi_note' => '{1} :count prenotazione, la incassa il partner|[2,*] :count prenotazioni, le incassano i partner',
+    ],
+
     'notice' => [
         'stuck_heading' => '{1} Un bonifico è fermo|[2,*] :count bonifici sono fermi',
         'stuck_body' => 'Per :amount Stripe ha rifiutato il bonifico più volte, o ha risposto con un esito incerto: il sistema non riprova più da solo. Controlla l\'account del partner su Stripe, poi chiedi all\'assistenza tecnica di rimetterli in coda.',

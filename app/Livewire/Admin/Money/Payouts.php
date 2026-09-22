@@ -33,6 +33,7 @@ class Payouts extends Component
             'current' => $period,
             'options' => $ledger->periodOptions($period),
             'totals' => $ledger->totals($period),
+            'onSite' => $ledger->onSiteBookings($period),
             'partners' => $ledger->byPartner($period),
             'transfers' => $ledger->transfers($period),
             'stuck' => $ledger->stuck(),

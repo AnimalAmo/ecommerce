@@ -65,6 +65,10 @@
         <x-admin.kpi accent :label="__('admin-money.kpi.partners')" :value="Format::money($totals['partners'])" :note="$partnersNote" />
         <x-admin.kpi accent :label="__('admin-money.kpi.platform')" :value="Format::money($totals['platform'])" :note="$platformNote" />
         <x-admin.kpi accent :label="__('admin-money.kpi.to_release')" :value="Format::money($totals['toRelease'])" :note="$releaseNote" />
+        {{-- Fuori dall'incassato: il partner incassa da sé. Senza prenotazioni offline non si mostra --}}
+        @if ($onSite['count'] > 0)
+            <x-admin.kpi :label="__('admin-money.on_site.kpi_label')" :value="Format::money($onSite['value_cents'])" :note="trans_choice('admin-money.on_site.kpi_note', $onSite['count'], ['count' => $onSite['count']])" />
+        @endif
     </div>
 
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))] items-start gap-3.5">

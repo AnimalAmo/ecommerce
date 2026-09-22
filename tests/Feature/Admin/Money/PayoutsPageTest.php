@@ -95,6 +95,28 @@ class PayoutsPageTest extends TestCase
             ->assertSee(route('admin.payouts.export', ['period' => '2026-09']), false);
     }
 
+    public function test_on_site_bookings_have_their_own_number(): void
+    {
+        $this->actingAsSuperadmin();
+        $at = $this->rome('2026-09-14 10:00');
+        Order::factory()->guest()->onSite()->create(['total_cents' => 9000, 'created_at' => $at, 'updated_at' => $at]);
+
+        $this->get(route('admin.payouts'))
+            ->assertOk()
+            ->assertSee(__('admin-money.on_site.kpi_label'))
+            ->assertSee(Format::money(9000))
+            ->assertSee(trans_choice('admin-money.on_site.kpi_note', 1, ['count' => 1]));
+    }
+
+    public function test_without_on_site_bookings_the_number_is_not_shown(): void
+    {
+        $this->actingAsSuperadmin();
+
+        $this->get(route('admin.payouts'))
+            ->assertOk()
+            ->assertDontSee(__('admin-money.on_site.kpi_label'));
+    }
+
     public function test_the_stripe_links_point_to_test_mode_with_a_test_key(): void
     {
         config(['payment.stripe.secret' => 'sk_test_123']);
@@ -195,6 +217,37 @@ class PayoutsPageTest extends TestCase
             array_slice($rows[2], 0, 6),
         );
         $this->assertSame('Senza divisione (prima di Connect)', $rows[2][9]);
+    }
+
+    public function test_the_export_leaves_out_on_site_bookings(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->partner('Lamasu Wellness', 'acct_lamasu');
+        $sale = $this->sale('2026-09-02 10:00', $partner, 12345, 1234, 10800);
+        // Stesso mese e stesso partner, ma da pagare in struttura: niente pagamento, niente registro.
+        $at = $this->rome('2026-09-14 10:00');
+        $onSite = Order::factory()->guest()->onSite()->create(['total_cents' => 9000, 'created_at' => $at, 'updated_at' => $at]);
+        OrderItem::factory()->for($onSite)->create([
+            'price_cents' => 9000,
+            'purchasable_type' => null,
+            'purchasable_id' => null,
+            'partner_user_id' => $partner->id,
+        ]);
+
+        $response = $this->get(route('admin.payouts.export', ['period' => '2026-09']));
+
+        $response->assertOk();
+
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', $response->streamedContent());
+        $rows = array_map(
+            fn (string $line): array => str_getcsv($line, ';', '"', ''),
+            array_values(array_filter(explode("\n", $content))),
+        );
+
+        // Né riga di registro né "Senza divisione (prima di Connect)": quei soldi non sono passati da AnimalAmo.
+        $this->assertCount(2, $rows, 'intestazione + la sola vendita online');
+        $this->assertSame($sale->order->order_number, $rows[1][1]);
+        $this->assertStringNotContainsString($onSite->order_number, $content);
     }
 
     // --- dati costruiti a mano -------------------------------------------------

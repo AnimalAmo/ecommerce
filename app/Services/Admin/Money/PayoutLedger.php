@@ -2,11 +2,13 @@
 
 namespace App\Services\Admin\Money;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\OrderStatus;
 use App\Enums\PayoutStatus;
 use App\Models\Order\Order;
 use App\Models\OrderPayout\OrderPayout;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
@@ -58,6 +60,28 @@ class PayoutLedger
             ->first();
 
         return ['orders' => (int) $row->orders, 'gross' => (int) $row->gross];
+    }
+
+    /**
+     * Prenotazioni confermate da pagare in struttura, nel periodo. Stanno
+     * apposta fuori da sales() e totals(), che restano su Paid: quei soldi il
+     * cliente li dà al partner, AnimalAmo non li vede mai. Con una data
+     * qualunque vale il suo mese di calendario (ora italiana).
+     *
+     * @return array{count: int, value_cents: int}
+     */
+    public function onSiteBookings(Period|CarbonInterface $period): array
+    {
+        $period = $period instanceof Period ? $period : Period::month($period);
+
+        $row = DB::table('orders')
+            ->where('orders.status', OrderStatus::Confirmed->value)
+            ->where('orders.payment_mode', OrderPaymentMode::OnSite->value)
+            ->whereBetween('orders.created_at', $period->bounds())
+            ->selectRaw('count(*) as bookings, coalesce(sum(total_cents), 0) as value')
+            ->first();
+
+        return ['count' => (int) $row->bookings, 'value_cents' => (int) $row->value];
     }
 
     /**
