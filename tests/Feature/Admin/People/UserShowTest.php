@@ -10,6 +10,7 @@ use App\Models\Partner\PartnerProfile;
 use App\Models\Pet\Pet;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Services\Admin\People\UserDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -94,8 +95,57 @@ class UserShowTest extends TestCase
             ->assertOk()
             ->assertSee('Hotel Brescia srl')
             ->assertSee('2 schede, 1 sospesa')
-            ->assertSee('1 prenotazione pagata')
+            ->assertSee('1 prenotazione confermata')
             ->assertSee(route('admin.catalog.index', ['partner' => $partner->id]), escape: false);
+    }
+
+    public function test_a_confirmed_on_site_order_renders_with_its_label(): void
+    {
+        $this->actingAsSuperadmin();
+
+        $user = User::factory()->create();
+        $order = Order::factory()->onSite()->for($user)->create(['total_cents' => 9000]);
+
+        // Prima del fallback i toni erano indicizzati senza "?? …": uno stato nuovo dava 500.
+        $this->get(route('admin.users.show', $user))
+            ->assertOk()
+            ->assertSee($order->order_number)
+            ->assertSee(__('admin-people.users.order_statuses.confirmed'));
+    }
+
+    public function test_the_partner_box_counts_confirmed_bookings_and_shows_the_payment_mode(): void
+    {
+        $this->actingAsSuperadmin();
+        Role::findOrCreate('partner', 'web');
+
+        $partner = User::factory()->create();
+        $partner->assignRole('partner');
+        PartnerProfile::factory()->offline()->for($partner)->create(['business_name' => 'Agriturismo Offline']);
+        $live = Structure::factory()->for($partner)->create();
+
+        // Pagata, confermata in struttura, in attesa: contano le prime due.
+        foreach ([Order::factory()->paid()->create(), Order::factory()->onSite()->create(), Order::factory()->create()] as $order) {
+            OrderItem::factory()->for($order)->create(['purchasable_id' => $live->id, 'partner_user_id' => $partner->id]);
+        }
+
+        $this->get(route('admin.users.show', $partner))
+            ->assertOk()
+            ->assertSee('2 prenotazioni confermate')
+            ->assertSee(__('admin-people.users.payment_mode_label'))
+            ->assertSee(__('admin-people.users.payment_mode.on_site'));
+    }
+
+    public function test_spent_and_paid_orders_ignore_on_site_bookings(): void
+    {
+        $buyer = User::factory()->create();
+        Order::factory()->paid()->for($buyer)->create(['total_cents' => 10000]);
+        Order::factory()->onSite()->for($buyer)->create(['total_cents' => 5000]);
+
+        $row = app(UserDirectory::class)->query([])->whereKey($buyer->id)->first();
+
+        // "Speso" sono soldi passati da AnimalAmo: l'ordine in struttura non c'entra.
+        $this->assertSame(1, (int) $row->paid_orders_count);
+        $this->assertSame(10000, (int) $row->spent_cents);
     }
 
     public function test_a_customer_profile_has_no_partner_box(): void

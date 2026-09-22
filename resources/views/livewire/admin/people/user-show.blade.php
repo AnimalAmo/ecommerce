@@ -13,7 +13,7 @@
     $nlKey = in_array($newsletterState, ['confirmed', 'pending', 'unsubscribed'], true) ? $newsletterState : ($newsletterState === null ? 'none' : 'suppressed');
     $nlTone = ['confirmed' => 'success', 'pending' => 'warning', 'unsubscribed' => 'muted', 'none' => 'muted', 'suppressed' => 'danger'][$nlKey];
     $appTones = ['pending' => 'warning', 'invited' => 'info', 'registered' => 'success'];
-    $orderTones = ['paid' => 'success', 'pending' => 'warning', 'cancelled' => 'muted'];
+    $orderTones = ['paid' => 'success', 'confirmed' => 'info', 'pending' => 'warning', 'cancelled' => 'muted'];
     $paid = UserDirectory::money((int) $orders->where('status', OrderStatus::Paid)->sum('total_cents'));
     // Smartbox: la "finestra" è solo la validità del cofanetto, non una data di soggiorno.
     $when = function ($item): ?string {
@@ -109,6 +109,10 @@
                     <span class="{{ $label }}">{{ __('admin-people.users.bookings_received') }}</span>
                     <span class="{{ $value }}">{{ trans_choice('admin-people.users.bookings_count', $partner['bookings'], ['count' => $partner['bookings']]) }}</span>
                 </div>
+                <div class="{{ $row }}">
+                    <span class="{{ $label }}">{{ __('admin-people.users.payment_mode_label') }}</span>
+                    <span class="{{ $value }}"><x-admin.badge :tone="$partner['payment_mode'] === 'on_site' ? 'warning' : 'info'">{{ __('admin-people.users.payment_mode.'.$partner['payment_mode']) }}</x-admin.badge></span>
+                </div>
             </div>
         </x-admin.card>
     @endif
@@ -143,7 +147,8 @@
                                 </flux:table.cell>
                                 <flux:table.cell align="end">{{ UserDirectory::money((int) $order->total_cents) }}</flux:table.cell>
                                 <flux:table.cell>
-                                    <x-admin.badge :tone="$orderTones[$order->status->value]">{{ __('admin-people.users.order_statuses.'.$order->status->value) }}</x-admin.badge>
+                                    {{-- Fallback: uno stato senza tono non deve mai mandare la scheda in errore --}}
+                                    <x-admin.badge :tone="$orderTones[$order->status->value] ?? 'muted'">{{ __('admin-people.users.order_statuses.'.$order->status->value) }}</x-admin.badge>
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforeach

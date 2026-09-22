@@ -123,7 +123,13 @@ return [
         'listings_suspended' => '{1} :count sospesa|[2,*] :count sospese',
         'listings_open' => 'Vedi le schede',
         'bookings_received' => 'Prenotazioni ricevute',
-        'bookings_count' => '{0} Nessuna prenotazione pagata|{1} :count prenotazione pagata|[2,*] :count prenotazioni pagate',
+        // Pagate online e confermate da pagare in struttura: tutte prenotazioni valide.
+        'bookings_count' => '{0} Nessuna prenotazione confermata|{1} :count prenotazione confermata|[2,*] :count prenotazioni confermate',
+        'payment_mode_label' => 'Pagamento',
+        'payment_mode' => [
+            'online' => 'Online su AnimalAmo',
+            'on_site' => 'Direttamente al partner',
+        ],
         'pets' => 'Animali',
         'pets_empty' => 'Nessun animale registrato.',
         'applications' => 'Candidature partner',

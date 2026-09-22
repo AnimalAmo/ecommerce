@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin\People;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\OrderStatus;
 use App\Models\Order\Order;
 use App\Models\User;
@@ -158,9 +159,11 @@ class UserDirectory
     /**
      * Riquadro "Partner" della scheda: ragione sociale, schede a catalogo
      * (sospese comprese: qui servono tutte, quindi query builder e non i
-     * model con lo scope di visibilità) e prenotazioni pagate ricevute.
+     * model con lo scope di visibilità), prenotazioni valide ricevute
+     * (pagate o confermate in struttura) e modalità di pagamento. Lo "speso"
+     * dei clienti resta invece solo Paid: sono soldi passati da AnimalAmo.
      *
-     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int}
+     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string}
      */
     public function partnerSummary(User $user): array
     {
@@ -173,8 +176,10 @@ class UserDirectory
             'bookings' => DB::table('order_items')
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('order_items.partner_user_id', $user->id)
-                ->where('orders.status', OrderStatus::Paid->value)
+                ->whereIn('orders.status', array_map(fn (OrderStatus $status): string => $status->value, OrderStatus::bookingStatuses()))
                 ->count(),
+            // Profilo assente = Online, la stessa regola di PartnerPaymentModeService::forOwner().
+            'payment_mode' => ($user->partnerProfile?->paymentMode() ?? OrderPaymentMode::Online)->value,
         ];
     }
 
