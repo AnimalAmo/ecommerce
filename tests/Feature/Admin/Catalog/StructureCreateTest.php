@@ -556,4 +556,29 @@ class StructureCreateTest extends TestCase
 
         $this->assertSame(0, StructureDraft::query()->count());
     }
+
+    /**
+     * Dopo una pubblicazione riuscita l'admin atterra sulla scheda: senza un
+     * messaggio non saprebbe se è andata a buon fine (contratto §Chiavi lang,
+     * `create.published`). Il flux:toast non sopravvive a un redirect, quindi
+     * la conferma passa da un flash di sessione.
+     */
+    public function test_after_publishing_the_listing_page_says_it_worked(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->filled($partner)->call('save')->assertHasNoErrors();
+
+        $this->assertSame(__('admin-catalog.create.published'), session('catalog_created'));
+
+        $structure = Structure::withHidden()->sole();
+
+        $this->followingRedirects()
+            ->get(route('admin.catalog.show', ['type' => 'structure', 'id' => $structure->id]))
+            ->assertOk()
+            // Il blocco aggiunto a show.blade.php deve esserci davvero: con il
+            // solo assertOk() si potrebbe cancellare quell'x-admin.notice e il
+            // test resterebbe verde.
+            ->assertSee(__('admin-catalog.create.published'));
+    }
 }

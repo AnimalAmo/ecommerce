@@ -1,6 +1,7 @@
 @php
     use App\Enums\OrderPaymentMode;
     use App\Enums\OrderStatus;
+    use App\Services\Admin\Catalog\AdminServiceCreator;
     use App\Services\Admin\People\UserDirectory;
     use Illuminate\Support\Carbon;
 
@@ -92,9 +93,22 @@
 
     @if ($partner !== null)
         <x-admin.card :heading="__('admin-people.users.partner')">
-            {{-- Un disattivato non entrerebbe comunque: niente link da rimandare. --}}
+            {{-- Un disattivato non entrerebbe comunque: niente link da rimandare,
+                 e nessuna scheda da intestargli (AdminServiceCreator lo rifiuterebbe). --}}
             @if ($user->is_active && $anonymizedAt === null)
                 <x-slot:aside>
+                    <flux:dropdown position="bottom" align="end">
+                        <x-admin.button tone="primary" icon="plus" icon-trailing="chevron-down">{{ __('admin-catalog.create.entry.dropdown') }}</x-admin.button>
+                        <flux:menu>
+                            @foreach (AdminServiceCreator::CREATABLE_FAMILIES as $family)
+                                <flux:menu.item
+                                    wire:key="create-{{ $family }}"
+                                    href="{{ route('admin.catalog.create', ['family' => $family, 'partner' => $user->id]) }}"
+                                    wire:navigate
+                                >{{ __('admin-catalog.create.entry.family.'.$family) }}</flux:menu.item>
+                            @endforeach
+                        </flux:menu>
+                    </flux:dropdown>
                     <x-admin.button tone="outline" icon="envelope" wire:click="resendWelcome">{{ __('admin-people.users.resend_welcome') }}</x-admin.button>
                 </x-slot:aside>
             @endif

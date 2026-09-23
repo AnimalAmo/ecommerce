@@ -4,6 +4,9 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Event\Event;
 use App\Models\User;
+use App\Services\Admin\Catalog\AdminServiceCreator;
+use Database\Seeders\ProvinceSeeder;
+use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -50,6 +53,47 @@ class AdminAccessTest extends TestCase
         $this->actingAsSuperadmin();
 
         $this->get(route($route))->assertOk();
+    }
+
+    /**
+     * Le schermate del pannello che hanno parametri nell'indirizzo: non
+     * possono stare in panelPages(), che passa il solo nome a route().
+     * L'elenco lo dà il service: una famiglia aggiunta lì è coperta da subito.
+     *
+     * @return array<string, array{0: string, 1: array<string, mixed>}>
+     */
+    public static function parameterisedPanelPages(): array
+    {
+        return collect(AdminServiceCreator::CREATABLE_FAMILIES)
+            ->mapWithKeys(fn (string $family): array => [
+                "nuova scheda {$family}" => ['admin.catalog.create', ['family' => $family]],
+            ])
+            ->all();
+    }
+
+    #[DataProvider('parameterisedPanelPages')]
+    public function test_a_guest_is_sent_to_the_panel_login_from_a_page_with_parameters(string $route, array $parameters): void
+    {
+        $this->get(route($route, $parameters))->assertRedirect(route('admin.login'));
+    }
+
+    #[DataProvider('parameterisedPanelPages')]
+    public function test_a_superadmin_can_open_every_panel_page_with_parameters(string $route, array $parameters): void
+    {
+        // Le pagine di creazione disegnano il select delle province: senza i
+        // seeder la lista è vuota, non rotta, ma il test resta realistico.
+        $this->seed([RegionSeeder::class, ProvinceSeeder::class]);
+        $this->actingAsSuperadmin();
+
+        $this->get(route($route, $parameters))->assertOk();
+    }
+
+    public function test_an_unknown_family_has_no_creation_page(): void
+    {
+        $this->actingAsSuperadmin();
+
+        $this->get('/admin/catalog/new/pacchetti')->assertNotFound();
+        $this->get('/admin/catalog/new/hotel')->assertNotFound();
     }
 
     public function test_a_customer_gets_a_403_not_the_login_form(): void
@@ -102,6 +146,7 @@ class AdminAccessTest extends TestCase
         $this->assertSame(url('/admin/login'), route('admin.login'));
         $this->assertSame(url('/admin/reset-password/abc'), route('admin.password.reset', ['token' => 'abc']));
         $this->assertSame(url('/admin/catalog/structure/7'), route('admin.catalog.show', ['type' => 'structure', 'id' => 7]));
+        $this->assertSame(url('/admin/catalog/new/structure'), route('admin.catalog.create', ['family' => 'structure']));
         $this->assertSame(url('/admin/users/export'), route('admin.users.export'));
         $this->assertSame(url('/admin/inbox'), route('admin.inbox'));
         $this->assertSame(url('/admin/payouts'), route('admin.payouts'));

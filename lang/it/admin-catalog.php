@@ -172,6 +172,25 @@ return [
         'not_eligible' => '«:name» non può ricevere schede: serve un partner attivo, non anonimizzato e con un profilo aziendale.',
         'listings_count' => 'Schede a catalogo: :count',
 
+        // Da dove si entra: menù sulla scheda del partner e bottone del catalogo.
+        'entry' => [
+            'dropdown' => 'Crea scheda',
+            'new_button' => 'Nuova scheda',
+            'modal_title' => 'Nuova scheda',
+            'modal_body' => 'Scegli il partner e il tipo di scheda: la compili tu e viene pubblicata a suo nome.',
+            'modal_partner' => 'Partner',
+            'modal_family' => 'Tipo di scheda',
+            'modal_submit' => 'Continua',
+            'family_required' => 'Scegli il tipo di scheda.',
+            'no_partners' => 'Nessun partner attivo con profilo aziendale: crea prima il partner dalla sezione Iscritti.',
+            'family' => [
+                'structure' => 'Struttura ricettiva',
+                'service' => 'Servizio',
+                'activity' => 'Attività o evento',
+                'smartbox' => 'Smartbox',
+            ],
+        ],
+
         // Stato del partner nel riquadro laterale. Il badge scrive
         // «Stripe: <stripe_status.*>»: non esistono chiavi `stripe_ok` /
         // `stripe_missing`, ed è su `stripe_status.*` che si asseriscono le

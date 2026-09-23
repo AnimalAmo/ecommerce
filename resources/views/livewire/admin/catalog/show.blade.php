@@ -1,4 +1,12 @@
 <div class="flex flex-col gap-[18px]">
+    {{-- Arriva da CreatesPartnerService::save(): il pannello non ha un canale
+         flash e un flux:toast non sopravvive al redirect, quindi la conferma
+         viaggia in sessione. Senza, l'admin atterra qui senza sapere se la
+         scheda è andata a buon fine (contratto §Chiavi lang, create.published). --}}
+    @if (session('catalog_created'))
+        <x-admin.notice tone="info">{{ session('catalog_created') }}</x-admin.notice>
+    @endif
+
     <x-admin.back-link :href="route('admin.catalog.index')">{{ __('admin-catalog.show.back') }}</x-admin.back-link>
 
     <div class="flex flex-wrap items-start justify-between gap-4">
