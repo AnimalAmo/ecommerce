@@ -36,7 +36,9 @@ class CreateOrderPayoutsPipe
         // charges esce dallo stesso saldo, quindi "lordo - provvigione"
         // chiederebbe sempre qualche centesimo più di quanto c'è, e il payout
         // del giorno 14 morirebbe con balance_insufficient.
-        $totalNet = $data->input->capture->netCents;
+        // Il pipe gira solo online (la pipeline in struttura lo salta), ma senza
+        // capture il netto resta ignoto e si ricade su lordo meno provvigione.
+        $totalNet = $data->input->capture?->netCents;
         $assigned = 0;
         $assignedNet = 0;
         $lastIndex = $items->count() - 1;

@@ -83,6 +83,11 @@
                                     <div class="mt-[21px] h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
                                     <p class="mt-[7px] text-right text-[13px] italic leading-none text-[#0D171A]">{{ $event['price'] }}</p>
+                                    @if ($event['paysOnSite'])
+                                        <div class="mt-2 flex justify-end">
+                                            <flux:badge size="sm" color="amber">{{ __('profile.orders.pay_on_site') }}</flux:badge>
+                                        </div>
+                                    @endif
                                 </article>
 
                                 <article wire:key="event-{{ $event['id'] }}" class="relative flex h-[170px] w-full max-w-[468px] rounded-[3px] border border-[#E9E9E9] bg-white p-[6px] max-lg:hidden">
@@ -113,6 +118,10 @@
                                                     <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
                                                     <span class="truncate text-[11px] font-semibold leading-none">{{ $event['location'] }}</span>
                                                 </div>
+                                            @endif
+
+                                            @if ($event['paysOnSite'])
+                                                <flux:badge size="sm" color="amber" class="self-start">{{ __('profile.orders.pay_on_site') }}</flux:badge>
                                             @endif
                                         </div>
 

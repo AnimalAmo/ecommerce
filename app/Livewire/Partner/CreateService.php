@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Models\Structure\StructureDraft;
 use Livewire\Component;
 
 class CreateService extends Component
@@ -12,9 +13,31 @@ class CreateService extends Component
     /** Tipo di servizio scelto (radio, scelta singola). */
     public string $service = '';
 
+    /**
+     * Riprende solo una bozza appena iniziata: di chi è loggato (draft()),
+     * `draft`, non in attesa e ferma allo step 0, cioè toccata solo da questa
+     * pagina. Così un refresh o l'"Indietro" dallo step del tipo non creano
+     * una riga a ogni visita. Qualunque altra bozza in sessione (in attesa di
+     * Stripe, un servizio in modifica, un wizard già avanzato) si lascia: prima
+     * next() ne riscriveva la categoria, trasformandola nel servizio successivo.
+     * La modifica di un servizio esistente passa da "I miei servizi", e il suo
+     * "Indietro" riporta lì (serviceChoiceBackUrl), non qui.
+     * draft() subito, non in next(): fissa `draftId` (Locked) sulla bozza,
+     * anche se un'altra scheda nel frattempo riscrive la sessione.
+     */
     public function mount(): void
     {
-        $this->service = $this->draft()->service_category ?? '';
+        $draft = $this->draft();
+
+        if ($draft->status !== StructureDraft::STATUS_DRAFT
+            || $draft->isAwaitingPublication()
+            || $draft->current_step > 0) {
+            session()->forget('structure_draft_id');
+            $this->draftId = null;
+            $draft = $this->draft();
+        }
+
+        $this->service = $draft->service_category ?? '';
     }
 
     public function next(): void

@@ -69,6 +69,25 @@
 
                                 <flux:button wire:click="goToStep(2)" class="mt-4 !h-10 !w-[197px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('checkout.ui.continue_purchase') }}</flux:button>
                             </div>
+                        @elseif ($paysOnSite)
+                            {{-- Card "Conferma la tua prenotazione" (partner senza pagamento online): nessun x-data Stripe,
+                                 quindi Stripe.js non si carica. Importo e ragione sociale dal server; il link è il sito del partner, se l'ha dato --}}
+                            <div class="{{ $card }} p-6">
+                                <h1 class="mt-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.on_site.title') }}</h1>
+
+                                <div class="mt-5 rounded-[3px] border border-[#E9E9E9] bg-[#F4F4F4] px-[15px] py-3 text-[15px] leading-6 text-[#0D171A]">
+                                    <p>{{ $partnerName !== null
+                                        ? __('checkout.on_site.notice', ['partner' => $partnerName, 'amount' => \App\Support\Format::money($total)])
+                                        : __('checkout.on_site.notice_without_partner', ['amount' => \App\Support\Format::money($total)]) }}</p>
+                                    @if ($partnerPaymentUrl !== null)
+                                        <p class="mt-2">
+                                            <a href="{{ $partnerPaymentUrl }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#68CDEB] underline">{{ __('checkout.on_site.pay_on_website') }}</a>
+                                        </p>
+                                    @endif
+                                </div>
+
+                                <flux:button wire:click="confirmBooking" wire:loading.attr="disabled" wire:target="confirmBooking" :disabled="$processing" class="mt-5 !h-10 !rounded-full !border-0 !bg-[#0D171A] !px-6 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A] disabled:!opacity-60 [&>span]:flex [&>span]:items-center [&>span]:gap-2">{{ __('checkout.on_site.confirm_cta') }}</flux:button>
+                            </div>
                         @else
                             {{-- Card "Seleziona un metodo di pagamento": righe metodo (solo gateway abilitati) + element/bottoni del provider.
                                  Il watchdog sblocca "Paga ora" se il dispatch process-payment non trova alcun element montato --}}
@@ -246,7 +265,7 @@
                                 <span class="text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.total') }}</span>
                                 <div class="text-right">
                                     <div class="text-2xl font-bold leading-none text-[#0D171A]">{{ \App\Support\Format::money($total) }}</div>
-                                    <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ __('checkout.ui.taxes_included') }}</div>
+                                    <div class="mt-[2px] text-xs leading-none text-[#627277]">{{ $paysOnSite ? __('checkout.on_site.taxes_included') : __('checkout.ui.taxes_included') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -254,12 +273,15 @@
                 </div>
             @else
                 {{-- Step 3 "Fatto!": heading ciano sopra la card riepilogo compatta --}}
-                <h1 class="mt-[109px] text-center text-2xl font-bold leading-none text-[#68CDEB]">{{ __('checkout.ui.thank_you') }}</h1>
+                <h1 class="mt-[109px] text-center text-2xl font-bold leading-none text-[#68CDEB]">{{ $paysOnSite ? __('checkout.on_site.thank_you') : __('checkout.ui.thank_you') }}</h1>
 
                 <div class="mx-auto mt-2 w-full max-w-[575px] {{ $card }} pb-[30px]">
                     @if ($gift)
                         {{-- Copy regalo (XD "Checkout – flusso regalo smartbox 3": 18px nero su due righe); email dalle options della riga regalo --}}
                         <p class="px-6 pt-11 text-lg font-normal leading-6 text-black">{{ __('checkout.ui.gift_sent', ['email' => $giftRecipientEmail]) }}<br>{{ __('checkout.ui.gift_sent_summary') }}</p>
+                    @elseif ($paysOnSite)
+                        {{-- Prenotazione in struttura: nessun addebito, il cliente paga il partner fuori piattaforma --}}
+                        <p class="px-6 pt-11 text-lg font-normal leading-6 text-[#555555]">{{ __('checkout.on_site.thank_you_sub') }}</p>
                     @else
                         <p class="px-6 pt-11 text-xl font-normal leading-none text-[#555555]">{{ __('checkout.ui.check_email') }}</p>
                     @endif
@@ -321,10 +343,10 @@
                             @if ($item['gift'] && ($item['giftDedication'] !== null || $item['giftMessage'] !== null))
                                 <div wire:key="done-gift-{{ $item['id'] }}" class="px-6 pb-6 text-[15px] font-normal text-[#0D171A]">
                                     @if ($item['giftDedication'] !== null)
-                                        <p class="leading-none">Dedicato a: {{ $item['giftDedication'] }}</p>
+                                        <p class="leading-none">{{ __('checkout.ui.dedicated_to', ['name' => $item['giftDedication']]) }}</p>
                                     @endif
                                     @if ($item['giftMessage'] !== null)
-                                        <p class="mt-4 leading-[21px]">Messaggio: {{ $item['giftMessage'] }}</p>
+                                        <p class="mt-4 leading-[21px]">{{ __('checkout.ui.message', ['message' => $item['giftMessage']]) }}</p>
                                     @endif
                                 </div>
                             @endif

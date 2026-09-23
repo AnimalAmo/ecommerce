@@ -34,8 +34,18 @@ class PartnerSmartboxPriceTest extends TestCase
 
     public function test_save_completes_the_draft_and_redirects_to_dashboard(): void
     {
-        // La bozza va a catalogo solo se il partner può essere pagato.
-        $this->actingAsPayablePartner();
+        // La bozza va a catalogo solo se il partner può essere pagato, e solo
+        // se ha un nome: una bozza vuota ora è un errore.
+        $partner = $this->actingAsPayablePartner();
+        $draft = StructureDraft::create([
+            'user_id' => $partner->id,
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 11,
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'name' => ['it' => 'Cofanetto relax'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
 
         Livewire::test(SmartboxPrice::class)
             ->set('price', '149,90')

@@ -48,6 +48,7 @@ return [
     'dimensions' => 'The image dimensions are not valid.',
     'distinct' => 'This value is repeated.',
     'ends_with' => 'Must end with: :values.',
+    'enum' => 'Invalid value.',
     'exists' => 'Invalid value.',
     'file' => 'Upload a file.',
     'filled' => 'This field cannot be empty.',
@@ -108,6 +109,10 @@ return [
         'giftMessage.*' => [
             'max' => 'The message cannot be longer than 500 characters.',
         ],
+        // Partner payment option: it is a choice, "Enter" does not read well.
+        'paymentMode' => [
+            'required' => 'Choose a payment option.',
+        ],
         'passwordConfirmation' => [
             'required' => 'Repeat the password.',
             'same' => 'The passwords do not match.',
@@ -127,16 +132,20 @@ return [
 
     // Field names with article, so "Enter :attribute." reads naturally.
     'attributes' => [
+        'accountHolder' => 'the account holder',
         'address' => 'your address',
+        'bic' => 'the BIC',
         'birthDate' => 'your date of birth',
         'businessName' => 'your business name',
         'city' => 'your city',
         'description' => 'a description',
         'email' => 'your email',
         'firstName' => 'your first name',
+        'iban' => 'the IBAN',
         'lastName' => 'your last name',
         'offerType' => 'your offer type',
         'password' => 'your password',
+        'paymentUrl' => 'the website address',
         'petType' => 'your pet type',
         'phone' => 'your mobile number',
         'postalCode' => 'your postal code',

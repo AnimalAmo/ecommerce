@@ -22,12 +22,12 @@
                             <flux:icon.check class="h-7 w-7 text-white" />
                         </div>
 
-                        <flux:heading level="1" class="mt-8 !text-4xl !font-bold !text-brand-cyan max-lg:!mt-6 max-lg:!text-lg">{{ __('auth-modal.reset.done_title') }}</flux:heading>
+                        <flux:heading level="1" class="mt-8 !text-4xl !font-bold !text-brand-cyan max-lg:!mt-6 max-lg:!text-lg">{{ $welcome ? __('auth-modal.partner_welcome.done_title') : __('auth-modal.reset.done_title') }}</flux:heading>
 
-                        <p class="mt-6 text-lg text-black max-lg:mt-4 max-lg:text-[15px] max-lg:text-[#555555]">{{ __('auth-modal.reset.done_text') }}</p>
+                        <p class="mt-6 text-lg text-black max-lg:mt-4 max-lg:text-[15px] max-lg:text-[#555555]">{{ $welcome ? __('auth-modal.partner_welcome.done_text') : __('auth-modal.reset.done_text') }}</p>
 
                         <div class="mt-10 flex flex-col items-center gap-3 max-lg:mt-8 max-lg:w-full lg:flex-row lg:justify-center lg:gap-4">
-                            <flux:button wire:click="goToLogin" class="!rounded-full !bg-brand-yellow !px-8 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ __('auth-modal.reset.done_cta') }}</flux:button>
+                            <flux:button wire:click="goToLogin" class="!rounded-full !bg-brand-yellow !px-8 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ $welcome ? __('auth-modal.partner_welcome.done_cta') : __('auth-modal.reset.done_cta') }}</flux:button>
                             <flux:button href="{{ route('home') }}" variant="ghost" class="!rounded-full !px-6 !text-sm !font-bold !text-ink max-lg:!h-[39px] max-lg:!w-full">{{ __('auth-modal.reset.back_home') }}</flux:button>
                         </div>
                     </div>
@@ -52,8 +52,9 @@
                 @else
                     {{-- Form --}}
                     <div class="text-center">
-                        <flux:heading level="1" class="!text-4xl !font-bold !text-ink max-lg:!text-lg max-lg:!text-brand-cyan">{{ __('auth-modal.reset.title') }}</flux:heading>
-                        <p class="mt-4 text-[15px] leading-[21px] text-[#555555]">{{ __('auth-modal.reset.intro', ['email' => $email]) }}</p>
+                        {{-- Con ?welcome=1 è il primo accesso di un partner creato dal pannello: non "reimposta", ma "scegli". --}}
+                        <flux:heading level="1" class="!text-4xl !font-bold !text-ink max-lg:!text-lg max-lg:!text-brand-cyan">{{ $welcome ? __('auth-modal.partner_welcome.title') : __('auth-modal.reset.title') }}</flux:heading>
+                        <p class="mt-4 text-[15px] leading-[21px] text-[#555555]">{{ $welcome ? __('auth-modal.partner_welcome.sub', ['email' => $email]) : __('auth-modal.reset.intro', ['email' => $email]) }}</p>
                     </div>
 
                     <form wire:submit="save" class="mx-auto mt-10 w-full max-w-[472px] max-lg:mt-8">
@@ -74,7 +75,7 @@
                         </div>
 
                         <div class="mt-10 flex justify-center max-lg:mt-8">
-                            <flux:button type="submit" class="!rounded-full !bg-brand-yellow !px-8 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ __('auth-modal.reset.submit') }}</flux:button>
+                            <flux:button type="submit" class="!rounded-full !bg-brand-yellow !px-8 !text-sm !font-bold !text-ink hover:!bg-[#0D171A] hover:!text-white max-lg:!h-[39px] max-lg:!w-full">{{ $welcome ? __('auth-modal.partner_welcome.submit') : __('auth-modal.reset.submit') }}</flux:button>
                         </div>
                     </form>
                 @endif

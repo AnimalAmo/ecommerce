@@ -12,6 +12,8 @@ return [
     'product_without_owner' => 'This product cannot be purchased right now. Please try again later.',
     'not_purchasable' => 'This product cannot be purchased.',
     'invalid_participants' => 'The selected number of participants is not valid.',
+    'changed_elsewhere' => 'Your cart changed in another window. If you already confirmed there, you will find the booking in your orders.',
+    'gift_requires_online_payment' => 'This Smartbox cannot be given as a gift: the partner takes payment directly at the property. You can buy it for yourself.',
     // Add-to-cart confirmation toast
     'added' => 'Added to cart.',
     // Validity line of the smartbox card ('Smartbox valid for 12 months', :validity via Format::validity)
@@ -39,8 +41,11 @@ return [
         'gift_message_placeholder' => 'Message',
         'total' => 'Total',
         'taxes_included' => 'Taxes and fees included',
+        // Seller paid directly: no AnimalAmo fee on the total.
+        'taxes_included_on_site' => 'Taxes included',
         'promo_code' => 'Enter promo code',
         'secure_payment' => 'Secure payment method',
+        'pay_on_site' => 'You will pay the partner directly',
         'free_cancellation' => 'Free cancellation',
         'free_cancellation_note' => '(No later than 2 weeks before the event)',
         'go_to_checkout' => 'Go to checkout',

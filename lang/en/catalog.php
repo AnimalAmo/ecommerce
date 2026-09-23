@@ -48,4 +48,6 @@ return [
     'show_results' => 'Show :count results',
     // At zero the button cannot promise results: it says what it actually does.
     'close_filters' => 'Close filters',
+    // Detail pages of a partner without online payment: the total is paid to them.
+    'pay_on_site' => 'Pay the partner directly, on site or on their website',
 ];

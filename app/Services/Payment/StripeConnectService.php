@@ -2,12 +2,14 @@
 
 namespace App\Services\Payment;
 
+use App\Jobs\PublishAwaitingDrafts;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Stripe\Account;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
+use Throwable;
 
 /**
  * Onboarding Connect del partner.
@@ -78,6 +80,10 @@ class StripeConnectService
         ]);
 
         $this->ensureManualPayouts($account);
+
+        // Dopo i bonifici manuali, non prima: con la coda sync tutta la
+        // pubblicazione gira qui, e non deve ritardare la trattenuta del recesso.
+        $this->publishAwaitingDraftsOnPayable($profile);
     }
 
     /**
@@ -115,6 +121,36 @@ class StripeConnectService
             // trattenuta torna a essere solo contrattuale — visibile.
             Log::warning('Pianificazione dei bonifici non impostata su manuale', [
                 'stripe_account_id' => $account->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Il collegamento Stripe appena completato sblocca i servizi che il
+     * partner aveva chiuso quando non poteva ancora essere pagato (P4). Solo
+     * sul passaggio, non a ogni evento: `wasChanged` guarda l'update appena
+     * fatto. Mai inline, perché qui passano il webhook account.updated e il
+     * mount della pagina pagamento.
+     *
+     * Il try/catch serve perché con la coda `sync` (i test, o una produzione
+     * configurata così) il job gira dentro questa chiamata. Un suo errore
+     * arriverebbe a StripeWebhookController, che risponde 400 a qualunque
+     * Throwable: Stripe riconsegnerebbe finché non disabilita l'endpoint, lo
+     * stesso degli incassi. Una dispatch persa la recupera entro dieci minuti
+     * `animalamo:publish-awaiting-drafts`.
+     */
+    private function publishAwaitingDraftsOnPayable(PartnerProfile $profile): void
+    {
+        if (! $profile->wasChanged(['stripe_charges_enabled', 'stripe_payouts_enabled']) || ! $profile->canBePaid()) {
+            return;
+        }
+
+        try {
+            PublishAwaitingDrafts::dispatch((int) $profile->user_id);
+        } catch (Throwable $exception) {
+            Log::warning('Pubblicazione delle bozze in attesa non avviata', [
+                'partner_user_id' => $profile->user_id,
                 'error' => $exception->getMessage(),
             ]);
         }

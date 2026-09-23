@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Partner\Bookings;
 
+use App\Enums\OrderStatus;
 use App\Enums\ProductType;
 use App\Models\Event\Event;
 use App\Models\OrderItem\OrderItem;
@@ -79,12 +80,15 @@ class PartnerBookings extends Component
             'email' => 'col_email',
         ];
 
-        return $common + match ($family) {
+        $columns = $common + match ($family) {
             'eventi' => ['title' => 'col_event', 'date' => 'col_date', 'time' => 'col_time', 'people' => 'col_people'],
             'attivita' => ['title' => 'col_activity', 'date' => 'col_date', 'price' => 'col_price', 'people' => 'col_people'],
             'smartbox' => ['title' => 'col_smartbox', 'date' => 'col_validity', 'price' => 'col_price'],
             default => ['title' => 'col_structure', 'date' => 'col_date', 'price' => 'col_price', 'people' => 'col_people'],
         };
+
+        // Su ogni famiglia: il partner offline deve sapere cosa incassare lui.
+        return $columns + ['payment' => 'col_payment'];
     }
 
     /**
@@ -139,6 +143,14 @@ class PartnerBookings extends Component
             'people' => BookingPricingService::persons($item->options ?? []),
             'date_from' => $item->booked_from?->toDateString(),
             'date_to' => $item->booked_until?->toDateString(),
+            // Dalla copia sull'ordine, mai dalla modalità attuale del partner.
+            // Pagato/da incassare vale solo per Paid e Confirmed: un ordine
+            // annullato (o rimasto in attesa) mostra il suo stato.
+            'payment' => match (true) {
+                $order->status === OrderStatus::Paid => __('partner.bookings.paid_online'),
+                $order->status === OrderStatus::Confirmed && $order->isOnSite() => __('partner.bookings.pay_on_site'),
+                default => $order->status->label(),
+            },
         ];
     }
 

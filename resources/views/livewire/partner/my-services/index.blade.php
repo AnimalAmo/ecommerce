@@ -40,6 +40,9 @@
                                             </p>
                                         @endif
                                         <h3 class="text-lg font-bold text-[#0D171A]">{{ $service->name }}</h3>
+                                        @if ($service->isAwaitingPublication())
+                                            <flux:badge size="sm" class="mt-1 !rounded-[3px] !bg-brand-yellow !text-ink">{{ __('partner.my_services.awaiting_stripe') }}</flux:badge>
+                                        @endif
                                         <p class="mt-1 flex items-center gap-1 text-sm font-medium text-[#959595]">
                                             <flux:icon.pin class="h-4 w-4 shrink-0" />
                                             {{ $service->locationLabel() }}

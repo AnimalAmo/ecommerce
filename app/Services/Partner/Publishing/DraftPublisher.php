@@ -28,7 +28,7 @@ class DraftPublisher
     /**
      * Null quando il draft non è pubblicabile (vedi isPublishable).
      *
-     * @throws PartnerNotPayableException onboarding Stripe del partner incompleto
+     * @throws PartnerNotPayableException partner online con onboarding Stripe incompleto, o senza profilo
      */
     public function publish(StructureDraft $draft): ?Model
     {
@@ -36,10 +36,14 @@ class DraftPublisher
             return null;
         }
 
-        // La bozza è pronta ma il partner non ha un account connesso: il
-        // prodotto sarebbe invendibile e il checkout esploderebbe invece di
-        // degradare a commissione zero. Meglio non pubblicare e dirlo.
-        if ($draft->user?->partnerProfile?->canBePaid() !== true) {
+        // La bozza è pronta ma il partner si fa pagare online e non ha un
+        // account connesso: il prodotto sarebbe invendibile e il checkout
+        // esploderebbe invece di degradare a commissione zero. Chi si fa
+        // pagare direttamente (22/09/2026) pubblica senza Stripe. Senza
+        // profilo non si sa nemmeno come verrebbe pagato: si rifiuta, come prima.
+        $profile = $draft->user?->partnerProfile;
+
+        if ($profile === null || ! $profile->canPublish()) {
             throw PartnerNotPayableException::onboardingIncomplete();
         }
 

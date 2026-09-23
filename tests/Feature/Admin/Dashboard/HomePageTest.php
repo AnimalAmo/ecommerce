@@ -86,6 +86,16 @@ class HomePageTest extends TestCase
             ->assertSee('Il cane può stare in camera al Lamasu?');
     }
 
+    public function test_the_home_notes_the_bookings_to_be_paid_on_site(): void
+    {
+        $this->actingAsSuperadmin();
+        Order::factory()->guest()->onSite()->create(['total_cents' => 9000, 'created_at' => now()->subDay()]);
+
+        $this->get(route('admin.home'))
+            ->assertOk()
+            ->assertSee(trans_choice('admin-dashboard.on_site_note', 1, ['count' => 1, 'amount' => Format::money(9000)]));
+    }
+
     public function test_an_empty_site_says_so_instead_of_showing_blank_boxes(): void
     {
         $this->actingAsSuperadmin();

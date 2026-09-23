@@ -5,6 +5,36 @@ return [
     // Errori del flusso partner (toast danger / eccezioni di dominio).
     'errors' => [
         'stripe_onboarding_required' => 'Before publishing a service you need to finish connecting your Stripe account.',
+        // Draft closed without the minimum catalogue data (name, rooms, date or price).
+        'draft_not_publishable' => "We can't publish this service yet: some required details are missing. Check the steps and try again.",
+    ],
+
+    // Automatic publishing once Stripe is connected (P4): dashboard notice after the wizard.
+    'publish' => [
+        'awaiting_stripe' => 'Your service is ready: we will publish it automatically as soon as you finish connecting your Stripe account.',
+        // Edit of a service already completed: the previous version stays the published one.
+        'awaiting_stripe_changes' => 'Changes saved: the version already published stays as it was, and we will publish your changes automatically as soon as you finish connecting your Stripe account.',
+    ],
+
+    // "My services": drafts closed by the partner and held until Stripe can pay them.
+    'my_services' => [
+        'awaiting_stripe' => 'Waiting for the Stripe connection',
+    ],
+
+    // Partner payment mode: online on AnimalAmo or paid directly to the partner.
+    'payment_mode' => [
+        'section' => 'How you get paid',
+        'help' => 'Choose whether customers pay online on AnimalAmo or pay you directly, on site or on your website. Bookings already made stay as they are.',
+        'online' => 'Online on AnimalAmo',
+        'on_site' => 'Directly to me, on site or on my website',
+        'url_label' => 'Website for payment or booking (optional)',
+        'url_help' => 'We show it to the customer in the booking confirmation.',
+        'save' => 'Save payment option',
+        'saved' => 'Payment option updated',
+        'online_needs_stripe' => 'To choose online payment, first connect your Stripe account in the box below.',
+        'errors' => [
+            'stripe_required' => 'To receive online payments you first need to finish connecting your Stripe account.',
+        ],
     ],
 
     /*
@@ -101,6 +131,7 @@ return [
             'disconnected' => 'Connect your account to get paid',
             'incomplete' => 'Connection not finished',
             'help' => 'Customers pay you directly: the money lands in your Stripe account, and AnimalAmo only keeps its commission. Until the connection is complete you cannot publish your services.',
+            'help_on_site' => 'Right now your customers pay you directly. If you want to switch to online payment, connect your Stripe account here: you can do it whenever you like.',
             'connect' => 'Connect account',
             'resume' => 'Resume connection',
         ],
@@ -192,6 +223,12 @@ return [
         'duration_nights' => '{1} 1 night|[2,*] :count nights',
         'duration_days' => '{1} 1 day|[2,*] :count days',
         'duration_hours' => '{1} 1 hour|[2,*] :count hours',
+        // How the booking is paid (copy saved on the order).
+        'col_payment' => 'Payment',
+        'detail_payment' => 'Payment:',
+        'paid_online' => 'Paid online',
+        'pay_on_site' => 'Paid to you directly',
+        'to_collect' => 'To collect on site: :amount',
     ],
 
     /*
@@ -280,6 +317,13 @@ return [
         'servizi_subtitle' => 'Such as Pet sitting, Training, and more',
         'submit' => 'Create an account',
         'error_required' => 'Select at least one service.',
+        'payment_mode' => [
+            'label' => 'How do you want to be paid?',
+            'online_title' => 'Online on AnimalAmo',
+            'online_subtitle' => 'The customer pays by card when booking. To publish you will need to connect your Stripe account.',
+            'on_site_title' => 'Directly to me, on site or on my website',
+            'on_site_subtitle' => 'The customer books on AnimalAmo and pays you, with no online payment. You can change this from your profile.',
+        ],
     ],
 
     /*
@@ -830,6 +874,7 @@ return [
         'type_double' => 'Double',
         'type_triple' => 'Triple',
         'type_suite' => 'Suite',
+        'type_whole' => 'Whole property',
         'add_rooms' => 'Add rooms',
         'checkin' => 'Check in',
         'checkout' => 'Check out',
@@ -932,6 +977,9 @@ return [
         'stat_sold' => 'Experiences sold',
         'stat_cancelled' => 'Experiences cancelled',
         'stat_saved' => 'Experiences saved',
+        // P4: services closed before connecting Stripe, published automatically afterwards.
+        'awaiting_stripe_banner' => ':count service is waiting for the Stripe connection: we will publish it as soon as your account is active.|:count services are waiting for the Stripe connection: we will publish them as soon as your account is active.',
+        'awaiting_stripe_cta' => 'Connect Stripe',
     ],
 
     /*
@@ -947,6 +995,21 @@ return [
         'cta' => 'Complete registration',
         'outro' => 'If you did not send this request, feel free to ignore this email.',
         'signature' => 'See you soon,',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Welcome to a partner created in the admin panel
+    |--------------------------------------------------------------------------
+    */
+    'welcome_mail' => [
+        'subject' => 'Welcome to AnimalAmo: your partner account is ready',
+        'title' => 'Welcome to AnimalAmo, :name!',
+        'intro' => 'We have created the partner account of :business. To enter your area, choose a password from the button below.',
+        'set_password_cta' => 'Choose your password',
+        'expires' => 'The link is valid for :days days. If it expires, use “Forgot password” in the partner login.',
+        'promoted_intro' => 'Your AnimalAmo account is now also the partner account of :business. Sign in with your usual email and password to open the partner area.',
+        'login_cta' => 'Go to the partner area',
     ],
 
 ];

@@ -14,6 +14,7 @@ use App\Models\OrderItem\OrderItem;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Services\Admin\Catalog\CatalogAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -104,6 +105,24 @@ class CatalogAdminTest extends TestCase
 
         $this->assertNotNull(Structure::withHidden()->find($structure->id), 'non cancellata');
         $this->assertNotNull(Structure::withHidden()->find($structure->id)->suspended_at, 'sospesa al suo posto');
+    }
+
+    public function test_delete_is_blocked_by_a_future_on_site_booking(): void
+    {
+        $structure = Structure::factory()->create();
+        $order = Order::factory()->onSite()->create();
+        OrderItem::factory()->for($order)->create([
+            'purchasable_type' => 'structure',
+            'purchasable_id' => $structure->id,
+            'booked_from' => now()->addDays(10),
+            'booked_until' => now()->addDays(12),
+        ]);
+
+        $catalog = app(CatalogAdmin::class);
+
+        // Il cliente arriverà in struttura: la scheda non può sparire.
+        $this->assertSame(['total' => 1, 'future' => 1], $catalog->bookings($structure));
+        $this->assertNotNull($catalog->deletionBlocker($structure));
     }
 
     public function test_delete_removes_the_row_and_what_points_to_it(): void

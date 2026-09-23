@@ -14,9 +14,10 @@ class PartnerServiceDetail extends Component
 
     public function mount(StructureDraft $draft): void
     {
-        // Solo i propri servizi completati sono visibili.
+        // Solo i propri servizi elencabili (completati o in attesa di Stripe):
+        // stessa scope della lista, così dettaglio e lista non divergono.
         abort_unless(
-            $draft->user_id === Auth::id() && $draft->status === StructureDraft::STATUS_COMPLETED,
+            StructureDraft::listableFor(Auth::id())->whereKey($draft->id)->exists(),
             403,
         );
 

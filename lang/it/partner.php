@@ -5,6 +5,36 @@ return [
     // Errori del flusso partner (toast danger / eccezioni di dominio).
     'errors' => [
         'stripe_onboarding_required' => 'Per pubblicare un servizio devi prima completare il collegamento del conto su Stripe.',
+        // Bozza chiusa senza i dati minimi per il catalogo (nome, stanze, data o prezzo).
+        'draft_not_publishable' => 'Non possiamo ancora pubblicare questo servizio: mancano alcuni dati obbligatori. Ricontrolla gli step e riprova.',
+    ],
+
+    // Pubblicazione automatica al collegamento Stripe (P4): avviso in dashboard dopo il wizard.
+    'publish' => [
+        'awaiting_stripe' => 'Il tuo servizio è pronto: lo pubblicheremo in automatico appena completi il collegamento del conto su Stripe.',
+        // Modifica di un servizio già completato: la versione precedente resta quella pubblicata.
+        'awaiting_stripe_changes' => "Modifiche salvate: la versione già pubblicata resta com'era e pubblicheremo le modifiche in automatico appena completi il collegamento del conto su Stripe.",
+    ],
+
+    // "I miei servizi": bozze chiuse dal partner e ferme finché non è pagabile su Stripe.
+    'my_services' => [
+        'awaiting_stripe' => 'In attesa del collegamento Stripe',
+    ],
+
+    // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.
+    'payment_mode' => [
+        'section' => 'Come ricevi i pagamenti',
+        'help' => 'Scegli se i clienti pagano online su AnimalAmo o direttamente a te, in struttura o sul tuo sito. Le prenotazioni già fatte restano come sono.',
+        'online' => 'Online su AnimalAmo',
+        'on_site' => 'Direttamente a me, in struttura o sul mio sito',
+        'url_label' => 'Sito dove pagare o prenotare (facoltativo)',
+        'url_help' => 'Lo mostriamo al cliente nella conferma della prenotazione.',
+        'save' => 'Salva la modalità',
+        'saved' => 'Modalità di pagamento aggiornata',
+        'online_needs_stripe' => 'Per scegliere il pagamento online collega prima il tuo conto Stripe dal riquadro qui sotto.',
+        'errors' => [
+            'stripe_required' => 'Per ricevere i pagamenti online devi prima completare il collegamento del conto su Stripe.',
+        ],
     ],
 
     /*
@@ -101,6 +131,7 @@ return [
             'disconnected' => 'Collega il tuo conto per ricevere i pagamenti',
             'incomplete' => 'Collegamento da completare',
             'help' => 'I clienti pagano direttamente te: il denaro arriva sul tuo conto Stripe, e AnimalAmo trattiene solo la propria provvigione. Finché il collegamento non è completo non puoi pubblicare i tuoi servizi.',
+            'help_on_site' => 'Oggi i tuoi clienti ti pagano direttamente. Se vuoi passare al pagamento online, collega qui il tuo conto Stripe: puoi farlo quando vuoi.',
             'connect' => 'Collega il conto',
             'resume' => 'Riprendi il collegamento',
         ],
@@ -192,6 +223,12 @@ return [
         'duration_nights' => '{1} 1 notte|[2,*] :count notti',
         'duration_days' => '{1} 1 giorno|[2,*] :count giorni',
         'duration_hours' => '{1} 1 ora|[2,*] :count ore',
+        // Come è pagata la prenotazione (copia salvata sull'ordine).
+        'col_payment' => 'Pagamento',
+        'detail_payment' => 'Pagamento:',
+        'paid_online' => 'Pagato online',
+        'pay_on_site' => 'Pagamento diretto',
+        'to_collect' => 'Da incassare in struttura: :amount',
     ],
 
     /*
@@ -280,6 +317,13 @@ return [
         'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
         'submit' => 'Crea un account',
         'error_required' => 'Seleziona almeno un servizio.',
+        'payment_mode' => [
+            'label' => 'Come vuoi essere pagato?',
+            'online_title' => 'Online su AnimalAmo',
+            'online_subtitle' => 'Il cliente paga con carta al momento della prenotazione. Per pubblicare dovrai collegare il tuo conto Stripe.',
+            'on_site_title' => 'Direttamente a me, in struttura o sul mio sito',
+            'on_site_subtitle' => 'Il cliente prenota su AnimalAmo e paga te, senza pagamento online. Puoi cambiare idea dal tuo profilo.',
+        ],
     ],
 
     /*
@@ -830,6 +874,9 @@ return [
         'type_double' => 'Doppia',
         'type_triple' => 'Tripla',
         'type_suite' => 'Suite',
+        // Tipologia fittizia della riga unica in modalità alloggio intero
+        // (HotelRoomsForm::WHOLE_PROPERTY_TYPE): finora nessuno la mostrava.
+        'type_whole' => 'Alloggio intero',
         'add_rooms' => 'Aggiungi stanze',
         'checkin' => 'Check in',
         'checkout' => 'Check out',
@@ -938,6 +985,9 @@ return [
         'stat_sold' => 'Esperienze vendute',
         'stat_cancelled' => 'Esperienze cancellate',
         'stat_saved' => 'Esperienze salvate',
+        // P4: servizi chiusi prima del collegamento Stripe, pubblicati in automatico dopo.
+        'awaiting_stripe_banner' => ':count servizio è in attesa del collegamento Stripe: lo pubblicheremo appena il conto è attivo.|:count servizi sono in attesa del collegamento Stripe: li pubblicheremo appena il conto è attivo.',
+        'awaiting_stripe_cta' => 'Collega Stripe',
     ],
 
     /*
@@ -953,6 +1003,21 @@ return [
         'cta' => 'Completa la registrazione',
         'outro' => 'Se non hai inviato tu questa richiesta, ignora pure questa email.',
         'signature' => 'A presto,',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Benvenuto al partner creato dal pannello
+    |--------------------------------------------------------------------------
+    */
+    'welcome_mail' => [
+        'subject' => 'Benvenuto su AnimalAmo: il tuo account partner è pronto',
+        'title' => 'Benvenuto su AnimalAmo, :name!',
+        'intro' => 'Abbiamo creato l’account partner di :business. Per entrare nella tua area scegli una password dal pulsante qui sotto.',
+        'set_password_cta' => 'Scegli la password',
+        'expires' => 'Il link è valido per :days giorni. Se scade, usa “Password dimenticata” nell’accesso partner.',
+        'promoted_intro' => 'Il tuo account AnimalAmo ora è anche l’account partner di :business. Accedi con la tua email e la password di sempre per aprire l’area partner.',
+        'login_cta' => 'Vai all’area partner',
     ],
 
 ];

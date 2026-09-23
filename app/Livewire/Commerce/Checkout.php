@@ -6,24 +6,28 @@ use App\Actions\Order\PlaceOrderAction;
 use App\Contracts\Payment\PaymentGatewayInterface;
 use App\Data\Cart\CartItemData;
 use App\Data\Checkout\PlaceOrderData;
+use App\Enums\OrderPaymentMode;
 use App\Enums\PaymentMethod;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Exceptions\OrderAlreadyPlacedException;
 use App\Exceptions\PaymentConfigurationException;
 use App\Models\Partner\PartnerProfile;
-use App\Models\User;
 use App\Services\Availability\AvailabilityService;
 use App\Services\Cart\CartManager;
 use App\Services\Commerce\CommissionCalculator;
 use App\Services\Orders\OrderQueryService;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
 use App\Support\Phone;
+use App\Support\SafeUrl;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -120,6 +124,32 @@ class Checkout extends Component
     /** Email destinataria mostrata allo step 3 del flusso regalo (dallo snapshot, il carrello è ormai vuoto). */
     public string $placedGiftRecipientEmail = '';
 
+    /**
+     * Modalità del venditore fissata all'ingresso nello step 2 (value di
+     * OrderPaymentMode). Bloccata: se il client potesse dire "on_site",
+     * prenoterebbe gratis da un partner che vuole l'incasso online.
+     */
+    #[Locked]
+    public string $paymentMode = 'online';
+
+    /**
+     * ULID generato allo step 2 del ramo in struttura: è la chiave di
+     * idempotenza della conferma (orders.checkout_token è unique).
+     */
+    #[Locked]
+    public ?string $checkoutToken = null;
+
+    /** Conferme in struttura al minuto per utente: prenotare non costa nulla, accaparrare posti sì. */
+    private const ON_SITE_MAX_ATTEMPTS = 5;
+
+    /** Memo per richiesta del profilo venditore: render e azioni lo leggono più volte. */
+    private ?PartnerProfile $sellerProfileMemo = null;
+
+    private bool $sellerProfileResolved = false;
+
+    /** @var array<int, ?int> memo per richiesta del venditore, per flusso (0 normale, 1 regalo) */
+    private array $sellerUserIdMemo = [];
+
     /** Tab dello stepper (statici: si avanza solo con le CTA, i tab non sono cliccabili). */
     public const STEPS = [1 => 'I tuoi dati', 2 => 'Pagamento', 3 => 'Fatto!'];
 
@@ -157,15 +187,7 @@ class Checkout extends Component
         }
 
         if ($step === 2) {
-            $this->validate([
-                'firstName' => ['required'],
-                'lastName' => ['required'],
-                'email' => ['required', 'email'],
-                // Il telefono resta facoltativo (orders.phone è nullable), ma se
-                // c'è dev'essere un numero vero: finisce nello snapshot ordine.
-                'phone' => ['nullable', ...Phone::rules()],
-                ...($this->gift ? ['recipientEmail' => ['required', 'email']] : []),
-            ]);
+            $this->validate($this->personalDataRules());
 
             if ($this->gift) {
                 foreach ($this->cart()->items(true) as $item) {
@@ -184,8 +206,9 @@ class Checkout extends Component
                 return;
             }
 
-            $this->ensureMethodIsAvailable();
-            $this->initPaymentSession();
+            if (! $this->preparePaymentStep()) {
+                return;
+            }
         }
 
         $this->step = $step;
@@ -202,7 +225,7 @@ class Checkout extends Component
 
         $this->paymentMethod = $method;
 
-        if ($this->step === 2) {
+        if ($this->step === 2 && ! $this->paysOnSite()) {
             $this->initPaymentSession();
         }
     }
@@ -220,7 +243,7 @@ class Checkout extends Component
 
         $this->useSavedCard = $saved;
 
-        if ($this->step === 2) {
+        if ($this->step === 2 && ! $this->paysOnSite()) {
             $this->initPaymentSession();
         }
     }
@@ -228,7 +251,7 @@ class Checkout extends Component
     /** "Paga ora": congela il bottone e delega la conferma al JS (Payment Element del metodo corrente). */
     public function processPayment(): void
     {
-        if ($this->step !== 2 || $this->processing || $this->paymentUnavailable) {
+        if ($this->step !== 2 || $this->processing || $this->paymentUnavailable || $this->paysOnSite()) {
             return;
         }
 
@@ -275,8 +298,9 @@ class Checkout extends Component
     {
         $method = PaymentMethod::tryFrom($this->paymentMethod);
 
-        // Metodo manomesso o gateway disabilitato nel frattempo: nessuna capture.
-        if ($this->step !== 2 || $method === null || ! $this->isMethodAvailable($method)) {
+        // Metodo manomesso, gateway disabilitato nel frattempo o checkout in
+        // struttura (nessun PaymentIntent esiste): nessuna capture.
+        if ($this->step !== 2 || $this->paysOnSite() || $method === null || ! $this->isMethodAvailable($method)) {
             $this->processing = false;
             Flux::toast(text: __('payment.errors.config_missing'), variant: 'danger');
 
@@ -414,6 +438,128 @@ class Checkout extends Component
         Flux::toast(text: $message !== '' ? $message : __('payment.errors.capture_failed'), variant: 'danger');
     }
 
+    /**
+     * "Conferma prenotazione" del ramo in struttura. Non si muove denaro,
+     * quindi niente capture e niente storni. Il token bloccato allo step 2
+     * rende idempotenti il doppio click e il replay dello stesso snapshot; una
+     * seconda tab monta un componente col suo token, e la ferma il carrello
+     * svuotato dal primo ordine: letto qui se il primo ha già finito, riletto
+     * sotto lock da PlaceOrderAction se le due conferme si sovrappongono. Il
+     * limite per utente frena chi accaparra posti gratis a raffica.
+     */
+    public function confirmBooking(PlaceOrderAction $action, PartnerPaymentModeService $modes): void
+    {
+        if ($this->step !== 2 || $this->processing || ! $this->paysOnSite() || $this->checkoutToken === null) {
+            return;
+        }
+
+        // In struttura non si regala mai: preparePaymentStep rifiuta il flusso
+        // regalo, ma ?regalo non è bloccato e il client può ribaltarlo dopo.
+        // Il bottone non resta muto: stesso avviso del passaggio allo step 2.
+        if ($this->gift) {
+            Flux::toast(text: __('checkout.on_site.gift_not_allowed'), variant: 'danger');
+
+            return;
+        }
+
+        if (! Auth::check()) {
+            $this->askToLogIn();
+
+            return;
+        }
+
+        // I dati dello step 1 non sono bloccati: validati al passaggio allo
+        // step 2, il client li può cambiare dopo. Finiscono nello snapshot
+        // dell'ordine e nella mail di conferma, quindi si rivalidano qui.
+        $this->validate($this->personalDataRules());
+
+        $throttleKey = $this->onSiteThrottleKey();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, self::ON_SITE_MAX_ATTEMPTS)) {
+            Flux::toast(
+                text: __('checkout.on_site.throttle', ['seconds' => RateLimiter::availableIn($throttleKey)]),
+                variant: 'danger',
+            );
+
+            return;
+        }
+
+        RateLimiter::hit($throttleKey, 60);
+
+        // Solo il flusso normale: le righe regalo non entrano mai in una prenotazione in struttura.
+        $items = $this->cart()->items(false);
+
+        // Carrello già vuoto: se l'ha svuotato questo token è un secondo click
+        // arrivato dopo il primo, altrimenti non resta niente da prenotare.
+        if ($items->isEmpty()) {
+            if ($action->findOnSiteOrder($this->checkoutToken) !== null) {
+                $this->finishAsAlreadyPlaced();
+
+                return;
+            }
+
+            $this->redirectRoute('carrello');
+
+            return;
+        }
+
+        $sellerUserId = $items->first()->partnerUserId;
+
+        // Il partner può essere passato a "online" fra lo step 2 e il click:
+        // si riapre lo step 2 con Stripe invece di prenotare senza incasso.
+        if ($modes->forOwner($sellerUserId) !== OrderPaymentMode::OnSite) {
+            Flux::toast(text: __('checkout.on_site.mode_changed'), variant: 'warning');
+            $this->preparePaymentStep();
+
+            return;
+        }
+
+        // Snapshot per lo step 3 PRIMA della pipeline (ClearCartPipe svuota il flusso).
+        $placedItems = $items->map(fn (CartItemData $item): array => $this->presentItem($item))->values()->all();
+
+        $data = PlaceOrderData::onSite(
+            firstName: $this->firstName,
+            lastName: $this->lastName,
+            email: $this->email,
+            phone: $this->phone !== '' ? $this->phone : null,
+            country: $this->country,
+            items: $items,
+            totalCents: $this->cart()->total(false),
+            checkoutToken: $this->checkoutToken,
+            // Copia salvata sull'ordine già pulita: solo http(s), come ogni href che la stampa.
+            partnerPaymentUrl: SafeUrl::http($modes->profileFor($sellerUserId)?->payment_url),
+        );
+
+        try {
+            $action->execute($data);
+        } catch (OrderAlreadyPlacedException) {
+            $this->finishAsAlreadyPlaced();
+
+            return;
+        } catch (CartValidationException $exception) {
+            // Nessun incasso da stornare: basta dire cosa non va, si resta allo step 2.
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return;
+        } catch (Throwable $exception) {
+            // Qualsiasi altro errore (totale disallineato fra le due letture del
+            // carrello, prodotto sparito nella pipeline): rollback già avvenuto,
+            // nessun denaro da stornare. Toast invece di un 500, si resta allo step 2.
+            Log::error('Checkout: conferma in struttura fallita', [
+                'checkout_token' => $this->checkoutToken,
+                'error' => $exception->getMessage(),
+            ]);
+            Flux::toast(text: __('checkout.on_site.failed'), variant: 'danger');
+
+            return;
+        }
+
+        $this->placedItems = $placedItems;
+        $this->placedGiftRecipientEmail = '';
+        $this->dispatch('cart-updated');
+        $this->step = 3;
+    }
+
     public function render(OrderQueryService $orders)
     {
         // Riepilogo ordine: le righe reali del carrello (filtrate sul flusso corrente),
@@ -427,15 +573,25 @@ class Checkout extends Component
 
         $methods = $this->availableMethods();
 
+        // Dati del partner da pagare: servono solo al riquadro dello step 2 in struttura.
+        $onSiteSeller = $this->step === 2 && $this->paysOnSite() ? $this->sellerProfile() : null;
+
         return view('livewire.commerce.checkout', [
             'items' => $items,
             'total' => $this->cart()->total($this->gift),
-            // Etichette dei tab dello stepper localizzate (le chiavi numeriche restano da STEPS).
+            // Etichette dei tab dello stepper localizzate (le chiavi numeriche restano da STEPS):
+            // chi paga in struttura non ha uno step "Pagamento", ha una conferma.
             'steps' => [
                 1 => __('checkout.ui.step_data'),
-                2 => __('checkout.ui.step_payment'),
+                2 => $this->confirmsOnSite() ? __('checkout.on_site.step_label') : __('checkout.ui.step_payment'),
                 3 => __('checkout.ui.step_done'),
             ],
+            // Ramo in struttura: niente Stripe allo step 2, riquadro col partner da pagare.
+            'paysOnSite' => $this->paysOnSite(),
+            // Ragione sociale facoltativa a profilo: vuota = variante del riquadro senza nome.
+            'partnerName' => filled($onSiteSeller?->business_name) ? $onSiteSeller->business_name : null,
+            // Solo http(s): un javascript: scritto senza passare dal service non arriva all'href.
+            'partnerPaymentUrl' => SafeUrl::http($onSiteSeller?->payment_url),
             // Righe metodo: solo i PaymentMethod il cui gateway è abilitato.
             'hasCardMethod' => in_array(PaymentMethod::Card, $methods, true),
             // Carta salvata a profilo: solo il mascherato serve alla riga.
@@ -577,17 +733,130 @@ class Checkout extends Component
     /**
      * Profilo del venditore del carrello. Un carrello ha un solo partner
      * (CartManager::guardSinglePartner), quindi la prima riga basta — e il
-     * proprietario arriva dal server, mai dal client.
+     * proprietario arriva dal server, mai dal client. Memo per richiesta:
+     * render, init della sessione e riquadro offline lo leggono più volte.
      */
     private function sellerProfile(): ?PartnerProfile
     {
-        $partnerUserId = $this->cart()->items($this->gift)->first()?->partnerUserId;
-
-        if ($partnerUserId === null) {
-            return null;
+        if (! $this->sellerProfileResolved) {
+            $this->sellerProfileMemo = app(PartnerPaymentModeService::class)->profileFor($this->sellerUserId());
+            $this->sellerProfileResolved = true;
         }
 
-        return User::find($partnerUserId)?->partnerProfile;
+        return $this->sellerProfileMemo;
+    }
+
+    /**
+     * Proprietario delle righe del flusso corrente (null a carrello vuoto).
+     * Memo per richiesta e per flusso: allo step 1 l'etichetta dello stepper lo
+     * chiede a ogni render, cioè a ogni tasto dei campi wire:model.live.
+     */
+    private function sellerUserId(): ?int
+    {
+        $flow = (int) $this->gift;
+
+        if (! array_key_exists($flow, $this->sellerUserIdMemo)) {
+            $this->sellerUserIdMemo[$flow] = $this->cart()->items($this->gift)->first()?->partnerUserId;
+        }
+
+        return $this->sellerUserIdMemo[$flow];
+    }
+
+    /** Modalità attuale del venditore, riletta dal profilo (profilo assente = online). */
+    private function sellerMode(): OrderPaymentMode
+    {
+        return app(PartnerPaymentModeService::class)->forOwner($this->sellerUserId());
+    }
+
+    /** Il checkout è stato bloccato sul ramo in struttura all'ingresso nello step 2. */
+    private function paysOnSite(): bool
+    {
+        return $this->paymentMode === OrderPaymentMode::OnSite->value;
+    }
+
+    /**
+     * Etichetta dello stepper: allo step 1 la modalità non è ancora bloccata e
+     * si legge dal venditore, così il tab dice "Conferma" fin da subito.
+     */
+    private function confirmsOnSite(): bool
+    {
+        return $this->step === 1
+            ? $this->sellerMode() === OrderPaymentMode::OnSite
+            : $this->paysOnSite();
+    }
+
+    /**
+     * Fissa la modalità del venditore per tutto lo step 2. Online: sessione
+     * Stripe come sempre. In struttura: solo il token di idempotenza, niente
+     * gateway. Falso quando lo step 2 non deve aprirsi.
+     */
+    private function preparePaymentStep(): bool
+    {
+        if ($this->sellerMode() === OrderPaymentMode::OnSite) {
+            // Regalo rimasto in carrello da quando il partner era online: un buono
+            // "da pagare in struttura" non ha nessuno che lo incassi. Prima del
+            // login, perché accedere non lo renderebbe acquistabile.
+            if ($this->gift) {
+                Flux::toast(text: __('checkout.on_site.gift_not_allowed'), variant: 'danger');
+
+                return false;
+            }
+
+            // Una prenotazione gratuita da ospite non sarebbe né visibile né
+            // annullabile da nessuno: serve un account.
+            if (! Auth::check()) {
+                $this->askToLogIn();
+
+                return false;
+            }
+
+            $this->paymentMode = OrderPaymentMode::OnSite->value;
+            $this->checkoutToken ??= (string) Str::ulid();
+            $this->clientSecret = null;
+            $this->paymentIntentId = null;
+            $this->sessionAmountCents = null;
+            $this->paymentUnavailable = false;
+
+            return true;
+        }
+
+        $this->paymentMode = OrderPaymentMode::Online->value;
+        $this->checkoutToken = null;
+        $this->ensureMethodIsAvailable();
+        $this->initPaymentSession();
+
+        return true;
+    }
+
+    /**
+     * Regole dei dati personali dello step 1: al passaggio allo step 2 e di
+     * nuovo alla conferma in struttura.
+     *
+     * @return array<string, list<mixed>>
+     */
+    private function personalDataRules(): array
+    {
+        return [
+            'firstName' => ['required'],
+            'lastName' => ['required'],
+            'email' => ['required', 'email'],
+            // Il telefono resta facoltativo (orders.phone è nullable), ma se
+            // c'è dev'essere un numero vero: finisce nello snapshot ordine.
+            'phone' => ['nullable', ...Phone::rules()],
+            ...($this->gift ? ['recipientEmail' => ['required', 'email']] : []),
+        ];
+    }
+
+    /** Ospite sul ramo in struttura: toast e modale di login, come preferiti e community. */
+    private function askToLogIn(): void
+    {
+        Flux::toast(text: __('checkout.on_site.login_required'), variant: 'warning');
+        Flux::modal('login')->show();
+    }
+
+    private function onSiteThrottleKey(): string
+    {
+        return 'checkout-on-site|'.Auth::id();
     }
 
     /**
@@ -634,7 +903,8 @@ class Checkout extends Component
     private function finishAsAlreadyPlaced(): void
     {
         $this->processing = false;
-        Flux::toast(text: __('payment.errors.already_placed'));
+        // In struttura non è passato alcun pagamento: il toast parla di prenotazione, non di addebiti.
+        Flux::toast(text: $this->paysOnSite() ? __('checkout.on_site.already_placed') : __('payment.errors.already_placed'));
         $this->redirectRoute(Auth::check() ? 'profilo.ordini' : 'home');
     }
 

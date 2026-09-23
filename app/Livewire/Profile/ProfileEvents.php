@@ -49,7 +49,7 @@ class ProfileEvents extends Component
      * ordini — passato ⇔ booked_until < adesso — e regali esclusi: chi compra
      * non partecipa, la stessa regola di OrderQueryService::profileRouteFor().
      *
-     * @return list<array{id: int, title: string, tag: string, photo: ?string, time: ?string, location: ?string, price: string}>
+     * @return list<array{id: int, title: string, tag: string, photo: ?string, time: ?string, location: ?string, price: string, paysOnSite: bool}>
      */
     private function bookedEvents(): array
     {
@@ -70,6 +70,8 @@ class ProfileEvents extends Component
             )
             // In programma: il più vicino per primo. Passati: il più recente per primo.
             ->orderBy('booked_from', $past ? 'desc' : 'asc')
+            // La modalità di pagamento è una copia sulla testata: una query per tutte le card.
+            ->with('order')
             ->get()
             ->map(fn (OrderItem $item): array => $this->presentEvent($item))
             ->values()
@@ -80,7 +82,7 @@ class ProfileEvents extends Component
      * Card evento del blade dal solo snapshot riga: tag dal ProductType,
      * orario da booked_from con lo stesso formato della griglia eventi.
      *
-     * @return array{id: int, title: string, tag: string, photo: ?string, time: ?string, location: ?string, price: string}
+     * @return array{id: int, title: string, tag: string, photo: ?string, time: ?string, location: ?string, price: string, paysOnSite: bool}
      */
     private function presentEvent(OrderItem $item): array
     {
@@ -93,6 +95,9 @@ class ProfileEvents extends Component
             'location' => $item->location,
             // Evento gratuito: "Gratis" come nelle card del catalogo, non "0,00 €".
             'price' => $item->price_cents === 0 ? __('format.free') : Format::money($item->price_cents),
+            // Dalla copia sull'ordine, mai dal partner di oggi (come OrderQueryService);
+            // annullato, l'evento non si paga a nessuno.
+            'paysOnSite' => (bool) $item->order?->isConfirmedOnSite(),
         ];
     }
 }

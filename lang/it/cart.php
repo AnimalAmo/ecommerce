@@ -12,6 +12,8 @@ return [
     'single_partner' => 'Nel carrello puoi avere prodotti di una sola struttura per volta. Completa questo acquisto, oppure svuota il carrello per ricominciare.',
     'product_without_owner' => 'Questo prodotto non è al momento acquistabile. Riprova più tardi.',
     'invalid_participants' => 'Il numero di partecipanti selezionato non è valido.',
+    'changed_elsewhere' => 'Il carrello è cambiato in un\'altra finestra. Se hai già confermato lì, trovi la prenotazione nei tuoi ordini.',
+    'gift_requires_online_payment' => 'Questa Smartbox non si può regalare: il partner la fa pagare direttamente in struttura. Puoi acquistarla per te.',
     // Toast di conferma aggiunta
     'added' => 'Aggiunto al carrello.',
     // Riga validità della card smartbox ('Smartbox valida per 12 mesi', :validity via Format::validity)
@@ -39,8 +41,11 @@ return [
         'gift_message_placeholder' => 'Messaggio',
         'total' => 'Totale',
         'taxes_included' => 'Tasse e commissioni comprese',
+        // Venditore pagato direttamente: nessuna commissione AnimalAmo sul totale.
+        'taxes_included_on_site' => 'Tasse comprese',
         'promo_code' => 'Inserisci codice promozionale',
         'secure_payment' => 'Metodo di pagamento sicuro',
+        'pay_on_site' => 'Pagherai direttamente al partner',
         'free_cancellation' => 'Cancellazione gratuita',
         'free_cancellation_note' => '(Non oltre 2 settimane prima dell’evento)',
         'go_to_checkout' => 'Vai al checkout',

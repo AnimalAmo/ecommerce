@@ -153,21 +153,23 @@ class CatalogAdmin
     }
 
     /**
-     * Righe d'ordine pagate sulla scheda.
+     * Prenotazioni valide sulla scheda: pagate online o confermate da pagare
+     * in struttura. Contano entrambe, perché in entrambi i casi il cliente
+     * si presenterà.
      *
      * @return array{total: int, future: int}
      */
     public function bookings(Model $item): array
     {
-        $paid = DB::table('order_items')
+        $booked = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.purchasable_type', $this->family($item))
             ->where('order_items.purchasable_id', $item->getKey())
-            ->where('orders.status', OrderStatus::Paid->value);
+            ->whereIn('orders.status', OrderStatus::bookingStatuses());
 
         return [
-            'total' => (clone $paid)->count(),
-            'future' => $this->futureBookingsQuery($item, $paid)->count(),
+            'total' => (clone $booked)->count(),
+            'future' => $this->futureBookingsQuery($item, $booked)->count(),
         ];
     }
 
@@ -203,8 +205,8 @@ class CatalogAdmin
     /**
      * Motivo per cui la scheda non si può cancellare, o null se si può.
      *
-     * Bloccata con prenotazioni future: la prenotazione pagata deve restare
-     * onorabile e leggibile dal partner. Lo smartbox non ha una data: conta
+     * Bloccata con prenotazioni future (pagate o confermate in struttura):
+     * devono restare onorabili e leggibili dal partner. Lo smartbox non ha una data: conta
      * come futura ogni vendita ancora dentro la validità del cofanetto.
      */
     public function deletionBlocker(Model $item): ?string
@@ -440,9 +442,10 @@ class CatalogAdmin
             ->values();
     }
 
-    private function futureBookingsQuery(Model $item, QueryBuilder $paid): QueryBuilder
+    /** $booked arriva già filtrato su OrderStatus::bookingStatuses() da bookings(). */
+    private function futureBookingsQuery(Model $item, QueryBuilder $booked): QueryBuilder
     {
-        $query = clone $paid;
+        $query = clone $booked;
 
         if ($item instanceof SmartboxPackage) {
             $months = (int) ($item->validity_months ?: 18);

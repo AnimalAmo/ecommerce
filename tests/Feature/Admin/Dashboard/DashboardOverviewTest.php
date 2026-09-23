@@ -128,6 +128,25 @@ class DashboardOverviewTest extends TestCase
         $this->assertSame(['orders' => 2, 'gross' => 5000], $this->overview()->monthSales());
     }
 
+    public function test_month_on_site_bookings_stay_out_of_month_sales(): void
+    {
+        Order::factory()->guest()->paid()->create([
+            'total_cents' => 3000,
+            'created_at' => CarbonImmutable::parse('2026-09-10 09:00', 'Europe/Rome')->utc(),
+        ]);
+        Order::factory()->guest()->onSite()->create([
+            'total_cents' => 9000,
+            'created_at' => CarbonImmutable::parse('2026-09-12 09:00', 'Europe/Rome')->utc(),
+        ]);
+        Order::factory()->guest()->onSite()->create([
+            'total_cents' => 1000,
+            'created_at' => CarbonImmutable::parse('2026-08-31 23:30', 'Europe/Rome')->utc(),
+        ]);
+
+        $this->assertSame(['orders' => 1, 'gross' => 3000], $this->overview()->monthSales());
+        $this->assertSame(['count' => 1, 'value_cents' => 9000], $this->overview()->monthOnSiteBookings());
+    }
+
     public function test_latest_listings_mix_the_families_newest_first_hidden_ones_included(): void
     {
         Structure::factory()->create(['name' => ['it' => 'Hotel vecchio'], 'created_at' => now()->subDays(9)]);

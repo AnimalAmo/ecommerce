@@ -29,9 +29,11 @@ class ActivityCancellation extends Component
 
         $this->saveStep(['cancellation_when' => $this->when], 10);
 
-        // Ultimo step: onboarding attività/eventi completato (stato -> completed).
-        $this->completeDraft();
-        $this->redirectRoute('partner.dashboard');
+        // Ultimo step: salva 10, ma la chiusura scrive 11 (StructureDraft::finalStep,
+        // come da sempre per le attività). Si resta qui solo se la bozza non è pubblicabile.
+        if ($this->completeDraft()) {
+            $this->redirectRoute('partner.dashboard');
+        }
     }
 
     public function render()

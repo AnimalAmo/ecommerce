@@ -31,9 +31,11 @@ class SmartboxPrice extends Component
 
         $this->saveStep(['price' => $this->price], 12);
 
-        // Ultimo step: onboarding smartbox completato (stato -> completed).
-        $this->completeDraft(12);
-        $this->redirectRoute('partner.dashboard');
+        // Ultimo step: pubblica o mette in attesa di Stripe. Si resta qui solo
+        // se la bozza non è pubblicabile, col toast che lo spiega.
+        if ($this->completeDraft(12)) {
+            $this->redirectRoute('partner.dashboard');
+        }
     }
 
     public function render()

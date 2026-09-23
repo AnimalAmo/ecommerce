@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use App\Services\PasswordResetService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Password;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -29,15 +30,29 @@ class ResetPassword extends Component
     public bool $invalid = false;
 
     /**
+     * Link di benvenuto di un partner creato dal pannello ("?welcome=1"):
+     * copia "scegli la password", broker a 7 giorni e, alla fine, la login
+     * partner. Solo per un partner non amministratore che arriva con un token
+     * valido (acceptsWelcome): altrimenti la pagina resta quella di sempre.
+     * Locked: dal browser non si allunga la validità di un link normale.
+     */
+    #[Locked]
+    public bool $welcome = false;
+
+    /**
      * $email non è un parametro di rotta: arriva dalla query string del link
      * ("?email="), che è come Laravel firma il destinatario del token. Resta
      * argomento esplicito perché il componente sia montabile anche senza
      * richiesta HTTP (test).
      */
-    public function mount(string $token, ?string $email = null): void
+    public function mount(string $token, ?string $email = null, ?bool $welcome = null): void
     {
         $this->token = $token;
         $this->email = $email ?? (string) request()->query('email', '');
+        // Il token entra nel controllo: la copia di benvenuto la vede solo chi
+        // ha in mano il link della mail (acceptsWelcome).
+        $this->welcome = ($welcome ?? request()->boolean('welcome'))
+            && app(PasswordResetService::class)->acceptsWelcome($this->email, $this->token);
 
         // Link troncato o incollato a metà: inutile mostrare il form, la
         // reimpostazione fallirebbe comunque dopo aver scritto la password.
@@ -63,7 +78,12 @@ class ResetPassword extends Component
     {
         $this->validate();
 
-        $status = $service->reset($this->email, $this->token, $this->password);
+        $status = $service->reset(
+            $this->email,
+            $this->token,
+            $this->password,
+            $this->welcome ? PasswordResetService::WELCOME_BROKER : null,
+        );
 
         if ($status !== Password::PASSWORD_RESET) {
             // Token scaduto/consumato oppure email non più esistente: un solo
@@ -85,6 +105,13 @@ class ResetPassword extends Component
      */
     public function goToLogin(): void
     {
+        // Un partner appena creato va alla sua login, non a quella dei clienti.
+        if ($this->welcome) {
+            Flux::modal('partner-login')->show();
+
+            return;
+        }
+
         Flux::modal('login')->show();
 
         $this->dispatch('prefill-login-email', email: $this->email);
@@ -97,6 +124,6 @@ class ResetPassword extends Component
 
     public function render()
     {
-        return view('livewire.auth.reset-password')->title(__('auth-modal.reset.title_page'));
+        return view('livewire.auth.reset-password')->title(__($this->welcome ? 'auth-modal.partner_welcome.title' : 'auth-modal.reset.title_page'));
     }
 }

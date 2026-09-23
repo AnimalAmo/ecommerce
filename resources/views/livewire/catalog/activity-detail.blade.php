@@ -222,6 +222,9 @@
                                 <p>{{ __('events.total') }}</p>
                                 <p>{{ $totalPrice }}</p>
                             </div>
+                            @if ($paysOnSite)
+                                @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
+                            @endif
                         @endif
                     </div>
                 </aside>

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 /**
  * @extends Factory<User>
@@ -39,7 +40,6 @@ class UserFactory extends Factory
         ];
     }
 
-    /** Account sospeso: legge/scrive come cliente ma non entra nell'area partner. */
     /**
      * Partner con onboarding Stripe completato: può incassare ed essere
      * bonificato, quindi i suoi servizi possono andare a catalogo.
@@ -51,6 +51,22 @@ class UserFactory extends Factory
         });
     }
 
+    /**
+     * Partner attivo che si fa pagare direttamente: pubblica senza Stripe e i
+     * suoi ordini nascono "confermati", non "pagati".
+     */
+    public function offlinePartner(): static
+    {
+        return $this->state(fn (): array => ['is_active' => true])
+            ->afterCreating(function (User $user): void {
+                Role::findOrCreate('partner', 'web');
+                $user->assignRole('partner');
+
+                PartnerProfile::factory()->offline()->for($user)->create();
+            });
+    }
+
+    /** Account sospeso: legge/scrive come cliente ma non entra nell'area partner. */
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [

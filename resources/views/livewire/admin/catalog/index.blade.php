@@ -7,6 +7,9 @@
         ])"
     >
         <x-slot:actions>
+            <flux:modal.trigger name="catalog-create">
+                <x-admin.button tone="primary" icon="plus">{{ __('admin-catalog.create.entry.new_button') }}</x-admin.button>
+            </flux:modal.trigger>
             <x-admin.button icon="arrow-down-tray" :href="$exportUrl">{{ __('admin-catalog.index.export') }}</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
@@ -108,4 +111,5 @@
     </x-admin.card>
 
     @include('livewire.admin.catalog.partials.confirm-modal')
+    @include('livewire.admin.catalog.partials.create-modal')
 </div>

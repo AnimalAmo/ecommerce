@@ -2,6 +2,7 @@
 
 namespace App\Models\Partner;
 
+use App\Enums\OrderPaymentMode;
 use App\Models\User;
 use Database\Factories\Partner\PartnerProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,11 +35,14 @@ class PartnerProfile extends Model
         'stripe_requirements_due',
         'commission_rate_bp',
         'commission_min_cents',
+        'online_payment',
+        'payment_url',
     ];
 
     protected function casts(): array
     {
         return [
+            'online_payment' => 'boolean',
             'stripe_charges_enabled' => 'boolean',
             'stripe_payouts_enabled' => 'boolean',
             'stripe_requirements_due' => 'array',
@@ -57,6 +61,42 @@ class PartnerProfile extends Model
     public function canBePaid(): bool
     {
         return $this->canSell() && $this->stripe_payouts_enabled;
+    }
+
+    /**
+     * Il cliente paga online su AnimalAmo. `!== false` e non `=== true`: un
+     * profilo appena creato non ha la colonna in memoria (la scrive il default
+     * del database), e va letto come i partner di prima, cioè online.
+     */
+    public function requiresOnlinePayment(): bool
+    {
+        return $this->online_payment !== false;
+    }
+
+    /**
+     * Può mandare servizi a catalogo. Chi si fa pagare direttamente non ha
+     * bisogno di Stripe. canSell/canBePaid restano verifiche Stripe pure,
+     * perché decidono anche i bonifici degli ordini online già fatti.
+     */
+    public function canPublish(): bool
+    {
+        return ! $this->requiresOnlinePayment() || $this->canBePaid();
+    }
+
+    /**
+     * Può scegliere (o tenere) il pagamento online. Resta online chi lo è già,
+     * anche senza Stripe (appena iscritto, o creato dall'admin); chi è offline
+     * ci torna solo da pagabile. Una sola regola per il service, che rifiuta,
+     * e per la pagina profilo, che disabilita la scelta.
+     */
+    public function canSwitchToOnline(): bool
+    {
+        return $this->requiresOnlinePayment() || $this->canBePaid();
+    }
+
+    public function paymentMode(): OrderPaymentMode
+    {
+        return $this->requiresOnlinePayment() ? OrderPaymentMode::Online : OrderPaymentMode::OnSite;
     }
 
     /** Aliquota del partner, o quella di piattaforma se non deroga. */

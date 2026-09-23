@@ -150,6 +150,17 @@ class DashboardOverview
     }
 
     /**
+     * Prenotazioni del mese da pagare in struttura: la query di Incassi, fuori
+     * da "Ordini del mese" perché quei soldi non passano da AnimalAmo.
+     *
+     * @return array{count: int, value_cents: int}
+     */
+    public function monthOnSiteBookings(): array
+    {
+        return $this->ledger->onSiteBookings(Period::current());
+    }
+
+    /**
      * Le ultime schede create, delle tre famiglie, anche sospese o in attesa:
      * il badge di stato dice il resto.
      *

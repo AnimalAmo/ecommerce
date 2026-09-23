@@ -255,6 +255,18 @@ class PayoutLedgerTest extends TestCase
         $this->assertSame('Settembre 2026', $this->ledger->periodOptions()['2026-09']);
     }
 
+    public function test_period_options_also_start_from_a_first_on_site_booking(): void
+    {
+        // Partenza con soli partner offline: la prima prenotazione è in struttura, il primo ordine pagato arriva dopo.
+        $this->onSiteOrder('2026-06-15 10:00', 9000);
+        $this->order('2026-08-10 10:00', 1000);
+
+        $this->assertSame(
+            ['2026-09', '2026-08', '2026-07', '2026-06', Period::LAST_12_MONTHS],
+            array_keys($this->ledger->periodOptions()),
+        );
+    }
+
     public function test_an_unknown_or_future_period_falls_back_to_this_month(): void
     {
         foreach (['2026-13', '2026-10', 'abc', '', null] as $key) {
@@ -264,6 +276,30 @@ class PayoutLedgerTest extends TestCase
         $year = Period::fromKey(Period::LAST_12_MONTHS);
         $this->assertSame('2025-10-01 00:00:00', $year->start->format('Y-m-d H:i:s'));
         $this->assertSame('2026-09-30 23:59:59', $year->end->format('Y-m-d H:i:s'));
+    }
+
+    public function test_an_on_site_booking_stays_out_of_every_ledger_number(): void
+    {
+        $this->sale('2026-09-12 10:00', $this->partner('Lamasu'), 5000, 500, 4350);
+        $before = $this->ledger->totals(Period::fromKey('2026-09'));
+
+        $this->onSiteOrder('2026-09-14 10:00', 9000);
+
+        // Nessun soldo è passato da AnimalAmo: incassato, divisione e "precedenti a Connect" non cambiano.
+        $this->assertEquals($before, $this->ledger->totals(Period::fromKey('2026-09')));
+        $this->assertSame(['orders' => 1, 'gross' => 5000], $this->ledger->sales(Period::fromKey('2026-09')));
+    }
+
+    public function test_on_site_bookings_are_counted_apart_by_month(): void
+    {
+        $this->onSiteOrder('2026-08-31 23:59:59', 1000);
+        $this->onSiteOrder('2026-09-01 00:00:00', 9000);
+        $this->onSiteOrder('2026-09-20 18:00:00', 3000);
+        $this->order('2026-09-10 12:00:00', 4000);
+
+        $this->assertSame(['count' => 2, 'value_cents' => 12000], $this->ledger->onSiteBookings(Period::fromKey('2026-09')));
+        // Accetta anche un giorno qualunque del mese (CarbonInterface).
+        $this->assertSame(['count' => 1, 'value_cents' => 1000], $this->ledger->onSiteBookings(CarbonImmutable::parse('2026-08-15 12:00', 'Europe/Rome')));
     }
 
     // --- dati costruiti a mano -------------------------------------------------
@@ -317,5 +353,17 @@ class PayoutLedgerTest extends TestCase
         ]);
 
         return $user->load('partnerProfile');
+    }
+
+    /** Prenotazione confermata da pagare in struttura, senza pagamento né registro. */
+    private function onSiteOrder(string $romeTime, int $total): Order
+    {
+        $at = $this->rome($romeTime);
+
+        return Order::factory()->guest()->onSite()->create([
+            'total_cents' => $total,
+            'created_at' => $at,
+            'updated_at' => $at,
+        ]);
     }
 }

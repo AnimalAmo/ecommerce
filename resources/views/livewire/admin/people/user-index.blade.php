@@ -12,6 +12,7 @@
     <x-admin.page-header :heading="__('admin-people.users.title')" :sub="$sub">
         <x-slot:actions>
             <x-admin.button tone="outline" icon="arrow-down-tray" :href="route('admin.users.export', $exportQuery)">{{ __('admin-people.users.export') }}</x-admin.button>
+            <x-admin.button tone="primary" icon="plus" :href="route('admin.users.create')" wire:navigate>{{ __('admin-people.partner_create.new_button') }}</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
 

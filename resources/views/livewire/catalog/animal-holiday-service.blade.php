@@ -294,6 +294,9 @@
                             <span>{{ __('holiday.total') }}</span>
                             <span>{{ \App\Support\Format::money($totalCents) }}</span>
                         </div>
+                        @if ($paysOnSite)
+                            @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
+                        @endif
                     </div>
                 </aside>
             </div>

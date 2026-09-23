@@ -2,40 +2,55 @@
 
 namespace App\Livewire\Concerns;
 
-use App\Exceptions\PartnerNotPayableException;
+use App\Enums\DraftCompletion;
+use App\Exceptions\DraftNotPublishableException;
 use App\Models\Structure\StructureDraft;
-use App\Services\Partner\Publishing\DraftPublisher;
+use App\Services\Partner\Publishing\DraftCompleter;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Locked;
 
 /**
- * Condivide la bozza di onboarding struttura tra i vari step del wizard partner.
- * La bozza è tracciata in sessione (non c'è ancora l'auth partner) e ogni step
- * salva i suoi campi + aggiorna `current_step`, così lo stato parziale sopravvive
- * se l'utente interrompe. `completeDraft($finalStep)` la chiude all'ultimo step
- * del flusso (hotel 11, attività 10, smartbox 12).
+ * Condivide la bozza di un servizio partner tra gli step del wizard. La bozza
+ * è tracciata in sessione e ogni step salva i suoi campi e aggiorna
+ * `current_step`, così lo stato parziale sopravvive se il partner si ferma.
+ * `completeDraft()` la chiude all'ultimo step (hotel 11, attività 11 dopo
+ * uno step 10, smartbox 12) passando da DraftCompleter.
+ *
+ * Il wizard è dietro ['auth','partner']: una bozza appartiene a chi la sta
+ * compilando. Una bozza in sessione di un altro utente (sessione riusata,
+ * impersonazione, bozze da ospite di prima dell'08/09/2026) non si apre:
+ * se ne crea una nuova e resta un warning nel log.
  */
 trait InteractsWithStructureDraft
 {
+    /**
+     * Locked: è l'id della riga che ogni step scrive. Se il client potesse
+     * riscriverlo, un partner compilerebbe (e pubblicherebbe) la bozza di un altro.
+     */
+    #[Locked]
     public ?int $draftId = null;
 
-    /** Bozza corrente dalla sessione, creandola se non esiste. */
+    /** Bozza corrente del partner loggato, dalla sessione, creandola se non esiste. */
     protected function draft(): StructureDraft
     {
-        if ($this->draftId && ($draft = StructureDraft::find($this->draftId))) {
+        if ($this->draftId && ($draft = $this->ownedDraft($this->draftId))) {
             return $draft;
         }
 
         $sessionId = session('structure_draft_id');
-        if ($sessionId && ($draft = StructureDraft::find($sessionId))) {
-            $this->draftId = $draft->id;
 
-            return $draft;
+        if ($sessionId) {
+            if ($draft = $this->ownedDraft((int) $sessionId)) {
+                $this->draftId = $draft->id;
+
+                return $draft;
+            }
+
+            session()->forget('structure_draft_id');
         }
 
-        // Un partner loggato "possiede" i servizi che crea (anche se il wizard è
-        // pubblico): così compaiono nella sua pagina "I miei servizi".
         $draft = StructureDraft::create([
             'user_id' => Auth::id(),
             'status' => StructureDraft::STATUS_DRAFT,
@@ -63,34 +78,81 @@ trait InteractsWithStructureDraft
     }
 
     /**
-     * Chiude la bozza all'ultimo step del flusso (default 11), la pubblica sul
-     * catalogo B2C e libera la sessione. MVP: pubblicazione automatica — la
-     * moderazione superadmin prevista dalla spec arriverà come gate a monte
-     * (vedi DraftPublisher).
+     * "Indietro" del primo step di ogni famiglia. Chi sta modificando un
+     * servizio di "I miei servizi" (completato o in attesa di Stripe) torna
+     * alla lista: "Crea servizio" gli aprirebbe una bozza nuova e la modifica
+     * si perderebbe in silenzio.
      */
-    protected function completeDraft(int $finalStep = 11): void
+    protected function serviceChoiceBackUrl(): string
     {
         $draft = $this->draft();
 
-        // Transazione: se la pubblicazione fallisce, lo status torna draft e il
-        // partner può riprovare (niente bozze "completed" mai arrivate a catalogo).
-        try {
-            DB::transaction(function () use ($draft, $finalStep): void {
-                $draft->update([
-                    'status' => StructureDraft::STATUS_COMPLETED,
-                    'current_step' => $finalStep,
-                ]);
+        return $draft->status === StructureDraft::STATUS_COMPLETED || $draft->isAwaitingPublication()
+            ? route('partner.services')
+            : route('partner.service.create');
+    }
 
-                app(DraftPublisher::class)->publish($draft->fresh());
-            });
-        } catch (PartnerNotPayableException $exception) {
-            // Onboarding Stripe incompleto: la bozza resta aperta e il partner
-            // sa perché, invece di vedere un wizard concluso e nessun servizio.
+    /**
+     * Chiude la bozza all'ultimo step (default: lo step finale della sua
+     * famiglia). Pubblicata o in attesa di Stripe, il wizard è finito: la
+     * sessione si libera, così "Crea servizio" non la riprende. Nel secondo
+     * caso l'avviso va in un flash che la dashboard mostra, perché un toast
+     * lanciato prima del redirect si perde. L'avviso distingue un servizio
+     * nuovo dalla modifica di uno già completato, la cui versione precedente
+     * resta quella pubblicata. Se invece mancano i dati minimi, il partner
+     * resta sullo step col toast e la sessione resta sulla bozza, per correggerla.
+     *
+     * @return bool true quando il chiamante deve andare in dashboard
+     */
+    protected function completeDraft(?int $finalStep = null): bool
+    {
+        $draft = $this->draft();
+        $wasCompleted = $draft->status === StructureDraft::STATUS_COMPLETED;
+
+        try {
+            $outcome = app(DraftCompleter::class)->complete($draft, $finalStep ?? $draft->finalStep());
+        } catch (DraftNotPublishableException $exception) {
             Flux::toast(text: $exception->getMessage(), variant: 'danger');
 
-            return;
+            return false;
         }
 
         session()->forget('structure_draft_id');
+
+        if ($outcome === DraftCompletion::AwaitingPayout) {
+            session()->flash('partner.notice', $wasCompleted
+                ? __('partner.publish.awaiting_stripe_changes')
+                : __('partner.publish.awaiting_stripe'));
+        }
+
+        return true;
+    }
+
+    /**
+     * La bozza, se è di chi è loggato. Senza proprietario vale solo per un
+     * ospite (i test degli step lo sono), mai per un partner loggato.
+     */
+    private function ownedDraft(int $id): ?StructureDraft
+    {
+        $draft = StructureDraft::find($id);
+
+        if ($draft === null) {
+            return null;
+        }
+
+        $owner = $draft->user_id === null ? null : (int) $draft->user_id;
+        $current = Auth::id() === null ? null : (int) Auth::id();
+
+        if ($owner === $current) {
+            return $draft;
+        }
+
+        Log::warning('Bozza di un altro utente ignorata dal wizard partner', [
+            'structure_draft_id' => $draft->id,
+            'draft_user_id' => $owner,
+            'user_id' => $current,
+        ]);
+
+        return null;
     }
 }

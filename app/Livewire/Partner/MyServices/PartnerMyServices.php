@@ -24,8 +24,10 @@ class PartnerMyServices extends Component
      */
     public function edit(int $draftId): void
     {
-        // Vincolato all'utente: nessuno può modificare i servizi altrui.
-        $draft = StructureDraft::completedFor(Auth::id())->firstWhere('id', $draftId);
+        // Vincolato all'utente: nessuno può modificare i servizi altrui. Si
+        // aprono anche le bozze in attesa di Stripe: il partner le può
+        // correggere, e l'ultimo step le rimette in attesa o le pubblica.
+        $draft = StructureDraft::listableFor(Auth::id())->firstWhere('id', $draftId);
 
         if ($draft === null) {
             return;
@@ -43,7 +45,9 @@ class PartnerMyServices extends Component
     public function render()
     {
         return view('livewire.partner.my-services.index', [
-            'services' => StructureDraft::completedFor(Auth::id())->get(),
+            // Completati e in attesa di Stripe (badge in vista): prima una bozza
+            // chiusa senza Stripe spariva da qui e restava solo in sessione.
+            'services' => StructureDraft::listableFor(Auth::id())->get(),
         ])->title(__('partner.services.title'));
     }
 }

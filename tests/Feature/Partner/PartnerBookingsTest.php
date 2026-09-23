@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Partner;
 
+use App\Enums\OrderPaymentMode;
+use App\Enums\OrderStatus;
 use App\Enums\ProductType;
 use App\Livewire\Partner\Bookings\PartnerBookings;
 use App\Models\Event\Event;
@@ -11,6 +13,7 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -155,6 +158,44 @@ class PartnerBookingsTest extends TestCase
         Livewire::test(PartnerBookings::class)
             ->set('tab', 'hacker')
             ->assertSet('tab', 'strutture');
+    }
+
+    public function test_the_payment_column_says_paid_online_or_to_collect_on_site(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $this->structureBooking($partner, ['title' => 'Hotel Online']);
+        $this->structureBooking($partner, ['title' => 'Hotel In Struttura'], [
+            'status' => OrderStatus::Confirmed,
+            'payment_mode' => OrderPaymentMode::OnSite,
+            'checkout_token' => (string) Str::ulid(),
+        ]);
+
+        $this->get(route('partner.bookings'))
+            ->assertOk()
+            ->assertSee(__('partner.bookings.col_payment'));
+
+        $rows = collect(Livewire::test(PartnerBookings::class)->viewData('panels')['strutture']['rows'])->keyBy('title');
+
+        $this->assertSame(__('partner.bookings.paid_online'), $rows['Hotel Online']['payment']);
+        $this->assertSame(__('partner.bookings.pay_on_site'), $rows['Hotel In Struttura']['payment']);
+        $this->assertArrayHasKey('payment', (new PartnerBookings)->columnsFor('eventi'));
+    }
+
+    public function test_a_booking_neither_paid_nor_confirmed_shows_its_status(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $this->structureBooking($partner, ['title' => 'Hotel Annullato Online'], ['status' => OrderStatus::Cancelled]);
+        $this->structureBooking($partner, ['title' => 'Hotel Annullato In Struttura'], [
+            'status' => OrderStatus::Cancelled,
+            'payment_mode' => OrderPaymentMode::OnSite,
+            'checkout_token' => (string) Str::ulid(),
+        ]);
+
+        $rows = collect(Livewire::test(PartnerBookings::class)->viewData('panels')['strutture']['rows'])->keyBy('title');
+
+        // "Pagato online" o "Pagamento diretto" su una prenotazione annullata direbbero il falso.
+        $this->assertSame(OrderStatus::Cancelled->label(), $rows['Hotel Annullato Online']['payment']);
+        $this->assertSame(OrderStatus::Cancelled->label(), $rows['Hotel Annullato In Struttura']['payment']);
     }
 
     public function test_family_columns_follow_the_mockup(): void

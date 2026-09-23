@@ -9,6 +9,7 @@ use App\Models\OrderItem\OrderItem;
 use App\Models\Scopes\CatalogVisibleScope;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -29,7 +30,29 @@ class Dashboard extends Component
         return view('livewire.partner.dashboard', [
             'partnerName' => Auth::user()->first_name,
             'stats' => $this->stats(),
+            // Avviso lasciato da completeDraft: un toast prima del redirect si perdeva.
+            'notice' => session('partner.notice'),
+            'awaitingCount' => $this->awaitingCount(),
         ])->title(__('partner.dashboard.title'));
+    }
+
+    /**
+     * Servizi chiusi dal partner quando non poteva ancora essere pagato (P4):
+     * li pubblica il collegamento Stripe. Senza questo numero il partner finiva
+     * il wizard e non trovava il servizio né a catalogo né qui. Zero per chi
+     * può già pubblicare: le sue bozze in attesa sono bozze non pubblicabili,
+     * e "Collega Stripe" gli chiederebbe qualcosa che ha già fatto.
+     */
+    private function awaitingCount(): int
+    {
+        if (Auth::user()->partnerProfile?->canPublish() === true) {
+            return 0;
+        }
+
+        return StructureDraft::query()
+            ->where('user_id', Auth::id())
+            ->awaitingPublication()
+            ->count();
     }
 
     /**
@@ -45,17 +68,22 @@ class Dashboard extends Component
     private function stats(): array
     {
         return [
-            ['label' => 'partner.dashboard.stat_sold', 'value' => $this->bookings(OrderStatus::Paid)],
-            ['label' => 'partner.dashboard.stat_cancelled', 'value' => $this->bookings(OrderStatus::Cancelled)],
+            // Venduto = prenotazione valida: pagata online o confermata da pagare in struttura.
+            ['label' => 'partner.dashboard.stat_sold', 'value' => $this->bookings(OrderStatus::bookingStatuses())],
+            ['label' => 'partner.dashboard.stat_cancelled', 'value' => $this->bookings([OrderStatus::Cancelled])],
             ['label' => 'partner.dashboard.stat_saved', 'value' => $this->saved()],
         ];
     }
 
-    /** Righe ordine dei prodotti del partner con la testata nello stato dato. */
-    private function bookings(OrderStatus $status): int
+    /**
+     * Righe ordine dei prodotti del partner con la testata in uno degli stati dati.
+     *
+     * @param  list<OrderStatus>  $statuses
+     */
+    private function bookings(array $statuses): int
     {
         return OrderItem::query()
-            ->whereHas('order', fn (Builder $query) => $query->where('status', $status))
+            ->whereHas('order', fn (Builder $query) => $query->whereIn('status', $statuses))
             ->whereHasMorph('purchasable', self::OWNED_TYPES, $this->ownedBy(...))
             ->count();
     }

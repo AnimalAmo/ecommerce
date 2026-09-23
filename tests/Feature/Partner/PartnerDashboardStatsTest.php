@@ -69,6 +69,31 @@ class PartnerDashboardStatsTest extends TestCase
         $this->assertSame('1', $this->statValue($html, __('partner.dashboard.stat_saved')));
     }
 
+    public function test_sold_counts_paid_and_on_site_confirmed_bookings(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $mine = Structure::factory()->create(['user_id' => $partner->id]);
+
+        $this->booking($mine, paid: true);
+        // Prenotazione confermata da pagare in struttura: è venduta anche se l'incasso non passa da noi.
+        OrderItem::factory()->create([
+            'order_id' => Order::factory()->onSite()->create()->id,
+            'purchasable_type' => 'structure',
+            'purchasable_id' => $mine->id,
+        ]);
+        // In attesa: non è né venduta né annullata.
+        OrderItem::factory()->create([
+            'order_id' => Order::factory()->create()->id,
+            'purchasable_type' => 'structure',
+            'purchasable_id' => $mine->id,
+        ]);
+
+        $html = $this->get(route('partner.dashboard'))->assertOk()->getContent();
+
+        $this->assertSame('2', $this->statValue($html, __('partner.dashboard.stat_sold')));
+        $this->assertSame('0', $this->statValue($html, __('partner.dashboard.stat_cancelled')));
+    }
+
     /**
      * Le righe del catalogo mock non hanno proprietario (`user_id` NULL): senza
      * guard, `where('user_id', null)` diventa `IS NULL` e le attribuirebbe al

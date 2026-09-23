@@ -112,6 +112,7 @@ return [
         'order_items' => 'Prenotazioni',
         'order_statuses' => [
             'paid' => 'Pagato',
+            'confirmed' => 'Confermato',
             'pending' => 'In attesa',
             'cancelled' => 'Annullato',
         ],
@@ -122,7 +123,26 @@ return [
         'listings_suspended' => '{1} :count sospesa|[2,*] :count sospese',
         'listings_open' => 'Vedi le schede',
         'bookings_received' => 'Prenotazioni ricevute',
-        'bookings_count' => '{0} Nessuna prenotazione pagata|{1} :count prenotazione pagata|[2,*] :count prenotazioni pagate',
+        // Pagate online e confermate da pagare in struttura: tutte prenotazioni valide.
+        'bookings_count' => '{0} Nessuna prenotazione confermata|{1} :count prenotazione confermata|[2,*] :count prenotazioni confermate',
+        'payment_mode_label' => 'Pagamento',
+        'payment_mode' => [
+            'online' => 'Online su AnimalAmo',
+            'on_site' => 'Direttamente al partner',
+        ],
+        'payment_mode_change' => 'Cambia',
+        'payment_mode_title' => 'Modalità di pagamento',
+        'payment_mode_save' => 'Salva',
+        'payment_mode_cancel' => 'Annulla',
+        'payment_mode_saved' => 'Modalità di pagamento aggiornata.',
+        'stripe_label' => 'Stripe',
+        'stripe_status' => [
+            'payable' => 'Collegato e pagabile',
+            'incomplete' => 'Collegamento incompleto',
+            'none' => 'Non collegato',
+        ],
+        'resend_welcome' => 'Invia di nuovo il link',
+        'welcome_sent' => 'Link per scegliere la password inviato a :email.',
         'pets' => 'Animali',
         'pets_empty' => 'Nessun animale registrato.',
         'applications' => 'Candidature partner',
@@ -131,6 +151,54 @@ return [
         'errors' => [
             'anonymized' => 'Un account anonimizzato non si può riattivare.',
             'superadmin' => 'Gli amministratori del pannello non si gestiscono da qui.',
+        ],
+    ],
+
+    'partner_create' => [
+        'title' => 'Nuovo partner',
+        'sub' => 'Crea l\'account di un partner: gli arriverà una mail per scegliere la password. Se l\'email è di un cliente, il suo account diventa anche partner.',
+        'new_button' => 'Nuovo partner',
+        'sections' => [
+            'person' => 'Referente',
+            'business' => 'Attività',
+            'payment' => 'Pagamento',
+        ],
+        'fields' => [
+            'firstName' => 'Nome',
+            'lastName' => 'Cognome',
+            'email' => 'Email',
+            'phone' => 'Cellulare',
+            'businessName' => 'Ragione sociale',
+            'vat' => 'Partita IVA',
+            'taxCode' => 'Codice fiscale',
+            'address' => 'Indirizzo',
+            'province' => 'Provincia',
+            'zip' => 'CAP',
+            'paymentMode' => 'Come pagano i clienti',
+            'paymentUrl' => 'Sito dove pagare o prenotare (facoltativo)',
+        ],
+        'province_placeholder' => 'Scegli la provincia',
+        // Diverse di proposito dai badge users.payment_mode.*: la modale sta nella
+        // stessa pagina dei badge, e testi uguali renderebbero ciechi i test.
+        'payment' => [
+            'online' => 'Con carta sul sito: per pubblicare serve il collegamento del conto',
+            'on_site' => 'Il cliente paga in struttura o sul sito del partner',
+            'url_help' => 'Lo vede il cliente nella conferma della prenotazione. Solo indirizzi http o https.',
+        ],
+        'submit' => 'Crea il partner',
+        'created' => 'Partner creato: gli abbiamo inviato la mail per scegliere la password.',
+        'promoted' => 'Il cliente ora è anche partner: gli abbiamo inviato una mail per avvisarlo.',
+        // Non "la modalità": quella, per un profilo nuovo, la scrive già la
+        // registrazione. A restare indietro è il link, e su un profilo che
+        // esisteva già anche la modalità.
+        'payment_mode_failed' => 'Partner creato, ma le impostazioni di pagamento non sono state salvate: controllale dalla scheda con "Cambia".',
+        'welcome_failed' => 'Partner creato, ma la mail non è partita: usa "Invia di nuovo il link" dalla scheda.',
+        'errors' => [
+            'superadmin' => 'Questo indirizzo è di un amministratore del pannello: non può diventare partner.',
+            'already_partner' => 'Questo indirizzo è già di un partner.',
+            'inactive' => 'Questo indirizzo è di un account disattivato o anonimizzato: non può diventare partner da qui.',
+            'not_partner' => 'Questo account non è un partner: non c\'è un link di benvenuto da inviare.',
+            'throttled' => 'Il link è appena partito: aspetta un minuto prima di inviarlo di nuovo.',
         ],
     ],
 

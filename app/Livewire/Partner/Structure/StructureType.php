@@ -30,7 +30,8 @@ class StructureType extends Component
 
     public function render()
     {
-        return view('livewire.partner.structure.structure-type')
-            ->title(__('partner.structure_type.title'));
+        return view('livewire.partner.structure.structure-type', [
+            'backUrl' => $this->serviceChoiceBackUrl(),
+        ])->title(__('partner.structure_type.title'));
     }
 }

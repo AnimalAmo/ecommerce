@@ -83,6 +83,17 @@ class SearchPageTest extends TestCase
             ->assertSee('senza account');
     }
 
+    public function test_a_confirmed_on_site_order_gets_its_own_tone(): void
+    {
+        $this->actingAsSuperadmin();
+        Order::factory()->guest()->onSite()->create(['order_number' => 'ORD-000043', 'first_name' => 'Anna', 'last_name' => 'Neri']);
+
+        // Tono "info" (fondo brand-cyan-bg), non il "muted" del fallback.
+        $this->get(route('admin.search', ['q' => 'ORD-000043']))
+            ->assertOk()
+            ->assertSeeInOrder(['ORD-000043', '!bg-brand-cyan-bg', __('orders.status.confirmed')], false);
+    }
+
     public function test_a_short_term_asks_for_more(): void
     {
         $this->actingAsSuperadmin();

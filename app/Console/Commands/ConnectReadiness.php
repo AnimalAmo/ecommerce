@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\DB;
  *  - quali prodotti non hanno un titolare, e quindi non sono acquistabili
  *    (senza account connesso non esiste un conto su cui far nascere l'incasso);
  *  - quali partner hanno prodotti a catalogo ma non possono ancora incassare.
+ *    Chi si fa pagare direttamente (in struttura o sul suo sito, 22/09/2026)
+ *    non passa da Stripe e non è un blocco.
  *
  * Il discrimine fra mock e contenuto vero è la bozza: i tre publisher scrivono
  * sempre `structure_draft_id`, i seeder mai. Una riga orfana CON bozza è roba
@@ -144,7 +146,7 @@ class ConnectReadiness extends Command
 
         PartnerProfile::query()->with('user')->get()
             ->each(function (PartnerProfile $profile) use (&$rows): void {
-                if ($profile->canBePaid()) {
+                if ($profile->canPublish()) {
                     return;
                 }
 

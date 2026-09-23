@@ -9,6 +9,7 @@
         : null;
     $orderTones = [
         OrderStatus::Paid->value => 'success',
+        OrderStatus::Confirmed->value => 'info',
         OrderStatus::Pending->value => 'warning',
         OrderStatus::Cancelled->value => 'muted',
     ];

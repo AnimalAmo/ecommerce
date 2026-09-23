@@ -3,12 +3,14 @@
 namespace App\Livewire\Commerce;
 
 use App\Data\Cart\CartItemData;
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
 use App\Services\FavoriteService;
+use App\Services\Partner\PartnerPaymentModeService;
 use DateTimeImmutable;
 use Flux\Flux;
 use Livewire\Attributes\Url;
@@ -203,7 +205,9 @@ class Cart extends Component
 
     public function render()
     {
-        $items = $this->cart()->items($this->gift)
+        $cartItems = $this->cart()->items($this->gift);
+
+        $items = $cartItems
             ->map(fn (CartItemData $item): array => $this->presentItem($item))
             ->values()
             ->all();
@@ -224,6 +228,11 @@ class Cart extends Component
             'bookingHours' => self::bookingHours(),
             // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
             'suggestions' => $items === [] ? app(FavoriteService::class)->topFavorited() : [],
+            // Un carrello = un partner (CartManager::guardSinglePartner): basta la
+            // prima riga già caricata, senza rileggere il carrello. Nessuna riga
+            // → null → Online (e la vista non stampa il riepilogo).
+            'paysOnSite' => app(PartnerPaymentModeService::class)
+                ->forOwner($cartItems->first()?->partnerUserId) === OrderPaymentMode::OnSite,
         ])->title(__('cart.ui.page_title'));
     }
 

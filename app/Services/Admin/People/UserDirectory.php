@@ -2,8 +2,10 @@
 
 namespace App\Services\Admin\People;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\OrderStatus;
 use App\Models\Order\Order;
+use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -128,6 +130,27 @@ class UserDirectory
         return $query->orderBy('users.id', $direction);
     }
 
+    /**
+     * Partner a cui il pannello può intestare una scheda: la stessa base
+     * dell'elenco "Iscritti" (superadmin esclusi) con i filtri di
+     * `AdminServiceCreator::isEligible()`, ma senza le colonne calcolate di
+     * `query()` — `newsletter_state`, `paid_orders_count` e `spent_cents`
+     * costano tre sottoquery correlate per riga, e qui serve un elenco di nomi
+     * che si ridisegna a ogni filtro del catalogo.
+     *
+     * @return Builder<User>
+     */
+    public function eligiblePartnerQuery(): Builder
+    {
+        return $this->base()
+            ->select(['users.id', 'users.first_name', 'users.last_name'])
+            ->whereHas('roles', fn (Builder $r) => $r->where('name', 'partner'))
+            ->where('users.is_active', true)
+            ->whereNull('users.anonymized_at')
+            ->whereHas('partnerProfile')
+            ->with('partnerProfile:id,user_id,business_name');
+    }
+
     /** Totali del sottotitolo: utenti registrati e quanti hanno chiesto la newsletter. */
     public function totals(): array
     {
@@ -158,9 +181,12 @@ class UserDirectory
     /**
      * Riquadro "Partner" della scheda: ragione sociale, schede a catalogo
      * (sospese comprese: qui servono tutte, quindi query builder e non i
-     * model con lo scope di visibilità) e prenotazioni pagate ricevute.
+     * model con lo scope di visibilità), prenotazioni valide ricevute
+     * (pagate o confermate in struttura), modalità di pagamento con il link
+     * del partner e stato del collegamento Stripe. Lo "speso" dei clienti
+     * resta invece solo Paid: sono soldi passati da AnimalAmo.
      *
-     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int}
+     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string, payment_url: ?string, stripe_status: string}
      */
     public function partnerSummary(User $user): array
     {
@@ -173,9 +199,30 @@ class UserDirectory
             'bookings' => DB::table('order_items')
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('order_items.partner_user_id', $user->id)
-                ->where('orders.status', OrderStatus::Paid->value)
+                ->whereIn('orders.status', OrderStatus::bookingStatuses())
                 ->count(),
+            // Profilo assente = Online, la stessa regola di PartnerPaymentModeService::forOwner().
+            'payment_mode' => ($user->partnerProfile?->paymentMode() ?? OrderPaymentMode::Online)->value,
+            'payment_url' => $user->partnerProfile?->payment_url,
+            'stripe_status' => self::stripeStatus($user->partnerProfile),
         ];
+    }
+
+    /**
+     * payable | incomplete | none. "Incompleto" è chi ha aperto l'account
+     * Stripe ma non riceve ancora bonifici: è il caso che l'admin deve
+     * sollecitare, e con un solo "non collegato" sparirebbe. Chi ha già
+     * canSell() (incassi attivi) ma non i bonifici resta "incompleto": per
+     * pubblicare online serve canBePaid(), e un terzo stato non cambierebbe
+     * cosa deve fare l'admin.
+     */
+    public static function stripeStatus(?PartnerProfile $profile): string
+    {
+        return match (true) {
+            $profile?->canBePaid() === true => 'payable',
+            $profile?->stripe_account_id !== null => 'incomplete',
+            default => 'none',
+        };
     }
 
     /** Stato mostrato nel pannello: active | inactive | anonymized. */

@@ -1,5 +1,7 @@
 @php
+    use App\Enums\OrderPaymentMode;
     use App\Enums\OrderStatus;
+    use App\Services\Admin\Catalog\AdminServiceCreator;
     use App\Services\Admin\People\UserDirectory;
     use Illuminate\Support\Carbon;
 
@@ -13,7 +15,7 @@
     $nlKey = in_array($newsletterState, ['confirmed', 'pending', 'unsubscribed'], true) ? $newsletterState : ($newsletterState === null ? 'none' : 'suppressed');
     $nlTone = ['confirmed' => 'success', 'pending' => 'warning', 'unsubscribed' => 'muted', 'none' => 'muted', 'suppressed' => 'danger'][$nlKey];
     $appTones = ['pending' => 'warning', 'invited' => 'info', 'registered' => 'success'];
-    $orderTones = ['paid' => 'success', 'pending' => 'warning', 'cancelled' => 'muted'];
+    $orderTones = ['paid' => 'success', 'confirmed' => 'info', 'pending' => 'warning', 'cancelled' => 'muted'];
     $paid = UserDirectory::money((int) $orders->where('status', OrderStatus::Paid)->sum('total_cents'));
     // Smartbox: la "finestra" è solo la validità del cofanetto, non una data di soggiorno.
     $when = function ($item): ?string {
@@ -91,6 +93,25 @@
 
     @if ($partner !== null)
         <x-admin.card :heading="__('admin-people.users.partner')">
+            {{-- Un disattivato non entrerebbe comunque: niente link da rimandare,
+                 e nessuna scheda da intestargli (AdminServiceCreator lo rifiuterebbe). --}}
+            @if ($user->is_active && $anonymizedAt === null)
+                <x-slot:aside>
+                    <flux:dropdown position="bottom" align="end">
+                        <x-admin.button tone="primary" icon="plus" icon-trailing="chevron-down">{{ __('admin-catalog.create.entry.dropdown') }}</x-admin.button>
+                        <flux:menu>
+                            @foreach (AdminServiceCreator::CREATABLE_FAMILIES as $family)
+                                <flux:menu.item
+                                    wire:key="create-{{ $family }}"
+                                    href="{{ route('admin.catalog.create', ['family' => $family, 'partner' => $user->id]) }}"
+                                    wire:navigate
+                                >{{ __('admin-catalog.create.entry.family.'.$family) }}</flux:menu.item>
+                            @endforeach
+                        </flux:menu>
+                    </flux:dropdown>
+                    <x-admin.button tone="outline" icon="envelope" wire:click="resendWelcome">{{ __('admin-people.users.resend_welcome') }}</x-admin.button>
+                </x-slot:aside>
+            @endif
             <div class="px-5 py-3">
                 <div class="{{ $row }}"><span class="{{ $label }}">{{ __('admin-people.users.business_name') }}</span><span class="{{ $value }}">{{ $partner['business_name'] ?: '—' }}</span></div>
                 <div class="{{ $row }} items-center">
@@ -108,6 +129,25 @@
                 <div class="{{ $row }}">
                     <span class="{{ $label }}">{{ __('admin-people.users.bookings_received') }}</span>
                     <span class="{{ $value }}">{{ trans_choice('admin-people.users.bookings_count', $partner['bookings'], ['count' => $partner['bookings']]) }}</span>
+                </div>
+                <div class="{{ $row }} items-center">
+                    <span class="{{ $label }}">{{ __('admin-people.users.payment_mode_label') }}</span>
+                    <span class="{{ $value }}">
+                        <x-admin.badge :tone="$partner['payment_mode'] === OrderPaymentMode::OnSite->value ? 'warning' : 'info'">{{ __('admin-people.users.payment_mode.'.$partner['payment_mode']) }}</x-admin.badge>
+                        {{-- Link già verificato http/https da PartnerPaymentModeService: sicuro come href. --}}
+                        @if ($partner['payment_url'] !== null)
+                            <a href="{{ $partner['payment_url'] }}" target="_blank" rel="noopener noreferrer" class="ml-2 text-[13.5px] font-normal break-all text-admin-teal hover:underline">{{ $partner['payment_url'] }}</a>
+                        @endif
+                    </span>
+                    @if ($user->partnerProfile !== null)
+                        <x-admin.button tone="ghost" icon="pencil-square" wire:click="editPaymentMode">{{ __('admin-people.users.payment_mode_change') }}</x-admin.button>
+                    @endif
+                </div>
+                <div class="{{ $row }}">
+                    <span class="{{ $label }}">{{ __('admin-people.users.stripe_label') }}</span>
+                    <span class="{{ $value }}">
+                        <x-admin.badge :tone="['payable' => 'success', 'incomplete' => 'warning', 'none' => 'muted'][$partner['stripe_status']]">{{ __('admin-people.users.stripe_status.'.$partner['stripe_status']) }}</x-admin.badge>
+                    </span>
                 </div>
             </div>
         </x-admin.card>
@@ -143,7 +183,8 @@
                                 </flux:table.cell>
                                 <flux:table.cell align="end">{{ UserDirectory::money((int) $order->total_cents) }}</flux:table.cell>
                                 <flux:table.cell>
-                                    <x-admin.badge :tone="$orderTones[$order->status->value]">{{ __('admin-people.users.order_statuses.'.$order->status->value) }}</x-admin.badge>
+                                    {{-- Fallback: uno stato senza tono non deve mai mandare la scheda in errore --}}
+                                    <x-admin.badge :tone="$orderTones[$order->status->value] ?? 'muted'">{{ __('admin-people.users.order_statuses.'.$order->status->value) }}</x-admin.badge>
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforeach
@@ -187,4 +228,8 @@
     </div>
 
     @include('livewire.admin.people.partials.anonymize-modal')
+
+    @if ($partner !== null)
+        @include('livewire.admin.people.partials.payment-mode-modal')
+    @endif
 </div>

@@ -6,6 +6,27 @@ return [
     // JS: Stripe confirmation finished without a successful outcome
     'payment_incomplete' => 'The payment was not completed. Please try again.',
 
+    // "Pay at the property" branch (partner without online payment): step 2 is a confirmation, no Stripe
+    'on_site' => [
+        'step_label' => 'Confirm',
+        // Line under the summary total: no AnimalAmo fee.
+        'taxes_included' => 'Taxes included',
+        'login_required' => 'To book and pay the partner directly you need to sign in to your account.',
+        'mode_changed' => 'The partner now accepts online payment: complete your booking by paying here.',
+        'throttle' => 'Too many confirmation attempts. Please try again in :seconds seconds.',
+        'title' => 'Confirm your booking',
+        'notice' => 'You will pay :amount directly to :partner, at the property or on their website.',
+        // Same box when the partner has not given a company name
+        'notice_without_partner' => 'You will pay :amount directly to the partner, at the property or on their website.',
+        'pay_on_website' => 'Go to the partner\'s website to pay or book',
+        'confirm_cta' => 'Confirm booking',
+        'failed' => 'We could not record your booking. Please try again in a moment.',
+        'already_placed' => 'This booking has already been recorded: there is no need to confirm it again.',
+        'gift_not_allowed' => 'The partner now takes payment directly, not online: this gift can no longer be bought. Please remove it from your cart.',
+        'thank_you' => 'Booking confirmed!',
+        'thank_you_sub' => 'Here is the summary, check your email: you will pay the partner directly.',
+    ],
+
     // Checkout funnel UI strings (blade commerce/checkout)
     'ui' => [
         'page_title' => 'Checkout — AnimalAmo',

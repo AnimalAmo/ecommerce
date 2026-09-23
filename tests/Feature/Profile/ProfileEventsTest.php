@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Profile;
 
+use App\Enums\OrderStatus;
 use App\Livewire\Profile\ProfileEvents;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
@@ -24,6 +25,7 @@ class ProfileEventsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        app()->setLocale('it');
 
         // Oggi fisso come in ProfileOrdersTest: le date relative a now() restano
         // coerenti tra arrange e assert anche a cavallo di mezzanotte.
@@ -163,6 +165,45 @@ class ProfileEventsTest extends TestCase
             ->assertSee($event->title)
             ->set('tab', 'passati')
             ->assertDontSee($event->title);
+    }
+
+    public function test_an_event_booked_on_site_shows_the_pay_on_site_badge(): void
+    {
+        $user = User::factory()->create();
+
+        $order = Order::factory()->onSite()->for($user)->create();
+        OrderItem::factory()->forEvent()->for($order)->create([
+            'title' => 'Brunch da pagare in loco',
+            'booked_from' => now()->addDays(3),
+            'booked_until' => now()->addDays(3)->addHours(2),
+        ]);
+        $this->bookedEvent($user, now()->addDays(4), ['title' => 'Brunch pagato online']);
+
+        $html = Livewire::actingAs($user)
+            ->test(ProfileEvents::class)
+            ->assertSee('Brunch da pagare in loco')
+            ->assertSee('Brunch pagato online')
+            ->html();
+
+        // Ogni evento ha due card (mobile e desktop): il badge solo sull'evento offline.
+        $this->assertSame(2, substr_count($html, e(__('profile.orders.pay_on_site'))));
+    }
+
+    public function test_a_cancelled_on_site_event_has_no_pay_on_site_badge(): void
+    {
+        $user = User::factory()->create();
+
+        $order = Order::factory()->onSite()->for($user)->create(['status' => OrderStatus::Cancelled]);
+        OrderItem::factory()->forEvent()->for($order)->create([
+            'title' => 'Brunch annullato',
+            'booked_from' => now()->addDays(3),
+            'booked_until' => now()->addDays(3)->addHours(2),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ProfileEvents::class)
+            ->assertSee('Brunch annullato')
+            ->assertDontSee(__('profile.orders.pay_on_site'));
     }
 
     public function test_arbitrary_tab_falls_back_to_programma(): void

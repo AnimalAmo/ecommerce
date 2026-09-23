@@ -3,6 +3,10 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Profile\PartnerProfilePayment;
+use App\Models\Partner\PartnerProfile;
+use Closure;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -10,6 +14,18 @@ use Tests\TestCase;
 class PartnerProfilePaymentTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app()->setLocale('it');
+    }
+
+    private function toast(string $text): Closure
+    {
+        return fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === $text;
+    }
 
     public function test_page_renders_the_payment_fields(): void
     {
@@ -58,5 +74,195 @@ class PartnerProfilePaymentTest extends TestCase
             'account_holder' => 'Susanna Rossi',
             'iban' => 'IT60X0542811101000000123456',
         ]);
+    }
+
+    /**
+     * Regressione: i campi IBAN/BIC erano composti a mano senza flux:error. Un
+     * salvataggio rifiutato ridisegnava il form identico. Il messaggio deve
+     * uscire in pagina, non basta l'error bag.
+     */
+    public function test_save_shows_the_errors_of_the_bank_fields(): void
+    {
+        $this->actingAsActivePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->call('save')
+            ->assertSee([
+                'Inserisci il titolare del conto.',
+                'Inserisci l\'IBAN.',
+                'Inserisci il BIC.',
+            ]);
+    }
+
+    public function test_it_shows_the_saved_payment_mode(): void
+    {
+        $partner = $this->actingAsOfflinePartner();
+        $partner->partnerProfile->update(['payment_url' => 'https://www.hotelrosovino.it']);
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertSee(__('partner.payment_mode.section'))
+            ->assertSet('paymentMode', 'on_site')
+            ->assertSet('paymentUrl', 'https://www.hotelrosovino.it');
+    }
+
+    public function test_an_online_partner_switches_to_on_site_payment(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertSet('paymentMode', 'online')
+            ->set('paymentMode', 'on_site')
+            ->set('paymentUrl', 'https://www.hotelrosovino.it')
+            ->call('savePaymentMode')
+            ->assertHasNoErrors()
+            ->assertDispatched('toast-show', $this->toast(__('partner.payment_mode.saved')));
+
+        $profile = $partner->partnerProfile->fresh();
+        $this->assertFalse($profile->online_payment);
+        $this->assertSame('https://www.hotelrosovino.it', $profile->payment_url);
+    }
+
+    public function test_an_offline_partner_without_stripe_cannot_go_back_online(): void
+    {
+        $partner = $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertSee(__('partner.payment_mode.online_needs_stripe'))
+            ->set('paymentMode', 'online')
+            ->call('savePaymentMode')
+            ->assertHasErrors('paymentMode')
+            ->assertSee(__('partner.payment_mode.errors.stripe_required'))
+            ->assertNotDispatched('toast-show');
+
+        $this->assertFalse($partner->partnerProfile->fresh()->online_payment);
+    }
+
+    /**
+     * Il rifiuto (payouts spenti fra il render e il submit, o richiesta
+     * manomessa) non deve lasciare la radio su un "online" disabilitato che il
+     * database non ha: salvando di nuovo solo il link tornerebbe lo stesso errore.
+     */
+    public function test_a_refused_switch_shows_the_mode_that_was_saved(): void
+    {
+        $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', 'online')
+            ->call('savePaymentMode')
+            ->assertHasErrors('paymentMode')
+            ->assertSet('paymentMode', 'on_site');
+    }
+
+    /**
+     * Il titolo della sezione è l'etichetta del gruppo di radio: senza, un
+     * lettore di schermo annuncia due scelte senza nome. L'errore lo mette Flux
+     * dentro lo stesso campo, una volta sola.
+     */
+    public function test_the_payment_mode_choice_is_a_named_group(): void
+    {
+        $this->actingAsOfflinePartner();
+
+        $html = Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', 'online')
+            ->call('savePaymentMode')
+            ->html();
+
+        $dom = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $section = __('partner.payment_mode.section');
+        $error = __('partner.payment_mode.errors.stripe_required');
+
+        $fields = (new DOMXPath($dom))->query(
+            "//ui-field[ui-label[normalize-space(.) = '{$section}'] and ui-radio-group and *[@data-flux-error][contains(normalize-space(.), '{$error}')]]"
+        );
+
+        $this->assertSame(1, $fields->length);
+        $this->assertSame(1, substr_count($html, $error));
+    }
+
+    public function test_an_offline_partner_with_stripe_goes_back_online(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->connected()->for($partner)->create(['online_payment' => false]);
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertDontSee(__('partner.payment_mode.online_needs_stripe'))
+            ->set('paymentMode', 'online')
+            ->call('savePaymentMode')
+            ->assertHasNoErrors();
+
+        $this->assertTrue($partner->partnerProfile->fresh()->online_payment);
+    }
+
+    public function test_an_online_partner_without_stripe_is_not_locked_out(): void
+    {
+        // È già online: la scelta non va disabilitata, e salvare il link non chiede Stripe.
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertDontSee(__('partner.payment_mode.online_needs_stripe'))
+            ->set('paymentUrl', 'https://www.hotelrosovino.it')
+            ->call('savePaymentMode')
+            ->assertHasNoErrors();
+
+        $this->assertTrue($partner->partnerProfile->fresh()->online_payment);
+    }
+
+    public function test_the_payment_url_must_be_a_web_address(): void
+    {
+        $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentUrl', 'non è un link')
+            ->call('savePaymentMode')
+            ->assertHasErrors('paymentUrl')
+            ->assertSee('Inserisci un indirizzo web valido.');
+    }
+
+    /** Solo da richiesta manomessa: messaggi in italiano, niente "payment mode" grezzo. */
+    public function test_a_tampered_payment_mode_is_refused_in_italian(): void
+    {
+        $partner = $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', '')
+            ->call('savePaymentMode')
+            ->assertHasErrors(['paymentMode' => 'required'])
+            ->assertSee('Scegli la modalità di pagamento.')
+            ->set('paymentMode', 'bonifico')
+            ->call('savePaymentMode')
+            ->assertHasErrors('paymentMode')
+            ->assertSee('Valore non valido.');
+
+        $this->assertFalse($partner->partnerProfile->fresh()->online_payment);
+    }
+
+    public function test_a_partner_without_profile_gets_one_when_saving_the_mode(): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', 'on_site')
+            ->call('savePaymentMode')
+            ->assertHasNoErrors();
+
+        $this->assertFalse($partner->partnerProfile()->firstOrFail()->online_payment);
+    }
+
+    public function test_the_stripe_box_speaks_to_an_offline_partner(): void
+    {
+        $this->actingAsOfflinePartner();
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->assertSee(__('partner.profile.stripe.help_on_site'))
+            ->assertDontSee(__('partner.profile.stripe.help'))
+            // Può preparare Stripe in anticipo per passare online.
+            ->assertSee(__('partner.profile.stripe.connect'));
     }
 }

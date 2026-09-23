@@ -62,4 +62,35 @@ class DeleteServiceModalTest extends TestCase
 
         $this->assertDatabaseHas('structure_drafts', ['id' => $othersDraft->id]);
     }
+
+    public function test_a_draft_awaiting_stripe_can_be_deleted(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $draft = $this->service($partner->id);
+        $draft->update(['status' => StructureDraft::STATUS_DRAFT, 'publish_requested_at' => now()]);
+
+        Livewire::test(DeleteServiceModal::class)
+            ->call('open', $draft->id)
+            ->assertSet('serviceId', $draft->id)
+            ->call('delete')
+            ->assertDispatched('service-deleted');
+
+        $this->assertDatabaseMissing('structure_drafts', ['id' => $draft->id]);
+    }
+
+    public function test_an_unfinished_draft_cannot_be_deleted_from_the_list(): void
+    {
+        // Non compare in lista: nemmeno un serviceId riscritto dal client la elimina.
+        $partner = $this->actingAsPayablePartner();
+        $draft = $this->service($partner->id);
+        $draft->update(['status' => StructureDraft::STATUS_DRAFT]);
+
+        Livewire::test(DeleteServiceModal::class)
+            ->call('open', $draft->id)
+            ->assertSet('serviceId', null)
+            ->set('serviceId', $draft->id)
+            ->call('delete');
+
+        $this->assertDatabaseHas('structure_drafts', ['id' => $draft->id]);
+    }
 }

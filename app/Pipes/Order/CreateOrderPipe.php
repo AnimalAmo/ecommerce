@@ -10,8 +10,12 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Crea la testata ordine: snapshot buyer + totale in cents dal CartManager.
- * Nasce Pending e passa a Paid in CreateOrderPaymentPipe (capture-first,
- * stessa transaction). user_id null = guest checkout permesso.
+ * Nasce Pending e passa a Paid in CreateOrderPaymentPipe (online, capture-first)
+ * o a Confirmed in ConfirmOnSiteOrderPipe (in struttura), nella stessa
+ * transaction. user_id null = guest checkout permesso (solo online).
+ *
+ * La modalità si scrive qui una volta sola e non si ricava mai dal flag
+ * attuale del partner, che può cambiare dopo l'ordine.
  */
 class CreateOrderPipe
 {
@@ -22,6 +26,9 @@ class CreateOrderPipe
         $data->order = Order::create([
             'user_id' => Auth::id(),
             'status' => OrderStatus::Pending,
+            'payment_mode' => $input->paymentMode,
+            'partner_payment_url' => $input->partnerPaymentUrl,
+            'checkout_token' => $input->checkoutToken,
             'is_gift' => $input->gift,
             'first_name' => $input->firstName,
             'last_name' => $input->lastName,

@@ -6,6 +6,27 @@ return [
     // JS: conferma Stripe terminata senza esito positivo
     'payment_incomplete' => 'Il pagamento non è stato completato. Riprova.',
 
+    // Ramo "paga in struttura" (partner senza pagamento online): lo step 2 è una conferma, niente Stripe
+    'on_site' => [
+        'step_label' => 'Conferma',
+        // Riga sotto il totale del riepilogo: nessuna commissione AnimalAmo.
+        'taxes_included' => 'Tasse comprese',
+        'login_required' => 'Per prenotare con pagamento diretto al partner devi accedere al tuo account.',
+        'mode_changed' => 'Il partner ora accetta il pagamento online: completa la prenotazione pagando qui.',
+        'throttle' => 'Troppi tentativi di conferma. Riprova tra :seconds secondi.',
+        'title' => 'Conferma la tua prenotazione',
+        'notice' => 'Pagherai direttamente a :partner l\'importo di :amount, in struttura o sul suo sito.',
+        // Stesso riquadro quando il partner non ha indicato la ragione sociale
+        'notice_without_partner' => 'Pagherai direttamente al partner l\'importo di :amount, in struttura o sul suo sito.',
+        'pay_on_website' => 'Vai al sito del partner per pagare o prenotare',
+        'confirm_cta' => 'Conferma prenotazione',
+        'failed' => 'Non siamo riusciti a registrare la prenotazione. Riprova tra qualche istante.',
+        'already_placed' => 'Questa prenotazione risulta già registrata: non serve confermarla di nuovo.',
+        'gift_not_allowed' => 'Il partner ora si fa pagare direttamente e non online: questo regalo non si può più acquistare. Rimuovilo dal carrello.',
+        'thank_you' => 'Prenotazione confermata!',
+        'thank_you_sub' => 'Ecco il riepilogo, controlla l\'email: il pagamento lo farai direttamente al partner.',
+    ],
+
     // Stringhe di UI del funnel Checkout (blade commerce/checkout)
     'ui' => [
         'page_title' => 'Checkout — AnimalAmo',

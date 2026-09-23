@@ -18,8 +18,11 @@
                 </flux:link>
 
                 {{-- Tag tipologia + titolo --}}
-                <div class="mt-5">
+                <div class="mt-5 flex flex-wrap items-center gap-2">
                     <flux:badge class="!rounded-[3px] !bg-brand-magenta !text-white">{{ $tag }}</flux:badge>
+                    @if ($draft->isAwaitingPublication())
+                        <flux:badge class="!rounded-[3px] !bg-brand-yellow !text-ink">{{ __('partner.my_services.awaiting_stripe') }}</flux:badge>
+                    @endif
                 </div>
                 <h1 class="mt-3 text-[25px] font-bold text-[#0D171A]">{{ $draft->name ?: __('partner.services.not_provided') }}</h1>
 
