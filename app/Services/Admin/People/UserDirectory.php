@@ -130,6 +130,27 @@ class UserDirectory
         return $query->orderBy('users.id', $direction);
     }
 
+    /**
+     * Partner a cui il pannello può intestare una scheda: la stessa base
+     * dell'elenco "Iscritti" (superadmin esclusi) con i filtri di
+     * `AdminServiceCreator::isEligible()`, ma senza le colonne calcolate di
+     * `query()` — `newsletter_state`, `paid_orders_count` e `spent_cents`
+     * costano tre sottoquery correlate per riga, e qui serve un elenco di nomi
+     * che si ridisegna a ogni filtro del catalogo.
+     *
+     * @return Builder<User>
+     */
+    public function eligiblePartnerQuery(): Builder
+    {
+        return $this->base()
+            ->select(['users.id', 'users.first_name', 'users.last_name'])
+            ->whereHas('roles', fn (Builder $r) => $r->where('name', 'partner'))
+            ->where('users.is_active', true)
+            ->whereNull('users.anonymized_at')
+            ->whereHas('partnerProfile')
+            ->with('partnerProfile:id,user_id,business_name');
+    }
+
     /** Totali del sottotitolo: utenti registrati e quanti hanno chiesto la newsletter. */
     public function totals(): array
     {

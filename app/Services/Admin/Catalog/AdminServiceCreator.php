@@ -110,8 +110,13 @@ class AdminServiceCreator
     /**
      * Partner a cui il pannello può intestare una scheda: gli stessi che
      * `create()` accetta, così il select non offre nomi che poi rifiuta.
-     * La query è quella dell'elenco "Iscritti" (ruolo partner, attivi, non
-     * anonimizzati, superadmin esclusi): un filtro solo, in un posto solo.
+     * Il filtro sta in un posto solo, `UserDirectory::eligiblePartnerQuery()`,
+     * accanto a quello dell'elenco "Iscritti".
+     *
+     * L'ordine è quello della ragione sociale, che è ciò che il select mostra:
+     * ordinare per cognome, come fa `sort => name`, in una tendina di ragioni
+     * sociali sembra un elenco non ordinato. Si ordina in PHP perché il
+     * ripiego su nome e cognome non è una colonna.
      *
      * Torna STRINGHE, non model: la vista ci fa `@foreach ($eligible as $id
      * => $label)`.
@@ -121,13 +126,18 @@ class AdminServiceCreator
     public function eligiblePartners(): Collection
     {
         return $this->directory
-            ->query(['role' => 'partner', 'status' => 'active', 'sort' => 'name', 'dir' => 'asc'])
-            ->whereHas('partnerProfile')
-            ->with('partnerProfile')
+            ->eligiblePartnerQuery()
             ->get()
+            ->sortBy($this->partnerLabel(...), SORT_NATURAL | SORT_FLAG_CASE)
             ->mapWithKeys(fn (User $partner): array => [
-                $partner->id => $partner->partnerProfile?->business_name ?: $partner->name,
+                $partner->id => $this->partnerLabel($partner),
             ]);
+    }
+
+    /** Come si chiama il partner nel pannello: ragione sociale, o nome e cognome. */
+    private function partnerLabel(User $partner): string
+    {
+        return $partner->partnerProfile?->business_name ?: $partner->name;
     }
 
     /**

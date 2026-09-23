@@ -295,4 +295,26 @@ class AdminServiceCreatorTest extends TestCase
         $this->assertSame([$good->id], $options->keys()->all());
         $this->assertSame('Cascina Bau', $options[$good->id]);
     }
+
+    /**
+     * Il select mostra la ragione sociale, quindi deve essere ordinato per
+     * ragione sociale: `sort => name` di UserDirectory ordina per cognome, e
+     * su una tendina di ragioni sociali sembra un elenco non ordinato.
+     */
+    public function test_the_eligible_partners_are_sorted_by_the_name_the_select_shows(): void
+    {
+        Role::findOrCreate('partner', 'web');
+
+        foreach ([['Abbiati', 'Zeta Kennel'], ['Zunino', 'alfa Resort'], ['Monti', 'Mille Cucce']] as [$lastName, $businessName]) {
+            $partner = User::factory()->create(['last_name' => $lastName, 'is_active' => true]);
+            $partner->assignRole('partner');
+            PartnerProfile::factory()->connected()->for($partner)->create(['business_name' => $businessName]);
+        }
+
+        // Maiuscole ignorate: "alfa Resort" viene prima di "Mille Cucce".
+        $this->assertSame(
+            ['alfa Resort', 'Mille Cucce', 'Zeta Kennel'],
+            $this->creator()->eligiblePartners()->values()->all(),
+        );
+    }
 }
