@@ -12,7 +12,7 @@
 
     <x-admin.page-header :heading="__($t.'heading')" :sub="$sub">
         <x-slot:actions>
-            <x-admin.button tone="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save">
+            <x-admin.button tone="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save" :disabled="$created">
                 {{ __('admin-catalog.create.submit') }}
             </x-admin.button>
         </x-slot:actions>

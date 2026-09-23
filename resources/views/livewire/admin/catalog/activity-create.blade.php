@@ -8,7 +8,7 @@
 
     <x-admin.page-header :heading="__('admin-catalog.create.activity.heading')" :sub="__('admin-catalog.create.activity.sub')">
         <x-slot:actions>
-            <x-admin.button tone="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save">{{ __('admin-catalog.create.submit') }}</x-admin.button>
+            <x-admin.button tone="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save" :disabled="$created">{{ __('admin-catalog.create.submit') }}</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
 

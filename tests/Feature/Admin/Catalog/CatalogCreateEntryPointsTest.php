@@ -165,4 +165,20 @@ class CatalogCreateEntryPointsTest extends TestCase
 
         $this->get(route('admin.users.show', $user))->assertOk()->assertDontSee('Crea scheda');
     }
+
+    /**
+     * Il campo di ricerca dentro un `flux:select variant="listbox" searchable`
+     * lo disegna Flux, con `__('Search...')`: senza `lang/it.json` la stringa
+     * resta inglese in mezzo a un pannello italiano. Lo si vede solo a
+     * browser, perché è un placeholder dentro il markup della modale.
+     */
+    public function test_the_partner_search_box_is_in_italian(): void
+    {
+        $this->partner();
+
+        $this->get(route('admin.catalog.index'))
+            ->assertOk()
+            ->assertSee('Cerca…')
+            ->assertDontSee('Search...');
+    }
 }
