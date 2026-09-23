@@ -643,4 +643,63 @@ class StructureCreateTest extends TestCase
         $this->assertSame(1, StructureDraft::query()->count());
         $this->assertCount(4, Storage::disk('public')->files('structure-photos'));
     }
+
+    /**
+     * "Rimuovi riga" è l'unica cosa che il pannello ha e il wizard no
+     * (contratto §Regole dei campi): senza un test, cancellarla non farebbe
+     * diventare rosso niente. Deve restare sempre una riga, perché `rooms`
+     * ha `min:1` e senza righe la scheda non è pubblicabile.
+     */
+    public function test_a_room_row_can_be_removed_but_never_the_last_one(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->filled($partner)
+            ->assertCount('rooms.rooms', 2)
+            ->call('removeRoom', 0)
+            ->assertCount('rooms.rooms', 1)
+            ->assertSet('rooms.rooms.0.type', 'singola')
+            ->call('removeRoom', 0)
+            ->assertCount('rooms.rooms', 1);
+    }
+
+    /**
+     * Senza consenso le adesioni smartbox non hanno senso: restavano
+     * selezionate e finivano sulla bozza, dove il partner non le ha mai
+     * chieste. La regola vive in due punti (l'hook e `draftAttributes()`) e
+     * nessuno dei due era coperto.
+     */
+    public function test_withdrawing_the_smartbox_consent_drops_the_memberships(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->filled($partner)
+            ->set('smartboxConsent', 'si')
+            ->set('smartboxTypes', ['tutta'])
+            ->set('smartboxConsent', 'no')
+            ->assertSet('smartboxTypes', [])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $draft = StructureDraft::query()->sole();
+
+        $this->assertSame('no', $draft->smartbox_consent);
+        $this->assertSame([], $draft->smartbox_types);
+    }
+
+    /**
+     * La distinzione struttura/servizi passa da `CatalogCreateController`, che
+     * legge `{family}` dall'indirizzo e la gira a mount. Gli altri test
+     * montano il componente a mano con `['family' => 'service']`: se il
+     * controller sbagliasse parametro, un servizio nascerebbe `struttura` e
+     * nessun test se ne accorgerebbe.
+     */
+    public function test_the_service_family_arrives_from_the_address(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->get(route('admin.catalog.create', ['family' => 'service', 'partner' => $partner->id]))
+            ->assertOk()
+            ->assertSee(__('admin-catalog.create.structure.sub_servizi'));
+    }
 }
