@@ -581,4 +581,66 @@ class StructureCreateTest extends TestCase
             // test resterebbe verde.
             ->assertSee(__('admin-catalog.create.published'));
     }
+
+    /**
+     * `saved` è pubblico perché lo dichiara HandlesPhotoUploads per il wizard,
+     * che riapre una bozza con le foto già su disco. Nel pannello non c'è
+     * nessuna bozza da cui ereditarle, quindi il client può scriverci quello
+     * che vuole: quattro stringhe a caso passerebbero il minimo di quattro
+     * foto e finirebbero in `img` come percorsi inesistenti.
+     */
+    public function test_a_tampered_saved_list_cannot_stand_in_for_real_photos(): void
+    {
+        $partner = $this->payablePartner();
+
+        $this->filled($partner)
+            ->set('photos', [])
+            ->set('saved', [
+                'structure-photos/finta-1.jpg',
+                'structure-photos/finta-2.jpg',
+                'structure-photos/finta-3.jpg',
+                'structure-photos/finta-4.jpg',
+            ])
+            ->call('save')
+            ->assertHasErrors('photos');
+
+        $this->assertSame(0, StructureDraft::query()->count());
+    }
+
+    /**
+     * Stesso buco, dall'altro lato: `removeSaved()` del wizard cancella dal
+     * disco public il percorso che trova in `saved`. Nel pannello il bottone
+     * non esiste nemmeno, ma il metodo resta raggiungibile dal payload.
+     */
+    public function test_removing_a_saved_photo_deletes_nothing_from_the_panel(): void
+    {
+        $partner = $this->payablePartner();
+
+        Storage::disk('public')->put('structure-photos/di-un-altro.jpg', 'x');
+
+        $this->filled($partner)
+            ->set('saved', ['structure-photos/di-un-altro.jpg'])
+            ->call('removeSaved', 0);
+
+        $this->assertTrue(Storage::disk('public')->exists('structure-photos/di-un-altro.jpg'));
+    }
+
+    /**
+     * Il percorso "in attesa di Stripe" non fa redirect: la pagina resta
+     * viva, compilata, con il bottone cliccabile. Un secondo clic creava una
+     * seconda bozza identica e un secondo caricamento delle stesse foto.
+     */
+    public function test_a_second_save_does_not_create_a_second_waiting_draft(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create();
+        $this->actingAsSuperadmin();
+
+        $component = $this->filled($partner)->call('save')->assertHasNoErrors();
+
+        $component->call('save')->assertHasNoErrors();
+
+        $this->assertSame(1, StructureDraft::query()->count());
+        $this->assertCount(4, Storage::disk('public')->files('structure-photos'));
+    }
 }

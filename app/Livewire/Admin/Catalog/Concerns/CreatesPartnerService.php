@@ -56,6 +56,15 @@ trait CreatesPartnerService
     /** Avviso "in attesa di Stripe" mostrato al posto del redirect (vedi save()). */
     public ?string $pendingNotice = null;
 
+    /**
+     * Salvataggio già riuscito. Il percorso "in attesa di Stripe" non fa
+     * redirect (vedi save()), quindi la pagina resta viva e compilata: un
+     * secondo clic creerebbe una seconda bozza identica, con un'altra copia
+     * delle stesse quattro foto. `#[Locked]`: lo scrive solo `save()`.
+     */
+    #[Locked]
+    public bool $created = false;
+
     /** Bozza fittizia per HandlesPhotoUploads: privata, quindi fuori dal payload. */
     private ?StructureDraft $draftStub = null;
 
@@ -139,6 +148,10 @@ trait CreatesPartnerService
      */
     public function save(AdminServiceCreator $creator): void
     {
+        if ($this->created) {
+            return;
+        }
+
         $this->pendingNotice = null;
 
         $partner = $this->partner();
@@ -158,6 +171,12 @@ trait CreatesPartnerService
 
             throw $e;
         }
+
+        // `saved` serve al wizard, che riapre una bozza con le foto già su
+        // disco. Qui non c'è nessuna bozza da cui ereditarle, ed è una
+        // proprietà pubblica: `collectPhotos()` la conta nel minimo di quattro
+        // e la copia in `img` senza guardare se quei file esistono.
+        $this->saved = [];
 
         $photos = $this->collectPhotos();
 
@@ -186,6 +205,11 @@ trait CreatesPartnerService
                 'name' => $partner->partnerProfile?->business_name ?: $partner->name,
             ], 'it');
 
+            // Le foto sono già sulla bozza: tenerle anche qui significa
+            // ricaricarle al clic successivo.
+            $this->photos = [];
+            $this->created = true;
+
             return;
         }
 
@@ -193,10 +217,18 @@ trait CreatesPartnerService
         // redirect, un flux:toast no. Lo legge show.blade.php (Task 9).
         session()->flash('catalog_created', __('admin-catalog.create.published', [], 'it'));
 
-        $this->redirectRoute('admin.catalog.show', [
-            'type' => $creator->catalogType($draft),
-            'id' => $creator->publishedRow($draft)->id,
-        ], navigate: true);
+        $this->created = true;
+
+        // `publishedRow()` torna null se una famiglia nuova non è mappata o
+        // uno scope la nasconde: una pubblicazione riuscita non deve
+        // diventare un 500 sul redirect, con la riga già a catalogo.
+        $row = $creator->publishedRow($draft);
+
+        $this->redirectRoute(
+            $row === null ? 'admin.catalog.index' : 'admin.catalog.show',
+            $row === null ? [] : ['type' => $creator->catalogType($draft), 'id' => $row->id],
+            navigate: true,
+        );
     }
 
     /** Partner scelto, con il profilo già caricato per il riepilogo. */
@@ -223,6 +255,14 @@ trait CreatesPartnerService
     {
         return __('admin-catalog.create.photos_min', [], 'it');
     }
+
+    /**
+     * Nel pannello non esistono foto già salvate: la pagina non disegna
+     * nessun bottone per togliersele. Il metodo del wizard resta però
+     * raggiungibile dal payload e cancellerebbe dal disco `public` il
+     * percorso che il client ha messo in `saved`, quindi qui non fa niente.
+     */
+    public function removeSaved(int $index): void {}
 
     /** Porta i tab testi sulla lingua che ha l'errore (stesso metodo di ArticleEdit). */
     protected function focusLocaleOf(array $keys): void

@@ -80,7 +80,9 @@
         </x-admin.notice>
     @endif
 
-    <x-admin.button tone="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save" class="self-start">
+    {{-- `$created` spento dopo un salvataggio riuscito: sul percorso "in attesa"
+         la pagina non fa redirect e il bottone resterebbe cliccabile. --}}
+    <x-admin.button tone="primary" wire:click="save" wire:loading.attr="disabled" wire:target="save" :disabled="$created" class="self-start">
         {{ __($t.'submit') }}
     </x-admin.button>
 </div>
