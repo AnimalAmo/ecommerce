@@ -355,4 +355,24 @@ class ActivityCreateTest extends TestCase
         auth()->logout();
         $this->get($url)->assertRedirect(route('admin.login'));
     }
+
+    /**
+     * `ActivityInfoForm` dichiara `after_or_equal:dateStart`, che dentro il
+     * componente si riferirebbe a un campo `dateStart` inesistente (i campi
+     * sono sotto `info.`): la regola passerebbe sempre, e una data di fine
+     * prima di quella di inizio arriverebbe al catalogo.
+     */
+    public function test_an_end_date_before_the_start_is_refused(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('info.dateStart', '2026-08-10')
+            ->set('info.dateEnd', '2026-08-01')
+            ->call('save')
+            ->assertHasErrors(['info.dateEnd' => 'after_or_equal']);
+
+        $this->assertSame(0, StructureDraft::query()->count());
+    }
 }

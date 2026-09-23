@@ -111,6 +111,19 @@ class SmartboxCreate extends Component
      * `mealTimes.*.from|to`, `dietary` array) non venivano applicate affatto, e
      * una regola aggiunta domani a quel Form non arriverebbe mai al pannello.
      */
+    /**
+     * Senza "altro" la textarea non si vede più (la nasconde la vista), ma la
+     * proprietà resta compilata e finirebbe sulla bozza: un residuo che
+     * l'admin non può più leggere né cancellare. Stessa forma di
+     * `StructureCreate::updatedSmartboxConsent()`.
+     */
+    public function updatedAnimalServices(): void
+    {
+        if (! in_array('altro', $this->animalServices, true)) {
+            $this->animalOther = '';
+        }
+    }
+
     public function rules(): array
     {
         $rules = [
@@ -172,7 +185,7 @@ class SmartboxCreate extends Component
 
     public function messages(): array
     {
-        return [
+        $messages = [
             'type.required' => __('partner.smartbox_type.error_required'),
             'type.in' => __('partner.smartbox_type.error_required'),
             'name.it.required' => __('partner.smartbox_name.error_required'),
@@ -201,6 +214,24 @@ class SmartboxCreate extends Component
             'photos.*.image' => __('admin-catalog.create.validation.photo_image'),
             'photos.*.max' => __('admin-catalog.create.validation.photo_max'),
         ];
+
+        foreach ($this->sectionForms() as $property => $form) {
+            // `Livewire\Form` non dichiara `messages()` nella classe base: il
+            // `getMessages()` di HandlesValidation lo cerca con method_exists.
+            // Oggi nessun Form di questa pagina ce l'ha, e senza il controllo
+            // la riga sotto sarebbe un «Call to undefined method». Il ciclo
+            // c'è perché un messaggio aggiunto domani a un Form deve arrivare
+            // al pannello, non sparire in silenzio (come in StructureCreate).
+            if (! method_exists($form, 'messages')) {
+                continue;
+            }
+
+            foreach ($form->messages() as $key => $message) {
+                $messages[$property.'.'.$key] = $message;
+            }
+        }
+
+        return $messages;
     }
 
     /**

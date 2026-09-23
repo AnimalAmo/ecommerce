@@ -343,4 +343,25 @@ class SmartboxCreateTest extends TestCase
         auth()->logout();
         $this->get($url)->assertRedirect(route('admin.login'));
     }
+
+    /**
+     * Togliendo "altro" la textarea sparisce dalla pagina, ma il testo resta
+     * nella proprietà e finiva comunque sulla bozza: un residuo che l'admin
+     * non vede più e non può più cancellare.
+     */
+    public function test_deselecting_the_other_animal_service_clears_its_free_text(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('animalServices', ['omaggio', 'altro'])
+            ->set('animalOther', 'Toelettatura inclusa')
+            ->set('animalServices', ['omaggio'])
+            ->assertSet('animalOther', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame([], StructureDraft::sole()->getTranslations('animal_services_other'));
+    }
 }

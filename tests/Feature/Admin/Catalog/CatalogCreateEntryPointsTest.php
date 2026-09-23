@@ -151,4 +151,18 @@ class CatalogCreateEntryPointsTest extends TestCase
             ->assertHasErrors('newFamily')
             ->assertNoRedirect();
     }
+
+    /**
+     * Il menù era acceso dal solo profilo aziendale, mentre
+     * `AdminServiceCreator` pretende anche il ruolo `partner`: il link si
+     * apriva e la pagina scartava il partner in silenzio, lasciando l'admin
+     * davanti a un form vuoto senza spiegazioni.
+     */
+    public function test_a_user_with_a_profile_but_no_partner_role_has_no_create_menu(): void
+    {
+        $user = User::factory()->create(['is_active' => true]);
+        PartnerProfile::factory()->connected()->for($user)->create(['business_name' => 'Senza Ruolo']);
+
+        $this->get(route('admin.users.show', $user))->assertOk()->assertDontSee('Crea scheda');
+    }
 }

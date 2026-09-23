@@ -53,7 +53,21 @@
                     <flux:input wire:model="location.address" class="sm:col-span-2" :label="__('admin-catalog.create.activity.field_address')" />
                     <flux:input wire:model="location.city" :label="__('admin-catalog.create.activity.field_city')" />
                     <flux:input wire:model="location.zip" inputmode="numeric" :label="__('admin-catalog.create.activity.field_zip')" />
-                    <x-partner.province-select :provinces="$provinces" model="location.province" :label="__('admin-catalog.create.activity.field_province')" />
+                    {{-- Composto a mano come in structure-create: x-partner.province-select
+                         porta lo stile del form partner (etichetta 12px grigia, campo
+                         quadrato, asterisco) e nel pannello sarebbe l'unico campo diverso
+                         da tutti gli altri. Field a mano = flux:error esplicito. --}}
+                    <flux:field>
+                        <flux:label>{{ __('admin-catalog.create.activity.field_province') }}</flux:label>
+                        <flux:select variant="listbox" searchable wire:model="location.province" :placeholder="__('admin-catalog.create.activity.field_province')">
+                            @foreach ($provinces as $province)
+                                <flux:select.option value="{{ $province->short_name }}" wire:key="province-{{ $province->short_name }}">
+                                    {{ $province->name }} ({{ $province->short_name }})
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:error name="location.province" />
+                    </flux:field>
                 </div>
             </x-admin.card>
 

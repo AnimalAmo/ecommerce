@@ -160,7 +160,13 @@ class ActivityCreate extends Component
         //    quelli del componente e `dateStart` non esiste, quindi il
         //    confronto non confronta niente — nessun errore, solo una regola
         //    che non c'è. Col percorso completo torna a valere.
-        $rules['info.dateEnd'] = ['required', 'date', 'after_or_equal:info.dateStart'];
+        //    Si riscrive il riferimento, non la regola: assegnando l'intero
+        //    array, una regola aggiunta domani a `dateEnd` nel Form sparirebbe
+        //    dal pannello senza che nessun test lo noti.
+        $rules['info.dateEnd'] = array_map(
+            fn (mixed $rule): mixed => $rule === 'after_or_equal:dateStart' ? 'after_or_equal:info.dateStart' : $rule,
+            $rules['info.dateEnd'],
+        );
 
         return $rules;
     }
@@ -182,7 +188,7 @@ class ActivityCreate extends Component
 
     public function messages(): array
     {
-        return [
+        $messages = [
             'type.required' => __('partner.activity_type.error_required'),
             'type.in' => __('partner.activity_type.error_required'),
             'name.it.required' => __('partner.activity_name.error_required'),
@@ -208,6 +214,24 @@ class ActivityCreate extends Component
             'photos.*.image' => __('admin-catalog.create.validation.photo_image'),
             'photos.*.max' => __('admin-catalog.create.validation.photo_max'),
         ];
+
+        foreach ($this->sectionForms() as $property => $form) {
+            // `Livewire\Form` non dichiara `messages()` nella classe base: il
+            // `getMessages()` di HandlesValidation lo cerca con method_exists.
+            // Oggi nessun Form di questa pagina ce l'ha, e senza il controllo
+            // la riga sotto sarebbe un «Call to undefined method». Il ciclo
+            // c'è perché un messaggio aggiunto domani a un Form deve arrivare
+            // al pannello, non sparire in silenzio (come in StructureCreate).
+            if (! method_exists($form, 'messages')) {
+                continue;
+            }
+
+            foreach ($form->messages() as $key => $message) {
+                $messages[$property.'.'.$key] = $message;
+            }
+        }
+
+        return $messages;
     }
 
     /**
