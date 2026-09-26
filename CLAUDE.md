@@ -15,7 +15,7 @@ AnimalAmo ecommerce — pet-friendly travel/booking marketplace (B2C web app + B
 - **Commits**: Conventional Commits, English, no Co-Authored-By/AI-attribution trailers. Don't push unless asked.
 - **`npm run build` before any deploy** — new Tailwind classes don't exist in old builds.
 - **Never remove `@source` for flux-pro in `resources/css/app.css`** — without it Pro components render unstyled.
-- **Nothing PHP runs on the Windows host** — host PHP is 7.4, the app needs ≥8.3. That kills `php artisan` *and* `vendor/bin/pint` (Pint needs ≥8.2). Everything goes through WSL (see Commands).
+- **Never run PHP on the host** — on either machine. The Windows host has PHP 7.4, the Linux host 8.2 without `pdo_sqlite`; the app needs ≥8.3 and `phpunit.xml` forces sqlite in memory. That kills `php artisan` *and* `vendor/bin/pint` (Pint needs ≥8.2). Windows goes through WSL, Linux through the Homestead VM (see Commands).
 
 ## Commands
 
@@ -31,14 +31,37 @@ wsl -d Ubuntu -e bash -lc '~/t.sh --native'             # same suite, WSL's own 
 wsl -d Ubuntu -e bash -lc '~/t.sh --shell'              # shell inside the container
 ```
 
+**On the Linux machine there is no WSL and no reachable Docker daemon — there is a Homestead VM**,
+running and mapping `animalamo.test`. The mirror script is `../aa-vm-test.sh` (one mirror per worktree:
+two phpunit runs on the same mirror corrupt each other).
+
+```bash
+# <name> = mirror suffix inside the VM (~/aa-<name>), <path> = "." for the main repo
+ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main .'
+ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main . --filter=SomeTest'
+ssh vagrant@192.168.56.56 'cd ~/Code/algomera/animal_amo/ecommerce && vendor/bin/pint --dirty'
+```
+
+A long run needs `setsid`, not `nohup`: when the ssh session closes it takes the process with it. And
+`pgrep phpunit` finds nothing — the process is called `php`.
+
 **Baseline: `20 failed, 1998 passed` in Docker (5m42s); `20 failed, 1 skipped, 1997 passed` con `--native`.** The 20 are pre-existing and live in three classes
 (`PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest`): the `email:rfc,dns` rule on
 partner applications needs DNS, which the sandbox has not, so the application is never stored and the
 assertions downstream die on `ModelNotFoundException`. Any number other than 20 is yours.
 
+**In the Homestead VM those 20 pass and the baseline is green: `1 skipped, 2044 passed` (8666
+assertions, 329s), measured 26/09/2026.** The VM resolves DNS, so `email:rfc,dns` accepts the address
+and the three classes run for real. On Linux, therefore, **any red is yours** — a much stronger check
+than the Windows one, which was hiding 20 tests that never exercised their code.
+
 ### Local environment (this machine)
 
-The old Homestead VM (`192.168.56.56`) **is gone** — `animalamo.test` no longer resolves to anything.
+There are two machines, on the same SSD. **On Windows** (`D:\Code\…`) the Homestead VM is unreachable
+and everything goes through WSL + Docker, as described below. **On Linux**
+(`/media/matteo/SSD3/Code/…`) the Homestead VM at `192.168.56.56` is alive and is how you run anything:
+`animalamo.test` resolves and the box lives in `~/Homestead`. Its four cores are shared with every other
+project's session — a load of 90 means queued, not broken.
 
 The working copy is on Windows (`D:\Code\algomera\animal_amo\ecommerce`) and that is where you edit and
 commit. A mirror lives on the WSL ext4 filesystem at `~/aa`, kept in sync by `~/t.sh`; Docker bind-mounts
