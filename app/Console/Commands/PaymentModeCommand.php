@@ -15,9 +15,9 @@ use Illuminate\Validation\ValidationException;
 /**
  * Sposta un partner fra incasso online su AnimalAmo e pagamento diretto.
  *
- * Nasce da un caso di produzione del 26/09/2026: «Bio Boutique Laurino» è a
- * incasso online ma non ha mai collegato Stripe, quindi il cliente arriva a un
- * checkout che non può funzionare.
+ * Nasce da un caso di produzione del 26/09/2026: «Bio Boutique Hotel Laurino»
+ * (utente 11) è a incasso online ma non ha mai collegato Stripe, quindi il
+ * cliente arriva a un checkout che non può funzionare.
  *
  * Perché non una UPDATE a mano. La colonna è una sola, ma cambiarla di forza
  * salta {@see PartnerPaymentModeService::set()}, e con essa:
@@ -36,7 +36,7 @@ use Illuminate\Validation\ValidationException;
 class PaymentModeCommand extends Command
 {
     protected $signature = 'animalamo:payment-mode
-        {partner : Ragione sociale, email del titolare, o id del profilo partner}
+        {partner : Ragione sociale, email del titolare, o id utente (quello di /admin/users/{id})}
         {--offline : Passa al pagamento diretto: nessun incasso su AnimalAmo}
         {--online : Torna all\'incasso online su AnimalAmo (richiede Stripe operativo)}
         {--url= : Sito dove pagare o prenotare, mostrato sulla scheda. Omesso, si tiene quello attuale}
@@ -108,11 +108,18 @@ class PaymentModeCommand extends Command
             return null;
         }
 
+        // Un numero è l'id UTENTE, non quello del profilo: è l'unico dei due
+        // che l'operatore vede (il pannello apre /admin/users/{id} e la
+        // creazione scheda passa ?partner={id}, entrambi risolti su User), ed
+        // è quello che il resto dell'applicazione usa come maniglia del
+        // partner (`structures.user_id`, `cart_items.partner_user_id`). Quando
+        // i due id divergono, leggerlo come id del profilo cambia la modalità
+        // a un altro partner senza che nessuno se ne accorga.
         if (ctype_digit($needle)) {
-            $profile = PartnerProfile::query()->find((int) $needle);
+            $profile = PartnerProfile::query()->where('user_id', (int) $needle)->first();
 
             if ($profile === null) {
-                $this->error('Nessun profilo partner con id '.$needle.'.');
+                $this->error('L\'utente '.$needle.' non ha un profilo partner.');
             }
 
             return $profile;
@@ -145,7 +152,7 @@ class PaymentModeCommand extends Command
         }
 
         if ($matches->count() > 1) {
-            $this->error('«'.$needle.'» corrisponde a '.$matches->count().' partner: usa il nome esatto o l\'id.');
+            $this->error('«'.$needle.'» corrisponde a '.$matches->count().' partner: usa il nome esatto o l\'id utente.');
             $this->candidates($matches);
 
             return null;
@@ -158,9 +165,11 @@ class PaymentModeCommand extends Command
     private function candidates(Collection $matches): void
     {
         $this->table(
-            ['id', 'Ragione sociale', 'Modalità'],
+            // L'id utente e non quello del profilo: è quello che l'operatore
+            // può ridare al comando, e quello che apre /admin/users/{id}.
+            ['utente', 'Ragione sociale', 'Modalità'],
             $matches->map(fn (PartnerProfile $profile): array => [
-                $profile->id,
+                $profile->user_id,
                 $profile->business_name,
                 $profile->requiresOnlinePayment() ? 'online' : 'diretto',
             ])->all(),
