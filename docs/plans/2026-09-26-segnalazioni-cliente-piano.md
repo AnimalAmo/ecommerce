@@ -173,7 +173,7 @@ Cosa fare:
 
 > ⚠️ **I contatti non esistono a database.** Nessuna delle tabelle (`partner_profiles`, `structures`, `events`, `venues`, `structure_drafts`) ha telefono, email pubblica, sito, WhatsApp o orari. L'unico telefono è `users.phone`, cioè un dato di registrazione, e l'unica email è la credenziale di login. Pubblicarli d'ufficio è una scelta che la cliente deve prendere per iscritto. Esiste solo `payment_url` («sito dove pagare o prenotare»), semanticamente diverso.
 
-### WP4 — R3, percorso differenziato · 1,5–2 g
+### WP4 — R3, percorso differenziato · 🟡 **in parte** (26/09, commit `830d8ed`)
 
 File: `Partner/Structure/StructureType.php`, `Partner/Activity/ActivityType.php`, `Partner/CreateService.php`, `Partner/Registration/PartnerRegisterStep2.php`, `lang/it|en/partner.php`, test del wizard.
 
@@ -257,8 +257,8 @@ Le altre, meno urgenti ma da chiudere prima di chiudere il lavoro:
 
 ```
 WP0 diagnosi produzione ──────────────────────────────►  (in parallelo, serve la cliente/hosting)
-WP7 ✅ ──►  WP2 ✅ ──►  WP1 🟡 ──►  WP3 🟡 ──►  WP4 branching ──►  WP5 attività ──►  WP6 eventi
-                                                         1,5-2 g            3-4 g             2,5-3 g
+WP7 ✅ ──►  WP2 ✅ ──►  WP1 🟡 ──►  WP3 🟡 ──►  WP4 🟡 ──►  WP5 attività ──►  WP6 eventi
+                                                                     3-4 g             2,5-3 g
 ```
 
 ### Stato al 26/09/2026
@@ -269,8 +269,9 @@ WP7 ✅ ──►  WP2 ✅ ──►  WP1 🟡 ──►  WP3 🟡 ──►  WP
 | **WP2** amenity | Filtro in lettura, guardie sui box vuoti, 5 schede, 7 test nuovi | Fase 2 (pulizia dati) — da rimandare |
 | **WP1** R6 | `animalamo:stuck-drafts` (+`--fix`), badge che dice la causa vera, `canBePaid()` nel gate checkout | FM-6 provincia, FM-7 log webhook, FM-9 profilo mancante, FM-2 output di `connect-sync` |
 | **WP3** R1 | Card contatti al posto del box prenotazione sulle 5 schede, `PartnerContacts`, 14 test riscritti | Guardia server-side nel carrello (**bloccata**, vedi sotto), contatti ricchi (**bloccati**, domanda 2) |
+| **WP4** R3 | "Servizi" apre il percorso attività, guardia sul precaricamento del `type`, pulizia delle colonne dell'altro ramo, 7 test nuovi | Persistenza della scelta fatta in registrazione; fusione delle card (**domanda 6**) |
 
-**Baseline test invariato in ogni commit: `20 failed`.** Passati da 1998 a 2018.
+**Baseline test invariato in ogni commit: `20 failed`.** Passati da 1998 a 2025.
 
 #### La decisione che blocca il resto di WP3
 
