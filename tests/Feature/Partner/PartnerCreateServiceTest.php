@@ -75,16 +75,25 @@ class PartnerCreateServiceTest extends TestCase
         $this->assertDatabaseHas('structure_drafts', ['service_category' => 'smartbox']);
     }
 
-    public function test_servizi_saves_the_category_and_reuses_the_structure_flow(): void
+    public function test_servizi_goes_to_the_activity_flow_and_never_shows_the_structure_categories(): void
     {
-        // Scelta cliente: "servizi" percorre gli stessi step della struttura ricettiva.
+        // Fino al 29/09/2026 "Servizi" percorreva gli step della struttura
+        // ricettiva: un toelettatore o un dog sitter si vedeva chiedere hotel,
+        // B&B, agriturismo o casa vacanza. La cliente ha chiesto il contrario.
         Livewire::test(CreateService::class)
             ->set('service', 'servizi')
             ->call('next')
             ->assertHasNoErrors()
-            ->assertRedirect(route('partner.structure.type'));
+            // Salta anche la scelta Attività/Evento: chi clicca "Servizi" l'ha già fatta.
+            ->assertRedirect(route('partner.activity.name'));
 
-        $this->assertDatabaseHas('structure_drafts', ['service_category' => 'servizi']);
+        $this->assertDatabaseHas('structure_drafts', [
+            // 'attivita' e non 'servizi': family() manda 'servizi' su
+            // StructurePublisher, e una bozza compilata col wizard attività
+            // pubblicata come Struttura sarebbe rotta.
+            'service_category' => 'attivita',
+            'type' => 'attivita',
+        ]);
     }
 
     /**
