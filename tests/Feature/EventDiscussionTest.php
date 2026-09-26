@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Amenity\Amenity;
 use App\Models\Event\Event;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
@@ -122,7 +123,23 @@ class EventDiscussionTest extends TestCase
             'position' => 1,
         ]);
 
+        self::withOneAmenity($event);
+
         return $event;
+    }
+
+    /**
+     * Una voce inclusa davvero: da quando la scheda mostra solo ciò che è
+     * offerto (29/09/2026) il box "Cosa è incluso" sparisce se non c'è niente,
+     * e queste prove servono a verificare la tab Informazioni, non le amenity.
+     */
+    private static function withOneAmenity(Event $event): void
+    {
+        // firstOrCreate: amenities.name è unico e una prova sola monta sia
+        // l'evento sia l'attività.
+        $amenity = Amenity::firstOrCreate(['name' => 'Wifi'], ['group' => Amenity::GROUP_HOTEL]);
+
+        $event->amenities()->sync([$amenity->id => ['included' => true, 'position' => 1]]);
     }
 
     private function partnerActivity(): Event
@@ -141,6 +158,8 @@ class EventDiscussionTest extends TestCase
             'answer' => 'Fino a due per prenotazione.',
             'position' => 1,
         ]);
+
+        self::withOneAmenity($activity);
 
         return $activity;
     }

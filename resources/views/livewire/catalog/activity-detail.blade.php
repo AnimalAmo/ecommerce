@@ -122,26 +122,25 @@
                         </section>
                     @endif
 
-                    {{-- 4d. Cosa è incluso (box bordato, check verdi / X rosa su due colonne) --}}
-                    <section class="mt-8 min-h-[250px] w-full rounded-[4px] border border-[#DEDEDE] bg-white px-4 pb-6 pt-[22px]">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.included') }}</h2>
-                        <div class="mt-[13px] grid grid-cols-1 gap-x-6 gap-y-[7px] sm:grid-cols-2">
-                            @foreach ($includedColumns as $column => $items)
-                                <ul wire:key="included-col-{{ $column }}" class="space-y-[7px]">
-                                    @foreach ($items as $item)
-                                        <li wire:key="included-{{ $column }}-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] leading-[21px] text-[#0D171A]">
-                                            @if ($item['included'])
+                    {{-- 4d. Cosa è incluso (box bordato, check verdi; solo le voci offerte).
+                           Le colonne vuote le toglie il componente: qui restano 1 o 2. --}}
+                    @if (filled($includedColumns))
+                        <section class="mt-8 min-h-[250px] w-full rounded-[4px] border border-[#DEDEDE] bg-white px-4 pb-6 pt-[22px]">
+                            <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.included') }}</h2>
+                            <div class="mt-[13px] grid grid-cols-1 gap-x-6 gap-y-[7px] {{ count($includedColumns) > 1 ? 'sm:grid-cols-2' : '' }}">
+                                @foreach ($includedColumns as $column => $items)
+                                    <ul wire:key="included-col-{{ $column }}" class="space-y-[7px]">
+                                        @foreach ($items as $item)
+                                            <li wire:key="included-{{ $column }}-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] leading-[21px] text-[#0D171A]">
                                                 <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
-                                            @else
-                                                <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
-                                            @endif
-                                            {{ $item['label'] }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endforeach
-                        </div>
-                    </section>
+                                                {{ $item['label'] }}
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endforeach
+                            </div>
+                        </section>
+                    @endif
                 </div>
 
                 {{-- 5. Colonna destra: box prenotazione (XD "Raggruppa 3019") --}}
@@ -209,6 +208,11 @@
                                 <flux:icon.check-1 class="h-4 w-4 shrink-0" />
                                 {{ __('events.join') }}
                             </flux:button>
+                        @elseif ($paysOnSite)
+                            {{-- Partner senza pagamento online: si contatta, non si prenota qui (29/09/2026). --}}
+                            <div class="mt-[26px]">
+                                @include('partials.catalog.partner-contacts-card')
+                            </div>
                         @else
                             <flux:button wire:click="addToCart" class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('events.add_to_cart') }}</flux:button>
 
@@ -222,9 +226,6 @@
                                 <p>{{ __('events.total') }}</p>
                                 <p>{{ $totalPrice }}</p>
                             </div>
-                            @if ($paysOnSite)
-                                @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
-                            @endif
                         @endif
                     </div>
                 </aside>

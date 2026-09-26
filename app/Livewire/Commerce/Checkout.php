@@ -648,7 +648,12 @@ class Checkout extends Component
         // quello della piattaforma. Senza, non c'è pagamento possibile.
         $seller = $this->sellerProfile();
 
-        if ($seller === null || ! $seller->canSell()) {
+        // canBePaid() e non canSell(): il secondo guarda solo charges_enabled.
+        // Nella finestra incassi-sì/bonifici-no il cliente pagherebbe e il
+        // bonifico al giorno 14 non partirebbe — ReleaseMaturedPayouts e
+        // DraftPublisher usano già canBePaid(), questa riga era rimasta
+        // indietro (audit Connect del 14/09/2026, difetto ancora aperto).
+        if ($seller === null || ! $seller->canBePaid()) {
             $this->paymentUnavailable = true;
             Flux::toast(text: __('payment.errors.seller_unavailable'), variant: 'danger');
 

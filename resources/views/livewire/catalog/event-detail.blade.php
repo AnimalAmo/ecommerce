@@ -89,7 +89,7 @@
                             <flux:icon.check-1 class="h-4 w-4 shrink-0" />
                             {{ __('events.join') }}
                         </flux:button>
-                    @else
+                    @elseif (! $paysOnSite)
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
                         <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.cart class="h-4 w-4 shrink-0" />
@@ -139,33 +139,38 @@
                         </ul>
                     </section>
 
-                    {{-- 4c. Cosa è incluso (box bordato, check verdi / X rosa su due colonne) --}}
-                    <section class="mt-8 min-h-[250px] w-full rounded-[4px] border border-[#DEDEDE] bg-white px-4 pb-6 pt-[22px]">
-                        <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.included') }}</h2>
-                        <div class="mt-[13px] grid grid-cols-1 gap-x-6 gap-y-[7px] sm:grid-cols-2">
-                            @foreach ($includedColumns as $column => $items)
-                                <ul wire:key="included-col-{{ $column }}" class="space-y-[7px]">
-                                    @foreach ($items as $item)
-                                        <li wire:key="included-{{ $column }}-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] leading-[21px] text-[#0D171A]">
-                                            @if ($item['included'])
+                    {{-- 4c. Cosa è incluso (box bordato, check verdi; solo le voci offerte).
+                           Le colonne vuote le toglie il componente: qui restano 1 o 2. --}}
+                    @if (filled($includedColumns))
+                        <section class="mt-8 min-h-[250px] w-full rounded-[4px] border border-[#DEDEDE] bg-white px-4 pb-6 pt-[22px]">
+                            <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.included') }}</h2>
+                            <div class="mt-[13px] grid grid-cols-1 gap-x-6 gap-y-[7px] {{ count($includedColumns) > 1 ? 'sm:grid-cols-2' : '' }}">
+                                @foreach ($includedColumns as $column => $items)
+                                    <ul wire:key="included-col-{{ $column }}" class="space-y-[7px]">
+                                        @foreach ($items as $item)
+                                            <li wire:key="included-{{ $column }}-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] leading-[21px] text-[#0D171A]">
                                                 <flux:icon.check class="h-[18px] w-[18px] shrink-0 text-[#37C443]" />
-                                            @else
-                                                <flux:icon.close class="h-[18px] w-[18px] shrink-0 text-[#EA2E68]" />
-                                            @endif
-                                            {{ $item['label'] }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endforeach
-                        </div>
-                    </section>
+                                                {{ $item['label'] }}
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endforeach
+                            </div>
+                        </section>
+                    @endif
                 </div>
 
                 {{-- 5. Colonna destra: card mappa (nascosta senza venue) e card "Domande frequenti".
                      Le FAQ stavano nella colonna destra della tab Discussione: rimossa quella tab,
                      senza questo spostamento il contenuto reale del partner sparirebbe dalla pagina. --}}
-                @if ($event->venue?->hasMap() || $faqs->isNotEmpty())
+                @if ($paysOnSite || $event->venue?->hasMap() || $faqs->isNotEmpty())
                     <aside class="w-full shrink-0 space-y-6 lg:w-[718px]">
+                        {{-- Partner senza pagamento online: la CTA carrello non c'è più,
+                             al suo posto i recapiti (29/09/2026). --}}
+                        @if ($paysOnSite)
+                            @include('partials.catalog.partner-contacts-card')
+                        @endif
+
                         @if ($event->venue?->hasMap())
                             <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-5">
                                 <div class="relative overflow-hidden rounded-[4px]">

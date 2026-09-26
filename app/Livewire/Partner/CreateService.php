@@ -47,13 +47,29 @@ class CreateService extends Component
             ['service.required' => __('partner.create_service.error_required'), 'service.in' => __('partner.create_service.error_required')],
         );
 
-        $this->saveStep(['service_category' => $this->service], 0);
+        // "Servizi" portava agli step della struttura ricettiva, quindi un
+        // toelettatore o un dog sitter si vedeva chiedere hotel, B&B,
+        // agriturismo o casa vacanza. La cliente ha chiesto il contrario
+        // (29/09/2026): i professionisti stanno in "Attività". La bozza nasce
+        // quindi come 'attivita' di tipo 'attivita' e salta la scelta
+        // Attività/Evento, che chi ha cliccato "Servizi" ha già fatto.
+        //
+        // service_category è 'attivita' e non 'servizi' di proposito: family()
+        // manda 'servizi' su StructurePublisher, e una bozza compilata col
+        // wizard attività pubblicata come Struttura sarebbe rotta. Le bozze
+        // storiche con 'servizi' restano dove sono: sono state compilate col
+        // percorso hotel e sono a catalogo come strutture.
+        $isProfessional = $this->service === 'servizi';
 
-        // "Servizi" percorre gli stessi step della struttura ricettiva (scelta
-        // cliente): il draft mantiene service_category='servizi' salvata sopra.
-        $route = match ($this->service) {
-            'attivita' => 'partner.activity.type',
-            'smartbox' => 'partner.smartbox.type',
+        $this->saveStep([
+            'service_category' => $isProfessional ? 'attivita' : $this->service,
+            ...($isProfessional ? ['type' => 'attivita'] : []),
+        ], $isProfessional ? 1 : 0);
+
+        $route = match (true) {
+            $isProfessional => 'partner.activity.name',
+            $this->service === 'attivita' => 'partner.activity.type',
+            $this->service === 'smartbox' => 'partner.smartbox.type',
             default => 'partner.structure.type',
         };
 

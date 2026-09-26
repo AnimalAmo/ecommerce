@@ -9,6 +9,7 @@ use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
@@ -185,12 +186,19 @@ class ActivityDetail extends Component
             'animalsLabel' => Format::animals($this->editAnimals),
             'guestsAtMax' => $this->guestsAtMax(),
             'animalsAtMax' => $this->animalsAtMax(),
-            'includedColumns' => [$activity->amenityRows('hotel'), $activity->amenityRows('animal')],
+            // array_filter: amenityRows torna solo le voci offerte, quindi una
+            // colonna può restare vuota — e la griglia a due colonne del blade
+            // lascerebbe metà sezione bianca. La si toglie qui, non nel template.
+            'includedColumns' => array_values(array_filter([
+                $activity->amenityRows('hotel'),
+                $activity->amenityRows('animal'),
+            ])),
             'faqs' => $activity->faqs,
             // Solo le attività acquistabili: quelle gratuite restano "Partecipa" e
             // non passano mai dal carrello, quindi non serve nemmeno la query.
             'paysOnSite' => ! $activity->hasJoinCta()
                 && app(PartnerPaymentModeService::class)->forPurchasable($activity) === OrderPaymentMode::OnSite,
+            'contacts' => app(PartnerContacts::class)->forPurchasable($activity),
         ])->title('AnimalAmo — '.$activity->title);
     }
 }

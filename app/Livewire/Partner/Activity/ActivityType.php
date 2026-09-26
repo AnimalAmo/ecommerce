@@ -26,8 +26,47 @@ class ActivityType extends Component
             ['type.required' => __('partner.activity_type.error_required'), 'type.in' => __('partner.activity_type.error_required')],
         );
 
-        $this->saveStep(['type' => $this->type], 1);
+        $this->saveStep(['type' => $this->type, ...$this->clearedFields()], 1);
         $this->redirectRoute('partner.activity.name');
+    }
+
+    /**
+     * Cambiando ramo i campi dell'altro restavano sulla bozza e finivano in
+     * pubblicazione: le colonne solo-struttura arrivando da lì, gli orari
+     * passando da Evento ad Attività (un'attività non ha orario di inizio e
+     * fine — richiesta della cliente, 29/09/2026). Il pannello admin questa
+     * correzione ce l'ha già in ActivityCreate::updatedType(), il wizard no.
+     *
+     * Si azzera solo al cambio effettivo: ripassare da questo step senza
+     * toccare la scelta non deve cancellare il lavoro già fatto.
+     *
+     * @return array<string, null>
+     */
+    private function clearedFields(): array
+    {
+        $previous = $this->draft()->type;
+
+        if ($previous === $this->type) {
+            return [];
+        }
+
+        $cleared = [];
+
+        // Da Struttura ricettiva: le colonne che solo quel percorso riempie.
+        if ($previous !== null && ! in_array($previous, ['attivita', 'eventi'], true)) {
+            $cleared = array_fill_keys(
+                ['license', 'rooms', 'checkin_from', 'checkin_to', 'checkout_from', 'checkout_to', 'smartbox_consent', 'smartbox_types'],
+                null,
+            );
+        }
+
+        // Da Evento ad Attività: gli orari non esistono più su questo ramo.
+        if ($this->type === 'attivita') {
+            $cleared['time_start'] = null;
+            $cleared['time_end'] = null;
+        }
+
+        return $cleared;
     }
 
     public function render()

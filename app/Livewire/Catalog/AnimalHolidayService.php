@@ -10,6 +10,7 @@ use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use DateTimeImmutable;
@@ -138,6 +139,7 @@ class AnimalHolidayService extends Component
             'bookingHours' => self::bookingHours(),
             // Service memoizzato per user_id: una query per richiesta.
             'paysOnSite' => app(PartnerPaymentModeService::class)->forPurchasable($service) === OrderPaymentMode::OnSite,
+            'contacts' => app(PartnerContacts::class)->forPurchasable($service),
         ])->title('AnimalAmo — '.$service->name);
     }
 

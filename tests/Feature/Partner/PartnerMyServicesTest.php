@@ -3,6 +3,7 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\MyServices\PartnerMyServices;
+use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,9 @@ class PartnerMyServicesTest extends TestCase
             'name' => 'Hotel Brescia',
             'city' => 'Darfo Boario Terme',
             'province' => 'BS',
+            // Pubblicabile: senza stanze il badge direbbe "mancano dei dati",
+            // che e' vero ma non e' cio' che queste prove vogliono verificare.
+            'rooms' => [['name' => 'Camera doppia', 'guests' => 2]],
         ], $attributes));
     }
 
@@ -56,6 +60,70 @@ class PartnerMyServicesTest extends TestCase
             ->assertSee('Rifugio in attesa')
             ->assertSee('Hotel Brescia')
             ->assertSeeHtmlInOrder(['Rifugio in attesa', e(__('partner.my_services.awaiting_stripe'))]);
+    }
+
+    public function test_a_waiting_draft_missing_data_says_so_instead_of_blaming_stripe(): void
+    {
+        // La diagnosi falsa che ha generato la segnalazione del 29/09/2026:
+        // qualunque bozza ferma leggeva "in attesa del collegamento Stripe".
+        app()->setLocale('it');
+        $partner = $this->actingAsPayablePartner();
+        $this->service($partner->id, [
+            'name' => 'Rifugio senza stanze',
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+            'rooms' => null,
+        ]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee(__('partner.my_services.incomplete'))
+            ->assertDontSee(__('partner.my_services.awaiting_stripe'));
+    }
+
+    public function test_a_ready_draft_of_a_payable_partner_says_it_is_going_live(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsPayablePartner();
+        $this->service($partner->id, [
+            'name' => 'Rifugio pronto',
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+        ]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee(__('partner.my_services.publishing'))
+            ->assertDontSee(__('partner.my_services.awaiting_stripe'));
+    }
+
+    public function test_a_listing_waiting_for_approval_says_so(): void
+    {
+        // Moderazione accesa: la scheda e' a catalogo ma invisibile, e prima
+        // l'area partner non aveva modo di dirlo.
+        app()->setLocale('it');
+        $partner = $this->actingAsPayablePartner();
+        $draft = $this->service($partner->id, ['name' => 'Hotel in moderazione']);
+        Structure::factory()->create([
+            'user_id' => $partner->id,
+            'structure_draft_id' => $draft->id,
+            'approval_status' => Structure::APPROVAL_PENDING,
+        ]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee(__('partner.my_services.awaiting_approval'));
+    }
+
+    public function test_a_published_listing_carries_no_badge(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsPayablePartner();
+        $draft = $this->service($partner->id, ['name' => 'Hotel online']);
+        Structure::factory()->create(['user_id' => $partner->id, 'structure_draft_id' => $draft->id]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee('Hotel online')
+            ->assertDontSee(__('partner.my_services.awaiting_stripe'))
+            ->assertDontSee(__('partner.my_services.publishing'))
+            ->assertDontSee(__('partner.my_services.awaiting_approval'));
     }
 
     public function test_the_badge_is_only_on_drafts_awaiting_stripe(): void

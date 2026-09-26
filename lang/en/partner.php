@@ -19,6 +19,12 @@ return [
     // "My services": drafts closed by the partner and held until Stripe can pay them.
     'my_services' => [
         'awaiting_stripe' => 'Waiting for the Stripe connection',
+        'publishing' => 'Going live',
+        'publishing_hint' => 'It will be online within a few minutes.',
+        'incomplete' => 'Some details are missing',
+        'incomplete_hint' => 'Open it and fill in the required fields: as it stands it cannot go online.',
+        'awaiting_approval' => 'Waiting for approval',
+        'suspended' => 'Suspended',
     ],
 
     // Partner payment mode: online on AnimalAmo or paid directly to the partner.
