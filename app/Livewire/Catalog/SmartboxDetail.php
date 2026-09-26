@@ -8,6 +8,7 @@ use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -110,6 +111,7 @@ class SmartboxDetail extends Component
             'animalServices' => $box->amenityRows('animal'),
             'animalsAtMax' => $this->animalsAtMax(),
             'paysOnSite' => $paysOnSite,
+            'contacts' => app(PartnerContacts::class)->forPurchasable($box),
         ])->title('AnimalAmo — '.$box->title);
     }
 

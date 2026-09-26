@@ -208,6 +208,11 @@
                                 <flux:icon.check-1 class="h-4 w-4 shrink-0" />
                                 {{ __('events.join') }}
                             </flux:button>
+                        @elseif ($paysOnSite)
+                            {{-- Partner senza pagamento online: si contatta, non si prenota qui (29/09/2026). --}}
+                            <div class="mt-[26px]">
+                                @include('partials.catalog.partner-contacts-card')
+                            </div>
                         @else
                             <flux:button wire:click="addToCart" class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('events.add_to_cart') }}</flux:button>
 
@@ -221,9 +226,6 @@
                                 <p>{{ __('events.total') }}</p>
                                 <p>{{ $totalPrice }}</p>
                             </div>
-                            @if ($paysOnSite)
-                                @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
-                            @endif
                         @endif
                     </div>
                 </aside>

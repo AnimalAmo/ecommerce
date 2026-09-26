@@ -89,7 +89,7 @@
                             <flux:icon.check-1 class="h-4 w-4 shrink-0" />
                             {{ __('events.join') }}
                         </flux:button>
-                    @else
+                    @elseif (! $paysOnSite)
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
                         <flux:button wire:click="addToCart" class="!h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                             <flux:icon.cart class="h-4 w-4 shrink-0" />
@@ -163,8 +163,14 @@
                 {{-- 5. Colonna destra: card mappa (nascosta senza venue) e card "Domande frequenti".
                      Le FAQ stavano nella colonna destra della tab Discussione: rimossa quella tab,
                      senza questo spostamento il contenuto reale del partner sparirebbe dalla pagina. --}}
-                @if ($event->venue?->hasMap() || $faqs->isNotEmpty())
+                @if ($paysOnSite || $event->venue?->hasMap() || $faqs->isNotEmpty())
                     <aside class="w-full shrink-0 space-y-6 lg:w-[718px]">
+                        {{-- Partner senza pagamento online: la CTA carrello non c'è più,
+                             al suo posto i recapiti (29/09/2026). --}}
+                        @if ($paysOnSite)
+                            @include('partials.catalog.partner-contacts-card')
+                        @endif
+
                         @if ($event->venue?->hasMap())
                             <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-5">
                                 <div class="relative overflow-hidden rounded-[4px]">

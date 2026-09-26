@@ -180,10 +180,13 @@
                             </div>
                         </div>
 
+                        {{-- Senza pagamento online la smartbox non si acquista da qui:
+                             al posto della CTA i recapiti del partner (29/09/2026). --}}
                         <div class="mt-[26px] px-[22px] pb-6">
-                            <flux:button wire:click="addToCart" class="!flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('smartbox.add_to_cart') }}</flux:button>
                             @if ($paysOnSite)
-                                @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
+                                @include('partials.catalog.partner-contacts-card')
+                            @else
+                                <flux:button wire:click="addToCart" class="!flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('smartbox.add_to_cart') }}</flux:button>
                             @endif
                         </div>
                     </div>

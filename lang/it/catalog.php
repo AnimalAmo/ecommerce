@@ -50,4 +50,13 @@ return [
     'close_filters' => 'Chiudi i filtri',
     // Schede dettaglio di un partner senza pagamento online: il totale si salda a lui.
     'pay_on_site' => 'Pagamento direttamente al partner, in struttura o sul suo sito',
+
+    // Card che prende il posto del box prenotazione quando il partner non
+    // prende ordini online (richiesta della cliente, 29/09/2026).
+    'contacts' => [
+        'title' => 'Contatta la struttura',
+        'intro' => 'Questa struttura non prende prenotazioni online: contattala direttamente per disponibilità e prezzi.',
+        'business_name' => 'Gestita da',
+        'address' => 'Dove si trova',
+    ],
 ];

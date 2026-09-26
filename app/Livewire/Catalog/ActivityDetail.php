@@ -9,6 +9,7 @@ use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
@@ -197,6 +198,7 @@ class ActivityDetail extends Component
             // non passano mai dal carrello, quindi non serve nemmeno la query.
             'paysOnSite' => ! $activity->hasJoinCta()
                 && app(PartnerPaymentModeService::class)->forPurchasable($activity) === OrderPaymentMode::OnSite,
+            'contacts' => app(PartnerContacts::class)->forPurchasable($activity),
         ])->title('AnimalAmo — '.$activity->title);
     }
 }

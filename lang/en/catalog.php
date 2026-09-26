@@ -50,4 +50,13 @@ return [
     'close_filters' => 'Close filters',
     // Detail pages of a partner without online payment: the total is paid to them.
     'pay_on_site' => 'Pay the partner directly, on site or on their website',
+
+    // Card that replaces the booking box when the partner takes no online
+    // orders (client request, 29/09/2026).
+    'contacts' => [
+        'title' => 'Contact the property',
+        'intro' => 'This property does not take online bookings: contact it directly for availability and prices.',
+        'business_name' => 'Run by',
+        'address' => 'Where it is',
+    ],
 ];

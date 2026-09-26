@@ -10,6 +10,7 @@ use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use DateTimeImmutable;
@@ -145,6 +146,8 @@ class AnimalHolidayStructure extends Component
             // Service memoizzato per user_id: una query per richiesta, anche se
             // findBySlug gira più volte (render + calendario).
             'paysOnSite' => app(PartnerPaymentModeService::class)->forPurchasable($structure) === OrderPaymentMode::OnSite,
+            // Card contatti al posto del box prenotazione quando il partner non vende online.
+            'contacts' => app(PartnerContacts::class)->forPurchasable($structure),
         ])->title('AnimalAmo — '.$structure->name);
     }
 

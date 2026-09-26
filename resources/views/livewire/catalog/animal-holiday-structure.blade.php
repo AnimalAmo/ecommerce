@@ -247,93 +247,98 @@
 
                 {{-- 2c. Card prenotazione (sticky su desktop).
                        Su mobile l'XD app non la prevede: la scheda si prenota dalla barra CTA in basso,
-                       con le date/ospiti/animali di default della ricerca. --}}
-                <aside class="w-full max-w-[453px] shrink-0 max-lg:hidden lg:sticky lg:top-24 lg:w-[453px]">
-                    <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-[22px]">
-                        <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($structure->price_cents)]) }}</p>
+                       con le date/ospiti/animali di default della ricerca.
+                       La card contatti invece su mobile SERVE: lì non c'è la barra,
+                       quindi in quel caso l'aside resta visibile. --}}
+                <aside class="w-full max-w-[453px] shrink-0 {{ $paysOnSite ? 'mt-8 lg:mt-0' : 'max-lg:hidden' }} lg:sticky lg:top-24 lg:w-[453px]">
+                    {{-- Partner senza pagamento online: la scheda si consulta e lo si
+                         contatta, niente carrello e niente checkout (29/09/2026). --}}
+                    @if ($paysOnSite)
+                        @include('partials.catalog.partner-contacts-card')
+                    @else
+                        <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-[22px]">
+                            <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($structure->price_cents)]) }}</p>
 
-                        <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
-                            {{-- Check-in / Check-out: apre il calendario range condiviso (accordion nello stile del pop-up carrello) --}}
-                            <div class="border-b border-[#DEDEDE]">
-                                <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-none !p-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-stretch">
-                                    <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.checkin') }}</span>
-                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
-                                    </span>
-                                    <span class="w-px self-stretch bg-[#DEDEDE]" aria-hidden="true"></span>
-                                    <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.checkout') }}</span>
-                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckOut ?? '—' }}</span>
-                                    </span>
-                                </flux:button>
+                            <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
+                                {{-- Check-in / Check-out: apre il calendario range condiviso (accordion nello stile del pop-up carrello) --}}
+                                <div class="border-b border-[#DEDEDE]">
+                                    <flux:button variant="ghost" wire:click="toggleField('date')" class="!h-[67px] !w-full !rounded-none !p-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-stretch">
+                                        <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
+                                            <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.checkin') }}</span>
+                                            <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckIn }}</span>
+                                        </span>
+                                        <span class="w-px self-stretch bg-[#DEDEDE]" aria-hidden="true"></span>
+                                        <span class="flex flex-1 flex-col justify-center gap-[7px] pl-[15px]">
+                                            <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.checkout') }}</span>
+                                            <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ $editCheckOut ?? '—' }}</span>
+                                        </span>
+                                    </flux:button>
 
-                                @if ($expandedField === 'date')
-                                    {{-- Calendario inline condiviso (giorni chiusi della struttura + passati disabilitati) --}}
-                                    <div class="px-[10px] pb-4">
-                                        @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
-                                    </div>
-                                @endif
-                            </div>
-                            {{-- Ospiti: apre gli stepper condivisi --}}
-                            <div class="border-b border-[#DEDEDE]">
-                                <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
-                                    <span class="flex flex-col gap-[7px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.guests') }}</span>
-                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::guests($editGuests) }}</span>
-                                    </span>
-                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
-                                </flux:button>
-
-                                @if ($expandedField === 'ospiti')
-                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
-                                    <div class="px-6 pb-3 pt-[10px]">
-                                        @include('partials.booking.guest-steppers', ['guests' => $editGuests, 'guestsAtMax' => $guestsAtMax])
-                                    </div>
-                                @endif
-                            </div>
-                            {{-- Animali: apre lo stepper condiviso per specie --}}
-                            <div>
-                                <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
-                                    <span class="flex flex-col gap-[7px]">
-                                        <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.animals') }}</span>
-                                        <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
-                                    </span>
-                                    <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
-                                </flux:button>
-
-                                @if ($expandedField === 'animali')
-                                    <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
-                                    <div class="px-6 pb-3 pt-[10px]">
-                                        @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('holiday.add_to_cart') }}</flux:button>
-
-                        <div class="mt-6 space-y-3">
-                            <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                                <span>{{ __('format.for_nights', ['price' => \App\Support\Format::money($structure->price_cents), 'count' => $nights]) }}</span>
-                                <span>{{ \App\Support\Format::money($nightsCents) }}</span>
-                            </div>
-                            {{-- Supplemento animali per notte: riga mostrata solo se il seed lo valorizza --}}
-                            @if ($animalSupplementCents > 0)
-                                <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                                    <span>{{ __('holiday.animal_supplement') }}</span>
-                                    <span>{{ \App\Support\Format::money($animalSupplementCents) }}</span>
+                                    @if ($expandedField === 'date')
+                                        {{-- Calendario inline condiviso (giorni chiusi della struttura + passati disabilitati) --}}
+                                        <div class="px-[10px] pb-4">
+                                            @include('partials.booking.calendar', ['calendar' => $calendar, 'calendarLabel' => $calendarLabel])
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
+                                {{-- Ospiti: apre gli stepper condivisi --}}
+                                <div class="border-b border-[#DEDEDE]">
+                                    <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                        <span class="flex flex-col gap-[7px]">
+                                            <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.guests') }}</span>
+                                            <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::guests($editGuests) }}</span>
+                                        </span>
+                                        <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'ospiti' ? 'rotate-180' : '' }}" />
+                                    </flux:button>
+
+                                    @if ($expandedField === 'ospiti')
+                                        <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                        <div class="px-6 pb-3 pt-[10px]">
+                                            @include('partials.booking.guest-steppers', ['guests' => $editGuests, 'guestsAtMax' => $guestsAtMax])
+                                        </div>
+                                    @endif
+                                </div>
+                                {{-- Animali: apre lo stepper condiviso per specie --}}
+                                <div>
+                                    <flux:button variant="ghost" wire:click="toggleField('animali')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
+                                        <span class="flex flex-col gap-[7px]">
+                                            <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('holiday.animals') }}</span>
+                                            <span class="text-[17px] font-light leading-none text-[#2B2B2B]">{{ \App\Support\Format::animals($editAnimals) }}</span>
+                                        </span>
+                                        <flux:icon.arrow-down class="h-3 w-3 shrink-0 text-black {{ $expandedField === 'animali' ? 'rotate-180' : '' }}" />
+                                    </flux:button>
+
+                                    @if ($expandedField === 'animali')
+                                        <div class="h-px bg-[#E9E9E9]" aria-hidden="true"></div>
+                                        <div class="px-6 pb-3 pt-[10px]">
+                                            @include('partials.booking.animal-stepper', ['animals' => $editAnimals, 'animalsAtMax' => $animalsAtMax])
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <flux:button wire:click="addToCart" class="mt-[26px] !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('holiday.add_to_cart') }}</flux:button>
+
+                            <div class="mt-6 space-y-3">
+                                <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
+                                    <span>{{ __('format.for_nights', ['price' => \App\Support\Format::money($structure->price_cents), 'count' => $nights]) }}</span>
+                                    <span>{{ \App\Support\Format::money($nightsCents) }}</span>
+                                </div>
+                                {{-- Supplemento animali per notte: riga mostrata solo se il seed lo valorizza --}}
+                                @if ($animalSupplementCents > 0)
+                                    <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
+                                        <span>{{ __('holiday.animal_supplement') }}</span>
+                                        <span>{{ \App\Support\Format::money($animalSupplementCents) }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <hr class="mt-5 border-[#DEDEDE]">
+                            <div class="mt-4 flex items-center justify-between text-[17px] font-bold text-[#2B2B2B]">
+                                <span>{{ __('holiday.total') }}</span>
+                                <span>{{ \App\Support\Format::money($totalCents) }}</span>
+                            </div>
                         </div>
-                        <hr class="mt-5 border-[#DEDEDE]">
-                        <div class="mt-4 flex items-center justify-between text-[17px] font-bold text-[#2B2B2B]">
-                            <span>{{ __('holiday.total') }}</span>
-                            <span>{{ \App\Support\Format::money($totalCents) }}</span>
-                        </div>
-                        @if ($paysOnSite)
-                            @include('partials.catalog.pay-on-site-notice', ['noticeClass' => 'mt-4'])
-                        @endif
-                    </div>
+                    @endif
                 </aside>
             </div>
         </div>
@@ -341,16 +346,16 @@
 
     @include('partials.site-footer', ['hideMobileTabbar' => true])
 
-    {{-- Barra fissa mobile (XD app "Dettaglio struttura"): sulla scheda la tabbar lascia il posto alla CTA carrello --}}
-    {{-- Su mobile la card con il totale non c'è: la dicitura offline va nella barra, sotto la CTA --}}
-    <div class="fixed inset-x-0 bottom-0 z-40 flex h-20 flex-col items-center justify-center gap-1 border-t border-gray-150 bg-white px-4 lg:hidden">
-        <flux:button wire:click="addToCart" class="!h-[39px] !w-[189px] !rounded-full !border-0 !bg-brand-cyan !text-sm !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('holiday.add_to_cart') }}</flux:button>
-        @if ($paysOnSite)
-            <p class="text-center text-xs leading-[14px] text-[#627277]">{{ __('catalog.pay_on_site') }}</p>
-        @endif
-    </div>
-    {{-- Spaziatore: evita che la barra CTA copra il fondo pagina --}}
-    <div class="h-20 lg:hidden"></div>
+    {{-- Barra fissa mobile (XD app "Dettaglio struttura"): sulla scheda la tabbar lascia il posto alla CTA carrello.
+         Senza pagamento online non c'è niente da mettere nel carrello: la barra sparisce
+         e resta la card contatti, che su mobile scorre in pagina. --}}
+    @unless ($paysOnSite)
+        <div class="fixed inset-x-0 bottom-0 z-40 flex h-20 flex-col items-center justify-center gap-1 border-t border-gray-150 bg-white px-4 lg:hidden">
+            <flux:button wire:click="addToCart" class="!h-[39px] !w-[189px] !rounded-full !border-0 !bg-brand-cyan !text-sm !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('holiday.add_to_cart') }}</flux:button>
+        </div>
+        {{-- Spaziatore: evita che la barra CTA copra il fondo pagina --}}
+        <div class="h-20 lg:hidden"></div>
+    @endunless
 
     {{-- Pop-up "Aggiunto al carrello" (XD: "Pop-up aggiunta al carrello") — card ancorata in alto a destra sotto l'header --}}
     @if ($cartPopupOpen)

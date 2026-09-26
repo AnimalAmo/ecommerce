@@ -8,6 +8,7 @@ use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Support\Format;
 use Flux\Flux;
@@ -119,6 +120,7 @@ class EventDetail extends Component
             // Solo gli eventi acquistabili: i gratuiti hanno la CTA Partecipa.
             'paysOnSite' => ! $event->hasJoinCta()
                 && app(PartnerPaymentModeService::class)->forPurchasable($event) === OrderPaymentMode::OnSite,
+            'contacts' => app(PartnerContacts::class)->forPurchasable($event),
         ])->title('AnimalAmo — '.$event->title);
     }
 }
