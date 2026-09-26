@@ -130,7 +130,7 @@ Ambiente di sviluppo ricostruito: **Laravel Sail (PHP 8.3) dentro WSL**, sul mod
 
 Resta da fare in questo pacchetto: **`StructureDraftFactory` manca del tutto**. Oggi almeno 20 file di test costruiscono la bozza a mano con `StructureDraft::create([...])`. R4 e R5 aggiungono campi alla bozza: senza factory ogni campo nuovo va rincorso in venti punti. Va creata con gli stati `structure()`, `activity()`, `event()`, `smartbox()`, `completed()`, `awaitingPublication()`, in **additivo** — i test vecchi restano com'erano.
 
-### WP2 — R2, solo le caratteristiche selezionate · 0,5–1 g · **quick win, per primo**
+### WP2 — R2, solo le caratteristiche selezionate · ✅ **fatto** (26/09, commit `9281dae`)
 
 File: `app/Models/Concerns/HasAmenities.php`, i 5 blade di dettaglio catalogo, `ActivityDetail.php`, `EventDetail.php`, 3 test.
 
@@ -143,7 +143,7 @@ Il punto che rende questa richiesta facile e sicura: **nessuno sceglie mai il `f
 
 > ⚠️ **Da segnalare alla cliente:** 7 delle 14 amenity del catalogo (Lavanderia, Ascensore, Noleggio bici, Dog sitter, Dog Beach nelle vicinanze, Supplemento animali, Piscina per cani) **non sono selezionabili in nessuno step del percorso partner**. Oggi appaiono sempre con la X rossa; dopo questa modifica non appariranno mai. O si aggiungono al wizard, o si tolgono dal catalogo.
 
-### WP1 — R6, i fix di codice · 1–2 g
+### WP1 — R6, i fix di codice · 🟡 **in parte** (26/09, commit `b131955`)
 
 File: `app/Services/Payment/StripeConnectService.php`, `app/Http/Controllers/…StripeWebhookController.php`, `app/Livewire/Commerce/Checkout.php` (una riga), `app/Livewire/Forms/HotelLocationForm.php` + `ActivityLocationForm.php`, `resources/views/livewire/partner/my-services/index.blade.php`, una migrazione dati, `app/Console/Commands/ConnectSyncCommand.php`.
 
@@ -155,7 +155,7 @@ File: `app/Services/Payment/StripeConnectService.php`, `app/Http/Controllers/…
 6. **FM-9**: guardia sul profilo mancante in `ensureAccountFor()`, prima di creare l'account su Stripe.
 7. **FM-2**: far stampare a `animalamo:connect-sync` **quali** profili ha cambiato.
 
-### WP3 — R1, niente checkout + scheda con i contatti · 3–4 g · **dopo WP2** (stessi 5 blade)
+### WP3 — R1, niente checkout + scheda con i contatti · 🟡 **in parte** (26/09, commit `835d1e7`)
 
 **Prerequisito bloccante: le due domande sui contatti (§3).** Non si scrive una riga prima.
 
@@ -257,9 +257,26 @@ Le altre, meno urgenti ma da chiudere prima di chiudere il lavoro:
 
 ```
 WP0 diagnosi produzione ──────────────────────────────►  (in parallelo, serve la cliente/hosting)
-WP7 strumenti ✅ ──►  WP2 amenity ──►  WP1 fix R6 ──►  WP3 no-checkout ──►  WP4 branching ──►  WP5 attività ──►  WP6 eventi
-                      0,5-1 g          1-2 g            3-4 g              1,5-2 g            3-4 g             2,5-3 g
+WP7 ✅ ──►  WP2 ✅ ──►  WP1 🟡 ──►  WP3 🟡 ──►  WP4 branching ──►  WP5 attività ──►  WP6 eventi
+                                                         1,5-2 g            3-4 g             2,5-3 g
 ```
+
+### Stato al 26/09/2026
+
+| | Fatto | Rimasto |
+|---|---|---|
+| **WP7** strumenti | Sail 8.3 in WSL, `~/t.sh`, trappola swoole, CLAUDE.md e pre-commit-check riscritti | `StructureDraftFactory` |
+| **WP2** amenity | Filtro in lettura, guardie sui box vuoti, 5 schede, 7 test nuovi | Fase 2 (pulizia dati) — da rimandare |
+| **WP1** R6 | `animalamo:stuck-drafts` (+`--fix`), badge che dice la causa vera, `canBePaid()` nel gate checkout | FM-6 provincia, FM-7 log webhook, FM-9 profilo mancante, FM-2 output di `connect-sync` |
+| **WP3** R1 | Card contatti al posto del box prenotazione sulle 5 schede, `PartnerContacts`, 14 test riscritti | Guardia server-side nel carrello (**bloccata**, vedi sotto), contatti ricchi (**bloccati**, domanda 2) |
+
+**Baseline test invariato in ogni commit: `20 failed`.** Passati da 1998 a 2018.
+
+#### La decisione che blocca il resto di WP3
+
+Ho scritto la guardia in `CartManager::addItem()` — un partner senza pagamento online non entra nel carrello — e **l'ho tolta**: fa cadere 40 test, cioè l'intera suite del checkout in struttura (`CheckoutOnSiteTest`, `CheckoutOnSiteViewTest`, `PlaceOnSiteOrderTest`, le mail relative). Tenerla equivale a cancellare una funzione che la cliente non ha chiesto di cancellare, e R6 lascia intendere il contrario («quando è realmente previsto un pagamento **o una prenotazione online**»).
+
+Oggi nessun percorso dell'interfaccia porta più lì, quindi la richiesta della cliente è soddisfatta. Resta aperto solo l'irrobustimento: serve la risposta alla domanda 7.
 
 WP2 va prima di WP3 perché toccano gli stessi cinque blade. WP4 → WP5 → WP6 sono in sequenza perché insistono sugli stessi Form object e sullo stesso contatore di step.
 
