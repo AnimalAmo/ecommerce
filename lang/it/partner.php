@@ -17,8 +17,17 @@ return [
     ],
 
     // "I miei servizi": bozze chiuse dal partner e ferme finché non è pagabile su Stripe.
+    // Perché un servizio non è (ancora) online. Prima c'era la sola dicitura
+    // "in attesa di Stripe", mostrata su ogni bozza ferma: chi era fermo per
+    // un altro motivo leggeva una diagnosi falsa (segnalazione del 29/09/2026).
     'my_services' => [
         'awaiting_stripe' => 'In attesa del collegamento Stripe',
+        'publishing' => 'In pubblicazione',
+        'publishing_hint' => 'Va online entro pochi minuti.',
+        'incomplete' => 'Mancano dei dati',
+        'incomplete_hint' => 'Aprila e completa i campi obbligatori: com’è adesso non può andare online.',
+        'awaiting_approval' => 'In attesa di approvazione',
+        'suspended' => 'Sospesa',
     ],
 
     // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.

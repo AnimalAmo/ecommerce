@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\MyServices;
 
 use App\Models\Structure\StructureDraft;
+use App\Services\Partner\DraftPublicationState;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -44,10 +45,13 @@ class PartnerMyServices extends Component
 
     public function render()
     {
+        // Completati e in attesa di Stripe (badge in vista): prima una bozza
+        // chiusa senza Stripe spariva da qui e restava solo in sessione.
+        $services = StructureDraft::listableFor(Auth::id())->get();
+
         return view('livewire.partner.my-services.index', [
-            // Completati e in attesa di Stripe (badge in vista): prima una bozza
-            // chiusa senza Stripe spariva da qui e restava solo in sessione.
-            'services' => StructureDraft::listableFor(Auth::id())->get(),
+            'services' => $services,
+            'states' => app(DraftPublicationState::class)->forDrafts($services, Auth::user()),
         ])->title(__('partner.services.title'));
     }
 }
