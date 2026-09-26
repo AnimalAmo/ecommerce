@@ -37,6 +37,7 @@ class StructureDraft extends Model
         'meeting_point',
         'additional_other',
         'animal_services_other',
+        'activity_categories_other',
     ];
 
     protected $fillable = [
@@ -79,6 +80,8 @@ class StructureDraft extends Model
         'rules',
         'animal_services',
         'animal_services_other',
+        'activity_categories',
+        'activity_categories_other',
         'smartbox_consent',
         'smartbox_types',
         'smartbox_structures',
@@ -105,6 +108,7 @@ class StructureDraft extends Model
             'included_services' => 'array',
             'rules' => 'array',
             'animal_services' => 'array',
+            'activity_categories' => 'array',
             'smartbox_types' => 'array',
             'smartbox_structures' => 'array',
             'photos' => 'array',

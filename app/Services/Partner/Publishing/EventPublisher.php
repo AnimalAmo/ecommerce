@@ -25,6 +25,11 @@ class EventPublisher extends FamilyPublisher
             'user_id' => $draft->user_id,
             'venue_id' => $this->venue($draft)?->id,
             'type' => $isEvent ? ProductType::Event : ProductType::Activity,
+            // Categorie professionali, scelta multipla (cliente, 26/09/2026).
+            // NULL sugli eventi veri anche se la bozza le porta addosso: sono
+            // del professionista, e un cambio di ramo può lasciarle lì.
+            'activity_categories' => $isEvent ? null : $draft->activity_categories,
+            'activity_categories_other' => $isEvent ? null : $this->translations($draft, 'activity_categories_other'),
             'title' => $this->translations($draft, 'name'),
             'slug' => $this->slug($draft, $isEvent ? 'evento' : 'attivita'),
             'location' => $draft->locationLabel(),
