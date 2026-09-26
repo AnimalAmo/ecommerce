@@ -35,6 +35,12 @@ class ServiceOptionLabelsTest extends TestCase
             'servizi animali' => ['animal_services', ['nessuno', 'omaggio', 'pet_sitting', 'veterinario', 'area_animali', 'altro']],
             'tipologia struttura' => ['structure_type', ['hotel', 'bb', 'agriturismo', 'casa_vacanza']],
             'tipologia attività' => ['activity_type', ['attivita', 'eventi']],
+            // Categorie professionali: otto voci confermate dalla cliente il
+            // 26/09/2026, a scelta MULTIPLA. Tre accorpano sinonimi con la
+            // barra (dog sitter/pet sitter, educatore/addestratore,
+            // maneggio/centro equestre): uno slug per voce, non due, o il
+            // filtro e la lettura si sdoppiano.
+            'categorie professionali' => ['activity_category', ['toelettatore', 'asilo_cani', 'dog_sitter', 'educatore_cinofilo', 'fotografo_pet', 'maneggio', 'fattoria_didattica', 'altro']],
             'tipologia smartbox' => ['smartbox_type', ['soggiorno', 'benessere', 'avventura']],
             'tipologia stanza' => ['room_type', ['singola', 'doppia', 'tripla', 'suite']],
             'alloggio intero' => ['room_type_whole', ['intera_struttura']],
@@ -81,7 +87,7 @@ class ServiceOptionLabelsTest extends TestCase
     {
         $this->assertSame([
             'services', 'additional', 'rules', 'animal_services', 'type',
-            'structure_type', 'activity_type', 'smartbox_type',
+            'structure_type', 'activity_type', 'activity_category', 'smartbox_type',
             'room_type', 'room_type_whole', 'cancellation',
             'consent', 'smartbox_consent',
             'smartbox_amenities', 'smartbox_additional',
@@ -98,6 +104,25 @@ class ServiceOptionLabelsTest extends TestCase
         $this->assertSame('7 giorni', ServiceOptionLabels::options('cancellation')['7']);
         $this->assertSame('Gratuito', ServiceOptionLabels::options('price_type')['gratuito']);
         $this->assertSame('Tutta la struttura', ServiceOptionLabels::options('smartbox_consent')['tutta']);
+        // Le tre voci accorpate vanno a video con la barra, come le ha scritte
+        // la cliente: è una voce sola, non due.
+        $this->assertSame('Dog sitter / Pet sitter', ServiceOptionLabels::options('activity_category')['dog_sitter']);
+        $this->assertSame('Maneggio / Centro equestre', ServiceOptionLabels::options('activity_category')['maneggio']);
+        $this->assertSame('Asilo per cani', ServiceOptionLabels::options('activity_category')['asilo_cani']);
+    }
+
+    public function test_the_professional_categories_exist_in_english_too(): void
+    {
+        // `lang/en` non è un vezzo: il catalogo è bilingue e una chiave mancante
+        // uscirebbe grezza sulla scheda inglese, non vuota.
+        app()->setLocale('en');
+
+        foreach (ServiceOptionLabels::options('activity_category') as $slug => $label) {
+            $this->assertNotSame($slug, $label, "manca la traduzione inglese di {$slug}");
+            $this->assertFalse(str_contains($label, '.'), "chiave lang inglese mancante per {$slug}");
+        }
+
+        $this->assertSame('Other', ServiceOptionLabels::options('activity_category')['altro']);
     }
 
     public function test_the_holiday_home_is_no_longer_shown_as_a_raw_slug(): void

@@ -686,6 +686,20 @@ return [
     | Tipologia attività/eventi (step 1 di 10 del flusso attività ed eventi)
     |--------------------------------------------------------------------------
     */
+    // Categorie professionali dell'attivita, scelta multipla: le otto voci
+    // confermate dalla cliente il 26/09/2026. Tre accorpano sinonimi con la
+    // barra, ed e come le ha scritte lei.
+    'activity_category' => [
+        'toelettatore' => 'Toelettatore',
+        'asilo_cani' => 'Asilo per cani',
+        'dog_sitter' => 'Dog sitter / Pet sitter',
+        'educatore_cinofilo' => 'Educatore cinofilo / Addestratore',
+        'fotografo_pet' => 'Fotografo pet',
+        'maneggio' => 'Maneggio / Centro equestre',
+        'fattoria_didattica' => 'Fattoria didattica',
+        'altro' => 'Altro',
+    ],
+
     'activity_type' => [
         'title' => 'AnimalAmo — Attività ed Eventi',
         'step' => 'Step 1 di 10',
