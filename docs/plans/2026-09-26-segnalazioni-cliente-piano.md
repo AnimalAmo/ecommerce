@@ -4,6 +4,12 @@
 **Branch:** `feature/segnalazioni-2026-09-29`.
 **Baseline test al 26/09/2026:** `20 failed, 1998 passed` in Docker (8507 asserzioni, 5m42s); `20 failed, 1 skipped, 1997 passed` con il PHP nativo di WSL (8502 asserzioni, 6m34s). L'unico test saltato nativamente gira e passa in container. I 20 rossi sono preesistenti e concentrati in tre classi — `PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest` — tutti causati dalla regola `email:rfc,dns` sulle candidature partner, che senza DNS raggiungibile rifiuta l'email e fa cadere i test a valle su `ModelNotFoundException`. **Non sono regressioni**: qualunque numero diverso da 20 dopo una modifica va indagato.
 
+**Aggiornamento del 26/09/2026, a lavoro finito:** la suite è stata rieseguita nella **VM Homestead su
+Linux** (`ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main .'`) e i 20 rossi
+**non esistono lì**: `1 skipped, 2044 passed`, 8666 asserzioni, 329s. La VM risolve il DNS, quindi
+`email:rfc,dns` accetta l'indirizzo e le tre classi girano davvero (2025 + 20 = 2045 = 2044 + 1 saltato).
+Da qui in avanti, su Linux, la baseline è **zero rossi** e qualunque rosso è nostro.
+
 Metodo: cinque agenti hanno mappato il codice in parallelo, ognuno su un'area, leggendo i file e citando `file:riga`. Quello che segue è la sintesi. Le stime sono in giorni-uomo di sviluppo, test inclusi, verifica visiva inclusa.
 
 ---
@@ -271,7 +277,7 @@ WP7 ✅ ──►  WP2 ✅ ──►  WP1 🟡 ──►  WP3 🟡 ──►  WP
 | **WP3** R1 | Card contatti al posto del box prenotazione sulle 5 schede, `PartnerContacts`, 14 test riscritti | Guardia server-side nel carrello (**bloccata**, vedi sotto), contatti ricchi (**bloccati**, domanda 2) |
 | **WP4** R3 | "Servizi" apre il percorso attività, guardia sul precaricamento del `type`, pulizia delle colonne dell'altro ramo, 7 test nuovi | Persistenza della scelta fatta in registrazione; fusione delle card (**domanda 6**) |
 
-**Baseline test invariato in ogni commit: `20 failed`.** Passati da 1998 a 2025.
+**Baseline test invariato in ogni commit: `20 failed` in Docker.** Passati da 1998 a 2025 — e nella VM, dove i 20 girano davvero, `2044 passed, 1 skipped, 0 failed`.
 
 #### La decisione che blocca il resto di WP3
 
