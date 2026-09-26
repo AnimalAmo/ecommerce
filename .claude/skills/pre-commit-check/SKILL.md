@@ -1,27 +1,31 @@
 ---
 name: pre-commit-check
-description: Quando il lavoro su AnimalAmo è finito e si sta per committare — sequenza canonica di verifica: Pint, test dentro la VM Homestead (il php dell'host è troppo vecchio), build asset se servono, formato del messaggio di commit. Usare SEMPRE prima di ogni commit, anche per modifiche piccole.
+description: Quando il lavoro su AnimalAmo è finito e si sta per committare — sequenza canonica di verifica: Pint, test in Docker dentro WSL (sull'host Windows non gira nulla di PHP), build asset se servono, formato del messaggio di commit. Usare SEMPRE prima di ogni commit, anche per modifiche piccole.
 ---
 
 # Checklist pre-commit AnimalAmo
 
 Esegui in ordine. Non dichiarare "fatto" senza l'output di ogni passo.
 
-## 1. Pint (host, ok)
+Sull'host Windows **non gira niente di PHP**: la sua versione è 7.4, l'app ne vuole ≥8.3 e Pint ≥8.2. Vale per i test *e* per lo stile. La vecchia VM Homestead (192.168.56.56) non esiste più.
+
+Tutto passa da `~/t.sh` dentro WSL: fa l'rsync da `D:` alla copia su filesystem ext4 (`~/aa`) e lancia il comando in Docker (Sail, PHP 8.3).
+
+## 1. Pint
 
 ```bash
-vendor/bin/pint --dirty
+wsl -d Ubuntu -e bash -lc '~/t.sh --pint --dirty'
 ```
 
-## 2. Test — SOLO dentro la VM
-
-Il php dell'host è 8.2, l'app richiede ≥8.3: `php artisan test` sull'host fallisce o mente. Sempre via ssh:
+## 2. Test
 
 ```bash
-ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test'
+wsl -d Ubuntu -e bash -lc '~/t.sh'
 ```
 
-Test singolo: aggiungi `--filter=NomeTest`. Suite completa attesa verde (~620 test). Un test rosso = si sistema prima di committare, non si committa "con nota".
+Test singolo: `~/t.sh --filter=NomeTest`. Senza container (più veloce per un giro rapido): `~/t.sh --native`.
+
+**Atteso: `20 failed, 1998 passed` in Docker (`20 failed, 1 skipped, 1997 passed` con `--native`).** I 20 rossi sono preesistenti e stanno in tre classi — `PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest` — tutti per la regola `email:rfc,dns` sulle candidature partner, che senza DNS raggiungibile rifiuta l'email. Un numero diverso da 20 è roba tua: si sistema prima di committare, non si committa "con nota".
 
 ## 3. Asset — NON buildare in locale
 

@@ -15,25 +15,39 @@ AnimalAmo ecommerce — pet-friendly travel/booking marketplace (B2C web app + B
 - **Commits**: Conventional Commits, English, no Co-Authored-By/AI-attribution trailers. Don't push unless asked.
 - **`npm run build` before any deploy** — new Tailwind classes don't exist in old builds.
 - **Never remove `@source` for flux-pro in `resources/css/app.css`** — without it Pro components render unstyled.
-- **Tests run ONLY inside the VM** — host PHP is 8.2, app needs ≥8.3 (see Commands).
+- **Nothing PHP runs on the Windows host** — host PHP is 7.4, the app needs ≥8.3. That kills `php artisan` *and* `vendor/bin/pint` (Pint needs ≥8.2). Everything goes through WSL (see Commands).
 
 ## Commands
 
 ```bash
-composer dev          # full dev stack: artisan serve + queue + pail logs + vite (concurrently)
-npm run dev           # vite only (hot reload; usually enough when serving through the VM)
-npm run build         # production assets
-vendor/bin/pint       # code style (Laravel Pint) — fine on the host
-composer setup        # first-time install (env, key, migrate, npm, build)
+npm run dev           # vite only (hot reload) — runs on the Windows host
+npm run build         # production assets — runs on the Windows host
 
-# Tests — inside the Homestead VM only:
-ssh vagrant@192.168.56.56 'cd /home/vagrant/Code/algomera/animal_amo/ecommerce && php artisan test'
-#   single test: append --filter=SomeTest
+# Everything PHP — through WSL. `~/t.sh` rsyncs D: into the WSL copy (~/aa) and runs there.
+wsl -d Ubuntu -e bash -lc '~/t.sh'                      # full suite in Docker (Sail, PHP 8.3)
+wsl -d Ubuntu -e bash -lc '~/t.sh --filter=SomeTest'    # single test
+wsl -d Ubuntu -e bash -lc '~/t.sh --pint --dirty'       # code style
+wsl -d Ubuntu -e bash -lc '~/t.sh --native'             # same suite, WSL's own PHP, no container
+wsl -d Ubuntu -e bash -lc '~/t.sh --shell'              # shell inside the container
 ```
 
-### Local serving (this machine)
+**Baseline: `20 failed, 1998 passed` in Docker (5m42s); `20 failed, 1 skipped, 1997 passed` con `--native`.** The 20 are pre-existing and live in three classes
+(`PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest`): the `email:rfc,dns` rule on
+partner applications needs DNS, which the sandbox has not, so the application is never stored and the
+assertions downstream die on `ModelNotFoundException`. Any number other than 20 is yours.
 
-The app is served by a Homestead-style VM: `http://animalamo.test` → `192.168.56.56` (see `/etc/hosts`), MySQL on the VM (`DB_USERNAME=homestead`). `php artisan serve`/port 8000 on the host is NOT this app. Run `npm run dev` on the host — the browser loads assets from the host's vite (`public/hot`). First PHP request after a change can be slow (shared-folder view compilation); static assets respond instantly.
+### Local environment (this machine)
+
+The old Homestead VM (`192.168.56.56`) **is gone** — `animalamo.test` no longer resolves to anything.
+
+The working copy is on Windows (`D:\Code\algomera\animal_amo\ecommerce`) and that is where you edit and
+commit. A mirror lives on the WSL ext4 filesystem at `~/aa`, kept in sync by `~/t.sh`; Docker bind-mounts
+**that** copy. Never bind-mount `/mnt/d` into a container — crossing the Windows filesystem makes the
+suite unusably slow.
+
+`compose.yaml` is Laravel Sail (PHP 8.3 runtime + MySQL 8.4). The container is only for running things:
+`vendor/` is installed inside WSL, and `.env` is excluded from the rsync so the mirror keeps its own
+(`DB_HOST=mysql`). Tests never touch MySQL — `phpunit.xml` forces sqlite in memory.
 
 ## Architecture
 

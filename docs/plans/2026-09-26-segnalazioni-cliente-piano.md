@@ -2,7 +2,7 @@
 
 **Fonte:** `D:/Code/algomera/animal_amo/segnalazione-29-09-2026.txt` (mail di Isabella, 6 richieste).
 **Branch:** `feature/segnalazioni-2026-09-29`.
-**Baseline test al 26/09/2026:** `20 failed, 1 skipped, 1997 passed` (8502 asserzioni, 6m34s). I 20 rossi sono preesistenti e concentrati in tre classi — `PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest` — tutti causati dalla regola `email:rfc,dns` sulle candidature partner, che senza DNS raggiungibile rifiuta l'email e fa cadere i test a valle su `ModelNotFoundException`. **Non sono regressioni**: qualunque numero diverso da 20 dopo una modifica va indagato.
+**Baseline test al 26/09/2026:** `20 failed, 1998 passed` in Docker (8507 asserzioni, 5m42s); `20 failed, 1 skipped, 1997 passed` con il PHP nativo di WSL (8502 asserzioni, 6m34s). L'unico test saltato nativamente gira e passa in container. I 20 rossi sono preesistenti e concentrati in tre classi — `PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest` — tutti causati dalla regola `email:rfc,dns` sulle candidature partner, che senza DNS raggiungibile rifiuta l'email e fa cadere i test a valle su `ModelNotFoundException`. **Non sono regressioni**: qualunque numero diverso da 20 dopo una modifica va indagato.
 
 Metodo: cinque agenti hanno mappato il codice in parallelo, ognuno su un'area, leggendo i file e citando `file:riga`. Quello che segue è la sintesi. Le stime sono in giorni-uomo di sviluppo, test inclusi, verifica visiva inclusa.
 
@@ -118,14 +118,17 @@ WHERE province IS NOT NULL AND province NOT IN (SELECT short_name FROM provinces
 
 **Il risultato di WP0 decide la priorità di WP1.** Senza questi numeri si lavora al buio.
 
-### WP7 — Strumenti · 0,5–1 g · **prerequisito di tutto**
+### WP7 — Strumenti · ✅ **fatto** (26/09)
 
-File: `CLAUDE.md`, `.claude/skills/pre-commit-check/SKILL.md`, `database/factories/Structure/StructureDraftFactory.php`, (opzionale) `docker/php/Dockerfile` + `docker-compose.yml` + `.dockerignore`.
+Ambiente di sviluppo ricostruito: **Laravel Sail (PHP 8.3) dentro WSL**, sul modello di oh-my-gloria.
 
-- **Correggere `CLAUDE.md`.** Dice «host PHP is 8.2» e prescrive la VM Homestead. Misurato: **l'host ha PHP 7.4.33** e la VM `192.168.56.56` non risponde. Conseguenza operativa non ovvia: anche `vendor/bin/pint` sull'host non funziona (Pint richiede ≥ 8.2), quindi **il passo 1 della pre-commit-check è rotto, non solo i test**.
-- **La via che funziona oggi è WSL**, e l'ho verificata: Ubuntu con PHP 8.3.6 e tutte le estensioni necessarie (`intl`, `exif`, `gd`, `zip`, `bcmath`, `sqlite3`, `pdo_sqlite`, `mbstring`, `curl`), script `~/t.sh` che fa rsync in `~/aa` e lancia phpunit. Mancava solo `composer install` nel mirror — fatto.
-- **Docker: consigliato solo se serve a te.** Docker Desktop è installato ma il daemon è fermo, e nel repo non c'è nulla. Su Windows Docker gira comunque **dentro WSL2**: rispetto al percorso già pronto aggiunge il build di un'immagine e un layer di filesystem, non velocità — anzi, il bind mount su `/mnt/d` è lento e la suite può passare da ~6 a parecchi minuti. La specifica completa è pronta se la vuoi lo stesso: base `php:8.3-cli-bookworm`, estensioni `intl exif gd zip bcmath pdo_mysql pdo_sqlite sockets pcntl`, **nessun servizio MySQL** (phpunit forza sqlite in memoria), Node 22 solo per vite, volumi nominati per `vendor/` e `node_modules/`, e il montaggio in sola lettura dell'`auth.json` perché `livewire/flux-pro` è un repository a credenziali.
-- **`StructureDraftFactory` manca del tutto**: oggi almeno 20 file di test costruiscono la bozza a mano con `StructureDraft::create([...])`. R4 e R5 aggiungono campi alla bozza: senza factory ogni campo nuovo va rincorso in venti punti. Crearla con gli stati `structure()`, `activity()`, `event()`, `smartbox()`, `completed()`, `awaitingPublication()`, in **additivo** (i test vecchi restano com'erano).
+- Il repo di lavoro resta su `D:`; una copia vive sul filesystem ext4 di WSL (`~/aa`) e **Docker bind-monta quella**. Mai `/mnt/d` in un container: attraversare il filesystem di Windows rende la suite inutilizzabile.
+- `compose.yaml` (Sail 8.3 + MySQL 8.4), `docker/php/no-swoole.ini` e `docker/t.sh` sono versionati. `laravel/sail` aggiunto in require-dev **senza toccare nient'altro**: il primo tentativo con `composer require -W` aveva tirato dentro framework 13.30→13.33 e `brick/math` 0.18→1.0, ed è stato annullato. Nel lock ci sono solo `laravel/sail` e `symfony/yaml`.
+- **Trappola trovata e chiusa: l'immagine Sail carica `swoole`, che manda `php artisan test` in segfault.** Exit 255, nessun messaggio, output troncato a metà suite — il primo test a cadere è quello con `withoutDefer()` + `Mail::fake()` in `AdminAuthTest`. Il file ini di swoole viene mascherato dal mount in `compose.yaml`. Il progetto non usa Octane, quindi non si perde niente.
+- Costo di Docker misurato, non stimato: **suite intera 342s in container contro 394s nativi — Docker è più veloce**, grazie alla configurazione opcache dell'immagine Sail. (Su un singolo gruppo pesante come `Admin/Catalog` il rapporto si inverte, 152s contro 114s: è la partenza del container a pesare, non l'esecuzione.)
+- `CLAUDE.md` e `.claude/skills/pre-commit-check` riscritti: dicevano che l'host ha PHP 8.2 e prescrivevano una VM Homestead che non esiste più. L'host ha **PHP 7.4**, quindi era rotto anche `vendor/bin/pint`, non solo i test.
+
+Resta da fare in questo pacchetto: **`StructureDraftFactory` manca del tutto**. Oggi almeno 20 file di test costruiscono la bozza a mano con `StructureDraft::create([...])`. R4 e R5 aggiungono campi alla bozza: senza factory ogni campo nuovo va rincorso in venti punti. Va creata con gli stati `structure()`, `activity()`, `event()`, `smartbox()`, `completed()`, `awaitingPublication()`, in **additivo** — i test vecchi restano com'erano.
 
 ### WP2 — R2, solo le caratteristiche selezionate · 0,5–1 g · **quick win, per primo**
 
@@ -254,8 +257,8 @@ Le altre, meno urgenti ma da chiudere prima di chiudere il lavoro:
 
 ```
 WP0 diagnosi produzione ──────────────────────────────►  (in parallelo, serve la cliente/hosting)
-WP7 strumenti ──►  WP2 amenity ──►  WP1 fix R6 ──►  WP3 no-checkout ──►  WP4 branching ──►  WP5 attività ──►  WP6 eventi
-                   0,5-1 g          1-2 g            3-4 g              1,5-2 g            3-4 g             2,5-3 g
+WP7 strumenti ✅ ──►  WP2 amenity ──►  WP1 fix R6 ──►  WP3 no-checkout ──►  WP4 branching ──►  WP5 attività ──►  WP6 eventi
+                      0,5-1 g          1-2 g            3-4 g              1,5-2 g            3-4 g             2,5-3 g
 ```
 
 WP2 va prima di WP3 perché toccano gli stessi cinque blade. WP4 → WP5 → WP6 sono in sequenza perché insistono sugli stessi Form object e sullo stesso contatore di step.
@@ -264,8 +267,8 @@ WP2 va prima di WP3 perché toccano gli stessi cinque blade. WP4 → WP5 → WP6
 
 ## 6. Regole operative per chi implementa
 
-- Test: `wsl -d Ubuntu -e bash -lc '~/t.sh'` (suite intera) oppure `~/t.sh --filter=NomeTest`. Baseline: **20 rossi**.
-- Stile: `wsl -d Ubuntu -e bash -lc 'cd ~/aa && vendor/bin/pint --dirty'`. **Non** sull'host: PHP 7.4.
+- Test: `wsl -d Ubuntu -e bash -lc '~/t.sh'` (suite intera in Docker), `~/t.sh --filter=NomeTest` (singolo), `~/t.sh --native` (senza container). Baseline: **20 rossi**.
+- Stile: `wsl -d Ubuntu -e bash -lc '~/t.sh --pint --dirty'`. **Non** sull'host: PHP 7.4, e Pint ne vuole ≥8.2.
 - Testi UI sempre via `__()`. `LangParityTest` confronta **solo le chiavi** (non i valori né i placeholder) su una whitelist fissa di 26 file: ogni chiave nuova in `lang/it` di quei file **deve** avere la gemella in `lang/en`, o la suite diventa rossa. I file `admin-*.php` sono fuori whitelist ed esistono solo in `it/`.
 - Migrazioni: classe anonima, docblock in italiano che cita la richiesta e la data, `->after('colonna')` sempre, `down()` sempre scritto (vuoto solo per le migrazioni-dati, con il commento del perché). Per una colonna indicizzata: prima `dropIndex`, poi `dropColumn` — SQLite non toglie una colonna indicizzata.
 - Nuove rotte del wizard: due slug localizzati (`lang/it|en/routes.php`) e **`php artisan route:clear` dopo il deploy**, o la rotta nuova dà 404 in produzione.
