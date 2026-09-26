@@ -72,25 +72,23 @@
                         @include('partials.general-info', ['rows' => $service->general_info])
                     </section>
 
-                    {{-- 3. Servizi Animali --}}
-                    <section class="mt-8">
-                        <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 lg:px-[22px]">
-                            <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.animal_services') }}</h2>
-                            <ul class="mt-2 space-y-[7px]">
-                                {{-- $row e non $service: il nome del model di pagina non va sovrascritto dal loop --}}
-                                @foreach ($animalServices as $row)
-                                    <li wire:key="srv-animal-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
-                                        @if ($row['included'])
+                    {{-- 3. Servizi Animali (solo quelli offerti; senza nessuno la sezione sparisce) --}}
+                    @if (filled($animalServices))
+                        <section class="mt-8">
+                            <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 lg:px-[22px]">
+                                <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.animal_services') }}</h2>
+                                <ul class="mt-2 space-y-[7px]">
+                                    {{-- $row e non $service: il nome del model di pagina non va sovrascritto dal loop --}}
+                                    @foreach ($animalServices as $row)
+                                        <li wire:key="srv-animal-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
                                             <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
-                                        @else
-                                            <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
-                                        @endif
-                                        {{ $row['label'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </section>
+                                            {{ $row['label'] }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </section>
+                    @endif
 
                     {{-- 4. Dove siamo (Google Maps con la chiave configurata, screenshot XD come fallback; senza entrambi la sezione sparisce) --}}
                     @if ($service->hasMap())

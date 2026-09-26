@@ -111,39 +111,39 @@
                         </section>
                     @endif
 
-                    {{-- 4. Servizi Hotel / Servizi Animali (mobile: due liste impilate senza cornice) --}}
-                    <section class="mt-8 flex flex-wrap gap-3 max-lg:flex-col max-lg:gap-7">
-                        <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 max-lg:min-h-0 max-lg:w-full max-lg:rounded-none max-lg:border-0 max-lg:p-0">
-                            <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.hotel_services') }}</h2>
-                            <ul class="mt-2 space-y-[7px]">
-                                @foreach ($hotelServices as $service)
-                                    <li wire:key="srv-hotel-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
-                                        @if ($service['included'])
-                                            <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
-                                        @else
-                                            <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
-                                        @endif
-                                        {{ $service['label'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                        <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 max-lg:min-h-0 max-lg:w-full max-lg:rounded-none max-lg:border-0 max-lg:p-0 lg:px-[22px]">
-                            <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.animal_services') }}</h2>
-                            <ul class="mt-2 space-y-[7px]">
-                                @foreach ($animalServices as $service)
-                                    <li wire:key="srv-animal-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
-                                        @if ($service['included'])
-                                            <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
-                                        @else
-                                            <flux:icon.close class="h-3.5 w-3.5 shrink-0 text-[#EA2E68]" />
-                                        @endif
-                                        {{ $service['label'] }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </section>
+                    {{-- 4. Servizi Hotel / Servizi Animali (mobile: due liste impilate senza cornice).
+                           Solo le voci offerte: un box senza voci sparisce invece di lasciare
+                           una cornice alta 250px col solo titolo. --}}
+                    @if (filled($hotelServices) || filled($animalServices))
+                        <section class="mt-8 flex flex-wrap gap-3 max-lg:flex-col max-lg:gap-7">
+                            @if (filled($hotelServices))
+                                <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 max-lg:min-h-0 max-lg:w-full max-lg:rounded-none max-lg:border-0 max-lg:p-0">
+                                    <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.hotel_services') }}</h2>
+                                    <ul class="mt-2 space-y-[7px]">
+                                        @foreach ($hotelServices as $service)
+                                            <li wire:key="srv-hotel-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
+                                                <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
+                                                {{ $service['label'] }}
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                            @if (filled($animalServices))
+                                <div class="min-h-[250px] w-[442px] max-w-full rounded-[4px] border border-[#DEDEDE] bg-white p-4 max-lg:min-h-0 max-lg:w-full max-lg:rounded-none max-lg:border-0 max-lg:p-0 lg:px-[22px]">
+                                    <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('holiday.animal_services') }}</h2>
+                                    <ul class="mt-2 space-y-[7px]">
+                                        @foreach ($animalServices as $service)
+                                            <li wire:key="srv-animal-{{ $loop->index }}" class="flex items-center gap-3 text-[15px] text-[#0D171A]">
+                                                <flux:icon.check class="h-3.5 w-3.5 shrink-0 text-[#37C443]" />
+                                                {{ $service['label'] }}
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        </section>
+                    @endif
 
                     {{-- 5. Dove siamo (Google Maps con la chiave configurata, screenshot XD come fallback; senza entrambi la sezione sparisce) --}}
                     @if ($structure->hasMap())

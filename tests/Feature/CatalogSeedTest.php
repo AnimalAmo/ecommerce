@@ -59,9 +59,13 @@ class CatalogSeedTest extends TestCase
         $this->assertCount(12, $hotel->reviews);
         // FAQ lorem rimosse: restano a zero finché la cliente non consegna i testi.
         $this->assertCount(0, $hotel->faqs);
-        $this->assertCount(6, $hotel->amenityRows('hotel'));
-        $this->assertCount(6, $hotel->amenityRows('animal'));
+        // 4 su 6 per gruppo: il seed ne semina 6, due per gruppo sono marcate
+        // non offerte e dal 29/09/2026 non arrivano più alla scheda.
+        $this->assertCount(4, $hotel->amenityRows('hotel'));
+        $this->assertCount(4, $hotel->amenityRows('animal'));
         $this->assertSame('Pet sitting', $hotel->amenityRows('animal')[0]['label']);
+        $this->assertNotContains('Noleggio bici', array_column($hotel->amenityRows('hotel'), 'label'));
+        $this->assertNotContains('Piscina per cani', array_column($hotel->amenityRows('animal'), 'label'));
 
         $service = Structure::where('slug', 'dog-sitting')->first();
         $this->assertSame(ProductType::Service, $service->type);

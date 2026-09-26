@@ -109,7 +109,12 @@ class EventDetail extends Component
             // Prezzo nel pop-up: solo eventi acquistabili (prezzo reale, mai il fallback mock);
             // i gratuiti/senza prezzo hanno la CTA Partecipa e il pop-up carrello non esiste.
             'popupPrice' => $event->price_cents !== null ? Format::money($event->price_cents) : null,
-            'includedColumns' => [$event->amenityRows('hotel'), $event->amenityRows('animal')],
+            // Una colonna vuota va tolta qui: la griglia a due colonne del blade
+            // lascerebbe metà sezione bianca (vedi ActivityDetail).
+            'includedColumns' => array_values(array_filter([
+                $event->amenityRows('hotel'),
+                $event->amenityRows('animal'),
+            ])),
             'faqs' => $event->faqs,
             // Solo gli eventi acquistabili: i gratuiti hanno la CTA Partecipa.
             'paysOnSite' => ! $event->hasJoinCta()

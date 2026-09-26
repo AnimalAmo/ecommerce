@@ -119,23 +119,28 @@ class StructurePublisherTest extends TestCase
     {
         $structure = app(DraftPublisher::class)->publish($this->hotelDraft());
 
-        $hotel = collect($structure->amenityRows('hotel'));
-        $animal = collect($structure->amenityRows('animal'));
+        $hotel = collect($structure->amenityRows('hotel'))->pluck('label');
+        $animal = collect($structure->amenityRows('animal'))->pluck('label');
 
-        // Selezionate nel wizard ⇒ ✓ (sauna approssimata su Spa, pranzo dagli additional).
-        $this->assertTrue($hotel->firstWhere('label', 'Wifi')['included']);
-        $this->assertTrue($hotel->firstWhere('label', 'Spa')['included']);
-        $this->assertTrue($hotel->firstWhere('label', 'Pranzo')['included']);
-        $this->assertTrue($animal->firstWhere('label', 'Pet sitting')['included']);
-        $this->assertTrue($animal->firstWhere('label', 'Omaggio di benvenuto')['included']);
+        // Selezionate nel wizard (sauna approssimata su Spa, pranzo dagli additional).
+        $this->assertEqualsCanonicalizing(['Wifi', 'Spa', 'Pranzo'], $hotel->all());
+        $this->assertEqualsCanonicalizing(['Pet sitting', 'Omaggio di benvenuto'], $animal->all());
 
-        // Il resto del gruppo ⇒ ✗ (righe rosse del template).
-        $this->assertFalse($hotel->firstWhere('label', 'Aria condizionata negli spazi comuni')['included']);
-        $this->assertFalse($animal->firstWhere('label', 'Servizio veterinario')['included']);
+        // Il resto del gruppo non compare: dal 29/09/2026 la scheda mostra solo
+        // ciò che la struttura offre, non l'elenco completo con le voci assenti.
+        $this->assertNotContains('Aria condizionata negli spazi comuni', $hotel->all());
+        $this->assertNotContains('Servizio veterinario', $animal->all());
+    }
 
-        // Tutte le amenity dei due gruppi sono presenti (7 + 7 dal seeder).
-        $this->assertCount(7, $hotel);
-        $this->assertCount(7, $animal);
+    public function test_the_pivot_still_records_the_amenities_not_offered(): void
+    {
+        // amenityRows() filtra in lettura: sotto, il pivot continua a portare
+        // una riga per ogni amenity del catalogo (7 + 7 dal seeder). È ciò che
+        // rende il filtro reversibile senza toccare i dati.
+        $structure = app(DraftPublisher::class)->publish($this->hotelDraft());
+
+        $this->assertCount(14, $structure->amenities);
+        $this->assertCount(9, $structure->amenities->where('pivot.included', false));
     }
 
     public function test_publish_skips_drafts_without_the_minimum_viable_data(): void

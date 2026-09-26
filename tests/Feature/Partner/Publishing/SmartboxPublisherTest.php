@@ -91,12 +91,13 @@ class SmartboxPublisherTest extends TestCase
 
         $first = $publisher->publish($draft);
 
-        $hotel = collect($first->amenityRows('hotel'));
-        $this->assertTrue($hotel->firstWhere('label', 'Wifi')['included']);
-        $this->assertTrue($hotel->firstWhere('label', 'Aria condizionata negli spazi comuni')['included']);
+        $hotel = collect($first->amenityRows('hotel'))->pluck('label')->all();
+        $this->assertContains('Wifi', $hotel);
+        $this->assertContains('Aria condizionata negli spazi comuni', $hotel);
         // 'spa' dagli additional → Spa inclusa.
-        $this->assertTrue($hotel->firstWhere('label', 'Spa')['included']);
-        $this->assertFalse($hotel->firstWhere('label', 'Pranzo')['included']);
+        $this->assertContains('Spa', $hotel);
+        // Non selezionata: dal 29/09/2026 non compare più sulla scheda.
+        $this->assertNotContains('Pranzo', $hotel);
 
         $draft->price = '250';
         $draft->save();
