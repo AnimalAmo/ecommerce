@@ -7,6 +7,13 @@
         'servizi' => ['partner.create_service.servizi_title', 'partner.create_service.servizi_subtitle'],
         'smartbox' => ['partner.create_service.smartbox_title', 'partner.create_service.smartbox_subtitle'],
     ];
+
+    // La card Smartbox porta a un wizard di dodici sezioni che, senza incasso
+    // online, non produrrebbe niente di vendibile (richiesta della cliente del
+    // 27/09/2026). Si legge qui, dove la scelta si fa. Il dato sta nella vista e
+    // non fra quelli passati dal componente perché la card è una riga di questo
+    // elenco: nessun altro pezzo della pagina lo usa.
+    $smartboxPaymentRequired = auth()->user()?->partnerProfile?->canPublishFamily('smartbox') !== true;
 @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -32,6 +39,22 @@
                 @error('service')
                     <p class="mt-3 text-sm text-red-500">{{ $message }}</p>
                 @enderror
+
+                {{-- Avviso sulla card Smartbox: avvisa e non blocca, la scelta
+                     resta selezionabile (si modifica anche un cofanetto già fatto). --}}
+                @if ($smartboxPaymentRequired)
+                    <flux:callout
+                        variant="warning"
+                        icon="credit-card"
+                        class="mt-6"
+                        :heading="__('partner.publish.smartbox_payment_required')"
+                        :text="__('partner.publish.smartbox_payment_required_hint')"
+                    >
+                        <x-slot name="actions">
+                            <flux:button size="sm" href="{{ route('partner.profile.payment') }}" class="!rounded-full !border-0 !bg-[#232A2C] !px-5 !font-bold !text-white hover:!bg-[#0D171A]">{{ __('partner.publish.smartbox_payment_required_cta') }}</flux:button>
+                        </x-slot>
+                    </flux:callout>
+                @endif
 
                 {{-- Azioni: Indietro (link alla dashboard) + Avanti (pill scuro) --}}
                 <div class="mt-8 flex items-center justify-end gap-6">

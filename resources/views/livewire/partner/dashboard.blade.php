@@ -38,6 +38,23 @@
                     </flux:callout>
                 @endif
 
+                {{-- Smartbox ferme perché manca l'incasso online (richiesta della
+                     cliente del 27/09/2026). Avviso a sé: il titolo è la frase
+                     che la cliente ha chiesto, il testo dice quante sono. --}}
+                @if ($smartboxAwaitingCount > 0)
+                    <flux:callout
+                        variant="warning"
+                        icon="credit-card"
+                        class="mt-3.5"
+                        :heading="__('partner.dashboard.smartbox_payment_heading')"
+                        :text="trans_choice('partner.dashboard.smartbox_payment_banner', $smartboxAwaitingCount, ['count' => $smartboxAwaitingCount])"
+                    >
+                        <x-slot name="actions">
+                            <flux:button size="sm" href="{{ route('partner.profile.payment') }}" class="!rounded-full !border-0 !bg-[#232A2C] !px-5 !font-bold !text-white hover:!bg-[#0D171A]">{{ __('partner.dashboard.smartbox_payment_cta') }}</flux:button>
+                        </x-slot>
+                    </flux:callout>
+                @endif
+
                 {{-- Statistiche (XD: 3 card 294x105, r10, bordo #E9E9E9). Numeri reali del
                      partner; senza il badge di variazione % del mockup, che non ha una
                      fonte (nessuno storico da confrontare). --}}

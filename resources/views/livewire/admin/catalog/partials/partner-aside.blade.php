@@ -6,7 +6,7 @@
        $eligible → Collection<int, string> id => ragione sociale
        $summary  → array|null da partnerSummary()
      Più le proprietà pubbliche del trait: $partnerId, $partnerChoice,
-     $pendingNotice. --}}
+     $pendingNotice, $pendingNoticeSmartbox. --}}
 @php $t = 'admin-catalog.create.'; @endphp
 
 <div class="flex min-w-0 flex-col gap-3.5">
@@ -52,10 +52,13 @@
     </x-admin.card>
 
     {{-- Avviso PRIMA di compilare undici sezioni: un partner online senza
-         Stripe si può scegliere, ma la scheda nascerà in attesa. --}}
+         Stripe si può scegliere, ma la scheda nascerà in attesa. Su una
+         smartbox il motivo può essere un altro — il partner incassa fuori
+         dalla piattaforma (27/09/2026) — e l'admin deve leggere quello vero,
+         non «collega Stripe» su un conto che nessuno collegherà. --}}
     @if ($summary && ! $summary['can_publish'])
-        <x-admin.notice tone="warning" :heading="__($t.'awaiting_stripe_heading')">
-            {{ __($t.'stripe_missing_notice') }}
+        <x-admin.notice tone="warning" :heading="__($t.($summary['smartbox_payment_block'] ? 'smartbox_payment_heading' : 'awaiting_stripe_heading'))">
+            {{ __($t.($summary['smartbox_payment_block'] ? 'smartbox_payment_notice' : 'stripe_missing_notice')) }}
         </x-admin.notice>
     @endif
 
@@ -69,7 +72,7 @@
          redirect si porterebbe via il toast. L'avviso resta in pagina, con i
          due link che il Task 2 ha dichiarato. --}}
     @if ($pendingNotice !== null)
-        <x-admin.notice tone="warning" :heading="__($t.'awaiting_stripe_heading')">
+        <x-admin.notice tone="warning" :heading="__($t.($pendingNoticeSmartbox ? 'smartbox_payment_heading' : 'awaiting_stripe_heading'))">
             {{ $pendingNotice }}
             <x-slot:actions>
                 @if ($partnerId !== null)

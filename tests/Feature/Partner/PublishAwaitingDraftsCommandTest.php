@@ -32,10 +32,31 @@ class PublishAwaitingDraftsCommandTest extends TestCase
         ]);
     }
 
+    /**
+     * Bozza struttura in attesa, col minimo che `isPublishable` pretende per il
+     * default della famiglia (nome italiano e `rooms`).
+     */
+    private function awaitingStructureOf(?User $partner): StructureDraft
+    {
+        return StructureDraft::create([
+            'user_id' => $partner?->id,
+            'service_category' => 'struttura',
+            'type' => 'hotel',
+            'name' => ['it' => 'Hotel in attesa'],
+            'rooms' => [['type' => 'doppia', 'count' => 2, 'price' => '80']],
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 11,
+            'publish_requested_at' => now(),
+        ]);
+    }
+
     public function test_pubblica_le_bozze_dei_partner_che_ora_possono_pubblicare(): void
     {
         $payable = $this->awaitingSmartboxOf(User::factory()->stripeConnected()->create());
-        $offline = $this->awaitingSmartboxOf(User::factory()->offlinePartner()->create());
+        // Struttura e non smartbox: dal 27/09/2026 un cofanetto di chi incassa
+        // fuori dalla piattaforma non si pubblica, e questo test verifica che il
+        // comando prenda le bozze di chi PUÒ pubblicare — non quelle ferme.
+        $offline = $this->awaitingStructureOf(User::factory()->offlinePartner()->create());
 
         $unpayablePartner = User::factory()->create();
         PartnerProfile::factory()->for($unpayablePartner)->create();
@@ -57,6 +78,23 @@ class PublishAwaitingDraftsCommandTest extends TestCase
         $this->assertTrue($inactive->fresh()->isAwaitingPublication());
         $this->assertSame(StructureDraft::STATUS_DRAFT, $inactive->fresh()->status);
         $this->assertTrue($orphan->fresh()->isAwaitingPublication());
+    }
+
+    /**
+     * Il pre-filtro del comando è family-aware (27/09/2026): un partner le cui
+     * uniche bozze in attesa sono smartbox ferme non entra nel giro — e
+     * soprattutto la bozza non va a catalogo, che è la parte che conta.
+     */
+    public function test_le_smartbox_di_un_partner_che_incassa_fuori_non_si_pubblicano(): void
+    {
+        $offline = $this->awaitingSmartboxOf(User::factory()->offlinePartner()->create());
+
+        $this->artisan('animalamo:publish-awaiting-drafts')
+            ->expectsOutputToContain('Bozze pubblicate: 0.')
+            ->assertSuccessful();
+
+        $this->assertTrue($offline->fresh()->isAwaitingPublication());
+        $this->assertSame(StructureDraft::STATUS_DRAFT, $offline->fresh()->status);
     }
 
     public function test_senza_bozze_in_attesa_non_pubblica_nulla(): void

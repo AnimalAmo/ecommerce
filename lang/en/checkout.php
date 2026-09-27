@@ -25,6 +25,16 @@ return [
         'gift_not_allowed' => 'The partner now takes payment directly, not online: this gift can no longer be bought. Please remove it from your cart.',
         'thank_you' => 'Booking confirmed!',
         'thank_you_sub' => 'Here is the summary, check your email: you will pay the partner directly.',
+
+        // Mode switched off by the commerce.on_site_booking kill switch (client
+        // request, 27/09/2026): the cart is NOT emptied, payment is blocked and
+        // we explain how to book with the partner instead.
+        'unavailable' => [
+            'title' => 'This booking cannot be completed here',
+            'body' => 'Booking with payment directly to the partner is no longer completed on AnimalAmo: to book, please contact the partner directly. Your cart stays exactly as it is, we have removed nothing.',
+            'toast' => 'This booking option is no longer available: contact the partner to book.',
+            'back_to_cart' => 'Back to the cart',
+        ],
     ],
 
     // Checkout funnel UI strings (blade commerce/checkout)

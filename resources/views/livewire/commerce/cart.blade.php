@@ -296,16 +296,21 @@
                                 <div class="mx-[17px] h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
                                 <div class="px-[15px] {{ $gift ? 'pt-[10px]' : 'pt-5' }}">
-                                    <div class="flex items-center gap-5">
-                                        @if ($paysOnSite)
-                                            {{-- Partner senza pagamento online: nessun addebito qui, si paga a lui --}}
-                                            <flux:icon.pin class="h-5 w-5 shrink-0 text-[#1E2E33]" />
-                                            <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.pay_on_site') }}</span>
-                                        @else
-                                            <flux:icon.lock class="h-5 w-5 shrink-0 text-[#1E2E33]" />
-                                            <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.secure_payment') }}</span>
-                                        @endif
-                                    </div>
+                                    {{-- Col pagamento diretto al partner spento (richiesta della cliente, 27/09/2026)
+                                         questa riga sparisce: prometteva un pagamento al partner che da qui non
+                                         parte più. La spiegazione prende il posto della CTA, qui sotto. --}}
+                                    @unless ($onSiteBlocked)
+                                        <div class="flex items-center gap-5">
+                                            @if ($paysOnSite)
+                                                {{-- Partner senza pagamento online: nessun addebito qui, si paga a lui --}}
+                                                <flux:icon.pin class="h-5 w-5 shrink-0 text-[#1E2E33]" />
+                                                <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.pay_on_site') }}</span>
+                                            @else
+                                                <flux:icon.lock class="h-5 w-5 shrink-0 text-[#1E2E33]" />
+                                                <span class="text-sm leading-none text-[#0D171A]">{{ __('cart.ui.secure_payment') }}</span>
+                                            @endif
+                                        </div>
+                                    @endunless
                                     @unless ($gift)
                                         <div class="mt-5 flex items-start gap-5">
                                             <flux:icon.calendar-return class="h-5 w-5 shrink-0 text-[#1E2E33]" />
@@ -316,14 +321,29 @@
 
                                 <div class="mx-[17px] {{ $gift ? 'mt-[17px]' : 'mt-5' }} h-px bg-[#E9E9E9]" aria-hidden="true"></div>
 
-                                <div class="{{ $gift ? 'mt-[23px]' : 'mt-[31px]' }} flex justify-center">
-                                    @if ($gift)
-                                        {{-- In modalità regalo la CTA persiste dedica/messaggio sulle righe e apre il checkout regalo (?regalo=1) --}}
-                                        <flux:button wire:click="goToCheckout" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('cart.ui.go_to_checkout') }}</flux:button>
-                                    @else
-                                        <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('cart.ui.go_to_checkout') }}</flux:button>
-                                    @endif
-                                </div>
+                                @if ($onSiteBlocked)
+                                    {{-- Niente CTA verso un checkout che si bloccherebbe: la spiegazione sta qui,
+                                         dove il cliente sta per cliccare. Le righe, il totale e Modifica/Elimina
+                                         restano intatti — il carrello non si svuota (richiesta della cliente, 27/09/2026). --}}
+                                    <div class="{{ $gift ? 'mt-[23px]' : 'mt-[31px]' }} px-[15px] pb-1">
+                                        <p class="text-[15px] font-bold leading-[22px] text-[#0D171A]">{{ __('checkout.on_site.unavailable.title') }}</p>
+                                        <p class="mt-2 text-[13px] leading-[19px] text-[#627277]">{{ __('checkout.on_site.unavailable.body') }}</p>
+                                        {{-- I recapiti del partner stanno sulla scheda del prodotto; senza rotta
+                                             ricavabile (cofanetti) resta la sola spiegazione. --}}
+                                        @if ($onSiteProductUrl !== null)
+                                            <flux:button href="{{ $onSiteProductUrl }}" class="mt-4 !h-10 !w-full !rounded-full !border !border-[#C8C8C8] !bg-white !text-[15px] !font-bold !text-[#0D171A] !shadow-none">{{ __('catalog.book_with_partner') }}</flux:button>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="{{ $gift ? 'mt-[23px]' : 'mt-[31px]' }} flex justify-center">
+                                        @if ($gift)
+                                            {{-- In modalità regalo la CTA persiste dedica/messaggio sulle righe e apre il checkout regalo (?regalo=1) --}}
+                                            <flux:button wire:click="goToCheckout" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('cart.ui.go_to_checkout') }}</flux:button>
+                                        @else
+                                            <flux:button href="{{ route('checkout') }}" class="!h-10 !w-[170px] !rounded-full !border-0 !bg-[#0D171A] !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('cart.ui.go_to_checkout') }}</flux:button>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         </aside>
                     </div>
@@ -346,13 +366,22 @@
                 <span>{{ __('cart.ui.total') }}</span>
                 <span>{{ \App\Support\Format::money($total) }}</span>
             </div>
-            @if ($paysOnSite)
-                <p class="mt-2 text-sm leading-none text-[#627277]">{{ __('cart.ui.pay_on_site') }}</p>
-            @endif
-            @if ($gift)
-                <flux:button wire:click="goToCheckout" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
+            @if ($onSiteBlocked)
+                {{-- Stessa sostituzione del riepilogo desktop, in formato barra (richiesta della cliente, 27/09/2026) --}}
+                <p class="mt-2 text-sm font-bold leading-[19px] text-[#0D171A]">{{ __('checkout.on_site.unavailable.title') }}</p>
+                <p class="mt-1 text-[13px] leading-[18px] text-[#627277]">{{ __('checkout.on_site.unavailable.body') }}</p>
+                @if ($onSiteProductUrl !== null)
+                    <flux:button href="{{ $onSiteProductUrl }}" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border !border-[#C8C8C8] !bg-white !text-[15px] !font-semibold !text-[#0D171A] !shadow-none">{{ __('catalog.book_with_partner') }}</flux:button>
+                @endif
             @else
-                <flux:button href="{{ route('checkout') }}" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
+                @if ($paysOnSite)
+                    <p class="mt-2 text-sm leading-none text-[#627277]">{{ __('cart.ui.pay_on_site') }}</p>
+                @endif
+                @if ($gift)
+                    <flux:button wire:click="goToCheckout" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
+                @else
+                    <flux:button href="{{ route('checkout') }}" class="mt-3 !h-[39px] !w-full !rounded-[19px] !border-0 !bg-brand-cyan !text-[15px] !font-semibold !text-white !shadow-none hover:!bg-brand-cyan">{{ __('cart.ui.proceed_checkout') }}</flux:button>
+                @endif
             @endif
         </div>
     @endif

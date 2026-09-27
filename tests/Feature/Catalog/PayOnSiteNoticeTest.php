@@ -3,16 +3,20 @@
 namespace Tests\Feature\Catalog;
 
 use App\Livewire\Catalog\ActivityDetail;
+use App\Livewire\Catalog\AnimalHolidayRegion;
 use App\Livewire\Catalog\AnimalHolidayService;
 use App\Livewire\Catalog\AnimalHolidayStructure;
 use App\Livewire\Catalog\EventDetail;
+use App\Livewire\Catalog\Events;
 use App\Livewire\Catalog\SmartboxDetail;
 use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
+use App\Services\Cart\CartManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -216,5 +220,108 @@ class PayOnSiteNoticeTest extends TestCase
             ->assertOk()
             ->assertSee(__('smartbox.add_to_cart'))
             ->assertDontSee(__('catalog.contacts.title'));
+    }
+
+    // ── Le stesse regole nelle LISTE (27/09/2026) ───────────────────────────
+    //
+    // Fino a ieri la regola valeva solo sulle schede di dettaglio: nelle griglie
+    // il pulsante carrello c'era per tutti e portava a un checkout che si
+    // blocca. Un pulsante che non funziona è peggio di nessun pulsante.
+
+    public function test_la_griglia_eventi_rimanda_alla_scheda_per_un_titolare_offline(): void
+    {
+        Event::factory()->create(['user_id' => $this->offlineOwner()->id, 'slug' => 'brunch-in-griglia']);
+
+        Livewire::test(Events::class)
+            ->assertOk()
+            ->assertSee(__('catalog.book_with_partner'))
+            // Il pulsante carrello non c'è: si cerca la sua azione, non la sua
+            // etichetta, perché è l'azione che porterebbe al checkout bloccato.
+            ->assertDontSeeHtml('wire:click="addToCart(');
+    }
+
+    public function test_la_griglia_eventi_tiene_il_carrello_per_un_titolare_online(): void
+    {
+        Event::factory()->create(['user_id' => $this->onlineOwner()->id, 'slug' => 'brunch-online-in-griglia']);
+
+        Livewire::test(Events::class)
+            ->assertOk()
+            ->assertSee(__('events.add_to_cart'))
+            ->assertSeeHtml('wire:click="addToCart(')
+            ->assertDontSee(__('catalog.book_with_partner'));
+    }
+
+    /**
+     * Il costo della regola in griglia: UNA query, non una per card. È la ragione
+     * per cui `PartnerPaymentModeService::forOwners()` esiste, quindi va tenuta
+     * ferma qui, dove la N+1 nascerebbe.
+     *
+     * Si contano solo le query su `partner_profiles` e non tutte quelle della
+     * pagina: il totale cambierebbe a ogni ritocco della griglia e questo test
+     * diventerebbe un test di quante query fa il catalogo, che non è il suo tema.
+     */
+    public function test_la_griglia_eventi_legge_le_modalita_in_una_query_sola(): void
+    {
+        foreach (range(1, 3) as $index) {
+            Event::factory()->create([
+                'user_id' => $this->offlineOwner()->id,
+                'slug' => 'evento-offline-'.$index,
+            ]);
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        Livewire::test(Events::class)->assertOk();
+
+        $profileQueries = collect(DB::getQueryLog())
+            ->filter(fn (array $entry): bool => str_contains($entry['query'], 'partner_profiles'));
+
+        $this->assertCount(
+            1,
+            $profileQueries,
+            'Tre titolari diversi in griglia devono costare una query sola: '.$profileQueries->count().' significa N+1.',
+        );
+    }
+
+    public function test_la_pagina_regione_rimanda_alla_scheda_per_un_titolare_offline(): void
+    {
+        Event::factory()->create(['user_id' => $this->offlineOwner()->id, 'slug' => 'brunch-in-regione']);
+
+        // Le chip della pagina regione partono su hotel/servizi: senza accendere
+        // "eventi" la griglia eventi non viene nemmeno interrogata.
+        Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+            ->set('activeTypes', ['eventi'])
+            ->assertOk()
+            ->assertSee(__('catalog.book_with_partner'))
+            ->assertDontSeeHtml('wire:click="addToCart(');
+    }
+
+    public function test_la_pagina_regione_tiene_il_carrello_per_un_titolare_online(): void
+    {
+        Event::factory()->create(['user_id' => $this->onlineOwner()->id, 'slug' => 'brunch-online-in-regione']);
+
+        Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+            ->set('activeTypes', ['eventi'])
+            ->assertOk()
+            ->assertSeeHtml('wire:click="addToCart(')
+            ->assertDontSee(__('catalog.book_with_partner'));
+    }
+
+    /**
+     * Il pulsante non c'è più, ma `addToCart($id)` arriva dal payload del client:
+     * senza la guardia server-side la riga entrerebbe in un carrello che al
+     * checkout si blocca.
+     */
+    public function test_l_aggiunta_rapida_di_un_evento_di_un_titolare_offline_e_rifiutata(): void
+    {
+        $event = Event::factory()->create(['user_id' => $this->offlineOwner()->id, 'slug' => 'brunch-a-mano']);
+
+        Livewire::test(Events::class)
+            ->call('addToCart', $event->id)
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable'))
+            ->assertNotDispatched('cart-updated');
+
+        $this->assertTrue(app(CartManager::class)->items()->isEmpty());
     }
 }

@@ -67,7 +67,7 @@ class StuckDrafts extends Command
 
         $this->report(
             'Pronte ma ferme: il partner può già pubblicare',
-            $awaiting->filter(fn (StructureDraft $draft): bool => $draft->user?->partnerProfile?->canPublish() === true),
+            $awaiting->filter(fn (StructureDraft $draft): bool => $draft->user?->partnerProfile?->canPublishFamily($draft->family()) === true),
             'Nessuna: niente di pubblicabile è rimasto indietro.',
         );
 
@@ -115,7 +115,7 @@ class StuckDrafts extends Command
                 $draft->current_step.'/'.$draft->finalStep(),
                 $draft->status,
                 self::isPublishable($draft) ? 'sì' : 'NO',
-                $draft->user?->partnerProfile?->canPublish() === true ? 'sì' : 'NO',
+                $draft->user?->partnerProfile?->canPublishFamily($draft->family()) === true ? 'sì' : 'NO',
             ])->all(),
         );
     }

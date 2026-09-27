@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Structure\StructureDraft;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 /**
@@ -20,12 +21,26 @@ class HotelLocationForm extends Form
 
     public string $license = '';
 
+    /**
+     * `province.exists`: la sigla deve esistere in `provinces`. Senza questo
+     * controllo una sigla fuori elenco veniva salvata e la pubblicazione ne
+     * ricavava `region_id` NULL, con la scheda invisibile su ogni pagina
+     * regione (si veda StructurePublisher::regionIdFor()).
+     *
+     * Volutamente SENZA un `messages()` su questo Form: StructureCreate
+     * costruisce il proprio messaggio `location.province.exists` e poi ci fonde
+     * sopra quelli dei Form object, quindi una chiave qui vincerebbe sul
+     * messaggio del pannello admin. Nel wizard resta il generico di
+     * `lang/it/validation.php` e il suo gemello inglese, che basta: il campo è una select ricercabile
+     * (components/partner/province-select) che manda sempre una sigla del DB,
+     * quindi l'errore lo vede solo chi forgia la richiesta.
+     */
     public function rules(): array
     {
         return [
             'address' => ['required', 'string', 'max:128'],
             'city' => ['required', 'string', 'max:64'],
-            'province' => ['required', 'string', 'max:64'],
+            'province' => ['required', 'string', 'max:64', Rule::exists('provinces', 'short_name')],
             'zip' => ['required', 'digits:5'],
             'license' => ['required', 'string', 'max:64'],
         ];

@@ -5,6 +5,7 @@ namespace Tests\Feature\Partner\Publishing;
 use App\Enums\DraftCompletion;
 use App\Models\Partner\PartnerProfile;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Services\Partner\Publishing\AwaitingDraftPublisher;
@@ -52,9 +53,32 @@ class AwaitingDraftPublisherTest extends TestCase
         ], $attributes));
     }
 
+    /**
+     * Bozza struttura in attesa, col minimo che `isPublishable` pretende per il
+     * default della famiglia (nome italiano e `rooms`).
+     */
+    private function awaitingStructureOf(User $partner, array $attributes = []): StructureDraft
+    {
+        return StructureDraft::create(array_merge([
+            'user_id' => $partner->id,
+            'service_category' => 'struttura',
+            'type' => 'hotel',
+            'name' => ['it' => 'Hotel in attesa'],
+            'rooms' => [['type' => 'doppia', 'count' => 2, 'price' => '80']],
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 11,
+            'publish_requested_at' => now()->subHour(),
+        ], $attributes));
+    }
+
     private function packagesOf(StructureDraft $draft): int
     {
         return SmartboxPackage::withHidden()->where('structure_draft_id', $draft->id)->count();
+    }
+
+    private function structuresOf(StructureDraft $draft): int
+    {
+        return Structure::withHidden()->where('structure_draft_id', $draft->id)->count();
     }
 
     public function test_pubblica_le_bozze_in_attesa_di_un_partner_ora_pagabile(): void
@@ -73,13 +97,48 @@ class AwaitingDraftPublisherTest extends TestCase
         }
     }
 
+    /**
+     * Era una smartbox in attesa fino al 27/09/2026. Dal gate per famiglia una
+     * smartbox di chi incassa fuori NON si sblocca passando offline, quindi la
+     * regola («chi passa al pagamento diretto si sblocca da sé») va provata su
+     * una struttura, o il nome del test direbbe il falso.
+     */
     public function test_un_partner_passato_offline_pubblica_le_bozze_in_attesa(): void
     {
         $partner = User::factory()->offlinePartner()->create();
-        $draft = $this->awaitingSmartboxOf($partner);
+        $draft = $this->awaitingStructureOf($partner);
 
         $this->assertSame(1, $this->publisher()->publishFor($partner->id));
-        $this->assertSame(1, $this->packagesOf($draft));
+        $this->assertSame(1, $this->structuresOf($draft));
+        $this->assertNull($draft->fresh()->publish_requested_at);
+    }
+
+    /**
+     * Il gate è per bozza: la smartbox di chi incassa fuori resta ferma e fuori
+     * dal conteggio, la struttura dello stesso partner va a catalogo nello
+     * stesso giro. E resta ferma IN SILENZIO: il comando la ritrova ogni dieci
+     * minuti, un warning per volta sarebbe un warning al giorno per sempre.
+     */
+    public function test_la_smartbox_di_un_partner_offline_resta_ferma_senza_warning(): void
+    {
+        Log::spy();
+        $partner = User::factory()->offlinePartner()->create();
+        $smartbox = $this->awaitingSmartboxOf($partner);
+        $structure = $this->awaitingStructureOf($partner);
+
+        $this->assertSame(1, $this->publisher()->publishFor($partner->id));
+
+        $this->assertSame(0, $this->packagesOf($smartbox));
+        $this->assertTrue($smartbox->fresh()->isAwaitingPublication());
+        $this->assertSame(StructureDraft::STATUS_DRAFT, $smartbox->fresh()->status);
+        $this->assertSame(1, $this->structuresOf($structure));
+
+        // Nessuna diagnosi da scrivere: non è un errore, è una riga ferma di
+        // proposito. (La struttura non ha provincia, quindi il solo warning
+        // ammesso è quello di StructurePublisher sulla regione: si controlla
+        // che NON sia arrivato quello della bozza non pubblicabile.)
+        Log::shouldNotHaveReceived('warning', ['Bozza in attesa di Stripe non pubblicabile', Mockery::any()]);
+        Log::shouldNotHaveReceived('warning', ['Pubblicazione della bozza in attesa fallita', Mockery::any()]);
     }
 
     public function test_un_partner_ancora_non_pagabile_resta_in_attesa(): void

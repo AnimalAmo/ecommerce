@@ -48,7 +48,32 @@ class ReleaseMaturedPayouts
                 }
             });
 
+        $this->warnAboutFailedRows();
+
         return $released;
+    }
+
+    /**
+     * Le righe già chiuse come `Failed` sono soldi del partner che non si
+     * muovono più da soli: lo scheduler non le riprende, e `payouts:retry` è un
+     * comando da lanciare a mano. Nessuno le vede, perché il log del fallimento
+     * è passato una volta nel giorno in cui è avvenuto.
+     *
+     * Questo è solo il promemoria giornaliero, alla fine del giro: non tocca gli
+     * importi, non tocca `payout_attempts`, non ritenta niente. `critical` come
+     * gli altri punti in cui il denaro si ferma.
+     */
+    private function warnAboutFailedRows(): void
+    {
+        $failed = OrderPayout::query()->where('status', PayoutStatus::Failed)->count();
+
+        if ($failed === 0) {
+            return;
+        }
+
+        Log::critical('Righe di payout ferme in stato fallito: nessun tentativo automatico le riprende, serve `payouts:retry` a mano', [
+            'righe' => $failed,
+        ]);
     }
 
     /**

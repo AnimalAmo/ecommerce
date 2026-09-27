@@ -225,11 +225,30 @@ class PartnerPaymentModeServiceTest extends TestCase
     {
         Queue::fake();
         $profile = PartnerProfile::factory()->create();
-        $this->awaitingSmartboxOf($profile);
+        // Struttura e non smartbox: dal 27/09/2026 un cofanetto di chi incassa
+        // in struttura non è pubblicabile, quindi non è più il caso generico.
+        $this->awaitingStructureOf($profile);
 
         $this->modes()->set($profile, false, null);
 
         Queue::assertPushed(PublishAwaitingDrafts::class, fn (PublishAwaitingDrafts $job): bool => $job->partnerId === $profile->user_id);
+    }
+
+    /**
+     * Il caso gemello, che prima non esisteva: chi passa al pagamento diretto e
+     * ha in attesa SOLO smartbox non accoda niente. Il gate per famiglia le
+     * scarterebbe comunque, una transazione per bozza, a ogni cambio di
+     * modalità e a ogni giro del cron dei dieci minuti.
+     */
+    public function test_passare_in_struttura_con_sole_smartbox_in_attesa_non_mette_in_coda(): void
+    {
+        Queue::fake();
+        $profile = PartnerProfile::factory()->create();
+        $this->awaitingSmartboxOf($profile);
+
+        $this->modes()->set($profile, false, null);
+
+        Queue::assertNotPushed(PublishAwaitingDrafts::class);
     }
 
     public function test_senza_bozze_in_attesa_non_mette_in_coda_nulla(): void
@@ -253,14 +272,128 @@ class PartnerPaymentModeServiceTest extends TestCase
         Queue::assertNotPushed(PublishAwaitingDrafts::class);
     }
 
+    /**
+     * Bozza struttura in attesa, col minimo che `isPublishable` pretende per il
+     * default della famiglia (nome italiano e `rooms`).
+     */
+    private function awaitingStructureOf(PartnerProfile $profile): StructureDraft
+    {
+        return StructureDraft::create([
+            'user_id' => $profile->user_id,
+            'service_category' => 'struttura',
+            'type' => 'hotel',
+            'name' => ['it' => 'Hotel in attesa'],
+            'rooms' => [['type' => 'doppia', 'count' => 2, 'price' => '80']],
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 11,
+            'publish_requested_at' => now(),
+        ]);
+    }
+
+    /**
+     * Era una smartbox fino al 27/09/2026: passare al pagamento diretto non
+     * sblocca più un cofanetto prepagato, quindi la regola («il cambio di
+     * modalità pubblica ciò che era in attesa») si prova su una struttura.
+     */
     public function test_passare_in_struttura_pubblica_le_bozze_in_attesa(): void
+    {
+        $profile = PartnerProfile::factory()->create();
+        $draft = $this->awaitingStructureOf($profile);
+
+        $this->modes()->set($profile, false, null);
+
+        $this->assertSame(StructureDraft::STATUS_COMPLETED, $draft->fresh()->status);
+        $this->assertSame(1, Structure::withHidden()->where('structure_draft_id', $draft->id)->count());
+    }
+
+    /**
+     * L'altra faccia: il cambio di modalità NON manda a catalogo una smartbox in
+     * attesa, perché un cofanetto prepagato si vende solo con l'incasso online
+     * (richiesta della cliente, 27/09/2026). La bozza resta in attesa, così
+     * resta in "I miei servizi" e torna in vetrina da sé al ritorno online.
+     */
+    public function test_passare_in_struttura_non_pubblica_una_smartbox_in_attesa(): void
     {
         $profile = PartnerProfile::factory()->create();
         $draft = $this->awaitingSmartboxOf($profile);
 
         $this->modes()->set($profile, false, null);
 
-        $this->assertSame(StructureDraft::STATUS_COMPLETED, $draft->fresh()->status);
+        $fresh = $draft->fresh();
+        $this->assertSame(StructureDraft::STATUS_DRAFT, $fresh->status);
+        $this->assertTrue($fresh->isAwaitingPublication());
+        $this->assertSame(0, SmartboxPackage::withHidden()->where('structure_draft_id', $draft->id)->count());
+    }
+
+    /**
+     * Reversibilità del ritiro, end-to-end e senza scorciatoie: il partner torna
+     * all'incasso online da `set()` (che nessuno ha modificato) e la smartbox
+     * ritirata dalla migrazione-dati torna in vetrina da sé, perché
+     * SmartboxPublisher azzera `withheld_at` alla ripubblicazione.
+     *
+     * È il percorso che la cliente vedrà davvero: nessun comando da lanciare a
+     * mano, nessuna seconda strada da tenere in pari.
+     */
+    public function test_il_ritorno_online_rimette_in_vetrina_la_smartbox_ritirata(): void
+    {
+        // Offline ma con Stripe operativo: è la sola condizione in cui si torna
+        // online (canSwitchToOnline).
+        $profile = PartnerProfile::factory()->connected()->create(['online_payment' => false]);
+        $draft = $this->awaitingSmartboxOf($profile);
+
+        $withheld = SmartboxPackage::factory()->create([
+            'user_id' => $profile->user_id,
+            'structure_draft_id' => $draft->id,
+            'withheld_at' => now()->subDay(),
+        ]);
+
+        // Prima: fuori dal catalogo, visibile solo con withHidden().
+        $this->assertNull(SmartboxPackage::find($withheld->id));
+
+        $this->modes()->set($profile, true, null);
+
+        $this->assertNull($withheld->fresh()->withheld_at);
+        $this->assertTrue($withheld->fresh()->isVisibleInCatalog());
+        // La riga è la stessa, non una seconda copia a catalogo.
         $this->assertSame(1, SmartboxPackage::withHidden()->where('structure_draft_id', $draft->id)->count());
+        $this->assertNotNull(SmartboxPackage::find($withheld->id));
+        $this->assertSame(StructureDraft::STATUS_COMPLETED, $draft->fresh()->status);
+        $this->assertNull($draft->fresh()->publish_requested_at);
+    }
+
+    /**
+     * `forOwners()` esiste per le griglie: decidere card per card se il pulsante
+     * carrello ha senso sarebbe una N+1 dentro una vista. Una query per tutti i
+     * titolari, e il secondo giro non ne fa nessuna — nemmeno per il titolare
+     * SENZA profilo, che è il caso che, non memorizzato, tornerebbe a
+     * interrogare il database a ogni card.
+     */
+    public function test_for_owners_legge_tutti_i_titolari_in_una_query_sola(): void
+    {
+        $offline = User::factory()->offlinePartner()->create();
+        $online = User::factory()->stripeConnected()->create();
+        $client = User::factory()->create();
+        $modes = $this->modes();
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        // Con un duplicato e un null dentro, come arrivano da una pluck().
+        $read = $modes->forOwners([$offline->id, $online->id, $client->id, $offline->id, null]);
+
+        $this->assertCount(1, DB::getQueryLog());
+
+        $this->assertSame([
+            $offline->id => OrderPaymentMode::OnSite,
+            $online->id => OrderPaymentMode::Online,
+            // Senza profilo vale il comportamento di prima: online.
+            $client->id => OrderPaymentMode::Online,
+        ], $read);
+
+        $modes->forOwners([$offline->id, $online->id, $client->id]);
+        $modes->forOwner($client->id);
+        $modes->profileFor($client->id);
+
+        $this->assertCount(1, DB::getQueryLog());
     }
 }

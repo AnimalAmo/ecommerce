@@ -21,7 +21,15 @@
                 <div class="mt-5 flex flex-wrap items-center gap-2">
                     <flux:badge class="!rounded-[3px] !bg-brand-magenta !text-white">{{ $tag }}</flux:badge>
                     @if ($draft->isAwaitingPublication())
-                        <flux:badge class="!rounded-[3px] !bg-brand-yellow !text-ink">{{ __('partner.my_services.awaiting_stripe') }}</flux:badge>
+                        @php
+                            // Stessa diagnosi del badge in "I miei servizi": per una
+                            // smartbox di chi non incassa online il collegamento Stripe
+                            // non è la cosa da fare (27/09/2026), e scriverlo comunque
+                            // è la diagnosi falsa della segnalazione del 29/09/2026.
+                            $paymentBlocked = $draft->family() === 'smartbox'
+                                && auth()->user()?->partnerProfile?->canPublishFamily('smartbox') !== true;
+                        @endphp
+                        <flux:badge class="!rounded-[3px] !bg-brand-yellow !text-ink">{{ __($paymentBlocked ? 'partner.my_services.awaiting_payment_method' : 'partner.my_services.awaiting_stripe') }}</flux:badge>
                     @endif
                 </div>
                 <h1 class="mt-3 text-[25px] font-bold text-[#0D171A]">{{ $draft->name ?: __('partner.services.not_provided') }}</h1>

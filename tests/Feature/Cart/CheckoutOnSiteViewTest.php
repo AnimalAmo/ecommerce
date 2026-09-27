@@ -38,6 +38,12 @@ class CheckoutOnSiteViewTest extends TestCase
         app()->setLocale('it');
         Carbon::setTestNow(Carbon::create(2026, 7, 15, 12, 0, 0));
 
+        // Come in CheckoutOnSiteTest: il percorso nasce spento (27/09/2026) e
+        // questa classe è la specifica di ciò che il cliente vede QUANDO è
+        // acceso — una funzione che la cliente ha chiesto di tenere. Il pannello
+        // del percorso spento ha il suo test in fondo alla classe.
+        config(['commerce.on_site_booking' => true]);
+
         Mail::fake();
         Events::fake([OnSiteOrderConfirmed::class]);
 
@@ -188,6 +194,54 @@ class CheckoutOnSiteViewTest extends TestCase
             ->assertSee('Nota: Tanti auguri!')
             ->assertDontSee('Dedicato a:')
             ->assertDontSee('Messaggio:');
+    }
+
+    /**
+     * Kill-switch spento (il default di produzione): al posto dei campi dello
+     * step 1 il pannello di spiegazione, con i recapiti del partner presi da
+     * PartnerContacts — ragione sociale, indirizzo e link «dove pagare o
+     * prenotare», i soli recapiti che esistono a database.
+     */
+    public function test_col_percorso_spento_il_checkout_mostra_il_pannello_coi_contatti(): void
+    {
+        config(['commerce.on_site_booking' => false]);
+
+        $this->actingAs(User::factory()->create());
+        $structure = $this->offlineStructure('https://example.com/paga');
+        $this->addStructureLine($structure);
+
+        Livewire::test(Checkout::class)
+            ->assertSee(__('checkout.on_site.unavailable.title'))
+            ->assertSee(__('checkout.on_site.unavailable.body'))
+            ->assertSee(__('checkout.on_site.unavailable.back_to_cart'))
+            // La colonna di destra è intatta: il riepilogo con la riga e il
+            // totale resta, il carrello non si svuota.
+            ->assertSee($structure->name)
+            ->assertSee(Format::money(50000))
+            // La card contatti condivisa con le schede B2C.
+            ->assertSee(__('catalog.contacts.title'))
+            ->assertSee('Agriturismo Il Faro')
+            ->assertSee('https://example.com/paga')
+            // Niente funnel: né i campi dello step 1 né la promessa «Conferma»
+            // di uno step 2 che non si aprirà.
+            ->assertDontSee(__('checkout.ui.verify_personal_data'))
+            ->assertViewHas('steps', fn (array $steps): bool => $steps[2] === __('checkout.ui.step_payment'));
+    }
+
+    /**
+     * Il link del partner passa sempre da SafeUrl, anche nel pannello: un
+     * `javascript:` scritto sul profilo saltando il service non arriva all'href.
+     */
+    public function test_nel_pannello_un_link_non_web_non_viene_stampato(): void
+    {
+        config(['commerce.on_site_booking' => false]);
+
+        $this->actingAs(User::factory()->create());
+        $this->addStructureLine($this->offlineStructure('javascript:alert(1)'));
+
+        Livewire::test(Checkout::class)
+            ->assertSee(__('checkout.on_site.unavailable.title'))
+            ->assertDontSeeHtml('javascript:');
     }
 
     private function offlineStructure(?string $paymentUrl): Structure

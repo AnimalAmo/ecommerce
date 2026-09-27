@@ -42,6 +42,12 @@ class SmartboxPublisher extends FamilyPublisher
             'features' => [],
             'position' => $current->position ?? ((int) SmartboxPackage::withHidden()->max('position') + 1),
             'cancellation_policy_days' => $this->cancellationDays($draft),
+            // Fine del ritiro (27/09/2026): se si arriva qui il gate per
+            // famiglia è passato, quindi il partner incassa online e il
+            // cofanetto è vendibile. Azzerarla qui rende la ripubblicazione
+            // l'unico modo di rimettere una smartbox in vetrina, senza un
+            // secondo percorso da tenere in pari.
+            'withheld_at' => null,
             ...$this->moderationAttributes($current),
         ]);
 

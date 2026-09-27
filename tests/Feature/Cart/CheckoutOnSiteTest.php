@@ -51,6 +51,14 @@ class CheckoutOnSiteTest extends TestCase
         app()->setLocale('it');
         Carbon::setTestNow(Carbon::create(2026, 7, 15, 12, 0, 0));
 
+        // Il percorso "prenota online e paga in struttura" nasce spento
+        // (richiesta della cliente del 27/09/2026: la modalità resta nel sistema
+        // ma spenta). Questa classe è la specifica di quel percorso, che la
+        // cliente ha chiesto di TENERE: si accende il flag, e i test restano
+        // quelli di prima. Con il flag spento lo step 2 non si apre nemmeno:
+        // quel caso è il suo test, in fondo alla classe.
+        config(['commerce.on_site_booking' => true]);
+
         Mail::fake();
         Events::fake([OnSiteOrderConfirmed::class]);
 
@@ -491,6 +499,52 @@ class CheckoutOnSiteTest extends TestCase
         }
 
         $this->assertDatabaseCount('orders', 0);
+    }
+
+    /**
+     * Kill-switch spento, che è il default di produzione: lo step 2 non si apre,
+     * niente ordine, niente Stripe — e il carrello resta intero. È la parte che
+     * la cliente ha chiesto per nome: «il carrello non si svuota».
+     */
+    public function test_col_percorso_spento_lo_step_due_non_si_apre_e_il_carrello_resta(): void
+    {
+        config(['commerce.on_site_booking' => false]);
+
+        $this->actingAs($this->buyer());
+        $this->addStructureLine($this->offlineStructure());
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSet('step', 1)
+            // $paymentMode resta 'online' e il token non nasce: senza token la
+            // conferma non ha nemmeno la chiave di idempotenza da spendere.
+            ->assertSet('paymentMode', OrderPaymentMode::Online->value)
+            ->assertSet('checkoutToken', null)
+            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.unavailable.toast')))
+            // Rete di sicurezza: `confirmBooking` arriva dal payload del client
+            // anche se la vista non disegna più il bottone.
+            ->call('confirmBooking')
+            ->assertSet('step', 1);
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertCount(1, $this->cart()->items());
+        $this->assertSame([], $this->gateway->initCalls);
+    }
+
+    /** Col flag spento il venditore online non cambia di una virgola. */
+    public function test_col_percorso_spento_il_venditore_online_entra_nello_step_due(): void
+    {
+        config(['commerce.on_site_booking' => false]);
+
+        $this->actingAs($this->buyer());
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => User::factory()->stripeConnected()->create()->id, 'price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->call('goToStep', 2)
+            ->assertSet('step', 2)
+            ->assertSet('paymentMode', OrderPaymentMode::Online->value)
+            ->assertSet('clientSecret', 'cs_fake_secret');
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

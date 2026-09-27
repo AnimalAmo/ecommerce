@@ -26,6 +26,30 @@
                 <h2 class="mt-4 text-lg font-medium text-[#0D171A]">{{ __('partner.create_service.section') }}</h2>
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.create_service.helper') }}</p>
 
+                {{-- Fuori dal mockup XD: avviso, non blocco (richiesta della cliente
+                     del 27/09/2026). Il wizard resta percorribile — chi ha già un
+                     cofanetto deve poterlo modificare — ma la condizione per
+                     venderlo si legge prima di compilare dodici sezioni. --}}
+                @if ($paymentRequired)
+                    <flux:callout
+                        variant="warning"
+                        icon="credit-card"
+                        class="mt-6"
+                        :heading="__('partner.publish.smartbox_payment_required')"
+                        :text="__('partner.publish.smartbox_payment_required_hint')"
+                    >
+                        <x-slot name="actions">
+                            {{-- `flux:link` e non `flux:button`: dentro uno step del
+                                 wizard l'unico pulsante-link di <main> è "Indietro", e
+                                 WizardBackLinkTest legge il primo che trova. Un secondo
+                                 pulsante-link gli farebbe leggere questo href al posto
+                                 del ritorno. In dashboard, dove l'invariante non c'è,
+                                 lo stesso avviso resta un bottone. --}}
+                            <flux:link href="{{ route('partner.profile.payment') }}" variant="ghost" class="!font-bold !text-[#0D171A] !underline">{{ __('partner.publish.smartbox_payment_required_cta') }}</flux:link>
+                        </x-slot>
+                    </flux:callout>
+                @endif
+
                 {{-- Tipologie smartbox: flux radio cards con icona in alto + label, selezione cyan --}}
                 <flux:radio.group wire:model="type" variant="cards" class="mt-8 [--color-accent:#6CD1EF] [&_[data-flux-radio-cards]]:justify-center [&_[data-flux-radio-cards]]:py-8 [&_[data-flux-radio-cards]]:!rounded-none [&_[data-flux-radio-cards]]:after:!rounded-none [&_[data-flux-radio-cards]>div]:!flex-col [&_[data-flux-radio-cards]>div]:items-center [&_[data-flux-radio-cards]>div]:gap-3 [&_[data-flux-radio-cards]>div]:text-center [&_[data-flux-radio-cards]_svg]:!size-[92px] [&_[data-flux-radio-cards]_svg]:!text-[#2B2B2B] [&_[data-flux-heading]]:!text-[15px] [&_[data-flux-heading]]:!font-semibold [&_[data-flux-heading]]:!text-[#1E2E33]">
                     @foreach ($types as $key => $t)

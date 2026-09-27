@@ -188,8 +188,17 @@
                                     {{ $event->location }}
                                 </p>
                                 <h3 class="mt-[10px] text-[20px] font-semibold leading-[25px] text-black max-lg:text-[18px] max-lg:leading-[22px] max-lg:text-[#0D171A]">{{ $event->title }}</h3>
+                                {{-- Titolare che incassa in struttura: il pulsante carrello porterebbe a un
+                                     checkout che si blocca (richiesta della cliente, 27/09/2026), quindi al suo
+                                     posto una pill verso la scheda, dove ci sono i contatti per prenotare.
+                                     Titolare assente (catalogo mock) o senza profilo: resta online. --}}
+                                @php $ownerOnSite = ($ownerModes[$event->user_id] ?? \App\Enums\OrderPaymentMode::Online) === \App\Enums\OrderPaymentMode::OnSite; @endphp
                                 <div class="mt-auto flex items-center justify-between gap-2 pt-[18px]">
-                                    @if (! $event->hasJoinCta())
+                                    @if (! $event->hasJoinCta() && $ownerOnSite)
+                                        <flux:button href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event->slug) : route('eventi.detail', $event->slug) }}" class="relative !z-[2] !h-[39px] !shrink-0 !rounded-full !border !border-[#C8C8C8] !bg-white !px-4 !text-sm !font-bold !text-[#0D171A] !shadow-none max-lg:!font-medium">
+                                            {{ __('catalog.book_with_partner') }}
+                                        </flux:button>
+                                    @elseif (! $event->hasJoinCta())
                                         {{-- Su mobile la pill si adatta al contenuto (XD app: label 14 medium), su desktop resta a larghezza fissa --}}
                                         <flux:button wire:click="addToCart({{ $event->id }})" class="relative !z-[2] !h-[39px] !w-[204px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !text-sm !font-bold !text-[#0D171A] !shadow-none max-lg:!w-auto max-lg:!px-4 max-lg:!font-medium [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                                             <flux:icon.cart class="h-4 w-4 shrink-0" />

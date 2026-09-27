@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerPaymentModeService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,6 +29,17 @@ trait AddsEventToCart
 
         // CTA Partecipa (gratis o senza prezzo): nessun acquisto (partecipazioni allo step 5).
         if ($event->hasJoinCta()) {
+            return;
+        }
+
+        // Titolare che incassa in struttura: si prenota contattando lui, non da
+        // qui (richiesta della cliente, 27/09/2026). Nella griglia il pulsante
+        // non c'è nemmeno, ma addToCart() arriva dal payload del client: la
+        // guardia sta qui, non nel CartManager, dove taglierebbe la modalità
+        // anche quando la cliente deciderà di riaccenderla.
+        if (app(PartnerPaymentModeService::class)->forPurchasable($event) === OrderPaymentMode::OnSite) {
+            Flux::toast(text: __('cart.not_purchasable'), variant: 'danger');
+
             return;
         }
 

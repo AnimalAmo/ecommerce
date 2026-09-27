@@ -84,6 +84,33 @@ class PartnerProfile extends Model
     }
 
     /**
+     * Può mandare a catalogo un servizio di questa famiglia.
+     *
+     * La smartbox è l'eccezione (richiesta della cliente, 27/09/2026: «una
+     * Smartbox non deve poter essere pubblicata/acquistata se il partner non ha
+     * collegato un sistema di pagamento»): è un cofanetto prepagato, quindi
+     * serve l'incasso online E un account Stripe pagabile. Con il pagamento
+     * diretto finirebbe nel percorso "paghi in struttura", che per un prepagato
+     * non esiste: non sarebbe acquistabile, e ciò che non è acquistabile non si
+     * tiene in vetrina.
+     *
+     * Il parametro è il valore di `StructureDraft::family()`
+     * (struttura|attivita|smartbox). Va bene anche la `service_category` del
+     * pannello: solo `smartbox` è un caso a sé, tutto il resto cade sul default.
+     *
+     * `canPublish()` resta com'è: la leggono payout, checkout, ConnectReadiness
+     * e la pagina profilo, dove la famiglia non esiste.
+     */
+    public function canPublishFamily(string $family): bool
+    {
+        if ($family === 'smartbox') {
+            return $this->requiresOnlinePayment() && $this->canBePaid();
+        }
+
+        return $this->canPublish();
+    }
+
+    /**
      * Può scegliere (o tenere) il pagamento online. Resta online chi lo è già,
      * anche senza Stripe (appena iscritto, o creato dall'admin); chi è offline
      * ci torna solo da pagabile. Una sola regola per il service, che rifiuta,

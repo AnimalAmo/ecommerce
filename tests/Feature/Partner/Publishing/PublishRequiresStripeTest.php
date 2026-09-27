@@ -6,6 +6,7 @@ use App\Exceptions\PartnerNotPayableException;
 use App\Models\Event\Event;
 use App\Models\Partner\PartnerProfile;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Services\Partner\Publishing\DraftPublisher;
@@ -66,14 +67,48 @@ class PublishRequiresStripeTest extends TestCase
         $this->assertInstanceOf(SmartboxPackage::class, $published);
     }
 
-    public function test_un_partner_offline_pubblica_senza_stripe(): void
+    /**
+     * La regola del 22/09/2026 vale ancora per tutto ciò che non è un cofanetto
+     * prepagato. Era una smartbox fino al 27/09/2026, quando la cliente ha
+     * chiesto di escluderle: una bozza smartbox qui proverebbe l'eccezione, non
+     * la regola, e il nome del test diventerebbe bugiardo.
+     */
+    public function test_un_partner_offline_pubblica_una_struttura_senza_stripe(): void
     {
-        $draft = $this->smartboxDraftFor(PartnerProfile::factory()->offline());
+        $draft = $this->structureDraftFor(PartnerProfile::factory()->offline());
 
         $published = app(DraftPublisher::class)->publish($draft);
 
-        $this->assertInstanceOf(SmartboxPackage::class, $published);
+        $this->assertInstanceOf(Structure::class, $published);
         $this->assertSame($draft->user_id, $published->user_id);
+    }
+
+    /**
+     * L'eccezione della famiglia smartbox (richiesta della cliente, 27/09/2026):
+     * un cofanetto prepagato si vende solo con l'incasso online. Lo stesso
+     * partner, nello stesso test, pubblica la sua struttura: il gate è per
+     * bozza, non una porta chiusa sul partner.
+     */
+    public function test_una_smartbox_di_un_partner_offline_non_si_pubblica_ma_la_sua_struttura_si(): void
+    {
+        $partner = User::factory()->create();
+        PartnerProfile::factory()->offline()->for($partner)->create();
+
+        $smartbox = $this->smartboxDraft($partner);
+
+        try {
+            app(DraftPublisher::class)->publish($smartbox);
+            $this->fail('Attesa PartnerNotPayableException per la smartbox di un partner che incassa fuori.');
+        } catch (PartnerNotPayableException $exception) {
+            // Messaggio suo: «completa il collegamento Stripe» manderebbe a
+            // cercare un onboarding a metà che non c'è.
+            $this->assertSame(__('partner.errors.smartbox_requires_online_payment'), $exception->getMessage());
+        }
+
+        $this->assertSame(0, SmartboxPackage::withHidden()->where('structure_draft_id', $smartbox->id)->count());
+
+        $structure = $this->structureDraft($partner);
+        $this->assertInstanceOf(Structure::class, app(DraftPublisher::class)->publish($structure));
     }
 
     public function test_un_partner_offline_pubblica_un_evento_gratuito_senza_stripe(): void
@@ -120,6 +155,15 @@ class PublishRequiresStripeTest extends TestCase
         return $this->smartboxDraft($partner);
     }
 
+    /** Bozza struttura completa, intestata al partner del profilo dato. */
+    private function structureDraftFor(mixed $profileFactory): StructureDraft
+    {
+        $partner = User::factory()->create();
+        $profileFactory->for($partner)->create();
+
+        return $this->structureDraft($partner);
+    }
+
     private function smartboxDraft(User $partner): StructureDraft
     {
         return StructureDraft::create([
@@ -128,6 +172,23 @@ class PublishRequiresStripeTest extends TestCase
             'type' => 'soggiorno',
             'name' => ['it' => 'Cofanetto di prova', 'en' => 'Test box'],
             'price' => '120',
+            'status' => StructureDraft::STATUS_COMPLETED,
+            'current_step' => 11,
+        ]);
+    }
+
+    /**
+     * Bozza struttura col minimo che `isPublishable` pretende per il default
+     * della famiglia: nome italiano e `rooms` valorizzato.
+     */
+    private function structureDraft(User $partner): StructureDraft
+    {
+        return StructureDraft::create([
+            'user_id' => $partner->id,
+            'service_category' => 'struttura',
+            'type' => 'hotel',
+            'name' => ['it' => 'Hotel di prova', 'en' => 'Test hotel'],
+            'rooms' => [['type' => 'doppia', 'count' => 2, 'price' => '80']],
             'status' => StructureDraft::STATUS_COMPLETED,
             'current_step' => 11,
         ]);

@@ -11,6 +11,8 @@ use Database\Seeders\AmenitySeeder;
 use Database\Seeders\ProvinceSeeder;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 use Tests\TestCase;
 
 class StructurePublisherTest extends TestCase
@@ -153,6 +155,68 @@ class StructurePublisherTest extends TestCase
         $this->assertNull(app(DraftPublisher::class)->publish($blank));
         $this->assertNull(app(DraftPublisher::class)->publish($noRooms));
         $this->assertSame(0, Structure::count());
+    }
+
+    /**
+     * `region_id` NULL non blocca la pubblicazione — la scheda resta valida e
+     * prenotabile — ma la fa sparire da ogni elenco regionale, e finora
+     * succedeva in silenzio: nessuno collegava «il mio hotel non si trova» a una
+     * colonna vuota. Il warning è l'unico modo di saperlo, quindi è esso stesso
+     * il comportamento da tenere fermo.
+     *
+     * Con la sigla ora verificata dai due form del wizard e dal pannello, ci si
+     * arriva solo da una bozza vecchia o da una richiesta forgiata: proprio i
+     * casi in cui nessuno starebbe a guardare.
+     */
+    public function test_a_province_outside_the_list_publishes_without_a_region_and_says_so(): void
+    {
+        Log::spy();
+        $draft = $this->hotelDraft(['province' => 'ZZ']);
+
+        $structure = app(DraftPublisher::class)->publish($draft);
+
+        $this->assertNull($structure->region_id);
+        // La scheda c'è: il null è una mutilazione, non un rifiuto.
+        $this->assertSame('Brescia (ZZ), Italia', $structure->location);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->with(
+                'Regione non ricavata dalla provincia: la scheda non comparirà su nessuna pagina regione',
+                Mockery::on(fn (array $context): bool => $context['structure_draft_id'] === $draft->id
+                    && $context['partner_user_id'] === $draft->user_id
+                    && $context['province'] === 'ZZ'),
+            );
+    }
+
+    /**
+     * Provincia mai compilata (bozza anteriore allo step "Luogo"): stesso esito e
+     * stesso warning, con la stringa vuota nel contesto — il messaggio dice la
+     * conseguenza e non accusa nessuno di aver sbagliato a scrivere.
+     */
+    public function test_a_missing_province_warns_too(): void
+    {
+        Log::spy();
+        $draft = $this->hotelDraft(['province' => null]);
+
+        $this->assertNull(app(DraftPublisher::class)->publish($draft)->region_id);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->with(
+                'Regione non ricavata dalla provincia: la scheda non comparirà su nessuna pagina regione',
+                Mockery::on(fn (array $context): bool => $context['province'] === ''),
+            );
+    }
+
+    /** Sigla in elenco: la regione si ricava e il log resta muto. */
+    public function test_a_known_province_does_not_warn(): void
+    {
+        Log::spy();
+
+        $this->assertNotNull(app(DraftPublisher::class)->publish($this->hotelDraft())->region_id);
+
+        Log::shouldNotHaveReceived('warning');
     }
 
     public function test_republishing_updates_the_same_row(): void

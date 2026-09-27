@@ -10,10 +10,12 @@ use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
+use App\Services\Cart\CartManager;
 use App\Services\Partner\Publishing\DraftPublisher;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 /**
@@ -183,5 +185,55 @@ class PublishedServiceVisibilityTest extends TestCase
             ->assertSee('Fuga romantica pet friendly')
             ->assertSee('Due notti con colazione.')
             ->assertSee("189,50\u{A0}€");
+    }
+
+    /**
+     * Ritiro dalla vetrina (`withheld_at`, richiesta della cliente del
+     * 27/09/2026): una smartbox non acquistabile non si tiene in vetrina.
+     *
+     * Non-regressione della decisione di NON toccare CartManager: il ritiro vive
+     * tutto in CatalogVisibleScope, quindi la riga sparisce dalla vetrina, dalla
+     * sua scheda e dal carrello con la stessa condizione — e se qualcuno
+     * spostasse quel `whereNull` fuori dallo scope globale, uno di questi tre
+     * diventerebbe rosso. L'aggiunta al carrello si chiama a mano di proposito:
+     * il pulsante non c'è più, ma `addItem` arriva dal payload del client.
+     */
+    public function test_una_smartbox_ritirata_esce_dalla_vetrina_e_non_si_puo_comprare(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+
+        $draft = StructureDraft::create([
+            'user_id' => $partner->id,
+            'status' => StructureDraft::STATUS_COMPLETED,
+            'current_step' => 12,
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'name' => ['it' => 'Cofanetto da ritirare'],
+            'price' => '120',
+        ]);
+
+        $package = app(DraftPublisher::class)->publish($draft);
+        $this->assertNotNull(SmartboxPackage::find($package->id), 'Prima del ritiro deve essere in vetrina.');
+
+        // Lo stesso gesto della migrazione-dati 2026_09_27_100002.
+        $package->forceFill(['withheld_at' => now()])->save();
+
+        // Fuori dal catalogo, ma la riga esiste ancora: è la premessa della
+        // reversibilità (la ripubblicazione azzera `withheld_at`).
+        $this->assertNull(SmartboxPackage::find($package->id));
+        $this->assertNotNull(SmartboxPackage::withHidden()->find($package->id));
+        $this->assertFalse($package->fresh()->isVisibleInCatalog());
+
+        // La scheda non si apre nemmeno da link diretto.
+        $this->get('/smartbox/'.$package->slug)->assertNotFound();
+
+        try {
+            app(CartManager::class)->addItem('smartbox_package', $package->id, ['animals' => ['cane' => 1]], false);
+            $this->fail('Una smartbox ritirata non deve entrare nel carrello.');
+        } catch (NotFoundHttpException) {
+            // atteso: `resolvePurchasable()` non la trova, come un prodotto sparito.
+        }
+
+        $this->assertTrue(app(CartManager::class)->items()->isEmpty());
     }
 }

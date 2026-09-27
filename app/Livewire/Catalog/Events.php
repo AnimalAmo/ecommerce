@@ -8,6 +8,7 @@ use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\HasCatalogFilters;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
+use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -107,8 +108,17 @@ class Events extends Component
                 ->get()
             : $events->getCollection();
 
+        // Modalità di incasso dei titolari delle card che la griglia disegna
+        // davvero ($similar coincide con la pagina quando i filtri danno
+        // risultati), letta in una query sola: il pulsante carrello ha senso
+        // solo per chi incassa online, e interrogare il profilo card per card
+        // sarebbe una N+1 nascosta dentro una vista.
+        $ownerModes = app(PartnerPaymentModeService::class)->forOwners($similar->pluck('user_id'));
+
         return view('livewire.catalog.events', [
             'events' => $events,
+            // Mappa id titolare => OrderPaymentMode per le card (assente = online).
+            'ownerModes' => $ownerModes,
             'empty' => $empty,
             'catalogueEmpty' => $catalogueEmpty,
             'similar' => $similar,

@@ -50,6 +50,10 @@ return [
     'close_filters' => 'Close filters',
     // Detail pages of a partner without online payment: the total is paid to them.
     'pay_on_site' => 'Pay the partner directly, on site or on their website',
+    // Pill replacing the cart button in the grids, and the pointer back to the
+    // listing from the cart (client request, 27/09/2026). It has to work for a
+    // property, an event and a gift box alike: "Contact the property" would not.
+    'book_with_partner' => 'See how to book',
 
     // Card that replaces the booking box when the partner takes no online
     // orders (client request, 29/09/2026).

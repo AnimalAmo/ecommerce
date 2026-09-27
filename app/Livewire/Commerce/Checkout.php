@@ -17,6 +17,7 @@ use App\Services\Availability\AvailabilityService;
 use App\Services\Cart\CartManager;
 use App\Services\Commerce\CommissionCalculator;
 use App\Services\Orders\OrderQueryService;
+use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Payment\PaymentGatewayFactory;
 use App\Services\Payment\PaymentGatewayService;
@@ -576,6 +577,11 @@ class Checkout extends Component
         // Dati del partner da pagare: servono solo al riquadro dello step 2 in struttura.
         $onSiteSeller = $this->step === 2 && $this->paysOnSite() ? $this->sellerProfile() : null;
 
+        // Modalità del venditore spenta: il pannello prende il posto dei campi
+        // dello step 1, così il cliente lo legge all'apertura del checkout e non
+        // dopo aver compilato i dati per niente.
+        $onSiteBlocked = $this->step < 3 && $this->onSiteBlocked();
+
         return view('livewire.commerce.checkout', [
             'items' => $items,
             'total' => $this->cart()->total($this->gift),
@@ -588,6 +594,14 @@ class Checkout extends Component
             ],
             // Ramo in struttura: niente Stripe allo step 2, riquadro col partner da pagare.
             'paysOnSite' => $this->paysOnSite(),
+            // Modalità non più disponibile: pannello di spiegazione al posto del funnel.
+            'onSiteBlocked' => $onSiteBlocked,
+            // Contatti del venditore per il pannello: ragione sociale, indirizzo e
+            // link «dove pagare o prenotare», gli unici recapiti che esistono a db
+            // (telefono, email pubblica e orari arrivano in un pacchetto successivo).
+            'sellerContacts' => $onSiteBlocked
+                ? app(PartnerContacts::class)->forOwner($this->sellerUserId())
+                : null,
             // Ragione sociale facoltativa a profilo: vuota = variante del riquadro senza nome.
             'partnerName' => filled($onSiteSeller?->business_name) ? $onSiteSeller->business_name : null,
             // Solo http(s): un javascript: scritto senza passare dal service non arriva all'href.
@@ -782,12 +796,39 @@ class Checkout extends Component
     /**
      * Etichetta dello stepper: allo step 1 la modalità non è ancora bloccata e
      * si legge dal venditore, così il tab dice "Conferma" fin da subito.
+     *
+     * Col kill-switch spento quella conferma non arriverà mai (preparePaymentStep
+     * ferma il passaggio), quindi il tab resta "Pagamento": annunciare
+     * "Conferma" per un flusso che non può confermare è una bugia allo step 1.
      */
     private function confirmsOnSite(): bool
     {
         return $this->step === 1
-            ? $this->sellerMode() === OrderPaymentMode::OnSite
+            ? self::onSiteBookingEnabled() && $this->sellerMode() === OrderPaymentMode::OnSite
             : $this->paysOnSite();
+    }
+
+    /**
+     * Il percorso "prenota online e paga in struttura" è acceso?
+     * (config/commerce.php, default spento — richiesta della cliente del
+     * 27/09/2026: la modalità si tiene nel sistema ma spenta.)
+     *
+     * Si legge dalla config a ogni chiamata e non da una proprietà pubblica:
+     * $paymentMode è #[Locked] proprio perché il client non deve poter dire
+     * "pago in struttura", e una proprietà nuova sarebbe la stessa porta.
+     */
+    private static function onSiteBookingEnabled(): bool
+    {
+        return (bool) config('commerce.on_site_booking');
+    }
+
+    /**
+     * Il venditore incassa in struttura ma quel percorso è spento: il checkout
+     * non si apre e mostra il pannello di spiegazione al posto dei campi.
+     */
+    private function onSiteBlocked(): bool
+    {
+        return ! self::onSiteBookingEnabled() && $this->sellerMode() === OrderPaymentMode::OnSite;
     }
 
     /**
@@ -798,6 +839,18 @@ class Checkout extends Component
     private function preparePaymentStep(): bool
     {
         if ($this->sellerMode() === OrderPaymentMode::OnSite) {
+            // Kill-switch spento (richiesta della cliente, 27/09/2026): la
+            // prenotazione con pagamento diretto al partner non si completa più
+            // qui. Si ferma il passaggio invece di svuotare il carrello, così
+            // $paymentMode resta 'online', $checkoutToken resta null e lo step 2
+            // non si apre. Rete di sicurezza: la vista non offre nemmeno la CTA,
+            // ma goToStep(2) arriva dal payload del client.
+            if (! self::onSiteBookingEnabled()) {
+                Flux::toast(text: __('checkout.on_site.unavailable.toast'), variant: 'danger');
+
+                return false;
+            }
+
             // Regalo rimasto in carrello da quando il partner era online: un buono
             // "da pagare in struttura" non ha nessuno che lo incassi. Prima del
             // login, perché accedere non lo renderebbe acquistabile.

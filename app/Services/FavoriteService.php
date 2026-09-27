@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
+use App\Exceptions\CartValidationException;
 use App\Models\Event\Event;
 use App\Models\Favorite\Favorite;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Support\Format;
 use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +67,17 @@ class FavoriteService
             return false;
         }
 
+        // Titolare che incassa in struttura: si prenota contattando lui, non da
+        // qui (richiesta della cliente, 27/09/2026). present() non disegna
+        // nemmeno la borsa, ma Favorites::toggleCart() arriva dal payload
+        // Livewire: senza questa riga il preferito entrerebbe in un carrello che
+        // al checkout si blocca. Eccezione e non false: false è il no-op
+        // silenzioso dei prodotti non acquistabili, qui il cliente merita di
+        // sapere perché (il componente la traduce in toast danger).
+        if (app(PartnerPaymentModeService::class)->forPurchasable($favorite->favoritable) === OrderPaymentMode::OnSite) {
+            throw CartValidationException::notPurchasable();
+        }
+
         app(CartManager::class)->addItem(
             $favorite->favoritable_type,
             $favorite->favoritable_id,
@@ -96,13 +110,17 @@ class FavoriteService
      */
     public function cards(User $user): array
     {
-        return $user->favorites()
+        $favorites = $user->favorites()
             ->with('favoritable')
             ->orderBy('id')
             ->get()
             // Prodotti nel frattempo rimossi dal catalogo: card saltata.
-            ->filter(fn (Favorite $favorite): bool => $favorite->favoritable !== null)
-            ->map(fn (Favorite $favorite): array => $this->present($favorite))
+            ->filter(fn (Favorite $favorite): bool => $favorite->favoritable !== null);
+
+        $modes = $this->ownerModes($favorites->map(fn (Favorite $favorite): Model => $favorite->favoritable));
+
+        return $favorites
+            ->map(fn (Favorite $favorite): array => $this->present($favorite, $modes))
             ->values()
             ->all();
     }
@@ -133,7 +151,9 @@ class FavoriteService
      */
     public function topFavorited(int $limit = 3): array
     {
-        return Favorite::query()
+        // I prodotti si risolvono prima di presentarli: serve l'elenco dei
+        // titolari per leggere le modalità di incasso in una query sola.
+        $rows = Favorite::query()
             ->select(['favoritable_type', 'favoritable_id'])
             ->selectRaw('count(*) as favorites_count')
             ->groupBy('favoritable_type', 'favoritable_id')
@@ -145,21 +165,34 @@ class FavoriteService
                 $product = Relation::getMorphedModel($row->favoritable_type)::find($row->favoritable_id);
 
                 // Prodotti nel frattempo rimossi dal catalogo: card saltata.
-                return $product !== null ? $this->cardFields($product) + [
-                    'id' => $row->favoritable_type.'-'.$product->getKey(),
-                    'type' => $product->type->value,
-                    'favoritable_type' => $row->favoritable_type,
-                    'favoritable_id' => $product->getKey(),
-                    'photo' => $product->imageUrl(),
-                ] : null;
+                return $product !== null ? ['alias' => $row->favoritable_type, 'product' => $product] : null;
             })
             ->filter()
-            ->values()
+            ->values();
+
+        $modes = $this->ownerModes($rows->pluck('product'));
+
+        return $rows
+            ->map(fn (array $row): array => $this->cardFields($row['product']) + [
+                'id' => $row['alias'].'-'.$row['product']->getKey(),
+                'type' => $row['product']->type->value,
+                'favoritable_type' => $row['alias'],
+                'favoritable_id' => $row['product']->getKey(),
+                // Stessa regola delle card dei preferiti: una borsa che non
+                // funziona è peggio di nessuna borsa.
+                'can_add_to_cart' => $this->canAddToCart($row['product'], $modes),
+                'photo' => $row['product']->imageUrl(),
+            ])
             ->all();
     }
 
-    /** Presenta il prodotto preferito nella card, per famiglia (Event / Structure / SmartboxPackage). */
-    private function present(Favorite $favorite): array
+    /**
+     * Presenta il prodotto preferito nella card, per famiglia (Event / Structure
+     * / SmartboxPackage). $modes: le modalità di incasso già lette dei titolari.
+     *
+     * @param  array<int, OrderPaymentMode>  $modes
+     */
+    private function present(Favorite $favorite, array $modes): array
     {
         $product = $favorite->favoritable;
 
@@ -170,11 +203,48 @@ class FavoriteService
             // al carrello deriva la famiglia dal ProductType, ma scrive sull'alias.
             'favoritable_type' => $favorite->favoritable_type,
             'favoritable_id' => $favorite->favoritable_id,
-            // Eventi gratuiti / "Partecipa" non sono acquistabili: niente bottone borsa.
-            'can_add_to_cart' => ! ($product instanceof Event && $product->hasJoinCta()),
+            'can_add_to_cart' => $this->canAddToCart($product, $modes),
             // Stessa foto della card listing del prodotto (URL risolto da HasCatalogImages).
             'photo' => $product->imageUrl(),
         ];
+    }
+
+    /**
+     * Modalità di incasso dei titolari dei prodotti passati, in una query sola
+     * (il service si ricorda anche i titolari senza profilo): una lettura per
+     * card sarebbe una N+1 dentro la griglia dei preferiti.
+     *
+     * @param  iterable<Model>  $products
+     * @return array<int, OrderPaymentMode>
+     */
+    private function ownerModes(iterable $products): array
+    {
+        return app(PartnerPaymentModeService::class)->forOwners(
+            collect($products)->map(fn (Model $product): mixed => $product->getAttribute('user_id')),
+        );
+    }
+
+    /**
+     * La borsa si mostra solo se premerla porta davvero a un acquisto: gli eventi
+     * gratuiti / "Partecipa" non sono acquistabili, e i prodotti di un titolare
+     * che incassa in struttura si prenotano contattandolo (richiesta della
+     * cliente, 27/09/2026). Una borsa che non funziona è peggio di nessuna borsa.
+     *
+     * Senza titolare (catalogo mock) o senza profilo partner vale online, come
+     * in PartnerPaymentModeService::forOwner().
+     *
+     * @param  array<int, OrderPaymentMode>  $modes
+     */
+    private function canAddToCart(Model $product, array $modes): bool
+    {
+        if ($product instanceof Event && $product->hasJoinCta()) {
+            return false;
+        }
+
+        $owner = $product->getAttribute('user_id');
+
+        return $owner === null
+            || ($modes[(int) $owner] ?? OrderPaymentMode::Online) === OrderPaymentMode::Online;
     }
 
     /** Parte comune della card (titolo, riga pin, riga meta, prezzo), per famiglia di prodotto. */

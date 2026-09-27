@@ -364,4 +364,80 @@ class SmartboxCreateTest extends TestCase
 
         $this->assertSame([], StructureDraft::sole()->getTranslations('animal_services_other'));
     }
+
+    // ── Partner che incassa fuori dalla piattaforma (27/09/2026) ────────────
+
+    /**
+     * Avviso PREVENTIVO del riquadro laterale: su una smartbox il motivo del
+     * blocco non è un onboarding Stripe a metà ma la modalità di pagamento, e
+     * l'admin deve leggere quello vero prima di compilare dodici sezioni —
+     * «collega Stripe» lo manderebbe a sollecitare un conto che nessuno aprirà.
+     */
+    public function test_con_un_partner_che_incassa_fuori_l_avviso_preventivo_parla_di_pagamento(): void
+    {
+        $partner = User::factory()->offlinePartner()->create();
+        $this->actingAsSuperadmin();
+
+        $this->componentFor($partner)
+            ->assertSee(__('admin-catalog.create.smartbox_payment_heading'))
+            ->assertSee(__('admin-catalog.create.smartbox_payment_notice'))
+            ->assertDontSee(__('admin-catalog.create.stripe_missing_notice'));
+    }
+
+    /** Partner online senza Stripe: l'avviso resta quello di prima. */
+    public function test_con_un_partner_online_senza_stripe_l_avviso_preventivo_resta_su_stripe(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create();
+        $this->actingAsSuperadmin();
+
+        $this->componentFor($partner)
+            ->assertSee(__('admin-catalog.create.stripe_missing_notice'))
+            ->assertDontSee(__('admin-catalog.create.smartbox_payment_notice'));
+    }
+
+    /**
+     * Esito del salvataggio: la bozza resta in attesa (non è un errore, la
+     * smartbox si compila e si salva) e il testo dice il motivo vero.
+     */
+    public function test_una_smartbox_di_un_partner_che_incassa_fuori_resta_in_attesa_col_motivo_vero(): void
+    {
+        $partner = User::factory()->offlinePartner()->create();
+        $partner->partnerProfile->update(['business_name' => 'Agriturismo Il Faro']);
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSee(__('admin-catalog.create.awaiting_smartbox_payment', ['name' => 'Agriturismo Il Faro']))
+            ->assertDontSee(__('admin-catalog.create.awaiting_stripe', ['name' => 'Agriturismo Il Faro']));
+
+        $draft = StructureDraft::sole();
+        $this->assertSame(0, SmartboxPackage::withHidden()->count());
+        $this->assertNotNull($draft->publish_requested_at);
+        $this->assertSame('smartbox', $draft->service_category);
+    }
+
+    /**
+     * ROSSO ATTESO — documenta un difetto, non lo copre.
+     *
+     * `partials/partner-aside.blade.php` sceglie fra i due titoli solo
+     * nell'avviso PREVENTIVO; quello di ESITO ha ancora il titolo fisso
+     * `awaiting_stripe_heading` ("Questo partner non può ancora essere pagato").
+     * Il risultato è un avviso che si contraddice: titolo Stripe, testo modalità
+     * di pagamento — cioè, nel titolo, la stessa diagnosi falsa che la modifica
+     * doveva eliminare. Si corregge nel blade, con lo stesso ternario già usato
+     * venti righe sopra.
+     */
+    public function test_il_titolo_dell_avviso_di_esito_non_deve_parlare_di_stripe(): void
+    {
+        $partner = User::factory()->offlinePartner()->create();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSee(__('admin-catalog.create.smartbox_payment_heading'))
+            ->assertDontSee(__('admin-catalog.create.awaiting_stripe_heading'));
+    }
 }

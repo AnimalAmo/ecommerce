@@ -11,6 +11,10 @@
 
     $badge = match ($state) {
         State::AWAITING_STRIPE => ['label' => 'partner.my_services.awaiting_stripe', 'class' => '!bg-brand-yellow !text-ink', 'hint' => null],
+        // Smartbox ferma perché il partner non incassa online (richiesta della
+        // cliente, 27/09/2026): tono warning, come l'attesa di Stripe, perché
+        // non è un errore del partner ma qualcosa che deve ancora collegare.
+        State::AWAITING_PAYMENT_METHOD => ['label' => 'partner.my_services.awaiting_payment_method', 'class' => '!bg-brand-yellow !text-ink', 'hint' => 'partner.my_services.awaiting_payment_method_hint'],
         State::PUBLISHING => ['label' => 'partner.my_services.publishing', 'class' => '!bg-brand-cyan !text-white', 'hint' => 'partner.my_services.publishing_hint'],
         State::INCOMPLETE => ['label' => 'partner.my_services.incomplete', 'class' => '!bg-[#FDEBE8] !text-[#F85933]', 'hint' => 'partner.my_services.incomplete_hint'],
         State::AWAITING_APPROVAL => ['label' => 'partner.my_services.awaiting_approval', 'class' => '!bg-brand-purple-soft !text-ink', 'hint' => null],

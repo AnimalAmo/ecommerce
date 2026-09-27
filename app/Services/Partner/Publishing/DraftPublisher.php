@@ -28,7 +28,7 @@ class DraftPublisher
     /**
      * Null quando il draft non è pubblicabile (vedi isPublishable).
      *
-     * @throws PartnerNotPayableException partner online con onboarding Stripe incompleto, o senza profilo
+     * @throws PartnerNotPayableException partner online con onboarding Stripe incompleto, senza profilo, o smartbox di chi non incassa online
      */
     public function publish(StructureDraft $draft): ?Model
     {
@@ -43,11 +43,23 @@ class DraftPublisher
         // profilo non si sa nemmeno come verrebbe pagato: si rifiuta, come prima.
         $profile = $draft->user?->partnerProfile;
 
-        if ($profile === null || ! $profile->canPublish()) {
+        if ($profile === null) {
             throw PartnerNotPayableException::onboardingIncomplete();
         }
 
-        return match ($draft->family()) {
+        $family = $draft->family();
+
+        // Il gate è per famiglia: la smartbox è un cofanetto prepagato e vuole
+        // l'incasso online (richiesta della cliente, 27/09/2026). Il messaggio
+        // cambia con la causa: chi incassa fuori non deve leggere «completa il
+        // collegamento Stripe», che gli farebbe cercare un onboarding a metà.
+        if (! $profile->canPublishFamily($family)) {
+            throw $family === 'smartbox' && ! $profile->requiresOnlinePayment()
+                ? PartnerNotPayableException::smartboxRequiresOnlinePayment()
+                : PartnerNotPayableException::onboardingIncomplete();
+        }
+
+        return match ($family) {
             'attivita' => $this->events->publish($draft),
             'smartbox' => $this->smartboxes->publish($draft),
             default => $this->structures->publish($draft),

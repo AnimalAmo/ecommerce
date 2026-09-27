@@ -32,7 +32,25 @@
                 {{-- Step 1 e 2: blocco a due card (654 + 40 + 575 = 1269) centrato --}}
                 <div class="mx-auto mt-[85px] flex w-full max-w-[1269px] flex-col gap-10 min-[87.5rem]:flex-row min-[87.5rem]:items-start">
                     <div class="w-full min-w-0 min-[87.5rem]:w-[654px] min-[87.5rem]:shrink-0">
-                        @if ($step === 1)
+                        @if ($onSiteBlocked)
+                            {{-- Modalità "prenota e paga in struttura" spenta (richiesta della cliente, 27/09/2026):
+                                 al posto dei campi, la spiegazione e i contatti del partner. Non è un errore del
+                                 cliente e non è un dato sbagliato: è una modalità che non c'è più. Le righe e il
+                                 totale restano nella colonna di destra — il carrello non viene svuotato. --}}
+                            <div class="{{ $card }} px-6 pb-8">
+                                <h1 class="my-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.on_site.unavailable.title') }}</h1>
+                                <p class="text-[15px] leading-6 text-[#555555]">{{ __('checkout.on_site.unavailable.body') }}</p>
+
+                                {{-- Stessa card contatti delle schede di un partner senza pagamento online:
+                                     ragione sociale, indirizzo e link «dove pagare o prenotare». Null (partner
+                                     senza profilo) = resta la sola dicitura, il partial se ne occupa. --}}
+                                <div class="mt-5">
+                                    @include('partials.catalog.partner-contacts-card', ['contacts' => $sellerContacts])
+                                </div>
+
+                                <flux:button href="{{ route('carrello', $gift ? ['regalo' => 1] : []) }}" class="mt-6 !h-10 !rounded-full !border-0 !bg-[#0D171A] !px-6 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('checkout.on_site.unavailable.back_to_cart') }}</flux:button>
+                            </div>
+                        @elseif ($step === 1)
                             {{-- Card "Verifica i tuoi dati personali": 5 campi precompilati con spunta ciano quando pieni --}}
                             <div class="{{ $card }} px-6 pb-8">
                                 <h1 class="my-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.verify_personal_data') }}</h1>

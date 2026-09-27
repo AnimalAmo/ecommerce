@@ -25,6 +25,16 @@ return [
         'gift_not_allowed' => 'Il partner ora si fa pagare direttamente e non online: questo regalo non si può più acquistare. Rimuovilo dal carrello.',
         'thank_you' => 'Prenotazione confermata!',
         'thank_you_sub' => 'Ecco il riepilogo, controlla l\'email: il pagamento lo farai direttamente al partner.',
+
+        // Modalità spenta dal kill-switch commerce.on_site_booking (richiesta
+        // della cliente, 27/09/2026): il carrello NON si svuota, si blocca il
+        // pagamento e si dice come prenotare presso il partner.
+        'unavailable' => [
+            'title' => 'Questa prenotazione non si completa qui',
+            'body' => 'La prenotazione con pagamento diretto al partner non si completa più su AnimalAmo: per prenotare va contattato direttamente il partner. Il tuo carrello resta dov\'è, non abbiamo toccato niente.',
+            'toast' => 'Questa modalità di prenotazione non è più disponibile: contatta il partner per prenotare.',
+            'back_to_cart' => 'Torna al carrello',
+        ],
     ],
 
     // Stringhe di UI del funnel Checkout (blade commerce/checkout)

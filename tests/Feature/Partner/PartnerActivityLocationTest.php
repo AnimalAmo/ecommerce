@@ -4,6 +4,8 @@ namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Activity\ActivityLocation;
 use App\Models\Structure\StructureDraft;
+use Database\Seeders\ProvinceSeeder;
+use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -11,6 +13,18 @@ use Tests\TestCase;
 class PartnerActivityLocationTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * `ActivityLocationForm` verifica la sigla con `exists:provinces,short_name`:
+     * senza le province a database anche 'VR' sarebbe rifiutata. Stessa coppia di
+     * seeder di StructurePublisherTest (ProvinceSeeder vuole le regioni).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed([RegionSeeder::class, ProvinceSeeder::class]);
+    }
 
     public function test_page_renders_the_location_fields(): void
     {
@@ -71,6 +85,28 @@ class PartnerActivityLocationTest extends TestCase
         // Nessuna traduzione EN salvata: fallback sull'italiano.
         $this->assertSame('Ingresso del parco', $draft->getTranslation('meeting_point', 'en'));
         $this->assertSame(['it' => 'Ingresso del parco'], $draft->getTranslations('meeting_point'));
+    }
+
+    /**
+     * Sigla fuori elenco. Un'attività non ha `region_id` — EventPublisher scrive
+     * un Venue — ma la sigla finisce testuale nell'indirizzo e nell'etichetta del
+     * luogo: una sigla inventata diventa un «Garda (ZZ)» a catalogo, non più
+     * modificabile dal partner a scheda pubblicata.
+     */
+    public function test_next_rejects_a_province_outside_the_list(): void
+    {
+        Livewire::test(ActivityLocation::class)
+            ->set('form.address', 'Via Lago 5')
+            ->set('form.city', 'Garda')
+            ->set('form.province', 'ZZ')
+            ->set('form.zip', '37016')
+            ->set('form.meetingPoint.it', 'Ingresso del parco')
+            ->call('next')
+            ->assertHasErrors(['form.province' => 'exists']);
+
+        // `mount()` crea sempre la bozza vuota della sessione: quel che conta è
+        // che lo step non abbia scritto la sigla inventata.
+        $this->assertNull(StructureDraft::first()->province);
     }
 
     public function test_it_rehydrates_the_saved_meeting_point(): void

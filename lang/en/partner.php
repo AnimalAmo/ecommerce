@@ -7,6 +7,11 @@ return [
         'stripe_onboarding_required' => 'Before publishing a service you need to finish connecting your Stripe account.',
         // Draft closed without the minimum catalogue data (name, rooms, date or price).
         'draft_not_publishable' => "We can't publish this service yet: some required details are missing. Check the steps and try again.",
+        // Partner user without a `partner_profiles` row: it used to create the
+        // Stripe account and then blow up, leaving an orphan account per click.
+        'partner_profile_missing' => "We can't start the Stripe connection: your partner profile is incomplete. Get in touch and we will fix it.",
+        // Smartbox of a partner who does not take payment online (client request, 27/09/2026).
+        'smartbox_requires_online_payment' => 'A Smartbox is a prepaid package: to publish and sell it you need to take payment online and connect your payment system.',
     ],
 
     // Automatic publishing once Stripe is connected (P4): dashboard notice after the wizard.
@@ -14,11 +19,21 @@ return [
         'awaiting_stripe' => 'Your service is ready: we will publish it automatically as soon as you finish connecting your Stripe account.',
         // Edit of a service already completed: the previous version stays the published one.
         'awaiting_stripe_changes' => 'Changes saved: the version already published stays as it was, and we will publish your changes automatically as soon as you finish connecting your Stripe account.',
+        // Smartbox wizard and Smartbox card notice: it warns, it does not block
+        // (client request, 27/09/2026). First line is the client's sentence,
+        // second one says the wizard can be filled in anyway.
+        'smartbox_payment_required' => 'To publish and sell a Smartbox you need to connect your payment system',
+        'smartbox_payment_required_hint' => 'You can fill in and save the package right away: it goes on sale by itself once you take payments online on AnimalAmo with your Stripe account connected.',
+        'smartbox_payment_required_cta' => 'Connect your payment system',
     ],
 
     // "My services": drafts closed by the partner and held until Stripe can pay them.
     'my_services' => [
         'awaiting_stripe' => 'Waiting for the Stripe connection',
+        // Smartbox pulled from the shop window, or held before entering it,
+        // because the partner does not take payment online (27/09/2026).
+        'awaiting_payment_method' => 'Payment system required',
+        'awaiting_payment_method_hint' => 'A Smartbox only sells with online payments: connect your payment system and it goes back on sale by itself.',
         'publishing' => 'Going live',
         'publishing_hint' => 'It will be online within a few minutes.',
         'incomplete' => 'Some details are missing',
@@ -986,6 +1001,11 @@ return [
         // P4: services closed before connecting Stripe, published automatically afterwards.
         'awaiting_stripe_banner' => ':count service is waiting for the Stripe connection: we will publish it as soon as your account is active.|:count services are waiting for the Stripe connection: we will publish them as soon as your account is active.',
         'awaiting_stripe_cta' => 'Connect Stripe',
+        // Smartboxes held because online payment is missing: the heading is the
+        // sentence the client asked for word for word (27/09/2026).
+        'smartbox_payment_heading' => 'To publish and sell a Smartbox you need to connect your payment system',
+        'smartbox_payment_banner' => 'You have :count Smartbox ready that we cannot put on sale: it goes back on sale by itself as soon as you take payments online.|You have :count Smartboxes ready that we cannot put on sale: they go back on sale by themselves as soon as you take payments online.',
+        'smartbox_payment_cta' => 'Connect your payment system',
     ],
 
     /*

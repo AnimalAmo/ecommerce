@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 
 /**
- * Ciò che il sito può mostrare e vendere: schede non sospese e approvate.
+ * Ciò che il sito può mostrare e vendere: schede non sospese, non ritirate e
+ * approvate.
+ *
+ * `withheld_at` è il ritiro della piattaforma (27/09/2026: una smartbox il cui
+ * partner non incassa online non è acquistabile, quindi non sta in vetrina).
+ * Sta qui e non in una condizione sparsa per il codice per la stessa ragione di
+ * `suspended_at`: una scheda non acquistabile che resta comprabile da un link
+ * diretto è esattamente il difetto che il ritiro deve impedire.
  *
  * Globale apposta. Il catalogo è interrogato da una ventina di punti (liste,
  * dettagli, carrello, checkout, sitemap, conteggi per regione): uno scope da
@@ -25,6 +32,7 @@ class CatalogVisibleScope implements Scope
     {
         $builder
             ->whereNull($model->qualifyColumn('suspended_at'))
+            ->whereNull($model->qualifyColumn('withheld_at'))
             ->where($model->qualifyColumn('approval_status'), 'approved');
     }
 }
