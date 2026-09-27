@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Exceptions\PartnerNotPayableException;
 use App\Jobs\PublishAwaitingDrafts;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
@@ -25,10 +26,24 @@ class StripeConnectService
 {
     public function __construct(private readonly StripeClient $client) {}
 
-    /** Id dell'account connesso del partner, creandolo se non esiste. */
+    /**
+     * Id dell'account connesso del partner, creandolo se non esiste.
+     *
+     * @throws PartnerNotPayableException utente partner senza riga `partner_profiles`
+     */
     public function ensureAccountFor(User $partner): string
     {
         $profile = $partner->partnerProfile;
+
+        // La guardia sta PRIMA della chiamata a Stripe, e non è pignoleria:
+        // senza profilo l'account veniva creato per davvero e a esplodere era
+        // l'`update()` della riga inesistente, due righe più sotto. Risultato,
+        // un account Connect orfano a ogni click del partner — e un account
+        // connesso non si cancella da codice, quindi la sola difesa è non
+        // farlo nascere.
+        if ($profile === null) {
+            throw PartnerNotPayableException::profileMissing();
+        }
 
         if ($profile->stripe_account_id !== null) {
             return $profile->stripe_account_id;

@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Profile;
 
 use App\Enums\OrderPaymentMode;
+use App\Exceptions\PartnerNotPayableException;
 use App\Exceptions\PaymentConfigurationException;
 use App\Exceptions\PaymentModeException;
 use App\Livewire\Forms\PartnerPaymentForm;
@@ -73,11 +74,21 @@ class PartnerProfilePayment extends Component
      */
     public function connectStripe()
     {
-        $url = app(StripeConnectService::class)->onboardingUrl(
-            Auth::user(),
-            route('partner.profile.payment'),
-            route('partner.profile.payment'),
-        );
+        // Profilo partner mancante: da qui `ensureAccountFor()` rifiuta prima di
+        // creare l'account su Stripe (27/09/2026). Senza questo catch il partner
+        // vedrebbe un 500 al posto del motivo. `savePaymentMode()` invece il
+        // profilo lo crea: è la differenza che portava all'account orfano.
+        try {
+            $url = app(StripeConnectService::class)->onboardingUrl(
+                Auth::user(),
+                route('partner.profile.payment'),
+                route('partner.profile.payment'),
+            );
+        } catch (PartnerNotPayableException $exception) {
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return null;
+        }
 
         return $this->redirect($url);
     }

@@ -256,9 +256,12 @@ class StructureCreate extends Component
         //    `required|string|max:64` del Form **più** l'exists, non l'uno al
         //    posto dell'altro.
 
-        // Rafforzamento 1: la sigla deve esistere davvero. Oggi una sigla
-        // sbagliata dà region_id NULL in silenzio (StructurePublisher) e la
-        // scheda sparisce da ogni elenco regionale.
+        // Rafforzamento 1: la sigla deve esistere davvero. Dal 27/09/2026 la
+        // regola sta anche su HotelLocationForm, quindi qui risulta doppia (due
+        // query identiche, innocue): non si toglie perché l'ordine di questo
+        // metodo è portante e il messaggio a video deve restare quello del
+        // pannello. Se una sigla fuori elenco passasse, la scheda sparirebbe da
+        // ogni elenco regionale e ora StructurePublisher::regionIdFor() lo logga.
         $rules['location.province'][] = Rule::exists('provinces', 'short_name');
 
         // Rafforzamento 3: le liste di slug del wizard non hanno whitelist.

@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Structure\StructureDraft;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 /**
@@ -21,12 +22,28 @@ class ActivityLocationForm extends Form
     /** Punto d'incontro, localizzato: it obbligatorio, en opzionale. */
     public array $meetingPoint = ['it' => '', 'en' => ''];
 
+    /**
+     * `province.exists`: la sigla deve esistere in `provinces`, lo stesso
+     * controllo che il pannello admin fa già (ActivityCreate). Un'attività non
+     * ha una regione — EventPublisher scrive un Venue, non `region_id` — ma la
+     * sigla finisce testuale nell'etichetta del luogo e nell'indirizzo del
+     * Venue: una sigla inventata diventa un «Garda (ZZ)» a catalogo, sotto gli
+     * occhi del cliente e non più modificabile dal partner a scheda pubblicata.
+     *
+     * Volutamente SENZA un `messages()` su questo Form: ActivityCreate
+     * costruisce il proprio messaggio `location.province.exists` e poi ci fonde
+     * sopra quelli dei Form object, quindi una chiave qui vincerebbe sul
+     * messaggio del pannello admin. Nel wizard resta il generico di
+     * `lang/it/validation.php` e il suo gemello inglese, che basta: il campo è una select ricercabile
+     * (components/partner/province-select) che manda sempre una sigla del DB,
+     * quindi l'errore lo vede solo chi forgia la richiesta.
+     */
     public function rules(): array
     {
         return [
             'address' => ['required', 'string', 'max:128'],
             'city' => ['required', 'string', 'max:64'],
-            'province' => ['required', 'string', 'max:64'],
+            'province' => ['required', 'string', 'max:64', Rule::exists('provinces', 'short_name')],
             'zip' => ['required', 'digits:5'],
             'meetingPoint.it' => ['required', 'string', 'max:128'],
             'meetingPoint.en' => ['nullable', 'string', 'max:128'],
