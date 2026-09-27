@@ -10,6 +10,7 @@ use App\Models\Event\Event;
 use App\Services\Cart\CartManager;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
+use App\Services\Partner\ServiceOptionLabels;
 use App\Support\Format;
 use Flux\Flux;
 use Livewire\Component;
@@ -98,6 +99,61 @@ class EventDetail extends Component
         return Event::where('slug', $this->eventSlug)->firstOrFail();
     }
 
+    /**
+     * Riga «Tipologia» della scheda: le tipologie di evento tradotte su una
+     * riga sola (stesso idioma di PartnerServiceDetail, implode ', ').
+     *
+     * Gruppo `event_category` e non `activity_category`: sono le due liste
+     * gemelle dello stesso step del wizard (risposta della cliente,
+     * 27/09/2026), e gli slug non si sovrappongono — un evento pubblicato da
+     * chi prima faceva il professionista non deve pescare nella lista
+     * sbagliata. Il testo libero di «Altro» resta la sotto-riga grigia del
+     * blade, come time_note e venue_note.
+     */
+    private static function categoryLabels(Event $event): ?string
+    {
+        $labels = array_filter(ServiceOptionLabels::labels('event_category', $event->event_categories));
+
+        return $labels === [] ? null : implode(', ', $labels);
+    }
+
+    /**
+     * Posti che restano, o null quando la capienza è illimitata
+     * (`max_participants` nullo) oppure già esaurita — in quel caso la riga
+     * lascia il posto alla dicitura "posti esauriti", che sta dove c'era la
+     * CTA: «Posti disponibili: 0» sarebbe una riga che dice di sì e di no.
+     *
+     * Stessa aritmetica di AvailabilityService::ensureEventAvailable, che è
+     * l'unico posto dove i posti si contano sotto lock: qui si decide solo cosa
+     * disegnare.
+     */
+    private static function remainingSeats(Event $event): ?int
+    {
+        if ($event->max_participants === null) {
+            return null;
+        }
+
+        $left = $event->max_participants - ($event->booked_participants ?? 0);
+
+        return $left > 0 ? $left : null;
+    }
+
+    /**
+     * Posti esauriti: non c'è spazio nemmeno per un partecipante (la scheda
+     * evento aggiunge sempre una persona per volta, decisione ratificata).
+     *
+     * Dal 27/09/2026 il partner può mettere un limite di posti, quindi un
+     * evento può riempirsi: la CTA sparisce invece di restare lì a fallire con
+     * un toast. `addToCart()` NON prende guardie nuove — la validazione vera
+     * resta del carrello, che è l'unico a contare sotto lock, e una chiamata
+     * wire manomessa deve continuare a passare da lì.
+     */
+    private static function isSoldOut(Event $event): bool
+    {
+        return $event->max_participants !== null
+            && ($event->booked_participants ?? 0) >= $event->max_participants;
+    }
+
     public function render()
     {
         $event = $this->event();
@@ -117,6 +173,15 @@ class EventDetail extends Component
                 $event->amenityRows('animal'),
             ])),
             'faqs' => $event->faqs,
+            // Le righe nate dalle risposte della cliente del 27/09/2026: che tipo
+            // di evento è, se è singolo o ricorrente, se la prenotazione serve e
+            // quanti posti restano. Ognuna è nulla quando il partner non l'ha
+            // compilata, e il blade salta la riga: mai un'etichetta senza valore.
+            'categoryLabels' => self::categoryLabels($event),
+            'recurrenceLabel' => ServiceOptionLabels::label('event_recurrence', $event->recurrence),
+            'bookingRequirement' => ServiceOptionLabels::label('booking_requirement', $event->booking_requirement),
+            'remainingSeats' => self::remainingSeats($event),
+            'isSoldOut' => self::isSoldOut($event),
             // Solo gli eventi acquistabili: i gratuiti hanno la CTA Partecipa.
             'paysOnSite' => ! $event->hasJoinCta()
                 && app(PartnerPaymentModeService::class)->forPurchasable($event) === OrderPaymentMode::OnSite,

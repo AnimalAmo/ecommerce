@@ -77,11 +77,29 @@
                         </section>
                     @endif
 
-                    {{-- 4b. Informazioni generali: durata, località, ritrovo --}}
+                    {{-- 4b. Informazioni generali: tipologia, durata, località, zona, orari, prenotazione, ritrovo.
+                           Le righe nuove (27/09/2026) riusano l'idioma della lista: icona + valore, con la
+                           sotto-riga grigia per il testo libero. Ognuna ha la sua guardia, così una scheda
+                           senza quel dato non mostra un'etichetta vuota. --}}
                     {{-- first:mt-0: con la descrizione nascosta questa è la prima sezione, il mt-10 raddoppierebbe il padding della colonna --}}
                     <section class="mt-10 first:mt-0">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
+                            {{-- Tipologia: le categorie professionali del partner (richiesta della cliente,
+                                 27/09/2026: un servizio professionale si presenta per quello che fa). Prima
+                                 riga della lista perché dice che cos'è la scheda. --}}
+                            @if (filled($categoryLabels))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.tag variant="micro" class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('partner.activity_name.field_categories') }}: {{ $categoryLabels }}</p>
+                                        {{-- Testo libero di "Altro": sotto-riga grigia come time_note e venue_note --}}
+                                        @if (filled($activity->activity_categories_other))
+                                            <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->activity_categories_other }}</p>
+                                        @endif
+                                    </div>
+                                </li>
+                            @endif
                             {{-- Durata: la riga c'è solo se una durata esiste davvero. Dal
                                  27/09/2026 la data è facoltativa per le attività, e senza date
                                  EventPublisher lascia `duration_days` nullo: il fallback "3
@@ -110,8 +128,42 @@
                                     @endif
                                 </div>
                             </li>
-                            {{-- venue_id nullable: guard sulle attività senza venue --}}
-                            @if ($activity->venue)
+                            {{-- Zona in cui opera il partner: prende il posto del ritrovo sulle schede di chi
+                                 non fa eventi (richiesta della cliente, 27/09/2026: «un professionista non ha
+                                 un ritrovo, ha un raggio in cui lavora»). L'etichetta è quella del wizard,
+                                 la sola che esiste a lang: è rivolta al partner ("Zona in cui operi") e va
+                                 riscritta al terzo posto quando si aprono i file di lingua. --}}
+                            @if (filled($activity->operating_area))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.map variant="micro" class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('partner.activity_location.operating_area') }}: {{ $activity->operating_area }}</p>
+                                    </div>
+                                </li>
+                            @endif
+                            {{-- Orari del titolare (profilo partner, letti una volta sola in ActivityDetail::openingHours) --}}
+                            @if (filled($openingHours))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('partner.profile.opening_hours') }}: {{ $openingHours }}</p>
+                                    </div>
+                                </li>
+                            @endif
+                            {{-- Prenotazione: il valore si porta dietro la parola ("Prenotazione obbligatoria"),
+                                 quindi qui non serve nessuna etichetta davanti. --}}
+                            @if (filled($bookingRequirement))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.ticket variant="micro" class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $bookingRequirement }}</p>
+                                    </div>
+                                </li>
+                            @endif
+                            {{-- Ritrovo: venue_id è nullable, e un venue che si chiama come la scheda non è un
+                                 ritrovo ma il ripiego del publisher — la guardia sta in
+                                 ActivityDetail::showsMeetingPoint(). --}}
+                            @if ($showMeetingPoint)
                                 <li class="flex items-start gap-4">
                                     {{-- XD: coppia di figure "noun-user" — resa con l'icona team --}}
                                     <flux:icon.team class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
@@ -166,18 +218,24 @@
                         {{-- Selettore: date fisse derivate dalla riga evento (starts_at/ends_at/duration_days, non editabili);
                              ospiti e animali con accordion + stepper condivisi (stile del pop-up Modifica del carrello) --}}
                         <div class="mt-4 rounded-[4px] border border-[#DEDEDE]">
-                            <div class="grid grid-cols-2 divide-x divide-[#DEDEDE]">
-                                <div class="px-[15px] pb-[14px] pt-3">
-                                    <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">{{ __('events.checkin') }}</p>
-                                    <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">{{ $dates['checkIn'] ?? '—' }}</p>
+                            {{-- Dal 27/09/2026 la data è facoltativa per un'attività, e la cliente chiede che al
+                                 posto di «Data inizio / Data fine» compaiano zona e orari: senza data la coppia
+                                 check-in/check-out non compare più (mostrava due trattini) e il selettore parte
+                                 dagli ospiti. --}}
+                            @if ($dates['checkIn'] !== null)
+                                <div class="grid grid-cols-2 divide-x divide-[#DEDEDE]">
+                                    <div class="px-[15px] pb-[14px] pt-3">
+                                        <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">{{ __('events.checkin') }}</p>
+                                        <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">{{ $dates['checkIn'] }}</p>
+                                    </div>
+                                    <div class="pb-[14px] pl-[18px] pr-[15px] pt-3">
+                                        <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">{{ __('events.checkout') }}</p>
+                                        <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">{{ $dates['checkOut'] ?? $dates['checkIn'] }}</p>
+                                    </div>
                                 </div>
-                                <div class="pb-[14px] pl-[18px] pr-[15px] pt-3">
-                                    <p class="text-[17px] font-medium leading-[23px] text-[#2B2B2B]">{{ __('events.checkout') }}</p>
-                                    <p class="mt-[3px] text-[17px] font-light leading-[23px] text-[#2B2B2B]">{{ $dates['checkOut'] ?? $dates['checkIn'] ?? '—' }}</p>
-                                </div>
-                            </div>
-                            {{-- Campo Ospiti --}}
-                            <div class="border-t border-[#DEDEDE]">
+                            @endif
+                            {{-- Campo Ospiti (senza le date è il primo blocco: il border-t raddoppierebbe il bordo del riquadro) --}}
+                            <div class="{{ $dates['checkIn'] !== null ? 'border-t border-[#DEDEDE]' : '' }}">
                                 <flux:button variant="ghost" wire:click="toggleField('ospiti')" class="!h-[67px] !w-full !rounded-none !px-[15px] !py-0 !text-left hover:!bg-transparent [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-between">
                                     <span class="flex flex-col gap-[7px]">
                                         <span class="text-[17px] font-medium leading-none text-[#2B2B2B]">{{ __('events.guests') }}</span>
@@ -212,7 +270,21 @@
                             </div>
                         </div>
 
-                        @if ($canJoin)
+                        {{-- Posti esauriti (27/09/2026, il partner può mettere un limite): al posto della CTA,
+                             la ragione. Per l'attività a pagamento il carrello rifiuterebbe l'aggiunta con un
+                             toast, e un pulsante che risponde solo con un errore è peggio di un pulsante
+                             assente; per quella gratuita il posto non c'è comunque, e «Partecipa» prometterebbe
+                             un posto che non esiste. Il copy è quello della validazione del carrello
+                             (cart.sold_out): una regola, una frase. I contatti del partner restano — lo si può
+                             chiamare comunque — il riepilogo prezzi no: non c'è più niente da comprare. --}}
+                        @if ($isSoldOut)
+                            <p class="mt-[26px] flex items-start gap-2 text-sm leading-[19px] text-[#627277]">
+                                <flux:icon.exclamation-circle class="mt-[2px] h-4 w-4 shrink-0" />
+                                <span>{{ __('cart.sold_out') }}</span>
+                            </p>
+                        @endif
+
+                        @if ($canJoin && ! $isSoldOut)
                             {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
                             <flux:button wire:click="joinEvent" class="!mt-[26px] !flex !h-[39px] !w-full !gap-2 !rounded-full !border-0 !bg-gray-150 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center [&>span]:gap-2">
                                 <flux:icon.check-1 class="h-4 w-4 shrink-0" />
@@ -223,7 +295,7 @@
                             <div class="mt-[26px]">
                                 @include('partials.catalog.partner-contacts-card')
                             </div>
-                        @else
+                        @elseif (! $isSoldOut)
                             <flux:button wire:click="addToCart" class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('events.add_to_cart') }}</flux:button>
 
                             {{-- Riepilogo reale dagli stepper: prezzo × persone + totale quotato server-side --}}

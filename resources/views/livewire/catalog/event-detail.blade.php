@@ -82,7 +82,19 @@
                         <flux:icon.heart class="h-4 w-4 shrink-0" />
                         {{ $isFav ? __('events.interested') : __('events.favorites') }}
                     </flux:button>
-                    @if ($canJoin)
+                    @if ($isSoldOut)
+                        {{-- Posti esauriti (27/09/2026, il partner può mettere un limite): al posto della CTA,
+                             la ragione. Per l'evento a pagamento il carrello rifiuterebbe l'aggiunta con un
+                             toast, e un pulsante che risponde solo con un errore è peggio di un pulsante
+                             assente; per quello gratuito il posto non c'è comunque, e «Partecipa» prometterebbe
+                             un posto che non esiste. Il copy è quello della validazione del carrello
+                             (cart.sold_out): una regola, una frase. Non è un flux:button: non c'è niente da
+                             cliccare. I recapiti del partner, quando li mostra, restano nella colonna destra. --}}
+                        <p class="flex max-w-[340px] shrink-0 items-start gap-2 text-sm leading-[19px] text-[#627277]">
+                            <flux:icon.exclamation-circle class="mt-[2px] h-4 w-4 shrink-0" />
+                            <span>{{ __('cart.sold_out') }}</span>
+                        </p>
+                    @elseif ($canJoin)
                         {{-- Pill "Partecipa" come nel listing (XD "Raggruppa 3155" 136x39, check + Nunito-Bold 14) al posto di "Aggiungi al carrello" --}}
                         {{-- [&>span]: con wire:click Flux avvolge lo slot in uno span display:block (swap spinner) che impilerebbe icona e testo --}}
                         <flux:button wire:click="joinEvent" class="!h-[39px] !w-[136px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-gray-150 hover:!bg-[#DEDEDE] !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
@@ -110,11 +122,28 @@
                         </section>
                     @endif
 
-                    {{-- 4b. Informazioni generali --}}
+                    {{-- 4b. Informazioni generali: tipologia, orario, luogo, singolo/ricorrente, prenotazione, posti.
+                           Le righe nuove (27/09/2026) riusano l'idioma della lista: icona + valore, con la
+                           sotto-riga grigia per il testo libero. Ognuna ha la sua guardia, così un evento
+                           senza quel dato non mostra un'etichetta vuota. --}}
                     {{-- first:mt-0: con la descrizione nascosta questa è la prima sezione, il mt-10 raddoppierebbe il padding della colonna --}}
                     <section class="mt-10 first:mt-0">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
+                            {{-- Tipologia: le tipologie di evento scelte dal partner (risposta della cliente,
+                                 27/09/2026). Prima riga della lista perché dice che cos'è l'evento. --}}
+                            @if (filled($categoryLabels))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.tag variant="micro" class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('partner.activity_name.field_categories_event') }}: {{ $categoryLabels }}</p>
+                                        {{-- Testo libero di "Altro": sotto-riga grigia come time_note e venue_note --}}
+                                        @if (filled($event->event_categories_other))
+                                            <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $event->event_categories_other }}</p>
+                                        @endif
+                                    </div>
+                                </li>
+                            @endif
                             @if ($event->starts_at && $event->ends_at)
                                 <li class="flex items-start gap-4">
                                     <flux:icon.time class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
@@ -136,6 +165,40 @@
                                     @endif
                                 </div>
                             </li>
+                            {{-- Singolo o ricorrente: è SOLO un'etichetta. La cliente ha escluso la generazione
+                                 automatica delle ricorrenze in questa fase, quindi la pagina non promette altre
+                                 date — il valore si porta dietro la parola ("Evento ricorrente") e non serve
+                                 nessuna etichetta davanti. --}}
+                            @if (filled($recurrenceLabel))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.calendar class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $recurrenceLabel }}</p>
+                                    </div>
+                                </li>
+                            @endif
+                            {{-- Prenotazione obbligatoria / facoltativa / nessuna: anche qui il valore è già una
+                                 frase ("Prenotazione obbligatoria"). --}}
+                            @if (filled($bookingRequirement))
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.ticket variant="micro" class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $bookingRequirement }}</p>
+                                    </div>
+                                </li>
+                            @endif
+                            {{-- Posti che restano, solo quando un limite esiste (capienza illimitata = nessuna
+                                 riga, non "illimitati"). A posti esauriti la riga non c'è: lo dice la dicitura
+                                 che prende il posto della CTA, e «Posti disponibili: 0» direbbe sì e no insieme. --}}
+                            @if ($remainingSeats !== null)
+                                <li class="flex items-start gap-4">
+                                    {{-- icona users e non team: quella custom ha fill/stroke fissi (ciano e verde) e sarebbe la sola voce colorata della lista --}}
+                                    <flux:icon.users variant="micro" class="mt-0.5 h-4 w-4 shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('partner.activity_info.max_participants') }}: {{ $remainingSeats }}</p>
+                                    </div>
+                                </li>
+                            @endif
                         </ul>
                     </section>
 
