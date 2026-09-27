@@ -122,3 +122,93 @@ Non prima di aver riletto l'elenco. Due cause restano possibili anche dopo il re
 query C e D: una scheda può risultare **pubblicata e comunque invisibile** se la provincia scritta nel wizard
 non è stata riconosciuta, oppure se la moderazione preventiva è accesa. Entrambe vanno chiuse caso per caso
 prima di scrivere ai partner che è risolto.
+
+---
+
+# Appendice — «all'ultimo passo il sistema mi butta fuori cancellando i dati»
+
+Segnalazione del **27/09/2026, ore 14:05**, da *Agriturismo Metina* (Monica Anselmetti, Montepulciano SI,
+`info@metina.it`), inoltrata dalla cliente: «ho completato tutte le informazioni richieste, ma all'ultimo
+passo il sistema mi "butta fuori" cancellando i dati. Al 5° tentativo ho rinunciato.»
+
+## Cosa è già certo, senza toccare il server
+
+**Una bozza a metà è raggiungibile solo dalla sessione, e da nessun'altra parte.**
+
+- Il wizard tiene la bozza in `session('structure_draft_id')` — `InteractsWithStructureDraft::draft()`.
+  Se la sessione non ce l'ha più, `draft()` **ne crea una nuova vuota**.
+- "I miei servizi" elenca solo le bozze `completed` **oppure** con `publish_requested_at` valorizzato —
+  `StructureDraft::scopeListableFor()`, `app/Models/Structure/StructureDraft.php:151-158`. Una bozza in
+  corso non ha né l'uno né l'altro: **non compare**.
+- L'unico punto che rimette la sessione su una bozza è `PartnerMyServices::edit()`
+  (`app/Livewire/Partner/MyServices/PartnerMyServices.php:37`), raggiungibile solo da quella lista.
+
+Quindi: **persa la sessione, il lavoro è irraggiungibile dall'interfaccia** anche se le righe sono tutte a
+database. Il partner riapre "Crea servizio", ne nasce una nuova vuota, e dal suo punto di vista il sistema
+ha cancellato i dati. È anche il motivo per cui è successo **cinque volte su cinque**: non c'è modo di
+riprendere, quindi ogni tentativo riparte da zero.
+
+Nessun percorso cancella davvero una bozza in corso: le uniche `delete()` sono l'eliminazione esplicita da
+"I miei servizi" (`DeleteServiceModal`), quella del pannello admin e la pulizia del catalogo mock.
+
+## Cosa la butta fuori — da stabilire sul server
+
+In ordine di probabilità:
+
+1. **La sessione scade.** `SESSION_LIFETIME` è a **120 minuti di inattività** (`config/session.php:35`,
+   `SESSION_DRIVER=database`). Undici step, con le foto da caricare e la licenza da cercare, superano due ore
+   di inattività senza sforzo — e succede **all'ultimo passo** proprio perché è quello più lontano
+   dall'inizio. Alla scadenza la richiesta Livewire prende un **419**, la pagina si ricarica e finisce sul
+   login: «mi butta fuori», letteralmente.
+2. **Il caricamento delle foto supera i limiti PHP.** Se il POST eccede `post_max_size`, PHP scarta
+   l'intera richiesta: Laravel non vede più nemmeno il token CSRF e risponde **419**, con lo stesso effetto.
+3. Un 500 all'ultimo step. Meno probabile: `DraftCompleter` cattura già il caso del partner non ancora
+   pagabile e `completeDraft()` quello della bozza incompleta (toast, si resta sullo step).
+
+```bash
+cd /home/forge/animalamo.it
+
+echo "=== durata sessione e driver ==="
+php artisan tinker --execute="echo config('session.lifetime'),' min / ',config('session.driver');"
+
+echo "=== limiti di upload ==="
+php -r 'echo "post_max_size=",ini_get("post_max_size")," upload_max_filesize=",ini_get("upload_max_filesize")," max_file_uploads=",ini_get("max_file_uploads"),PHP_EOL;'
+grep -r "client_max_body_size" /etc/nginx/ 2>/dev/null | head
+
+echo "=== 419 e 500 recenti ==="
+grep -c "419\|TokenMismatch" storage/logs/laravel*.log 2>/dev/null
+tail -200 storage/logs/laravel.log | grep -iE "production.ERROR" | tail -20
+```
+
+## La bozza di Metina: c'è ancora?
+
+```bash
+cd /home/forge/animalamo.it && php artisan db < /dev/stdin <<'SQL'
+SELECT sd.id, sd.user_id, u.email, sd.service_category, sd.type, sd.status,
+       sd.current_step, sd.publish_requested_at, sd.created_at, sd.updated_at,
+       JSON_UNQUOTE(JSON_EXTRACT(sd.name, '$.it')) AS nome
+FROM structure_drafts sd
+JOIN users u ON u.id = sd.user_id
+WHERE u.email LIKE '%metina%' OR JSON_UNQUOTE(JSON_EXTRACT(sd.name, '$.it')) LIKE '%etina%'
+ORDER BY sd.id DESC;
+SQL
+```
+
+Se le righe ci sono — ed è l'ipotesi forte — **il lavoro non è perduto**, è solo orfano. Si recupera
+esattamente come le schede ferme del blocco 3:
+
+```bash
+php artisan animalamo:stuck-drafts
+```
+
+Le bozze del **primo gruppo** («senza segnale: pronte, mai pubblicate, invisibili anche al partner») sono
+queste. `--fix` scrive loro `publish_requested_at`, e da quel momento **compaiono in "I miei servizi"**, dove
+il partner può riprenderle con "Modifica". Se la bozza di Metina è arrivata in fondo, è lì dentro.
+
+## Il difetto da chiudere, e non è il 419
+
+Il 419 è l'innesco; il difetto è che **una bozza in corso non si può riprendere**. Finché resta così,
+qualunque intoppo — sessione scaduta, browser chiuso, un altro dispositivo, un upload rifiutato — costa al
+partner tutto il lavoro fatto. La correzione è far comparire le bozze in corso in "I miei servizi", con il
+loro stato, invece di mostrarle solo quando sono finite. È mezza giornata e va davanti al resto della
+tranche C: ogni giorno che resta così è un partner che rinuncia al quinto tentativo, come ha fatto Metina.

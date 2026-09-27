@@ -45,7 +45,9 @@ ssh vagrant@192.168.56.56 'cd ~/Code/algomera/animal_amo/ecommerce && vendor/bin
 A long run needs `setsid`, not `nohup`: when the ssh session closes it takes the process with it. And
 `pgrep phpunit` finds nothing — the process is called `php`.
 
-**Baseline: `20 failed, 1998 passed` in Docker (5m42s); `20 failed, 1 skipped, 1997 passed` con `--native`.** The 20 are pre-existing and live in three classes
+**Baseline on Linux (the Homestead VM): `2094 passed, 1 skipped, 0 failed` (~345s) at 27/09/2026 — any
+red is yours.** In Docker on Windows the baseline is `20 failed, 1998 passed` (5m42s); `20 failed,
+1 skipped, 1997 passed` with `--native`. The 20 are pre-existing and live in three classes
 (`PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest`): the `email:rfc,dns` rule on
 partner applications needs DNS, which the sandbox has not, so the application is never stored and the
 assertions downstream die on `ModelNotFoundException`. Any number other than 20 is yours.
