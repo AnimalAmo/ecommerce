@@ -40,6 +40,9 @@ return [
         'incomplete_hint' => 'Open it and fill in the required fields: as it stands it cannot go online.',
         'awaiting_approval' => 'Waiting for approval',
         'suspended' => 'Suspended',
+        'draft' => 'Draft in progress',
+        'draft_hint' => 'Not online yet: pick it up where you left off.',
+        'resume' => 'Resume',
     ],
 
     // Partner payment mode: online on AnimalAmo or paid directly to the partner.

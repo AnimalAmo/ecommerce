@@ -43,6 +43,12 @@ return [
         'incomplete_hint' => 'Aprila e completa i campi obbligatori: com’è adesso non può andare online.',
         'awaiting_approval' => 'In attesa di approvazione',
         'suspended' => 'Sospesa',
+        // Bozza mai finita. Prima non compariva in elenco, e chi usciva dal
+        // wizard non aveva più nessun modo di ritrovarla: il lavoro sembrava
+        // cancellato (segnalazione di un partner, 27/09/2026).
+        'draft' => 'Bozza in corso',
+        'draft_hint' => 'Non è ancora online: riprendila da dove l’hai lasciata.',
+        'resume' => 'Riprendi',
     ],
 
     // Modalità di pagamento del partner: online su AnimalAmo o direttamente al partner.
