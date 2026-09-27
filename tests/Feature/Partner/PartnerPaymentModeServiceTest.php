@@ -396,4 +396,70 @@ class PartnerPaymentModeServiceTest extends TestCase
 
         $this->assertCount(1, DB::getQueryLog());
     }
+
+    // ── Difetto C8: il ritiro non ha il suo gemello ───────────────────────────
+    //
+    // `withheld_at` è scritta in tre soli punti: la migrazione dati una-tantum,
+    // SmartboxPublisher (che la AZZERA) e le definizioni di schema. `set()` salva
+    // `online_payment` e chiama solo `publishAwaitingDrafts()`: non tocca nessuna
+    // riga di catalogo già pubblicata. Da quel momento una smartbox NUOVA non si
+    // pubblica (`canPublishFamily('smartbox')` è false), ma quella vecchia resta
+    // in /smartbox — e sulla sua scheda, al posto del pulsante, compare l'invito
+    // «prenota col partner», che a un cofanetto prepagato da regalare non si
+    // applica.
+
+    public function test_passando_al_pagamento_diretto_le_smartbox_a_catalogo_vengono_ritirate(): void
+    {
+        $owner = User::factory()->stripeConnected()->create();
+        $box = SmartboxPackage::factory()->create(['user_id' => $owner->id]);
+
+        $this->modes()->set($owner->partnerProfile, false, null);
+
+        $this->assertNotNull(
+            SmartboxPackage::withHidden()->findOrFail($box->id)->withheld_at,
+            'Il gemello del ritiro: se una smartbox nuova non si pubblica senza incasso online, '
+            .'quella già in vetrina non può restarci.',
+        );
+    }
+
+    /** La smartbox ritirata non deve più comparire sul sito. */
+    public function test_una_smartbox_ritirata_esce_dalla_vetrina(): void
+    {
+        $owner = User::factory()->stripeConnected()->create();
+        $box = SmartboxPackage::factory()->create(['user_id' => $owner->id]);
+
+        $this->modes()->set($owner->partnerProfile, false, null);
+
+        $this->assertNull(
+            SmartboxPackage::query()->find($box->id),
+            'Il global scope del catalogo nasconde ciò che è ritirato: finché withheld_at è nulla '
+            .'il cofanetto resta acquistabile con una chiamata forgiata (vedi C7).',
+        );
+    }
+
+    /** Le altre famiglie non si ritirano: strutture ed eventi si vendono anche in struttura. */
+    public function test_il_passaggio_al_pagamento_diretto_non_ritira_strutture_ed_eventi(): void
+    {
+        $owner = User::factory()->stripeConnected()->create();
+        $structure = Structure::factory()->create(['user_id' => $owner->id]);
+
+        $this->modes()->set($owner->partnerProfile, false, null);
+
+        $this->assertNull(Structure::withHidden()->findOrFail($structure->id)->withheld_at);
+    }
+
+    /** E tornando online il ritiro si annulla: è quello che SmartboxPublisher già fa. */
+    public function test_tornando_online_la_smartbox_ritirata_torna_in_vetrina(): void
+    {
+        $owner = User::factory()->stripeConnected()->create();
+        $box = SmartboxPackage::factory()->create(['user_id' => $owner->id]);
+
+        $this->modes()->set($owner->partnerProfile->fresh(), false, null);
+        $this->modes()->set($owner->partnerProfile->fresh(), true, null);
+
+        $this->assertNull(
+            SmartboxPackage::withHidden()->findOrFail($box->id)->withheld_at,
+            'Il ritiro è reversibile: chi torna all\'incasso online ritrova il cofanetto in vetrina.',
+        );
+    }
 }

@@ -324,4 +324,90 @@ class PayOnSiteNoticeTest extends TestCase
 
         $this->assertTrue(app(CartManager::class)->items()->isEmpty());
     }
+
+    // ── Difetto C5: nelle liste la borsa ignora la capienza ──────────────────
+    //
+    // Le tre liste guardano solo `hasJoinCta()` e la modalità di incasso del
+    // titolare; `max_participants`/`booked_participants` non entrano in nessuno
+    // dei tre rami. La scheda di dettaglio si comporta bene, quindi lo stesso
+    // evento offre la borsa in griglia e la nega aprendolo — e il click dà solo
+    // il toast di AvailabilityService. Stessa regola già scritta qui sopra per la
+    // modalità di incasso: una borsa che non funziona è peggio di nessuna borsa.
+
+    /** Evento a pagamento, di un titolare online, a posti esauriti. */
+    private function soldOutEvent(string $slug, string $title): Event
+    {
+        return Event::factory()->create([
+            'user_id' => $this->onlineOwner()->id,
+            'slug' => $slug,
+            'title' => $title,
+            'max_participants' => 10,
+            'booked_participants' => 10,
+        ]);
+    }
+
+    public function test_la_griglia_eventi_non_offre_il_carrello_per_un_evento_pieno(): void
+    {
+        $this->soldOutEvent('evento-pieno-in-griglia', 'Evento al completo');
+
+        Livewire::test(Events::class)
+            ->assertOk()
+            ->assertSee('Evento al completo')
+            ->assertDontSeeHtml('wire:click="addToCart(')
+            // E la lista deve dirlo: oggi non dice niente.
+            ->assertSee(__('cart.sold_out'));
+    }
+
+    public function test_la_pagina_regione_non_offre_il_carrello_per_un_evento_pieno(): void
+    {
+        $this->soldOutEvent('evento-pieno-in-regione', 'Evento pieno in regione');
+
+        Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+            ->set('activeTypes', ['eventi'])
+            ->assertOk()
+            ->assertSee('Evento pieno in regione')
+            ->assertDontSeeHtml('wire:click="addToCart(')
+            ->assertSee(__('cart.sold_out'));
+    }
+
+    /**
+     * `FavoriteService::canAddToCart()` è nato per questa regola e guarda
+     * `hasJoinCta()` e la modalità del titolare, non la capienza: la borsa di
+     * partials/favorite-card.blade.php è gated solo su `can_add_to_cart`.
+     */
+    public function test_i_preferiti_non_offrono_la_borsa_per_un_evento_pieno(): void
+    {
+        $event = $this->soldOutEvent('evento-pieno-nei-preferiti', 'Evento pieno nei preferiti');
+        $user = User::factory()->create();
+        $user->favorites()->create(['favoritable_type' => 'event', 'favoritable_id' => $event->id]);
+
+        $this->actingAs($user)->get(route('preferiti'))
+            ->assertOk()
+            ->assertSee('Evento pieno nei preferiti')
+            ->assertDontSee(__('nav.card.add_to_cart'));
+    }
+
+    /** Il negativo: con un posto libero la borsa resta, in tutte e tre. */
+    public function test_con_un_posto_libero_la_borsa_resta_nelle_liste(): void
+    {
+        $event = Event::factory()->create([
+            'user_id' => $this->onlineOwner()->id,
+            'slug' => 'evento-quasi-pieno',
+            'title' => 'Evento quasi pieno',
+            'max_participants' => 10,
+            'booked_participants' => 9,
+        ]);
+
+        Livewire::test(Events::class)
+            ->assertOk()
+            ->assertSeeHtml('wire:click="addToCart(')
+            ->assertDontSee(__('cart.sold_out'));
+
+        $user = User::factory()->create();
+        $user->favorites()->create(['favoritable_type' => 'event', 'favoritable_id' => $event->id]);
+
+        $this->actingAs($user)->get(route('preferiti'))
+            ->assertOk()
+            ->assertSee(__('nav.card.add_to_cart'));
+    }
 }

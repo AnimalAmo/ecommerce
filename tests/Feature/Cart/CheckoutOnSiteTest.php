@@ -346,12 +346,21 @@ class CheckoutOnSiteTest extends TestCase
             ->call('confirmBooking')
             ->assertSet('step', 3);
 
-        // Secondo click arrivato dopo il primo (step manomesso, carrello già vuoto).
-        // Nessun pagamento è passato di qui: il toast parla di prenotazione, non di addebiti.
-        $component->set('step', 2)
-            ->call('confirmBooking')
-            ->assertDispatched('toast-show', $this->toast(__('checkout.on_site.already_placed')))
-            ->assertRedirect(route('profilo.ordini'));
+        // Secondo click arrivato dopo il primo. Dal 29/09/2026 `$step` è
+        // #[Locked], quindi il payload non può riportare il componente allo step
+        // 2 e il doppio click non arriva nemmeno a `confirmBooking`: l'esito
+        // idempotente sul token resta coperto dove vive davvero, cioè sull'azione
+        // (PlaceOnSiteOrderTest: replay a carrello vuoto, token già usato,
+        // sold-out con lo stesso token).
+        try {
+            $component->set('step', 2);
+
+            $this->fail('Atteso il rifiuto della scrittura su $step, che è #[Locked].');
+        } catch (CannotUpdateLockedPropertyException) {
+            // Il secondo click non riapre lo step della conferma.
+        }
+
+        $component->call('confirmBooking')->assertSet('step', 3);
 
         $this->assertSame(1, Order::count());
         Events::assertDispatchedTimes(OnSiteOrderConfirmed::class, 1);

@@ -95,4 +95,49 @@ class PartnerHotelPaymentTest extends TestCase
 
         Livewire::test(HotelPayment::class)->assertSet('form.iban', 'IT99');
     }
+
+    // ── Difetto W7: le coordinate restano solo sulla bozza ────────────────────
+    //
+    // `HotelPaymentForm::toDraft()` scrive `structure_drafts.account_holder/iban/
+    // bic` e nessuna riga tocca `partner_profiles`: il partner digita l'IBAN allo
+    // step 11, apre Profilo → Metodo di pagamento e lo trova vuoto, quindi lo
+    // riscrive. Due copie che non si sincronizzano, e nessuna delle due è la
+    // fonte: i bonifici passano da Stripe Connect.
+
+    public function test_le_coordinate_dello_step_undici_arrivano_al_profilo_partner(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->publishableDraftOf($partner);
+
+        Livewire::test(HotelPayment::class)
+            ->set('form.accountHolder', 'Mario Rossi')
+            ->set('form.iban', 'IT60X0542811101000000123456')
+            ->set('form.bic', 'UNCRITMM')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('partner_profiles', [
+            'user_id' => $partner->id,
+            'account_holder' => 'Mario Rossi',
+            'iban' => 'IT60X0542811101000000123456',
+            'bic' => 'UNCRITMM',
+        ]);
+    }
+
+    /** L'altro verso della stessa fonte unica: il profilo precompila lo step. */
+    public function test_lo_step_undici_precompila_le_coordinate_gia_a_profilo(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $partner->partnerProfile->update([
+            'account_holder' => 'Mario Rossi',
+            'iban' => 'IT60X0542811101000000123456',
+            'bic' => 'UNCRITMM',
+        ]);
+        $this->publishableDraftOf($partner);
+
+        Livewire::test(HotelPayment::class)
+            ->assertSet('form.accountHolder', 'Mario Rossi')
+            ->assertSet('form.iban', 'IT60X0542811101000000123456')
+            ->assertSet('form.bic', 'UNCRITMM');
+    }
 }

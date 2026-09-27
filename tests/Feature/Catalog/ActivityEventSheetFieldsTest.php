@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Catalog;
 
+use App\Livewire\Catalog\ActivityDetail;
+use App\Livewire\Catalog\EventDetail;
 use App\Models\Event\Event;
 use App\Models\Partner\PartnerProfile;
 use App\Models\Structure\StructureDraft;
@@ -9,6 +11,7 @@ use App\Models\User;
 use App\Services\Partner\Publishing\DraftPublisher;
 use Database\Seeders\AmenitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
@@ -337,5 +340,205 @@ class ActivityEventSheetFieldsTest extends TestCase
         $this->eventPage($event->fresh())
             ->assertSee(__('events.add_to_cart'))
             ->assertDontSee(__('cart.sold_out'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Difetto C2 — l'attività conta i posti sulla persona sbagliata
+    |--------------------------------------------------------------------------
+    | `ActivityDetail::isSoldOut()` è `booked >= max`, cioè la soglia della
+    | persona minima; il widget nasce con 2 adulti e
+    | `AvailabilityService::ensureEventAvailable()` rifiuta con
+    | `booked + persons > max`. Fra le due soglie la CTA resta accesa e risponde
+    | soltanto con un toast — il pulsante che un pulsante assente batte.
+    */
+
+    public function test_unattivita_con_meno_posti_degli_ospiti_di_default_non_offre_il_carrello(): void
+    {
+        // Un posto libero su dieci, e il widget chiede per due.
+        $activity = $this->publishActivity(['max_participants' => 10]);
+        $activity->update(['booked_participants' => 9]);
+
+        Livewire::test(ActivityDetail::class, ['activity' => $activity->slug])
+            // I default del widget non sono clampati sulla capienza residua.
+            ->assertSet('editGuests', ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0])
+            ->call('addToCart')
+            // Oggi: toast «Non ci sono abbastanza posti disponibili» e nient'altro.
+            ->assertDispatched('toast-show')
+            ->assertSet('cartPopupOpen', false);
+
+        $this->activityPage($activity->fresh())->assertDontSee(__('events.add_to_cart'));
+    }
+
+    /**
+     * L'altra metà di C2: senza sapere quanti posti restano, il cliente non ha
+     * modo di capire che scendendo a un ospite l'acquisto passerebbe.
+     * `remainingSeats` esiste solo su EventDetail.
+     */
+    public function test_la_scheda_attivita_dice_quanti_posti_restano(): void
+    {
+        $activity = $this->publishActivity(['max_participants' => 10]);
+        $activity->update(['booked_participants' => 7]);
+
+        // Stesso idioma della prova gemella sulla scheda evento.
+        $this->activityPage($activity->fresh())
+            ->assertSee(__('partner.activity_info.max_participants'))
+            ->assertSeeInOrder([__('partner.activity_info.max_participants'), '3']);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Difetto C4 — «Partecipa» non registra niente
+    |--------------------------------------------------------------------------
+    */
+
+    /** Evento gratuito pubblicato, con capienza dichiarata. */
+    private function publishFreeEvent(int $seats = 20): Event
+    {
+        return $this->publish([
+            'price_type' => 'gratuito',
+            'price_per_person' => null,
+            'max_participants' => $seats,
+        ]);
+    }
+
+    /**
+     * `joinEvent()` apre solo il pop-up (il TODO è dichiarato nel metodo), e
+     * `ProfileEvents::bookedEvents()` legge `order_items`, che per un evento
+     * gratuito non esistono: «Eventi a cui partecipo» resta vuoto per sempre.
+     */
+    public function test_partecipare_a_un_evento_gratuito_lo_fa_comparire_fra_i_miei_eventi(): void
+    {
+        $event = $this->publishFreeEvent();
+        $buyer = User::factory()->create();
+        $this->actingAs($buyer);
+
+        Livewire::test(EventDetail::class, ['event' => $event->slug])
+            ->call('joinEvent')
+            ->assertSet('joinPopupOpen', true);
+
+        $this->get(route('profilo.eventi'))
+            ->assertOk()
+            ->assertSee($event->title);
+    }
+
+    /**
+     * L'unico punto che incrementa `booked_participants` è
+     * ReserveAvailabilityPipe, raggiungibile solo da una riga di carrello, e
+     * `hasJoinCta()` fa uscire subito `addToCart()`. Per un evento gratuito il
+     * contatore resta quindi a zero qualunque cosa faccia il pubblico: il
+     * blocco a posti esauriti non può scattare, e la scheda continua a
+     * promettere la capienza piena.
+     */
+    public function test_le_partecipazioni_a_un_evento_gratuito_consumano_i_posti(): void
+    {
+        $event = $this->publishFreeEvent(2);
+
+        foreach ([User::factory()->create(), User::factory()->create()] as $participant) {
+            $this->actingAs($participant);
+
+            Livewire::test(EventDetail::class, ['event' => $event->slug])
+                ->call('joinEvent')
+                ->assertSet('joinPopupOpen', true);
+        }
+
+        $this->assertSame(
+            2,
+            (int) $event->fresh()->booked_participants,
+            'Due partecipazioni confermate devono consumare i due posti dichiarati: '
+            .'finché il contatore non si muove, isSoldOut() non diventa mai vero.',
+        );
+
+        // Terzo visitatore: i posti sono finiti e la CTA deve lasciare il posto alla ragione.
+        $this->eventPage($event->fresh())
+            ->assertSee(__('cart.sold_out'))
+            ->assertDontSee(__('events.join'));
+    }
+
+    /**
+     * Finché la partecipazione reale non c'è, la copy non deve affermare un
+     * fatto compiuto: il pop-up titola «Aggiunto agli eventi» e l'evento non è
+     * stato aggiunto da nessuna parte. Identico su ActivityDetail.
+     */
+    public function test_il_popup_della_partecipazione_non_dichiara_un_fatto_che_non_e_avvenuto(): void
+    {
+        $event = $this->publishFreeEvent();
+        $this->actingAs(User::factory()->create());
+
+        $html = Livewire::test(EventDetail::class, ['event' => $event->slug])
+            ->call('joinEvent')
+            ->html();
+
+        $this->assertStringNotContainsString(
+            __('events.added_to_events'),
+            $html,
+            'Nessun ordine, nessuna riga di partecipazione e nessun posto consumato: '
+            .'il pop-up non può dire «Aggiunto agli eventi».',
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Difetto W1 — detailed_description: obbligatoria e illeggibile
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * `ActivityDescription::next()` rende `detailedDescription.it` `required`
+     * per il ramo Attività/Servizio professionale e la salva su
+     * `structure_drafts.detailed_description`. EventPublisher non nomina mai
+     * quella colonna e su `events` non esiste la gemella (la smartbox ce l'ha:
+     * `extended_description`), quindi il partner compila un campo senza il
+     * quale non avanza e che nessuno leggerà mai.
+     */
+    public function test_la_descrizione_dettagliata_di_un_servizio_professionale_arriva_alla_scheda(): void
+    {
+        $activity = $this->publishActivity([
+            'detailed_description' => ['it' => 'Lavoro su appuntamento con un educatore certificato ENCI.'],
+        ]);
+
+        $this->activityPage($activity)->assertSee('Lavoro su appuntamento con un educatore certificato ENCI.');
+    }
+
+    /**
+     * L'altra faccia dello stesso buco: al posto della dettagliata, la seconda
+     * sezione «Attività» ristampa la descrizione breve — lo stesso testo due
+     * volte nella stessa pagina.
+     */
+    public function test_la_scheda_attivita_non_ripete_due_volte_la_descrizione_breve(): void
+    {
+        $activity = $this->publishActivity([
+            'description' => ['it' => 'Educazione di base con rinforzo positivo.'],
+        ]);
+
+        $html = $this->activityPage($activity)->getContent();
+
+        $this->assertSame(
+            1,
+            substr_count($html, 'Educazione di base con rinforzo positivo.'),
+            'La descrizione breve compare una volta sola: la sezione «Attività» deve portare '
+            .'la descrizione dettagliata, non ripetere quella di sopra.',
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Buco di copertura 3 — la zona operativa non finisce su un evento
+    |--------------------------------------------------------------------------
+    | La guardia nel publisher era provata; che la riga non compaia sulla scheda
+    | di un evento no. La zona sta AL POSTO del punto d'incontro: un evento ha
+    | un ritrovo, non un territorio.
+    */
+
+    public function test_la_scheda_di_un_evento_non_mostra_la_zona_in_cui_opera(): void
+    {
+        // La bozza porta addosso la zona (cambio di ramo da Attività a Evento).
+        $event = $this->publish(['operating_area' => ['it' => 'Milano e provincia']]);
+
+        $this->assertNull($event->operating_area, 'Il publisher non deve copiare la zona su un evento.');
+
+        $this->eventPage($event)
+            ->assertDontSee(__('partner.activity_location.operating_area'))
+            ->assertDontSee('Milano e provincia');
     }
 }

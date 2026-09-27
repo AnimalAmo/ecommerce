@@ -401,6 +401,98 @@ class CartStorageTest extends TestCase
         $this->assertNull(session()->get(SessionCartStorage::SESSION_KEY));
     }
 
+    // ── Difetto C9: le righe che escono dal catalogo sparicono in silenzio ─────
+    //
+    // `CartItem::purchasable()` è un `morphTo()` nudo, quindi eredita il global
+    // scope: con `withheld_at` o `suspended_at` valorizzati torna null, e i due
+    // storage filtrano `purchasable !== null` senza una parola. La riga resta a
+    // database per sempre, perché ClearCartPipe rimuove solo le chiavi ordinate.
+    // Per confronto `OrderItem::purchasable()` toglie lo scope di proposito.
+
+    public function test_una_riga_ritirata_dal_catalogo_non_sparisce_senza_dirlo(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $box = $this->smartbox();
+        $this->manager()->addItem('smartbox_package', $box->id, ['animals' => ['cane' => 1]], false);
+
+        $this->assertCount(1, $this->manager()->items());
+
+        // La smartbox viene ritirata dalla vetrina (partner passato al pagamento diretto).
+        $box->forceFill(['withheld_at' => now()])->save();
+
+        // Il cliente riapre il carrello e trova un totale più basso: la riga non
+        // si vede più e nessuno gli ha detto niente.
+        $this->assertSame(
+            0,
+            CartItem::query()->count(),
+            'Una riga che non si può più mostrare va rimossa dal carrello (e il cliente avvisato), '
+            .'non lasciata a database come fantasma che sposta il totale in silenzio.',
+        );
+    }
+
+    public function test_una_riga_sospesa_dallamministrazione_non_sparisce_senza_dirlo(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $structure = $this->structure();
+        $this->manager()->addItem('structure', $structure->id, $this->structureOptions(), false);
+
+        $structure->forceFill(['suspended_at' => now()])->save();
+
+        $this->assertSame(0, CartItem::query()->count());
+    }
+
+    /** Lo stesso dal carrello guest, dove la riga vive come entry di sessione. */
+    public function test_una_riga_guest_ritirata_non_resta_in_sessione(): void
+    {
+        $box = $this->smartbox();
+        $this->manager()->addItem('smartbox_package', $box->id, ['animals' => ['cane' => 1]], false);
+
+        $box->forceFill(['withheld_at' => now()])->save();
+
+        $this->assertSame(
+            [],
+            session()->get(SessionCartStorage::SESSION_KEY, []),
+            'La entry di sessione che non si può più mostrare non deve restare in sessione a vita.',
+        );
+    }
+
+    /**
+     * L'altra metà di C9: al login le righe del partner sbagliato vengono
+     * scartate da `guardSinglePartner` e finiscono in un `Log::info`. Il cliente
+     * vede un carrello più corto di quello che aveva, senza sapere perché.
+     */
+    public function test_le_righe_scartate_al_merge_vengono_dette_al_cliente(): void
+    {
+        $partnerA = User::factory()->stripeConnected()->create();
+        $partnerB = User::factory()->stripeConnected()->create();
+
+        $ofB = Structure::factory()->create(['user_id' => $partnerB->id, 'price_cents' => 10000]);
+        $ofA = Structure::factory()->create(['user_id' => $partnerA->id, 'price_cents' => 10000]);
+
+        // L'utente ha già una riga del partner B nel suo carrello a database.
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $this->manager()->addItem('structure', $ofB->id, $this->structureOptions(), false);
+
+        // Poi esce, e da ospite riempie il carrello col partner A.
+        Auth::logout();
+        session()->forget(SessionCartStorage::SESSION_KEY);
+        $this->manager()->addItem('structure', $ofA->id, $this->structureOptions(), false);
+
+        Auth::login($user);
+
+        // Oggi: la riga di A viene buttata con un Log::info e nessun avviso.
+        $this->assertNotNull(
+            session('cart.notice'),
+            'Le righe scartate al merge («un ordine, un venditore») devono essere dette: senza, il '
+            .'cliente deve indovinare che il carrello è cambiato accedendo.',
+        );
+    }
+
     public function test_login_with_an_empty_session_cart_is_a_noop(): void
     {
         $user = User::factory()->create();

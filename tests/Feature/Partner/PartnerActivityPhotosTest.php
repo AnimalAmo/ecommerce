@@ -3,7 +3,9 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\Activity\ActivityPhotos;
+use App\Models\Event\Event;
 use App\Models\Structure\StructureDraft;
+use App\Services\Partner\Publishing\DraftPublisher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -106,5 +108,100 @@ class PartnerActivityPhotosTest extends TestCase
         Livewire::test(ActivityPhotos::class)
             ->assertCount('saved', 1)
             ->assertSet('saved', ['structure-photos/existing.jpg']);
+    }
+
+    // ── Difetto F1: la X cancella dal disco una foto ancora a catalogo ───────
+
+    /** Attività già pubblicata con quattro foto: `events.img` punta alla prima. */
+    private function publishedActivityWithFourPhotos(int $ownerId): array
+    {
+        $photos = [
+            'structure-photos/aaa.jpg',
+            'structure-photos/bbb.jpg',
+            'structure-photos/ccc.jpg',
+            'structure-photos/ddd.jpg',
+        ];
+
+        $draft = StructureDraft::create([
+            'user_id' => $ownerId,
+            'status' => StructureDraft::STATUS_COMPLETED,
+            'current_step' => 11,
+            'service_category' => 'attivita',
+            'type' => 'attivita',
+            'name' => ['it' => 'Passeggiate al lago'],
+            'description' => ['it' => 'Una passeggiata con i vostri amici pelosi.'],
+            'address' => 'Via Roma 1',
+            'city' => 'Milano',
+            'province' => 'MI',
+            'zip' => '20121',
+            'price_type' => 'pagamento',
+            'price_per_person' => '20',
+            'cancellation_when' => '1',
+            'photos' => $photos,
+        ]);
+
+        foreach ($photos as $path) {
+            Storage::disk('public')->put($path, 'jpeg-finto');
+        }
+
+        $activity = app(DraftPublisher::class)->publish($draft);
+
+        $this->assertInstanceOf(Event::class, $activity, 'La fixture non è arrivata a catalogo.');
+        $this->assertSame($photos[0], $activity->img, 'La copertina deve essere la prima foto della bozza.');
+
+        session(['structure_draft_id' => $draft->id]);
+
+        return [$draft, $activity];
+    }
+
+    /**
+     * `removeSaved()` cancella il file dal disco e riscrive `photos` nello
+     * stesso click, fuori dal ciclo saveStep → completeDraft → publisher.
+     * `events.img` continua a puntare a quel path e `resolveImage()` non
+     * controlla l'esistenza del file: la scheda pubblica serve un'immagine
+     * rotta, e il file non è più recuperabile nemmeno abbandonando la modifica.
+     */
+    public function test_togliere_una_foto_salvata_non_cancella_il_file_a_cui_il_catalogo_punta(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        [, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
+
+        Livewire::test(ActivityPhotos::class)
+            ->assertCount('saved', 4)
+            ->call('removeSaved', 0)
+            ->assertCount('saved', 3);
+
+        // La riga a catalogo non è stata toccata: il publisher gira solo alla
+        // ripubblicazione, che qui non è avvenuta.
+        $this->assertSame('structure-photos/aaa.jpg', $activity->fresh()->img);
+
+        $this->assertTrue(
+            Storage::disk('public')->exists('structure-photos/aaa.jpg'),
+            'Il file della copertina non va cancellato prima che il publisher abbia riscritto img/hero_img: '
+            .'la scheda pubblica lo punta ancora e servirebbe un\'immagine rotta.',
+        );
+    }
+
+    /**
+     * L'aggravante: togliendo una foto si scende sotto il minimo, quindi
+     * `collectPhotos()` blocca l'avanzamento. Se il partner abbandona qui, il
+     * file è già perduto e la scheda resta online con l'immagine morta.
+     */
+    public function test_abbandonare_la_modifica_dopo_la_X_non_lascia_la_scheda_con_un_file_inesistente(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        [, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
+
+        Livewire::test(ActivityPhotos::class)
+            ->call('removeSaved', 0)
+            // Tre foto su quattro: il minimo non è più raggiunto.
+            ->call('next')
+            ->assertHasErrors('photos');
+
+        $this->assertTrue(
+            Storage::disk('public')->exists((string) $activity->fresh()->img),
+            'La copertina della scheda a catalogo deve esistere su disco: senza il file '
+            .'HasCatalogImages::resolveImage() compone comunque lo Storage URL e il cliente vede un buco.',
+        );
     }
 }

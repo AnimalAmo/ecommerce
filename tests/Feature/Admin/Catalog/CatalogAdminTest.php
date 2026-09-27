@@ -45,6 +45,83 @@ class CatalogAdminTest extends TestCase
             ->assertSee('3 schede, 1 sospesa.');
     }
 
+    // ── Difetto F4: il pannello è cieco al ritiro ─────────────────────────────
+    //
+    // `withheld_at` non compare in tutto app/Services/Admin e app/Livewire/Admin.
+    // `CatalogAdmin::status()` fa match solo su `approval_status` e
+    // `suspended_at`, quindi una scheda ritirata esce `published` col badge
+    // verde, rientra nel filtro «pubblicate» e non entra in nessun contatore —
+    // mentre CatalogVisibleScope la nasconde al sito e il partner legge «Serve il
+    // sistema di pagamento».
+
+    /** Smartbox ritirata da noi (non sospesa dall'admin): `withheld_at` valorizzato. */
+    private function withheldSmartbox(string $title = 'Cofanetto ritirato'): SmartboxPackage
+    {
+        $box = SmartboxPackage::factory()->create(['title' => ['it' => $title]]);
+        $box->forceFill(['withheld_at' => now()])->save();
+
+        return SmartboxPackage::withHidden()->findOrFail($box->id);
+    }
+
+    public function test_una_scheda_ritirata_non_risulta_pubblicata(): void
+    {
+        $box = $this->withheldSmartbox();
+
+        $this->assertTrue($box->isWithheld(), 'La fixture deve essere davvero ritirata.');
+
+        $this->assertNotSame(
+            CatalogAdmin::STATUS_PUBLISHED,
+            app(CatalogAdmin::class)->status($box),
+            'Una scheda che il sito non mostra non può avere il badge verde «Pubblicata»: '
+            .'lo scope e la diagnostica partner conoscono già il ritiro, il pannello no.',
+        );
+    }
+
+    public function test_il_filtro_pubblicate_non_include_una_scheda_ritirata(): void
+    {
+        $this->withheldSmartbox('Cofanetto ritirato');
+        SmartboxPackage::factory()->create(['title' => ['it' => 'Cofanetto in vetrina']]);
+
+        Livewire::test(CatalogIndex::class)
+            ->set('status', CatalogAdmin::STATUS_PUBLISHED)
+            ->assertSee('Cofanetto in vetrina')
+            ->assertDontSee('Cofanetto ritirato');
+    }
+
+    /**
+     * Quello che l'admin vede aprendo il catalogo: una riga verde «Pubblicata»
+     * per una scheda che non è in vetrina da nessuna parte.
+     */
+    public function test_la_lista_non_dichiara_pubblicata_una_scheda_ritirata(): void
+    {
+        $this->withheldSmartbox('Cofanetto ritirato');
+
+        $this->get(route('admin.catalog.index'))
+            ->assertOk()
+            ->assertSee('Cofanetto ritirato')
+            ->assertDontSee(__('admin-catalog.status.published'));
+    }
+
+    /**
+     * I contatori dell'intestazione: una scheda ritirata è dentro `total` e
+     * fuori da `suspended` e `pending`, quindi «1 scheda» senza una parola su
+     * quella che non si vede.
+     */
+    public function test_i_contatori_del_catalogo_distinguono_una_scheda_ritirata(): void
+    {
+        $this->withheldSmartbox();
+
+        $totals = app(CatalogAdmin::class)->totals();
+
+        $this->assertArrayHasKey(
+            'withheld',
+            $totals,
+            'Serve un contatore del ritiro accanto a sospese e in attesa: senza, la riga di '
+            .'intestazione conta una scheda che nessuno può vedere come se fosse in vetrina.',
+        );
+        $this->assertSame(1, $totals['withheld']);
+    }
+
     public function test_filters_narrow_the_list(): void
     {
         Structure::factory()->create(['name' => ['it' => 'Hotel Brescia']]);

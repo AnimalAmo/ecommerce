@@ -108,4 +108,45 @@ class StuckDraftsCommandTest extends TestCase
             ->expectsOutputToContain('Pronte ma ferme')
             ->assertSuccessful();
     }
+
+    // ── Difetto F8: i tre gruppi non sono disgiunti ───────────────────────────
+    //
+    // Sono tre filtri indipendenti sullo stesso insieme. Il secondo guarda solo
+    // `canPublishFamily(...) === true`, il terzo fa `reject(isPublishable)`: una
+    // bozza in attesa e INCOMPLETA di un partner pagabile compare sotto entrambi.
+    // Chi legge segue il docblock, lancia `animalamo:publish-awaiting-drafts`, non
+    // vede pubblicare niente e conclude che manca `schedule:run` — mentre la causa
+    // è scritta due righe più sotto.
+
+    public function test_una_bozza_in_attesa_e_incompleta_non_finisce_fra_le_pronte_ma_ferme(): void
+    {
+        // Partner pagabile, bozza in attesa a cui mancano le stanze: non andrà a
+        // catalogo qualunque cosa faccia il cron.
+        $this->readyDraft(
+            User::factory()->stripeConnected()->create(),
+            ['publish_requested_at' => now(), 'current_step' => 11, 'rooms' => null],
+        );
+
+        $this->artisan('animalamo:stuck-drafts')
+            // Il gruppo che la riguarda.
+            ->expectsOutputToContain('In attesa ma incomplete')
+            // E il secondo gruppo deve dirsi vuoto: se la elenca, manda a
+            // incolpare il cron di una bozza che nessun cron può pubblicare.
+            ->expectsOutputToContain('Nessuna: niente di pubblicabile è rimasto indietro.')
+            ->assertSuccessful();
+    }
+
+    /** Il negativo: completa e in attesa, il secondo gruppo la elenca davvero. */
+    public function test_una_bozza_in_attesa_e_completa_resta_fra_le_pronte_ma_ferme(): void
+    {
+        $this->readyDraft(
+            User::factory()->stripeConnected()->create(),
+            ['publish_requested_at' => now(), 'current_step' => 11],
+        );
+
+        $this->artisan('animalamo:stuck-drafts')
+            ->expectsOutputToContain('Pronte ma ferme')
+            ->expectsOutputToContain('Nessuna: le bozze in attesa hanno tutte i dati per andare a catalogo.')
+            ->assertSuccessful();
+    }
 }

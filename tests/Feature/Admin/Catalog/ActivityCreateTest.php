@@ -3,6 +3,16 @@
 namespace Tests\Feature\Admin\Catalog;
 
 use App\Livewire\Admin\Catalog\ActivityCreate;
+use App\Livewire\Partner\Activity\ActivityAnimalServices;
+use App\Livewire\Partner\Activity\ActivityCancellation;
+use App\Livewire\Partner\Activity\ActivityCost;
+use App\Livewire\Partner\Activity\ActivityDescription;
+use App\Livewire\Partner\Activity\ActivityIncluded;
+use App\Livewire\Partner\Activity\ActivityInfo;
+use App\Livewire\Partner\Activity\ActivityLocation;
+use App\Livewire\Partner\Activity\ActivityName;
+use App\Livewire\Partner\Activity\ActivityPhotos;
+use App\Livewire\Partner\CreateService;
 use App\Livewire\Partner\MyServices\PartnerMyServices;
 use App\Models\Event\Event;
 use App\Models\Partner\PartnerProfile;
@@ -162,6 +172,234 @@ class ActivityCreateTest extends TestCase
         $event = Event::withHidden()->where('user_id', $adminPartner->id)->sole();
 
         $this->assertSame($this->comparable($reference), $this->comparable($event));
+    }
+
+    // ── Buco di copertura 4: il percorso del wizard, dalla card al catalogo ─────
+    //
+    // Il confronto qui sopra usa una bozza SCRITTA A MANO: prova che il pannello
+    // non diverge da quella forma, non che il wizard la produca. I due test qui
+    // sotto camminano davvero gli step, partendo dalla card di «Crea servizio», e
+    // confrontano la riga a catalogo con quella del pannello: le colonne nuove
+    // sono verificate una per una da `comparable()`, che è la lista condivisa.
+
+    /**
+     * Percorso «Evento»: la card scrive `type` = 'eventi' e salta lo step del
+     * tipo, poi nome+tipologie, luogo, descrizione, informazioni generali
+     * (date, orari, prenotazione, ricorrenza, posti), incluso, extra animali,
+     * costo, foto, cancellazione.
+     */
+    private function walkTheEventWizard(User $partner): StructureDraft
+    {
+        $this->actingAs($partner);
+        session()->forget('structure_draft_id');
+
+        Livewire::test(CreateService::class)
+            ->set('service', 'eventi')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.name'));
+
+        Livewire::test(ActivityName::class)
+            // La card «Evento» ha già scelto il ramo: lo step deve saperlo.
+            ->assertSet('isEvent', true)
+            ->set('name.it', 'Aperitivo a 6 zampe')
+            ->set('name.en', 'Six-legged happy hour')
+            ->set('categories', ['fiere_mercatini', 'altro'])
+            ->set('categoriesOther.it', 'Sagra del cane')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityLocation::class)
+            ->set('form.address', 'Piazza Duomo 1')
+            ->set('form.city', 'Milano')
+            ->set('form.province', 'MI')
+            ->set('form.zip', '20121')
+            ->set('form.meetingPoint.it', 'Piazza Duomo')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityDescription::class)
+            ->set('description.it', 'Un aperitivo con i vostri amici pelosi.')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityInfo::class)
+            ->assertSet('form.isEvent', true)
+            ->set('form.dateStart', '2026-08-01')
+            ->set('form.dateEnd', '2026-08-01')
+            ->set('form.timeStart', '10:00')
+            ->set('form.timeEnd', '18:00')
+            ->set('form.bookingRequirement', 'obbligatoria')
+            ->set('form.recurrence', 'ricorrente')
+            ->set('form.maxParticipants', '30')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityIncluded::class)
+            ->set('form.services', ['wifi'])
+            ->set('form.additional', ['colazione'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityAnimalServices::class)
+            ->set('services', ['veterinario'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityCost::class)
+            ->set('costType', 'pagamento')
+            ->set('pricePerPerson', '25')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityPhotos::class)
+            ->set('photos', [
+                UploadedFile::fake()->image('uno.jpg'),
+                UploadedFile::fake()->image('due.jpg'),
+                UploadedFile::fake()->image('tre.jpg'),
+                UploadedFile::fake()->image('quattro.jpg'),
+            ])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityCancellation::class)
+            ->set('when', '1')
+            ->call('next')
+            ->assertRedirect(route('partner.dashboard'));
+
+        return StructureDraft::query()->where('user_id', $partner->id)->sole();
+    }
+
+    public function test_the_event_wizard_walked_from_the_card_produces_the_panel_row(): void
+    {
+        $adminPartner = $this->actingAsPayablePartner();
+        $wizardPartner = $this->actingAsPayablePartner();
+
+        $this->walkTheEventWizard($wizardPartner);
+        $reference = Event::withHidden()->where('user_id', $wizardPartner->id)->sole();
+
+        $this->actingAsSuperadmin();
+        $this->fill($this->componentFor($adminPartner))->call('save')->assertHasNoErrors();
+
+        $event = Event::withHidden()->where('user_id', $adminPartner->id)->sole();
+
+        $this->assertSame($this->comparable($reference), $this->comparable($event));
+    }
+
+    /**
+     * Le colonne nuove sulla bozza che il wizard scrive davvero, una per una:
+     * il confronto qui sopra le vede a valle del publisher, questo le vede dove
+     * gli step le hanno messe (e dove un `service_category` sbagliato le manderebbe
+     * al publisher sbagliato).
+     */
+    public function test_the_event_wizard_writes_every_new_column_on_the_draft(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $draft = $this->walkTheEventWizard($partner);
+
+        $this->assertSame('attivita', $draft->service_category);
+        $this->assertSame('eventi', $draft->type);
+        $this->assertSame(['fiere_mercatini', 'altro'], $draft->event_categories);
+        $this->assertSame('Sagra del cane', $draft->getTranslation('event_categories_other', 'it'));
+        $this->assertSame('obbligatoria', $draft->booking_requirement);
+        $this->assertSame('ricorrente', $draft->recurrence);
+        $this->assertSame(30, $draft->max_participants);
+        $this->assertSame('Piazza Duomo', $draft->getTranslation('meeting_point', 'it'));
+        // Il ramo abbandonato resta vuoto: metà della regola è il valore che NON arriva.
+        $this->assertNull($draft->activity_categories);
+        $this->assertSame([], $draft->getTranslations('operating_area'));
+    }
+
+    /**
+     * Percorso «Servizio professionale»: la stessa card che salta lo step del
+     * tipo, sul ramo opposto. Data facoltativa, zona al posto del ritrovo,
+     * categorie professionali, e NESSUN posto — un professionista non si esaurisce.
+     */
+    public function test_the_professional_wizard_walked_from_the_card_writes_its_own_columns(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAs($partner);
+
+        Livewire::test(CreateService::class)
+            ->set('service', 'servizi')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.name'));
+
+        Livewire::test(ActivityName::class)
+            ->assertSet('isEvent', false)
+            ->set('name.it', 'Toelettatura Bau')
+            ->set('categories', ['toelettatore', 'dog_sitter'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityLocation::class)
+            ->set('form.address', 'Via Roma 1')
+            ->set('form.city', 'Sesto San Giovanni')
+            ->set('form.province', 'MI')
+            ->set('form.zip', '20099')
+            ->set('form.operatingArea.it', 'Milano e provincia')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityDescription::class)
+            ->assertSet('isActivity', true)
+            ->set('description.it', 'Toelettatura a domicilio.')
+            ->set('detailedDescription.it', 'Lavoro su appuntamento, sempre in piccoli gruppi.')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        // Nessuna data: dal 27/09/2026 è facoltativa su questo ramo.
+        Livewire::test(ActivityInfo::class)
+            ->assertSet('form.isEvent', false)
+            ->set('form.bookingRequirement', 'facoltativa')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityIncluded::class)->call('next')->assertHasNoErrors();
+        Livewire::test(ActivityAnimalServices::class)->call('next')->assertHasNoErrors();
+
+        Livewire::test(ActivityCost::class)
+            ->set('costType', 'pagamento')
+            ->set('pricePerPerson', '30')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityPhotos::class)
+            ->set('photos', [
+                UploadedFile::fake()->image('uno.jpg'),
+                UploadedFile::fake()->image('due.jpg'),
+                UploadedFile::fake()->image('tre.jpg'),
+                UploadedFile::fake()->image('quattro.jpg'),
+            ])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityCancellation::class)
+            ->set('when', '7')
+            ->call('next')
+            ->assertRedirect(route('partner.dashboard'));
+
+        $draft = StructureDraft::query()->where('user_id', $partner->id)->sole();
+
+        $this->assertSame('attivita', $draft->service_category);
+        $this->assertSame('attivita', $draft->type);
+        $this->assertSame(['toelettatore', 'dog_sitter'], $draft->activity_categories);
+        $this->assertSame('Milano e provincia', $draft->getTranslation('operating_area', 'it'));
+        $this->assertSame('facoltativa', $draft->booking_requirement);
+        $this->assertNull($draft->date_start);
+        $this->assertNull($draft->recurrence);
+        $this->assertNull(
+            $draft->max_participants,
+            'Un servizio professionale non si esaurisce: nessun posto deve arrivare su questo ramo.',
+        );
+        $this->assertSame([], $draft->getTranslations('event_categories_other'));
+
+        // E a catalogo: attività, senza capienza e senza ritrovo inventato.
+        $activity = Event::withHidden()->where('user_id', $partner->id)->sole();
+        $this->assertSame('activity', $activity->type->value);
+        $this->assertNull($activity->max_participants);
+        $this->assertNull($activity->starts_at);
+        $this->assertSame('Milano e provincia', $activity->getTranslation('operating_area', 'it'));
+        $this->assertSame('', $activity->venue->name);
     }
 
     public function test_the_draft_belongs_to_the_partner_and_carries_the_family(): void
@@ -580,5 +818,73 @@ class ActivityCreateTest extends TestCase
             ->assertSet('type', 'attivita')
             ->assertSet('location.isEvent', false)
             ->assertSet('info.isEvent', false);
+    }
+
+    // ── Difetto F9: regole accodate a chiavi che il ramo non dichiara ──────────
+    //
+    // `ActivityLocationForm::rules()` dichiara `meetingPoint.it/en` SOLO dentro
+    // `if ($this->isEvent)`; sul ramo attività — il valore di partenza della
+    // pagina — dichiara `operatingArea.it/en`. I due `[]=` di ActivityCreate
+    // AUTO-CREANO quindi `location.meetingPoint.it => ['max:110']` e `.en`:
+    // regole su un campo che la vista non disegna. Oggi innocue (la property
+    // esiste vuota e `max` salta la stringa vuota), ma un `required` o un
+    // `Rule::in` aggiunto domani a quelle chiavi bloccherebbe il salvataggio di
+    // un'attività su un campo invisibile, senza che nessun test lo noti.
+
+    public function test_il_ramo_attivita_non_accoda_regole_al_punto_dincontro(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $rules = $this->componentFor($partner)->instance()->rules();
+
+        $this->assertArrayNotHasKey(
+            'location.meetingPoint.it',
+            $rules,
+            'Sul ramo attività il punto d\'incontro non è nemmeno disegnato: i due rafforzamenti '
+            .'vanno condizionati allo stesso `isEvent` del Form.',
+        );
+        $this->assertArrayNotHasKey('location.meetingPoint.en', $rules);
+        // La zona operativa, che è il campo di questo ramo, deve esserci.
+        $this->assertArrayHasKey('location.operatingArea.it', $rules);
+    }
+
+    /** Sul ramo evento il rafforzamento serve e resta accodato alla regola del Form. */
+    public function test_il_ramo_evento_tiene_il_rafforzamento_sul_punto_dincontro(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $rules = $this->componentFor($partner)->set('type', 'eventi')->instance()->rules();
+
+        $this->assertArrayHasKey('location.meetingPoint.it', $rules);
+        $this->assertContains('max:110', $rules['location.meetingPoint.it']);
+        // Accodato, non sostituito: la regola del Form resta.
+        $this->assertContains('required', $rules['location.meetingPoint.it']);
+    }
+
+    /**
+     * `Rule::exists('provinces','short_name')` è già in ActivityLocationForm:
+     * accodarlo di nuovo è un duplicato innocuo (MessageBag deduplica il
+     * messaggio identico e le due query sono identiche), ma StructureCreate lo
+     * documenta come consapevole e qui non c'è nessuna nota.
+     */
+    public function test_lexists_sulla_provincia_non_e_duplicato(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $rules = $this->componentFor($partner)->instance()->rules();
+
+        $existsRules = array_filter(
+            $rules['location.province'],
+            fn ($rule): bool => $rule instanceof \Illuminate\Validation\Rules\Exists,
+        );
+
+        $this->assertCount(
+            1,
+            $existsRules,
+            'La sigla si verifica una volta: due Exists identici sono due query identiche.',
+        );
     }
 }

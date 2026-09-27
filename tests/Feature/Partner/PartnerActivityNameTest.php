@@ -248,6 +248,124 @@ class PartnerActivityNameTest extends TestCase
         $this->assertSame([], $draft->refresh()->activity_categories);
     }
 
+    // ── Difetto F6: il testo di «Altro» sopravvive alla deselezione ───────────
+    //
+    // Il campo è disegnato SOLO dentro `@if (in_array('altro', $categories))`,
+    // ma `next()` scrive la colonna senza guardare se lo slug è ancora
+    // selezionato: il testo resta a bozza, il publisher lo copia e i due blade
+    // lo stampano gated solo su `filled(...)`. Dal wizard si può svuotare solo
+    // rispuntando «Altro», cancellandolo e ritogliendo la spunta.
+
+    public function test_togliere_altro_svuota_anche_il_suo_testo_libero(): void
+    {
+        $draft = $this->draftInSession('attivita');
+
+        // Primo salvataggio: «Altro» spuntato, col suo testo.
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Pensione per gatti')
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', 'Pensione per gatti a domicilio')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Pensione per gatti a domicilio', $draft->fresh()->getTranslation('activity_categories_other', 'it'));
+
+        // Si riapre lo step, si toglie «Altro» e si spunta un'altra casella. Il
+        // campo di testo non è più disegnato, quindi il partner non lo vede più.
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['toelettatore'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame(['toelettatore'], $draft->activity_categories);
+        $this->assertTrue(
+            blank($draft->getTranslation('activity_categories_other', 'it')),
+            'Senza «Altro» selezionato il suo testo libero non ha più un posto: la scheda stamperebbe '
+            .'«Tipologia: Toelettatore» con la sotto-riga grigia di un testo che il partner ha rinunciato a dare.',
+        );
+    }
+
+    /** Lo stesso sul ramo evento, dove la colonna gemella è `event_categories_other`. */
+    public function test_togliere_altro_svuota_il_testo_libero_anche_sugli_eventi(): void
+    {
+        $draft = $this->draftInSession('eventi');
+
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Sagra del cane')
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', 'Sagra paesana')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['fiere_mercatini'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(blank($draft->fresh()->getTranslation('event_categories_other', 'it')));
+    }
+
+    // ── Difetto W5: una traduzione inglese salvata non si può più togliere ─────
+    //
+    // `array_filter(..., filled)` fa CADERE la chiave del locale svuotato, e
+    // `setTranslations()` itera solo le chiavi che riceve: il locale assente non
+    // viene rimosso. Nel wizard non esiste una sola chiamata a
+    // `forgetTranslation()`/`replaceTranslations()`, che il lato contenuti usa
+    // invece regolarmente. L'unica via d'uscita — svuotare TUTTE le lingue — è
+    // chiusa dal `required` sull'italiano.
+
+    public function test_svuotare_la_traduzione_inglese_del_nome_la_rimuove(): void
+    {
+        $draft = $this->draftInSession('eventi');
+
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Sagra del cane')
+            ->set('name.en', 'Dog Fair')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Dog Fair', $draft->fresh()->getTranslation('name', 'en', false));
+
+        // Il partner riapre lo step, corregge l'italiano e SVUOTA il tab EN.
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Sagra del cane 2026')
+            ->set('name.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame('Sagra del cane 2026', $draft->getTranslation('name', 'it'));
+        $this->assertTrue(
+            blank($draft->getTranslation('name', 'en', false)),
+            'Svuotato il tab EN, il visitatore su /en deve tornare al fallback italiano: '
+            .'oggi FamilyPublisher riporta a catalogo il vecchio «Dog Fair» per sempre.',
+        );
+    }
+
+    /** Lo stesso sul testo libero di «Altro», che passa dallo stesso array_filter. */
+    public function test_svuotare_la_traduzione_inglese_del_testo_libero_la_rimuove(): void
+    {
+        $draft = $this->draftInSession('attivita');
+
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Pensione per conigli')
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', 'Pensione per conigli')
+            ->set('categoriesOther.en', 'Rabbit boarding')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityName::class)
+            ->set('categoriesOther.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(blank($draft->fresh()->getTranslation('activity_categories_other', 'en', false)));
+    }
+
     public function test_it_rehydrates_the_saved_categories_of_the_branch(): void
     {
         $this->draftInSession('eventi', [

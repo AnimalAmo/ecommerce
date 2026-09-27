@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Partner;
 
+use App\Livewire\Partner\Activity\ActivityName;
 use App\Livewire\Partner\Activity\ActivityType;
+use App\Livewire\Partner\CreateService;
 use App\Livewire\Partner\MyServices\PartnerMyServices;
 use App\Livewire\Partner\Smartbox\SmartboxType;
 use App\Livewire\Partner\Structure\StructureType;
@@ -109,5 +111,81 @@ class WizardBackLinkTest extends TestCase
         session(['structure_draft_id' => $draft->id]);
 
         $this->assertSame(route('partner.service.create'), $this->backHref(Livewire::test($component)->html()));
+    }
+
+    // ── Difetto W4: l'«Indietro» dello step Nome è cablato sullo step del tipo ─
+    //
+    // `CreateService::next()` reindirizza DIRETTAMENTE a `partner.activity.name`
+    // per le card «Servizio professionale» ed «Evento», saltando lo step del
+    // tipo. Il pulsante «Indietro» di ActivityName è però un href fisso a
+    // `partner.activity.type` — l'unico back link del wizard che non passa da
+    // `serviceChoiceBackUrl()`. Lo skip funziona in una sola direzione: chi torna
+    // indietro atterra sullo «Step 1 di 10», la scelta Attività/Evento che il
+    // funnel aveva già fatto, e non esiste ritorno alle card.
+
+    /** @return array<string, array{0: string}> */
+    public static function cardsThatSkipTheTypeStep(): array
+    {
+        return [
+            'servizio professionale' => ['servizi'],
+            'evento' => ['eventi'],
+        ];
+    }
+
+    #[DataProvider('cardsThatSkipTheTypeStep')]
+    public function test_lo_step_del_nome_torna_alle_card_quando_e_il_primo_del_percorso(string $card): void
+    {
+        $this->actingAsActivePartner();
+
+        Livewire::test(CreateService::class)
+            ->set('service', $card)
+            ->call('next')
+            ->assertRedirect(route('partner.activity.name'));
+
+        $this->assertSame(
+            route('partner.service.create'),
+            $this->backHref(Livewire::test(ActivityName::class)->html()),
+            'La bozza arriva qui con current_step 1 e senza essere passata da activity.type: '
+            .'«Indietro» deve riportare alla scelta delle card, non a uno step che il funnel ha saltato.',
+        );
+    }
+
+    /**
+     * Chi sta MODIFICANDO un servizio di «I miei servizi» deve tornare alla
+     * lista anche da questo step: «Crea servizio» gli aprirebbe una bozza nuova
+     * e la modifica si perderebbe in silenzio. È la stessa regola dei tre step
+     * del tipo, che questo componente non applica.
+     */
+    public function test_chi_modifica_un_servizio_torna_alla_lista_anche_dallo_step_del_nome(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->serviceOf($partner, 'attivita', 'attivita');
+        session(['structure_draft_id' => $draft->id]);
+
+        $this->assertSame(route('partner.services'), $this->backHref(Livewire::test(ActivityName::class)->html()));
+    }
+
+    /**
+     * Nota per chi corregge: la bozza delle card «Attività» e «Servizio
+     * professionale» arriva qui indistinguibile (entrambe `service_category`
+     * 'attivita', `type` 'attivita', `current_step` 1), quindi non esiste un
+     * criterio sui dati per riportare una allo step del tipo e l'altra alle
+     * card. La destinazione unica sensata è quella di `serviceChoiceBackUrl()`,
+     * che è anche la sola che non atterra su uno step già superato.
+     */
+    public function test_lo_step_del_nome_non_rimanda_mai_a_uno_step_che_il_funnel_ha_saltato(): void
+    {
+        $this->actingAsActivePartner();
+
+        Livewire::test(CreateService::class)
+            ->set('service', 'eventi')
+            ->call('next');
+
+        $this->assertNotSame(
+            route('partner.activity.type'),
+            $this->backHref(Livewire::test(ActivityName::class)->html()),
+            'Chi entra dalla card «Evento» ha già fatto la scelta Attività/Evento: '
+            .'rimandarlo sullo «Step 1 di 10» gli chiede due volte la stessa cosa.',
+        );
     }
 }

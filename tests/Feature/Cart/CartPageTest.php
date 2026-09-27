@@ -229,6 +229,58 @@ class CartPageTest extends TestCase
             ->assertNoRedirect();
     }
 
+    // ── Difetto C6: borsa e cuore delle card suggerite sono solo colore ──────
+    //
+    // `toggleSuggestionCart()` e `toggleSuggestionFavorite()` si limitano a
+    // infilare la chiave in un array di componente: nessuna chiamata a
+    // CartManager né a FavoriteService. Il partial è LO STESSO di /preferiti,
+    // dove la borsa aggiunge davvero (Favorites::toggleCart): lo stesso
+    // componente, graficamente identico, ha due comportamenti opposti — e qui
+    // arriva perfino a dichiarare «Rimuovi dal carrello» su un carrello vuoto.
+
+    /** Le tre card «Le attività più amate» compaiono solo a carrello vuoto. */
+    private function suggestedHotel(): Structure
+    {
+        $hotel = $this->hotel();
+        $this->addFavorites('structure', $hotel->id, 3);
+
+        return $hotel;
+    }
+
+    public function test_la_borsa_di_una_card_suggerita_aggiunge_davvero_al_carrello(): void
+    {
+        $this->actingAs($this->giulia);
+        $hotel = $this->suggestedHotel();
+        $key = 'structure-'.$hotel->id;
+
+        Livewire::test(Cart::class)
+            ->assertSee($hotel->name)
+            ->call('toggleSuggestionCart', $key);
+
+        $this->assertCount(
+            1,
+            $this->cart()->items(),
+            'La borsa porta il bottone a giallo e l\'aria-label a «Rimuovi dal carrello»: '
+            .'uno stato visivo che mente è peggio di un bottone assente. '
+            .'Se la cura è togliere i due bottoni dalle card suggerite, questo test va con loro.',
+        );
+    }
+
+    public function test_il_cuore_di_una_card_suggerita_salva_davvero_il_preferito(): void
+    {
+        $this->actingAs($this->giulia);
+        $hotel = $this->suggestedHotel();
+        $key = 'structure-'.$hotel->id;
+
+        Livewire::test(Cart::class)->call('toggleSuggestionFavorite', $key);
+
+        $this->assertDatabaseHas('favorites', [
+            'user_id' => $this->giulia->id,
+            'favoritable_type' => 'structure',
+            'favoritable_id' => $hotel->id,
+        ]);
+    }
+
     /** Facciata carrello (storage scelto dallo stato auth corrente). */
     private function cart(): CartManager
     {
