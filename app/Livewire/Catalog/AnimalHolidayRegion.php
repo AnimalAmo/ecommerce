@@ -10,6 +10,7 @@ use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -138,9 +139,16 @@ class AnimalHolidayRegion extends Component
             ? $this->regionStructures($regionId)->orderBy('position')->limit(self::SIMILAR_LIMIT)->get()
             : $results;
 
+        // Modalità di incasso dei titolari degli eventi in griglia, in una query
+        // sola: il pulsante carrello ha senso solo per chi incassa online, e una
+        // lettura per card sarebbe una N+1 nascosta dentro una vista.
+        $ownerModes = app(PartnerPaymentModeService::class)->forOwners($events->pluck('user_id'));
+
         return view('livewire.catalog.animal-holiday-region', [
             'results' => $results,
             'events' => $events,
+            // Mappa id titolare => OrderPaymentMode per le card evento (assente = online).
+            'ownerModes' => $ownerModes,
             'boxes' => $boxes,
             'empty' => $empty,
             // Griglia vuota per due motivi opposti: filtri troppo stretti oppure catalogo

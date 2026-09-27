@@ -34,4 +34,18 @@ return [
         'max_release_attempts' => (int) env('PAYOUT_MAX_RELEASE_ATTEMPTS', 5),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Prenota online e paga in struttura
+    |--------------------------------------------------------------------------
+    | Richiesta della cliente del 27/09/2026 (punto 7): la modalità resta nel
+    | sistema ma spenta. Con il flag spento il percorso "prenota e paga in
+    | struttura" non si completa più su AnimalAmo — il carrello non si svuota,
+    | il checkout si blocca e spiega come prenotare presso il partner.
+    | Accenderlo riapre quel percorso esattamente com'era: il ramo è ancora
+    | tutto nel codice, non è stato cancellato.
+    */
+
+    'on_site_booking' => (bool) env('ON_SITE_BOOKING_ENABLED', false),
+
 ];

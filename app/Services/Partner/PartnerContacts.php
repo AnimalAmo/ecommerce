@@ -32,7 +32,19 @@ class PartnerContacts
     public function forPurchasable(?Model $purchasable): ?array
     {
         $owner = $purchasable?->getAttribute('user_id');
-        $profile = $this->modes->profileFor($owner === null ? null : (int) $owner);
+
+        return $this->forOwner($owner === null ? null : (int) $owner);
+    }
+
+    /**
+     * Gli stessi contatti a partire dal solo id del titolare: il checkout sa chi
+     * è il venditore del carrello (CartItemData::partnerUserId) ma non ha in
+     * mano il purchasable, e caricarlo solo per rileggerne lo `user_id` sarebbe
+     * una query per niente.
+     */
+    public function forOwner(?int $userId): ?array
+    {
+        $profile = $this->modes->profileFor($userId);
 
         if ($profile === null) {
             return null;

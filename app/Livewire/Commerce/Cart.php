@@ -9,10 +9,13 @@ use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
+use App\Services\Content\FaqService;
 use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
 use DateTimeImmutable;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -207,6 +210,18 @@ class Cart extends Component
     {
         $cartItems = $this->cart()->items($this->gift);
 
+        // Un carrello = un partner (CartManager::guardSinglePartner): basta la
+        // prima riga già caricata, senza rileggere il carrello. Nessuna riga
+        // → null → Online (e la vista non stampa il riepilogo).
+        $paysOnSite = app(PartnerPaymentModeService::class)
+            ->forOwner($cartItems->first()?->partnerUserId) === OrderPaymentMode::OnSite;
+
+        // Kill-switch spento (richiesta della cliente, 27/09/2026): il carrello
+        // resta com'è — righe, totale, Modifica ed Elimina intatti — ma le CTA
+        // verso il checkout diventano la spiegazione. Mandare il cliente a
+        // sbattere contro il blocco due schermate dopo sarebbe peggio.
+        $onSiteBlocked = $paysOnSite && ! (bool) config('commerce.on_site_booking');
+
         $items = $cartItems
             ->map(fn (CartItemData $item): array => $this->presentItem($item))
             ->values()
@@ -228,12 +243,34 @@ class Cart extends Component
             'bookingHours' => self::bookingHours(),
             // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
             'suggestions' => $items === [] ? app(FavoriteService::class)->topFavorited() : [],
-            // Un carrello = un partner (CartManager::guardSinglePartner): basta la
-            // prima riga già caricata, senza rileggere il carrello. Nessuna riga
-            // → null → Online (e la vista non stampa il riepilogo).
-            'paysOnSite' => app(PartnerPaymentModeService::class)
-                ->forOwner($cartItems->first()?->partnerUserId) === OrderPaymentMode::OnSite,
+            'paysOnSite' => $paysOnSite,
+            // Modalità non più disponibile: al posto delle CTA la spiegazione.
+            'onSiteBlocked' => $onSiteBlocked,
+            // I contatti del partner stanno sulla scheda del prodotto (il carrello
+            // non li duplica): serve il link per arrivarci.
+            'onSiteProductUrl' => $onSiteBlocked ? self::productUrl($cartItems->first()) : null,
         ])->title(__('cart.ui.page_title'));
+    }
+
+    /**
+     * Scheda pubblica del prodotto di una riga: col pagamento diretto al partner
+     * spento è l'unico posto dove il cliente trova i recapiti per prenotare.
+     *
+     * La mappatura purchasable → rotta pubblica esiste già in FaqService (con la
+     * trappola della struttura senza regione, che manderebbe route() in errore):
+     * riusarla è meglio che riscriverla qui. Null = niente link (cofanetti e
+     * strutture senza regione), il pannello resta la sola spiegazione.
+     */
+    private static function productUrl(?CartItemData $item): ?string
+    {
+        if ($item === null) {
+            return null;
+        }
+
+        $class = Relation::getMorphedModel($item->type);
+        $product = $class !== null ? $class::find($item->purchasableId) : null;
+
+        return $product instanceof Model ? app(FaqService::class)->productUrl($product) : null;
     }
 
     /** Struttura del calendario del pop-up: il purchasable della riga in modifica (solo structure/service). */
