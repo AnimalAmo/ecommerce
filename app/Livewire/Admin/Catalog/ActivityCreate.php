@@ -33,6 +33,30 @@ class ActivityCreate extends Component
     /** @var array<string, string> */
     public array $name = ['it' => '', 'en' => ''];
 
+    /**
+     * Tipologie a scelta multipla, facoltative (risposte della cliente,
+     * 27/09/2026): le categorie professionali quando `type` è 'attivita', le
+     * tipologie di evento quando è 'eventi'.
+     *
+     * Una property sola per i due rami, identica ad ActivityName (step 2 del
+     * wizard): gruppo di slug e colonna della bozza li decide il tipo, così il
+     * pannello non può scrivere una tipologia di evento in `activity_categories`
+     * — una scheda che il partner, riaprendo il suo step, non saprebbe più
+     * risalvare.
+     *
+     * @var list<string>
+     */
+    public array $categories = [];
+
+    /**
+     * Dettaglio di "Altro" delle tipologie, localizzato it/en. Come nel wizard
+     * resta salvato anche se "Altro" viene deselezionato: la colonna è `text`,
+     * quindi qui non serve il rafforzamento a 110 di nome e punto d'incontro.
+     *
+     * @var array<string, string>
+     */
+    public array $categoriesOther = ['it' => '', 'en' => ''];
+
     public ActivityLocationForm $location;
 
     /** @var array<string, string> */
@@ -61,9 +85,15 @@ class ActivityCreate extends Component
 
     public function mount(): void
     {
-        // Il form nasce su "Attività": senza questo il Form object resterebbe
+        // Il form nasce su "Attività": senza questo i Form object resterebbero
         // con isEvent=false per caso e non per scelta (setFromDraft non gira mai).
         $this->info->isEvent = false;
+        // Stessa riga per il luogo, che dal 27/09/2026 ha anche lui i due rami
+        // (punto d'incontro agli eventi, zona operativa alle attività): senza
+        // valorizzarlo il pannello non chiederebbe più il punto d'incontro di un
+        // evento e ne scriverebbe il testo in `operating_area`, cioè in una
+        // colonna che il ramo eventi non pubblica nemmeno.
+        $this->location->isEvent = false;
     }
 
     /**
@@ -72,15 +102,30 @@ class ActivityCreate extends Component
      * e tornerebbero validi al primo ripensamento. Si azzerano qui, che è anche
      * la correzione del difetto noto del wizard (orari di un evento superstiti
      * in starts_at/ends_at di un'attività).
+     *
+     * Le due righe `isEvent` sono una sola decisione ripetuta sui due Form: da
+     * `$type` dipendono l'obbligatorietà di data e orari (info) e quale fra
+     * punto d'incontro e zona operativa viene chiesto e salvato (location).
      */
     public function updatedType(): void
     {
         $this->info->isEvent = $this->type === 'eventi';
+        $this->location->isEvent = $this->info->isEvent;
 
         if (! $this->info->isEvent) {
             $this->info->timeStart = '';
             $this->info->timeEnd = '';
         }
+
+        // Le tipologie invece vanno azzerate SEMPRE, in tutte e due le
+        // direzioni: le due liste non hanno uno slug in comune, e una scelta
+        // rimasta in memoria dopo il cambio di ramo sarebbe rifiutata da
+        // `categories.*` sotto una casella che non viene più disegnata — un
+        // errore che l'admin non potrebbe correggere. Con lei il testo libero di
+        // "Altro", che senza la sua casella finirebbe nella colonna dell'altro
+        // ramo senza che nessuno l'abbia chiesto.
+        $this->categories = [];
+        $this->categoriesOther = ['it' => '', 'en' => ''];
     }
 
     /**
@@ -108,6 +153,18 @@ class ActivityCreate extends Component
             'type' => ['required', Rule::in(ServiceOptionLabels::slugs('activity_type'))],
             'name.it' => ['required', 'string', 'max:110'],
             'name.en' => ['nullable', 'string', 'max:110'],
+            // Tipologie (27/09/2026), regole IDENTICHE ad ActivityName: la
+            // lista è facoltativa — obbligatoria renderebbe non risalvabile
+            // ogni bozza già aperta, che ha la colonna NULL — e la whitelist va
+            // sull'ELEMENTO, perché `Rule::in` su `categories` confronterebbe un
+            // array con delle stringhe e rifiuterebbe qualunque selezione. Il
+            // gruppo è quello del ramo corrente (`categoryGroup()`), e i 200
+            // caratteri del testo libero sono quelli del wizard: su una colonna
+            // `text` non serve il rafforzamento a 110.
+            'categories' => ['array'],
+            'categories.*' => ['string', Rule::in(ServiceOptionLabels::slugs($this->categoryGroup()))],
+            'categoriesOther.it' => ['nullable', 'string', 'max:200'],
+            'categoriesOther.en' => ['nullable', 'string', 'max:200'],
             'description.it' => ['required', 'string', 'max:200'],
             'description.en' => ['nullable', 'string', 'max:200'],
             'animalServices' => ['array'],
@@ -168,6 +225,20 @@ class ActivityCreate extends Component
             $rules['info.dateEnd'],
         );
 
+        //    Stessa medicina, e per la stessa ragione, su `required_with:dateEnd`:
+        //    è la regola che tiene insieme la coppia di date da quando la data è
+        //    facoltativa per le attività (risposta della cliente, 27/09/2026).
+        //    Qui `dateEnd` da solo nomina un campo di primo livello che non
+        //    esiste, e `required_with` su un campo assente è sempre soddisfatto:
+        //    la regola passava in silenzio e una data di fine senza inizio
+        //    arrivava alla bozza, dove il publisher ne farebbe un `ends_at`
+        //    senza `starts_at`. Sul ramo eventi la regola non c'è (le date sono
+        //    obbligatorie entrambe) e array_map non trova niente da riscrivere.
+        $rules['info.dateStart'] = array_map(
+            fn (mixed $rule): mixed => $rule === 'required_with:dateEnd' ? 'required_with:info.dateEnd' : $rule,
+            $rules['info.dateStart'],
+        );
+
         return $rules;
     }
 
@@ -184,6 +255,18 @@ class ActivityCreate extends Component
             'info' => $this->info,
             'included' => $this->included,
         ];
+    }
+
+    /** Gruppo di ServiceOptionLabels delle tipologie del ramo corrente (come ActivityName::group()). */
+    private function categoryGroup(): string
+    {
+        return $this->type === 'eventi' ? 'event_category' : 'activity_category';
+    }
+
+    /** Colonna JSON della bozza per le tipologie del ramo corrente; il testo libero è la stessa più `_other`. */
+    private function categoriesColumn(): string
+    {
+        return $this->type === 'eventi' ? 'event_categories' : 'activity_categories';
     }
 
     public function messages(): array
@@ -208,6 +291,12 @@ class ActivityCreate extends Component
             'when.in' => __('partner.hotel_cancellation.error_required'),
             'location.province.exists' => __('admin-catalog.create.validation.province_exists'),
             'animalServices.*.in' => __('admin-catalog.create.validation.option_unknown'),
+            // Stesso testo delle altre whitelist: i tre campi nuovi che scelgono
+            // da un elenco chiuso (27/09/2026). `categories.*.in` copre lo slug
+            // forgiato e quello rimasto dall'altro ramo.
+            'categories.*.in' => __('admin-catalog.create.validation.option_unknown'),
+            'info.bookingRequirement.in' => __('admin-catalog.create.validation.option_unknown'),
+            'info.recurrence.in' => __('admin-catalog.create.validation.option_unknown'),
             'included.services.*.in' => __('admin-catalog.create.validation.option_unknown'),
             'included.additional.*.in' => __('admin-catalog.create.validation.option_unknown'),
             'included.structureRules.*.in' => __('admin-catalog.create.validation.option_unknown'),
@@ -262,6 +351,17 @@ class ActivityCreate extends Component
             'location.province' => __($prefix.'field_province'),
             'location.meetingPoint.it' => __($prefix.'field_meeting_point'),
             'location.meetingPoint.en' => __($prefix.'field_meeting_point'),
+            // Campi del 27/09/2026. L'etichetta delle tipologie cambia col ramo
+            // esattamente come la lista delle voci: è la stessa ternaria della
+            // vista, e senza di lei l'errore direbbe «Il campo categories».
+            'categories' => $this->type === 'eventi' ? __($prefix.'field_categories_event') : __($prefix.'field_categories'),
+            'categoriesOther.it' => __($prefix.'field_categories_other'),
+            'categoriesOther.en' => __($prefix.'field_categories_other'),
+            'location.operatingArea.it' => __($prefix.'field_operating_area'),
+            'location.operatingArea.en' => __($prefix.'field_operating_area'),
+            'info.bookingRequirement' => __($prefix.'field_booking_requirement'),
+            'info.recurrence' => __($prefix.'field_recurrence'),
+            'info.maxParticipants' => __($prefix.'field_max_participants'),
             'info.dateStart' => __($prefix.'field_date_start'),
             'info.dateEnd' => __($prefix.'field_date_end'),
             'info.timeStart' => __($prefix.'field_time_start'),
@@ -289,6 +389,13 @@ class ActivityCreate extends Component
             'additionalOptions' => ServiceOptionLabels::options('additional'),
             'ruleOptions' => ServiceOptionLabels::options('rules'),
             'animalOptions' => ServiceOptionLabels::options('animal_services'),
+            // Tipologie del ramo corrente e le due liste dei campi nuovi di
+            // ActivityInfoForm (27/09/2026). Le ultime due si chiedono al Form e
+            // non a ServiceOptionLabels: è lui che le valida, e passando dai
+            // suoi accessori la vista non può offrire una voce che lui rifiuta.
+            'categoryOptions' => ServiceOptionLabels::options($this->categoryGroup()),
+            'bookingOptions' => $this->info->bookingOptions(),
+            'recurrenceOptions' => $this->info->recurrenceOptions(),
         ])
             ->layout('layouts::admin')
             ->title(__('admin-catalog.create.activity.title'));
@@ -325,6 +432,11 @@ class ActivityCreate extends Component
         $attributes = [
             'type' => $this->type,
             'name' => $filled($this->name),
+            // Solo la colonna del ramo corrente, come fa ActivityName: quella
+            // dell'altro ramo resta NULL, ed è anche quella che EventPublisher
+            // scarta in base al tipo pubblicato.
+            $this->categoriesColumn() => $this->categories,
+            $this->categoriesColumn().'_other' => $filled($this->categoriesOther),
             ...$this->location->toDraft(),
             'description' => $filled($this->description),
             ...$this->info->toDraft(),

@@ -16,12 +16,42 @@
         <div class="flex min-w-0 flex-col gap-3.5 lg:col-span-2">
 
             <x-admin.card :heading="__('admin-catalog.create.activity.section_type')">
-                <div class="p-5">
-                    <flux:radio.group wire:model.live="type" variant="cards" class="[--color-accent:#6CD1EF]">
-                        <flux:radio value="attivita" :label="__('partner.activity_type.attivita')" />
-                        <flux:radio value="eventi" :label="__('partner.activity_type.eventi')" />
-                    </flux:radio.group>
-                    <flux:error name="type" />
+                <div class="flex flex-col gap-5 p-5">
+                    <div>
+                        <flux:radio.group wire:model.live="type" variant="cards" class="[--color-accent:#6CD1EF]">
+                            <flux:radio value="attivita" :label="__('partner.activity_type.attivita')" />
+                            <flux:radio value="eventi" :label="__('partner.activity_type.eventi')" />
+                        </flux:radio.group>
+                        <flux:error name="type" />
+                    </div>
+
+                    {{-- Tipologie a scelta multipla, facoltative (risposte della cliente,
+                         27/09/2026): categorie professionali per le attività, tipologie di
+                         evento per gli eventi. L'elenco lo dà ServiceOptionLabels, la stessa
+                         fonte che valida `categories.*`, e cambia col radio qui sopra —
+                         perché è `wire:model.live`. Il testo libero di «Altro» sta invece
+                         fra i testi: là c'è l'unica pila di schede lingua della pagina.
+
+                         `.live` come le altre caselle di questa pagina, e qui serve: senza,
+                         la selezione resta in attesa nel browser e potrebbe arrivare al
+                         server NELLA STESSA richiesta del cambio di tipo, dopo che
+                         `updatedType()` ha già azzerato la lista — uno slug del ramo
+                         vecchio sopravviverebbe sotto le voci del ramo nuovo. --}}
+                    <div class="flex flex-col gap-2 {{ $checkboxes }}">
+                        <flux:checkbox.group wire:model.live="categories" :label="$type === 'eventi' ? __('admin-catalog.create.activity.field_categories_event') : __('admin-catalog.create.activity.field_categories')">
+                            {{-- `$optionLabel` e non `$label`: la variabile sopravvive al
+                                 foreach, e Flux elenca `label` fra i prop che eredita dallo
+                                 scope del chiamante — il date-picker del riquadro
+                                 "Informazioni generali", che di label non ne ha uno proprio,
+                                 si ritroverebbe addosso l'ultima voce di questo elenco. --}}
+                            @foreach ($categoryOptions as $slug => $optionLabel)
+                                <flux:checkbox value="{{ $slug }}" :label="$optionLabel" wire:key="act-cat-{{ $slug }}" />
+                            @endforeach
+                        </flux:checkbox.group>
+                        <p class="m-0 text-[13px] text-gray-600">{{ __('admin-catalog.create.activity.categories_help') }}</p>
+                        <flux:error name="categories" />
+                        <flux:error name="categories.*" />
+                    </div>
                 </div>
             </x-admin.card>
 
@@ -36,11 +66,29 @@
                     @foreach (['it', 'en'] as $locale)
                         <div wire:key="activity-texts-{{ $locale }}" @class(['flex flex-col gap-4', 'hidden' => $lang !== $locale])>
                             <flux:input wire:model="name.{{ $locale }}" maxlength="110" :label="__('admin-catalog.create.activity.field_name')" />
+                            {{-- Il testo libero di «Altro» delle tipologie, subito sotto il
+                                 titolo come nello step 2 del wizard. Sempre visibile e non legato alla casella
+                                 'altro': è l'idioma di questa pagina, dove gli altri due
+                                 testi liberi (servizi aggiuntivi, servizi animali) stanno
+                                 qui mentre le loro caselle stanno in un'altra scheda. --}}
+                            <flux:input wire:model="categoriesOther.{{ $locale }}" maxlength="200" :label="__('admin-catalog.create.activity.field_categories_other')" />
                             <flux:textarea wire:model="description.{{ $locale }}" rows="3" maxlength="200" :label="__('admin-catalog.create.activity.field_description')" />
                             @if ($type === 'attivita')
                                 <flux:textarea wire:model="detailedDescription.{{ $locale }}" rows="5" maxlength="200" :label="__('admin-catalog.create.activity.field_detailed_description')" :description="__('admin-catalog.create.activity.detailed_help')" />
                             @endif
-                            <flux:input wire:model="location.meetingPoint.{{ $locale }}" maxlength="110" :label="__('admin-catalog.create.activity.field_meeting_point')" />
+                            {{-- Punto d'incontro agli eventi, zona operativa alle attività
+                                 (risposta della cliente, 27/09/2026): un professionista non
+                                 ha un ritrovo, ha una zona in cui lavora. Il ramo è lo stesso
+                                 che decide `location.isEvent`, cioè quale dei due campi
+                                 ActivityLocationForm valida e scrive: mostrare l'altro
+                                 sarebbe un campo che non viene salvato. 128 e non 110 perché
+                                 `operating_area` è una colonna `text`, non il varchar del
+                                 punto d'incontro. --}}
+                            @if ($type === 'eventi')
+                                <flux:input wire:model="location.meetingPoint.{{ $locale }}" maxlength="110" :label="__('admin-catalog.create.activity.field_meeting_point')" />
+                            @else
+                                <flux:input wire:model="location.operatingArea.{{ $locale }}" maxlength="128" :label="__('admin-catalog.create.activity.field_operating_area')" :description="__('admin-catalog.create.activity.operating_area_help')" />
+                            @endif
                             <flux:textarea wire:model="included.additionalOther.{{ $locale }}" rows="2" maxlength="200" :label="__('admin-catalog.create.activity.field_additional_other')" />
                             <flux:textarea wire:model="animalOther.{{ $locale }}" rows="2" maxlength="200" :label="__('admin-catalog.create.activity.field_animal_other')" />
                         </div>
@@ -99,6 +147,39 @@
                         </flux:select>
                     @else
                         <p class="m-0 text-[13px] text-gray-600 sm:col-span-2">{{ __('admin-catalog.create.activity.times_help') }}</p>
+                    @endif
+
+                    {{-- Prenotazione, ricorrenza e posti (risposte della cliente,
+                         27/09/2026), negli stessi rami di ActivityInfoForm::rules(), che
+                         resta l'unica fonte delle regole: la prenotazione si chiede a
+                         tutti e due, ricorrenza e posti solo agli eventi.
+
+                         Prima voce con `value=""` e non il prop `placeholder`: Flux
+                         disegna l'opzione-placeholder `disabled`, e su un campo
+                         facoltativo non si tornerebbe più a "nessuna scelta" dopo averne
+                         fatta una (stessa nota nel wizard). --}}
+                    <flux:select wire:model="info.bookingRequirement" :label="__('admin-catalog.create.activity.field_booking_requirement')">
+                        <flux:select.option value="">{{ __('admin-catalog.create.activity.field_booking_requirement') }}</flux:select.option>
+                        @foreach ($bookingOptions as $slug => $optionLabel)
+                            <flux:select.option value="{{ $slug }}">{{ $optionLabel }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+
+                    @if ($type === 'eventi')
+                        {{-- Sola etichetta per la scheda: la cliente ha escluso la
+                             generazione automatica delle date ripetute, quindi da
+                             'ricorrente' non nasce nessuna logica di ripetizione. --}}
+                        <flux:select wire:model="info.recurrence" :label="__('admin-catalog.create.activity.field_recurrence')">
+                            <flux:select.option value="">{{ __('admin-catalog.create.activity.field_recurrence') }}</flux:select.option>
+                            @foreach ($recurrenceOptions as $slug => $optionLabel)
+                                <flux:select.option value="{{ $slug }}">{{ $optionLabel }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        {{-- max=65535 come la regola: la colonna è unsignedSmallInteger
+                             su bozza ed evento, e in MySQL strict un valore più grande è
+                             un errore SQL, non una validazione. --}}
+                        <flux:input wire:model="info.maxParticipants" type="number" min="1" max="65535" inputmode="numeric" :label="__('admin-catalog.create.activity.field_max_participants')" :description="__('admin-catalog.create.activity.max_participants_help')" />
                     @endif
                 </div>
             </x-admin.card>

@@ -320,6 +320,20 @@ return [
             'field_description' => 'Descrizione breve',
             'field_detailed_description' => 'Descrizione dettagliata',
             'field_meeting_point' => 'Punto di incontro',
+            // Campi nati dalle risposte della cliente del 27/09/2026. Le
+            // etichette sono quelle del wizard riscritte nell'idioma del
+            // pannello (`field_*` piatte, senza la voce del partner): il campo è
+            // lo stesso, ma qui lo compila l'admin per conto di qualcun altro.
+            'field_categories' => 'Tipologia di attività o servizio',
+            'field_categories_event' => 'Tipologia di evento',
+            'categories_help' => 'Facoltativa: se ne può selezionare più di una.',
+            'field_categories_other' => 'Tipologia, se è stato scelto «Altro»',
+            'field_operating_area' => 'Zona in cui opera',
+            'operating_area_help' => 'Solo per le attività, al posto del punto di incontro: per esempio «Milano e provincia».',
+            'field_booking_requirement' => 'Prenotazione',
+            'field_recurrence' => 'Ricorrenza',
+            'field_max_participants' => 'Posti disponibili',
+            'max_participants_help' => 'Solo per gli eventi. Vuoto = nessun limite; al raggiungimento del limite le iscrizioni si chiudono.',
             'field_address' => 'Indirizzo',
             'field_city' => 'Città',
             'field_zip' => 'CAP',
