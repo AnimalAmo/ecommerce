@@ -1,10 +1,16 @@
 {{-- Dashboard B2B – crea servizio (XD "Dashboard B2B – crea servizio", artboard 1920x1080) --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
+    // Le quattro voci chieste dalla cliente (27/09/2026) nel suo ordine —
+    // Struttura, Attività, Servizio professionale, Evento — più la Smartbox, che
+    // resta l'ultima. 'servizi' porta l'etichetta "Servizio professionale" (il
+    // valore del radio non cambia), 'eventi' è lo slug che la bozza scrive in
+    // `type`: le chiavi di questo elenco sono i valori che next() valida.
     $services = [
         'struttura' => ['partner.create_service.struttura_title', 'partner.create_service.struttura_subtitle'],
         'attivita' => ['partner.create_service.attivita_title', 'partner.create_service.attivita_subtitle'],
         'servizi' => ['partner.create_service.servizi_title', 'partner.create_service.servizi_subtitle'],
+        'eventi' => ['partner.create_service.eventi_title', 'partner.create_service.eventi_subtitle'],
         'smartbox' => ['partner.create_service.smartbox_title', 'partner.create_service.smartbox_subtitle'],
     ];
 

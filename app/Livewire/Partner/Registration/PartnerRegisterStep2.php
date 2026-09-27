@@ -11,7 +11,18 @@ use Livewire\Component;
 
 class PartnerRegisterStep2 extends Component
 {
-    /** Tipo di servizio scelto (radio, scelta singola): struttura | attivita | servizi. */
+    /**
+     * Tipo di servizio scelto (radio, scelta singola):
+     * struttura | attivita | servizi | eventi.
+     *
+     * "Evento" è la quarta voce chiesta dalla cliente il 27/09/2026
+     * («aggiungerei anche "Evento" come quarta scelta già in fase di
+     * registrazione, così il percorso è corretto fin dall'inizio»). Il valore è
+     * `eventi` e non `evento`: è lo slug che il wizard scrive in
+     * `structure_drafts.type`, così la scelta fatta qui arriva alla bozza senza
+     * traduzioni di mezzo. `servizi` invece resta `servizi` anche se l'etichetta
+     * ora dice "Servizio professionale": la chiave lang e il valore non cambiano.
+     */
     public string $service = '';
 
     /**
@@ -51,7 +62,7 @@ class PartnerRegisterStep2 extends Component
     {
         $this->validate(
             [
-                'service' => ['required', 'string', 'in:struttura,attivita,servizi'],
+                'service' => ['required', 'string', 'in:struttura,attivita,servizi,eventi'],
                 'paymentMode' => ['required', Rule::enum(OrderPaymentMode::class)],
             ],
             ['service.required' => __('partner.register2.error_required'), 'service.in' => __('partner.register2.error_required')],
@@ -110,6 +121,22 @@ class PartnerRegisterStep2 extends Component
         $step1['onlinePayment'] = $this->paymentMode === OrderPaymentMode::Online->value;
 
         $user = $registrar->register($step1, $existing, session('partner_registration.application_id'));
+
+        // La tipologia scelta qui sopravvive all'iscrizione: "Crea servizio" la
+        // usa per preselezionare la card giusta al primo ingresso nel funnel
+        // (richiesta della cliente, 27/09/2026: il percorso deve essere corretto
+        // dall'inizio). Si scrive qui, dopo `register()`, perché è qui che
+        // l'account nasce davvero: nei due rami sopra — account disattivato,
+        // email di un altro account — non esiste ancora un profilo da
+        // valorizzare, e la scelta resta in sessione (quel ramo la riscrive).
+        //
+        // update() sulla relazione e non su un modello caricato: `register()`
+        // crea/aggiorna il profilo con updateOrCreate dentro la sua
+        // transazione, quindi la riga c'è ma su $user non è caricata.
+        // Riscriverla a una seconda iscrizione va bene, al contrario di
+        // `online_payment`: questa colonna non decide niente, e il funnel la
+        // consulta solo finché il partner non ha scelto nemmeno una volta.
+        $user->partnerProfile()->update(['registration_service' => $this->service]);
 
         session()->forget([
             'partner_registration.step1',

@@ -37,6 +37,10 @@ class PartnerProfile extends Model
         'commission_min_cents',
         'online_payment',
         'payment_url',
+        // Tipologia scelta nello step 2 dell'iscrizione, conservata per
+        // preselezionare la card giusta al primo "Crea servizio" (richiesta
+        // della cliente, 27/09/2026). Stringa nullable: nessun cast serve.
+        'registration_service',
     ];
 
     protected function casts(): array

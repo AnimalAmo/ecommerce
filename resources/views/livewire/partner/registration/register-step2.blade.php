@@ -1,10 +1,15 @@
 {{-- Iscrizione B2B - step 2 (XD "Iscrizione B2B – step 2", artboard 1920x1080) --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
+    // Quattro voci nell'ordine chiesto dalla cliente (27/09/2026): Struttura,
+    // Attività, Servizio professionale, Evento. La chiave 'servizi' porta
+    // l'etichetta "Servizio professionale" (il valore del radio non cambia), e
+    // la quarta vale 'eventi' perché è lo slug che la bozza porta in `type`.
     $services = [
         'struttura' => ['partner.register2.struttura_title', 'partner.register2.struttura_subtitle'],
         'attivita' => ['partner.register2.attivita_title', 'partner.register2.attivita_subtitle'],
         'servizi' => ['partner.register2.servizi_title', 'partner.register2.servizi_subtitle'],
+        'eventi' => ['partner.register2.eventi_title', 'partner.register2.eventi_subtitle'],
     ];
 @endphp
 
