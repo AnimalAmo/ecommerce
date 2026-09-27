@@ -22,6 +22,12 @@ use Illuminate\Support\Collection;
  * leggeva «in attesa del collegamento Stripe», ci credeva, e apriva un ticket.
  *
  * Gli stati, in ordine di precedenza:
+ *  - `awaiting_payment_method` smartbox ritirata (o ferma) perché il partner
+ *                         non incassa online: richiesta della cliente del
+ *                         27/09/2026. Viene prima di tutto perché la riga a
+ *                         catalogo c'è, marcata `withheld_at`, e senza questo
+ *                         stato leggerebbe «Sospesa» — una cosa che l'admin
+ *                         non ha fatto;
  *  - `suspended`          la scheda è a catalogo ma sospesa dal pannello;
  *  - `awaiting_approval`  a catalogo, in attesa di approvazione (moderazione accesa);
  *  - `published`          online, nessun badge;
@@ -33,6 +39,8 @@ use Illuminate\Support\Collection;
  */
 class DraftPublicationState
 {
+    public const AWAITING_PAYMENT_METHOD = 'awaiting_payment_method';
+
     public const SUSPENDED = 'suspended';
 
     public const AWAITING_APPROVAL = 'awaiting_approval';
@@ -61,17 +69,32 @@ class DraftPublicationState
         }
 
         $published = $this->publishedRows($drafts);
-        $canPublish = $owner?->partnerProfile?->canPublish() === true;
+        $profile = $owner?->partnerProfile;
 
         return $drafts
             ->mapWithKeys(fn (StructureDraft $draft): array => [
-                $draft->id => $this->state($draft, $published->get($draft->id), $canPublish),
+                // Il gate si calcola per bozza: dal 27/09/2026 dipende dalla
+                // famiglia, e un solo bool per tutte direbbe il falso su metà.
+                $draft->id => $this->state(
+                    $draft,
+                    $published->get($draft->id),
+                    $profile?->canPublishFamily($draft->family()) === true,
+                ),
             ])
             ->all();
     }
 
-    private function state(StructureDraft $draft, ?Model $row, bool $canPublish): string
+    private function state(StructureDraft $draft, ?Model $row, bool $canPublishFamily): string
     {
+        // Ritirata da noi, non sospesa dall'admin: `withheld_at` lascia la riga
+        // dov'è, quindi senza questo ramo — che va prima del controllo sulla
+        // riga — il badge direbbe «Sospesa», accusando l'admin di una cosa che
+        // non ha fatto. Copre anche la finestra fra il ritorno al pagamento
+        // online e la ripubblicazione del cron, che dura fino a dieci minuti.
+        if ($row?->isWithheld() === true) {
+            return self::AWAITING_PAYMENT_METHOD;
+        }
+
         if ($row !== null) {
             return match (true) {
                 $row->isSuspended() => self::SUSPENDED,
@@ -84,11 +107,14 @@ class DraftPublicationState
             return self::DRAFT;
         }
 
-        // Prima i dati, poi Stripe: dire "in attesa di Stripe" a chi ha una
-        // bozza incompleta è la diagnosi falsa che ha generato la segnalazione.
+        // Prima i dati, poi il pagamento: dire "in attesa di Stripe" a chi ha
+        // una bozza incompleta è la diagnosi falsa che ha generato la
+        // segnalazione. Per la smartbox il motivo non è l'onboarding a metà ma
+        // il sistema di pagamento, e il badge lo dice con parole sue.
         return match (true) {
             ! $this->isPublishable($draft) => self::INCOMPLETE,
-            $canPublish => self::PUBLISHING,
+            ! $canPublishFamily && $draft->family() === 'smartbox' => self::AWAITING_PAYMENT_METHOD,
+            $canPublishFamily => self::PUBLISHING,
             default => self::AWAITING_STRIPE,
         };
     }

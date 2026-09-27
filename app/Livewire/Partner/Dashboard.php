@@ -11,6 +11,7 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -18,6 +19,14 @@ class Dashboard extends Component
 {
     /** Famiglie a catalogo che un partner può possedere (target dei morph). */
     private const OWNED_TYPES = [Structure::class, Event::class, SmartboxPackage::class];
+
+    /**
+     * Bozze in attesa per famiglia, memorizzate per il render. Privata, quindi
+     * fuori dal payload Livewire: si ricalcola a ogni richiesta.
+     *
+     * @var array<string, int>|null
+     */
+    private ?array $awaitingCache = null;
 
     /**
      * Il nome del saluto e le statistiche si leggono a ogni render da chi è
@@ -33,6 +42,7 @@ class Dashboard extends Component
             // Avviso lasciato da completeDraft: un toast prima del redirect si perdeva.
             'notice' => session('partner.notice'),
             'awaitingCount' => $this->awaitingCount(),
+            'smartboxAwaitingCount' => $this->smartboxAwaitingCount(),
         ])->title(__('partner.dashboard.title'));
     }
 
@@ -42,6 +52,10 @@ class Dashboard extends Component
      * il wizard e non trovava il servizio né a catalogo né qui. Zero per chi
      * può già pubblicare: le sue bozze in attesa sono bozze non pubblicabili,
      * e "Collega Stripe" gli chiederebbe qualcosa che ha già fatto.
+     *
+     * Le smartbox restano fuori da questo conteggio: hanno un avviso loro, e
+     * per un partner che incassa fuori dalla piattaforma "Collega Stripe" non
+     * sarebbe nemmeno la cosa da fare (27/09/2026).
      */
     private function awaitingCount(): int
     {
@@ -49,10 +63,47 @@ class Dashboard extends Component
             return 0;
         }
 
-        return StructureDraft::query()
+        return array_sum(Arr::except($this->awaitingByFamily(), 'smartbox'));
+    }
+
+    /**
+     * Smartbox ferme perché il partner non può pubblicarne (richiesta della
+     * cliente del 27/09/2026): sono le bozze in attesa più quelle già ritirate
+     * dalla vetrina, che il ritiro rimette in attesa.
+     *
+     * Conteggio a sé e non dentro `awaitingCount()`: quello esce zero per chi
+     * `canPublish()` ammette, e un partner che incassa in struttura lo è — con
+     * una smartbox pronta oggi non vedrebbe niente, che è il difetto da
+     * correggere.
+     */
+    private function smartboxAwaitingCount(): int
+    {
+        if (Auth::user()->partnerProfile?->canPublishFamily('smartbox') === true) {
+            return 0;
+        }
+
+        return $this->awaitingByFamily()['smartbox'] ?? 0;
+    }
+
+    /**
+     * Bozze in attesa del partner, contate per famiglia. Una query sola, letta
+     * dai due avvisi: nessuna bozza va contata due volte.
+     *
+     * Si raggruppa in PHP e non in SQL perché `service_category` nulla vale
+     * "struttura" (`StructureDraft::family()`): un `!= 'smartbox'` in SQL
+     * scarterebbe in silenzio proprio quelle righe, dato che il confronto con
+     * NULL non è mai vero.
+     *
+     * @return array<string, int>
+     */
+    private function awaitingByFamily(): array
+    {
+        return $this->awaitingCache ??= StructureDraft::query()
             ->where('user_id', Auth::id())
             ->awaitingPublication()
-            ->count();
+            ->get(['id', 'service_category'])
+            ->countBy(fn (StructureDraft $draft): string => $draft->family())
+            ->all();
     }
 
     /**

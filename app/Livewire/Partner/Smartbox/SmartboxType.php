@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Smartbox;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class SmartboxType extends Component
@@ -34,6 +35,11 @@ class SmartboxType extends Component
     {
         return view('livewire.partner.smartbox.smartbox-type', [
             'backUrl' => $this->serviceChoiceBackUrl(),
+            // Avvisa, non blocca (richiesta della cliente del 27/09/2026): una
+            // smartbox già fatta deve restare modificabile, e chi è al primo
+            // step deve sapere PRIMA di compilare dodici sezioni che senza
+            // incasso online il cofanetto non andrà in vetrina.
+            'paymentRequired' => Auth::user()?->partnerProfile?->canPublishFamily('smartbox') !== true,
         ])->title(__('partner.smartbox_type.title'));
     }
 }

@@ -3,6 +3,8 @@
 namespace Tests\Feature\Partner;
 
 use App\Livewire\Partner\MyServices\PartnerMyServices;
+use App\Models\Partner\PartnerProfile;
+use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
@@ -124,6 +126,70 @@ class PartnerMyServicesTest extends TestCase
             ->assertDontSee(__('partner.my_services.awaiting_stripe'))
             ->assertDontSee(__('partner.my_services.publishing'))
             ->assertDontSee(__('partner.my_services.awaiting_approval'));
+    }
+
+    /**
+     * Bozza smartbox di un partner che incassa fuori dalla piattaforma: il badge
+     * dice qual è la cosa da fare, non «in attesa del collegamento Stripe» —
+     * che per chi non userà mai Stripe è la stessa diagnosi falsa che ha
+     * generato la segnalazione del 29/09/2026.
+     */
+    public function test_una_smartbox_ferma_dice_che_serve_il_sistema_di_pagamento(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->offline()->for($partner)->create();
+
+        $this->smartboxService($partner->id, [
+            'name' => 'Cofanetto fermo',
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+        ]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee(__('partner.my_services.awaiting_payment_method'))
+            ->assertSee(__('partner.my_services.awaiting_payment_method_hint'))
+            ->assertDontSee(__('partner.my_services.awaiting_stripe'))
+            ->assertDontSee(__('partner.my_services.publishing'));
+    }
+
+    /**
+     * Smartbox RITIRATA (`withheld_at`): la riga a catalogo c'è, quindi senza il
+     * ramo dedicato il badge direbbe «Sospesa» — cioè accuserebbe l'admin di un
+     * "togli struttura" che nessuno ha fatto. È la ragione per cui quel ramo sta
+     * prima del controllo sulla riga.
+     */
+    public function test_una_smartbox_ritirata_non_risulta_sospesa(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->offline()->for($partner)->create();
+
+        $draft = $this->smartboxService($partner->id, ['name' => 'Cofanetto ritirato']);
+
+        SmartboxPackage::factory()->create([
+            'user_id' => $partner->id,
+            'structure_draft_id' => $draft->id,
+            'withheld_at' => now(),
+        ]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee('Cofanetto ritirato')
+            ->assertSee(__('partner.my_services.awaiting_payment_method'))
+            ->assertDontSee(__('partner.my_services.suspended'))
+            ->assertDontSee(__('partner.my_services.awaiting_stripe'));
+    }
+
+    /** Bozza smartbox completa: `price` è ciò che `isPublishable` pretende per la famiglia. */
+    private function smartboxService(int $userId, array $attributes = []): StructureDraft
+    {
+        return $this->service($userId, array_merge([
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'price' => '120',
+            'current_step' => 12,
+            'rooms' => null,
+        ], $attributes));
     }
 
     public function test_the_badge_is_only_on_drafts_awaiting_stripe(): void

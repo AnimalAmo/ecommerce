@@ -57,6 +57,14 @@ trait CreatesPartnerService
     public ?string $pendingNotice = null;
 
     /**
+     * L'esito di cui sopra è quello della smartbox di un partner che incassa
+     * fuori dalla piattaforma? Serve al titolo dell'avviso, che altrimenti
+     * resterebbe «non può ancora essere pagato» sopra un corpo che parla
+     * d'altro: la diagnosi falsa che il 27/09/2026 doveva sparire.
+     */
+    public bool $pendingNoticeSmartbox = false;
+
+    /**
      * Salvataggio già riuscito. Il percorso "in attesa di Stripe" non fa
      * redirect (vedi save()), quindi la pagina resta viva e compilata: un
      * secondo clic creerebbe una seconda bozza identica, con un'altra copia
@@ -111,7 +119,7 @@ trait CreatesPartnerService
      * UserDirectory lo risolve il container perché le viste non ricevono
      * iniezioni.
      *
-     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string, stripe_status: string, can_publish: bool}|null
+     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string, stripe_status: string, can_publish: bool, smartbox_payment_block: bool}|null
      */
     public function partnerSummary(): ?array
     {
@@ -135,9 +143,27 @@ trait CreatesPartnerService
                 default => 'none',
             },
             // Falso = la scheda nascerà "in attesa": l'avviso lo dice PRIMA
-            // che l'admin compili undici sezioni.
-            'can_publish' => (bool) $profile?->canPublish(),
+            // che l'admin compili undici sezioni. Per famiglia dal 27/09/2026:
+            // su una smartbox il pagamento diretto non basta più, e leggere
+            // "può pubblicare" su una pagina che poi lascia la scheda in attesa
+            // è la bugia che l'avviso deve evitare.
+            'can_publish' => (bool) $profile?->canPublishFamily($this->serviceCategory()),
+            // Quale dei due avvisi: Stripe da finire, o modalità di pagamento
+            // sbagliata per un cofanetto prepagato.
+            'smartbox_payment_block' => $this->smartboxPaymentBlock(),
         ];
+    }
+
+    /**
+     * La scheda è una smartbox e il partner incassa fuori dalla piattaforma: il
+     * motivo del blocco non è Stripe ma la modalità di pagamento (richiesta
+     * della cliente, 27/09/2026). Lo leggono l'avviso preventivo del riquadro
+     * laterale e il messaggio di esito, che devono dire la stessa cosa.
+     */
+    private function smartboxPaymentBlock(): bool
+    {
+        return $this->serviceCategory() === 'smartbox'
+            && $this->partner()?->partnerProfile?->requiresOnlinePayment() === false;
     }
 
     /**
@@ -153,6 +179,7 @@ trait CreatesPartnerService
         }
 
         $this->pendingNotice = null;
+        $this->pendingNoticeSmartbox = false;
 
         $partner = $this->partner();
 
@@ -201,9 +228,18 @@ trait CreatesPartnerService
             // layout del pannello non ha un canale per i messaggi flash (solo
             // flux:toast, che un redirect si porta via): l'avviso resta qui,
             // con il link alla scheda del partner. Lo disegna partner-aside.
-            $this->pendingNotice = __('admin-catalog.create.awaiting_stripe', [
-                'name' => $partner->partnerProfile?->business_name ?: $partner->name,
-            ], 'it');
+            // Due esiti diversi per due cause diverse: una smartbox di un
+            // partner che incassa fuori non aspetta un onboarding Stripe da
+            // finire, aspetta che passi all'incasso online (27/09/2026).
+            $this->pendingNoticeSmartbox = $this->smartboxPaymentBlock();
+
+            $this->pendingNotice = __(
+                $this->pendingNoticeSmartbox
+                    ? 'admin-catalog.create.awaiting_smartbox_payment'
+                    : 'admin-catalog.create.awaiting_stripe',
+                ['name' => $partner->partnerProfile?->business_name ?: $partner->name],
+                'it',
+            );
 
             // Le foto sono già sulla bozza: tenerle anche qui significa
             // ricaricarle al clic successivo.
