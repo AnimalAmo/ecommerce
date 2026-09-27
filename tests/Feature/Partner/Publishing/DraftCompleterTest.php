@@ -6,6 +6,7 @@ use App\Enums\DraftCompletion;
 use App\Exceptions\DraftNotPublishableException;
 use App\Models\Partner\PartnerProfile;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Services\Partner\Publishing\DraftCompleter;
@@ -64,9 +65,32 @@ class DraftCompleterTest extends TestCase
         ], $attributes));
     }
 
+    /**
+     * Bozza struttura col minimo che `isPublishable` pretende per il default
+     * della famiglia: nome italiano e `rooms`. Serve dal 27/09/2026 per provare
+     * la regola «offline pubblica senza Stripe», che sulla smartbox non vale più.
+     */
+    private function structureDraftOf(User $partner, array $attributes = []): StructureDraft
+    {
+        return StructureDraft::create(array_merge([
+            'user_id' => $partner->id,
+            'service_category' => 'struttura',
+            'type' => 'hotel',
+            'name' => ['it' => 'Hotel di prova'],
+            'rooms' => [['type' => 'doppia', 'count' => 2, 'price' => '80']],
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 10,
+        ], $attributes));
+    }
+
     private function packagesOf(StructureDraft $draft): int
     {
         return SmartboxPackage::withHidden()->where('structure_draft_id', $draft->id)->count();
+    }
+
+    private function structuresOf(StructureDraft $draft): int
+    {
+        return Structure::withHidden()->where('structure_draft_id', $draft->id)->count();
     }
 
     public function test_un_partner_pagabile_pubblica_e_chiude_la_bozza(): void
@@ -82,12 +106,37 @@ class DraftCompleterTest extends TestCase
         $this->assertSame(1, $this->packagesOf($draft));
     }
 
-    public function test_un_partner_offline_pubblica_senza_stripe(): void
+    /**
+     * Era una smartbox fino al 27/09/2026: dopo la richiesta della cliente una
+     * bozza smartbox qui proverebbe l'eccezione, non la regola. La regola
+     * («chi incassa fuori pubblica senza Stripe») si prova su una struttura.
+     */
+    public function test_un_partner_offline_pubblica_una_struttura_senza_stripe(): void
+    {
+        $draft = $this->structureDraftOf(User::factory()->offlinePartner()->create());
+
+        $this->assertSame(DraftCompletion::Published, $this->completer()->complete($draft, 11));
+        $this->assertSame(1, $this->structuresOf($draft));
+        $this->assertSame(StructureDraft::STATUS_COMPLETED, $draft->status);
+        $this->assertNull($draft->publish_requested_at);
+    }
+
+    /**
+     * L'eccezione smartbox dal lato di chi chiude il wizard: la bozza NON è un
+     * errore, resta parcheggiata in attesa come quella di un partner senza
+     * Stripe. È ciò che la tiene in "I miei servizi" col badge, e che la fa
+     * ripubblicare da sé al ritorno all'incasso online.
+     */
+    public function test_una_smartbox_di_un_partner_offline_resta_in_attesa(): void
     {
         $draft = $this->smartboxDraftOf(User::factory()->offlinePartner()->create());
 
-        $this->assertSame(DraftCompletion::Published, $this->completer()->complete($draft, 12));
-        $this->assertSame(1, $this->packagesOf($draft));
+        $this->assertSame(DraftCompletion::AwaitingPayout, $this->completer()->complete($draft, 12));
+
+        $fresh = $draft->fresh();
+        $this->assertSame(StructureDraft::STATUS_DRAFT, $fresh->status);
+        $this->assertTrue($fresh->publish_requested_at->equalTo(now()));
+        $this->assertSame(0, $this->packagesOf($draft));
     }
 
     public function test_un_partner_non_pagabile_lascia_la_bozza_in_attesa(): void

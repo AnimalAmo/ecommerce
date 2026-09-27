@@ -59,11 +59,19 @@ class AwaitingDraftPublisher
     }
 
     /**
-     * I controlli su utente attivo e canPublish vengono prima di
+     * I controlli su utente attivo e gate di pubblicazione vengono prima di
      * DraftCompleter: un partner ancora non pagabile altrimenti riscriverebbe
      * il segnale a ogni giro del comando, e uno disattivato (o anonimizzato)
      * finirebbe a catalogo. Una bozza diventata non pubblicabile resta in
      * attesa, così resta in "I miei servizi": la corregge il partner.
+     *
+     * Il gate è `canPublishFamily()`, per bozza e non per partner: una smartbox
+     * di chi incassa fuori dalla piattaforma (27/09/2026) non va a catalogo
+     * mentre le altre bozze dello stesso partner sì. Qui si esce con `false` e
+     * in silenzio: è una riga ferma di proposito, non un errore, e il comando
+     * la ritrova ogni dieci minuti finché il partner non torna al pagamento
+     * online — un warning per volta sarebbe un warning al giorno per sempre.
+     * Non contata fra le pubblicate, perché non è stata pubblicata.
      */
     private function publishOne(int $draftId): bool
     {
@@ -77,7 +85,11 @@ class AwaitingDraftPublisher
 
                 $owner = $draft->user;
 
-                if ($owner === null || ! $owner->is_active || $owner->partnerProfile?->canPublish() !== true) {
+                if ($owner === null || ! $owner->is_active) {
+                    return false;
+                }
+
+                if ($owner->partnerProfile?->canPublishFamily($draft->family()) !== true) {
                     return false;
                 }
 

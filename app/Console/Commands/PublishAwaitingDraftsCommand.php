@@ -21,6 +21,12 @@ use Throwable;
  * dell'08/09/2026), perché non c'è un partner che le venda, e quelle dei
  * partner disattivati o anonimizzati. AwaitingDraftPublisher ripete comunque
  * il controllo per ogni bozza. Un partner che fallisce non ferma gli altri.
+ *
+ * Il gate di pubblicazione è per famiglia (richiesta della cliente del
+ * 27/09/2026 sulle smartbox): qui serve solo a non chiamare il publisher per
+ * chi non ha niente da pubblicare, mentre la parola definitiva su ogni singola
+ * bozza resta di AwaitingDraftPublisher, che la scarta in silenzio. Il
+ * conteggio stampato conta le bozze andate davvero a catalogo.
  */
 class PublishAwaitingDraftsCommand extends Command
 {
@@ -30,20 +36,30 @@ class PublishAwaitingDraftsCommand extends Command
 
     public function handle(AwaitingDraftPublisher $publisher): int
     {
-        $partnerIds = StructureDraft::query()
+        // Le bozze in attesa con la loro famiglia, non i soli id dei partner:
+        // dal 27/09/2026 il gate è per famiglia, quindi sapere chi ha qualcosa
+        // in attesa non basta — serve sapere se ha qualcosa di pubblicabile.
+        $awaiting = StructureDraft::query()
             ->awaitingPublication()
             ->whereNotNull('user_id')
-            ->distinct()
-            ->pluck('user_id');
+            ->get(['id', 'user_id', 'service_category'])
+            ->groupBy(fn (StructureDraft $draft): int => (int) $draft->user_id);
 
         $published = 0;
 
         PartnerProfile::query()
-            ->whereIn('user_id', $partnerIds)
+            ->whereIn('user_id', $awaiting->keys())
             ->whereHas('user', fn (Builder $query): Builder => $query->where('is_active', true))
             ->orderBy('user_id')
+            // Prende il posto del vecchio `canPublish()`, che per le famiglie
+            // diverse dalla smartbox è la stessa regola. Un partner le cui
+            // uniche bozze in attesa sono smartbox ferme di proposito non apre
+            // nemmeno una transazione: AwaitingDraftPublisher le scarterebbe
+            // comunque, ma le riprenderebbe una per una ogni dieci minuti.
             ->get()
-            ->filter(fn (PartnerProfile $profile): bool => $profile->canPublish())
+            ->filter(fn (PartnerProfile $profile): bool => $awaiting
+                ->get((int) $profile->user_id, collect())
+                ->contains(fn (StructureDraft $draft): bool => $profile->canPublishFamily($draft->family())))
             ->each(function (PartnerProfile $profile) use ($publisher, &$published): void {
                 try {
                     $published += $publisher->publishFor((int) $profile->user_id);

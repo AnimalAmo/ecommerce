@@ -70,6 +70,54 @@ class PartnerPaymentModeService
         return $this->profileFor($userId)?->paymentMode() ?? OrderPaymentMode::Online;
     }
 
+    /**
+     * Modalità di molti titolari in una query sola. Le griglie del catalogo e le
+     * card dei preferiti devono decidere per decine di righe se il pulsante
+     * carrello ha senso: una lettura per riga sarebbe una N+1 nascosta dietro
+     * una vista.
+     *
+     * Come profileFor(), la cache tiene anche l'ASSENZA di profilo (null): sono
+     * gli id senza profilo quelli che, non memorizzati, tornerebbero a
+     * interrogare il database a ogni forOwner() successivo.
+     *
+     * @param  iterable<int|string|null>  $userIds  anche con null e duplicati dentro
+     * @return array<int, OrderPaymentMode> mappa id titolare => modalità (gli id null non ci sono)
+     */
+    public function forOwners(iterable $userIds): array
+    {
+        $ids = [];
+
+        foreach ($userIds as $userId) {
+            if ($userId !== null && ! in_array((int) $userId, $ids, true)) {
+                $ids[] = (int) $userId;
+            }
+        }
+
+        $missing = array_values(array_filter(
+            $ids,
+            fn (int $id): bool => ! array_key_exists($id, $this->profiles),
+        ));
+
+        if ($missing !== []) {
+            $found = PartnerProfile::query()
+                ->whereIn('user_id', $missing)
+                ->get()
+                ->keyBy(fn (PartnerProfile $profile): int => (int) $profile->user_id);
+
+            foreach ($missing as $id) {
+                $this->profiles[$id] = $found->get($id);
+            }
+        }
+
+        $modes = [];
+
+        foreach ($ids as $id) {
+            $modes[$id] = $this->forOwner($id);
+        }
+
+        return $modes;
+    }
+
     /** Structure, Event o SmartboxPackage: decide il titolare della scheda. */
     public function forPurchasable(?Model $purchasable): OrderPaymentMode
     {
@@ -109,12 +157,18 @@ class PartnerPaymentModeService
             return;
         }
 
-        $awaiting = StructureDraft::query()
+        // Non `exists()`: dal 27/09/2026 il gate è per famiglia, quindi avere
+        // qualcosa in attesa non basta — serve avere qualcosa di pubblicabile.
+        // Un partner che passa al pagamento diretto con in attesa solo smartbox
+        // metterebbe in coda un job che non pubblica niente. Bastano id e
+        // categoria: `family()` non legge altro.
+        $publishable = StructureDraft::query()
             ->where('user_id', $profile->user_id)
             ->awaitingPublication()
-            ->exists();
+            ->get(['id', 'service_category'])
+            ->contains(fn (StructureDraft $draft): bool => $profile->canPublishFamily($draft->family()));
 
-        if (! $awaiting) {
+        if (! $publishable) {
             return;
         }
 
