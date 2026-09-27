@@ -471,6 +471,7 @@ return [
         'helper' => 'It will help users find your structure quickly',
         'field_label' => 'Activity name',
         'field_categories' => 'Type of activity or service',
+        'field_categories_event' => 'Type of event',
         'field_categories_hint' => 'You can select more than one.',
         'field_categories_other' => 'Describe the type',
         'back' => 'Back',

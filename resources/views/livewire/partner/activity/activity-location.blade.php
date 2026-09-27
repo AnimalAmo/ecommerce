@@ -21,7 +21,7 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.activity_location.helper') }}</p>
 
                 <form wire:submit="next" class="mt-6">
-                    <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
+                    <div class="grid grid-cols-1 items-start gap-x-4 gap-y-5 md:grid-cols-2">
                         {{-- Indirizzo | Città --}}
                         <flux:field>
                             <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.address') }} *</flux:label>
@@ -43,20 +43,48 @@
                                 <flux:input wire:model="form.zip" inputmode="numeric" class="{{ $fieldClass }}" />
                             </flux:field>
                         </div>
-                        <x-partner.locale-tabs>
-                            <x-slot:it>
-                                <flux:field>
-                                    <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} *</flux:label>
-                                    <flux:input wire:model="form.meetingPoint.it" class="{{ $fieldClass }}" />
-                                </flux:field>
-                            </x-slot:it>
-                            <x-slot:en>
-                                <flux:field>
-                                    <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} (EN)</flux:label>
-                                    <flux:input wire:model="form.meetingPoint.en" class="{{ $fieldClass }}" />
-                                </flux:field>
-                            </x-slot:en>
-                        </x-partner.locale-tabs>
+                        {{-- Punto d'incontro solo per gli Eventi; le Attività hanno al suo
+                             posto la zona in cui operano, facoltativa (risposta della
+                             cliente, 27/09/2026: un professionista non ha un ritrovo). --}}
+                        @if ($form->isEvent)
+                            <x-partner.locale-tabs>
+                                <x-slot:it>
+                                    <flux:field>
+                                        <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} *</flux:label>
+                                        <flux:input wire:model="form.meetingPoint.it" class="{{ $fieldClass }}" />
+                                        {{-- Campo composto a mano: Flux non inietta l'errore, va messo qui. --}}
+                                        <flux:error name="form.meetingPoint.it" />
+                                    </flux:field>
+                                </x-slot:it>
+                                <x-slot:en>
+                                    <flux:field>
+                                        <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.meeting_point') }} (EN)</flux:label>
+                                        <flux:input wire:model="form.meetingPoint.en" class="{{ $fieldClass }}" />
+                                        <flux:error name="form.meetingPoint.en" />
+                                    </flux:field>
+                                </x-slot:en>
+                            </x-partner.locale-tabs>
+                        @else
+                            <div>
+                                <x-partner.locale-tabs>
+                                    <x-slot:it>
+                                        <flux:field>
+                                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.operating_area') }}</flux:label>
+                                            <flux:input wire:model="form.operatingArea.it" class="{{ $fieldClass }}" />
+                                            <flux:error name="form.operatingArea.it" />
+                                        </flux:field>
+                                    </x-slot:it>
+                                    <x-slot:en>
+                                        <flux:field>
+                                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_location.operating_area') }} (EN)</flux:label>
+                                            <flux:input wire:model="form.operatingArea.en" class="{{ $fieldClass }}" />
+                                            <flux:error name="form.operatingArea.en" />
+                                        </flux:field>
+                                    </x-slot:en>
+                                </x-partner.locale-tabs>
+                                <p class="mt-2 text-xs font-normal text-[#959595]">{{ __('partner.activity_location.operating_area_hint') }}</p>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Azioni: Indietro (a nome) + Avanti (pill scuro) --}}

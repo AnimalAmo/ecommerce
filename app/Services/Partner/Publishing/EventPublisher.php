@@ -30,6 +30,22 @@ class EventPublisher extends FamilyPublisher
             // del professionista, e un cambio di ramo può lasciarle lì.
             'activity_categories' => $isEvent ? null : $draft->activity_categories,
             'activity_categories_other' => $isEvent ? null : $this->translations($draft, 'activity_categories_other'),
+            // Tipologie di evento (cliente, 27/09/2026): la gemella sull'altro
+            // ramo, guardata nello stesso modo e nel verso opposto. Su un
+            // servizio professionale «Fiere / Mercatini» non vuol dire niente.
+            'event_categories' => $isEvent ? $draft->event_categories : null,
+            'event_categories_other' => $isEvent ? $this->translations($draft, 'event_categories_other') : null,
+            // Zona operativa: sta AL POSTO del punto d'incontro, quindi vale solo
+            // dove un punto d'incontro non c'è.
+            'operating_area' => $isEvent ? null : $this->translations($draft, 'operating_area'),
+            // Ricorrenza: sola etichetta per la scheda — la cliente ha escluso la
+            // generazione automatica delle date ripetute — e la domanda stessa
+            // parla di eventi.
+            'recurrence' => $isEvent ? $draft->recurrence : null,
+            // Prenotazione: nessuna guardia sul tipo. La cliente la chiede ai
+            // professionisti come «possibilità di prenotazione» e agli eventi come
+            // «obbligatoria o facoltativa»: è la stessa informazione.
+            'booking_requirement' => $draft->booking_requirement,
             'title' => $this->translations($draft, 'name'),
             'slug' => $this->slug($draft, $isEvent ? 'evento' : 'attivita'),
             'location' => $draft->locationLabel(),
@@ -38,8 +54,16 @@ class EventPublisher extends FamilyPublisher
             'ends_at' => $this->composeDateTime($draft->date_end ?? $draft->date_start, $draft->time_end, '23:59'),
             // Senza durata il detail attività farebbe fallback sul mock '3 giorni'.
             'duration_days' => $isEvent ? null : $this->durationDays($draft),
-            // Capienza illimitata: nessun input wizard (audit finding 11, v2).
-            'max_participants' => null,
+            // Capienza: il wizard ha il campo dallo step 5 (cliente, 27/09/2026:
+            // «numero effettivo, con blocco delle iscrizioni al raggiungimento del
+            // limite»), quindi un evento può finalmente esaurirsi. NULL resta
+            // "illimitata", ed è quello che hanno tutte le schede pubblicate prima
+            // di questa modifica. AvailabilityService e ReserveAvailabilityPipe
+            // leggono già la colonna: non serve altro a valle.
+            // Nessuna guardia sul tipo, a differenza delle tipologie: la capienza
+            // ha senso anche per un'attività (un workshop ha dei posti), e un
+            // valore scritto dal pannello admin non va buttato.
+            'max_participants' => $draft->max_participants,
             'price_cents' => $isFree ? null : $this->cents($draft->price_per_person),
             'is_free' => $isFree,
             'img' => $this->coverPhoto($draft),
@@ -65,14 +89,18 @@ class EventPublisher extends FamilyPublisher
      * Chiave = draft (non il nome): niente venue condivisi tra partner e le
      * correzioni di nome/indirizzo si propagano alla ri-pubblicazione.
      * Nessun map_img: la card mappa resta nascosta (guard nei blade).
+     *
+     * Senza punto d'incontro il nome cadeva sul NOME del servizio, e la scheda
+     * di un'attività stampava «Ritrovo: <nome dell'attività>» — un ritrovo che
+     * non esiste, perché un professionista lavora su una zona e non ha un luogo
+     * d'incontro (cliente, 27/09/2026). Il Venue continua a nascere, perché è
+     * lui che regge indirizzo e mappa; quello che non fa più è inventarsi un
+     * ritrovo. Nome vuoto = nessun ritrovo, ed è il segnale su cui la scheda
+     * pubblica decide se stampare quella riga.
      */
     private function venue(StructureDraft $draft): ?Venue
     {
-        $name = $draft->getTranslation('meeting_point', 'it') ?: $draft->getTranslation('name', 'it');
-
-        if (blank($name)) {
-            return null;
-        }
+        $meetingPoint = (string) $draft->getTranslation('meeting_point', 'it');
 
         $address = trim(implode(' ', array_filter([
             $draft->address,
@@ -81,8 +109,18 @@ class EventPublisher extends FamilyPublisher
             filled($draft->province) ? '('.$draft->province.')' : null,
         ])));
 
+        // Né ritrovo né indirizzo: un Venue così non direbbe nulla e la card
+        // mappa resterebbe nascosta comunque (mapQuery() vuole l'indirizzo).
+        if (blank($meetingPoint) && $address === '') {
+            return null;
+        }
+
         return Venue::query()->updateOrCreate(['structure_draft_id' => $draft->id], [
-            'name' => $name,
+            // Stringa vuota e non NULL: `venues.name` non è nullable e la
+            // migrazione è fuori perimetro. mapQuery() filtra già i vuoti prima
+            // di comporre la query per Google, quindi un nome vuoto non sporca
+            // la mappa.
+            'name' => $meetingPoint,
             'address' => $address !== '' ? $address : null,
         ]);
     }

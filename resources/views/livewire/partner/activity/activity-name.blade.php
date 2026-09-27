@@ -1,5 +1,10 @@
 {{-- Dashboard B2B – tipologia attività/eventi - nome (XD, artboard 1920x1080) --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
+@php
+    $fieldClass = '[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]';
+    // Checkbox tondi cyan + label SemiBold 15 #555, come lo step dei servizi animali.
+    $checkboxWrap = '[--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full [&_[data-flux-label]]:!text-[15px] [&_[data-flux-label]]:!font-semibold [&_[data-flux-label]]:!text-[#555555]';
+@endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
 
@@ -25,16 +30,65 @@
                         <x-slot:it>
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_name.field_label') }}</flux:label>
-                                <flux:input wire:model="name.it" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                <flux:input wire:model="name.it" class="{{ $fieldClass }}" />
                             </flux:field>
                         </x-slot:it>
                         <x-slot:en>
                             <flux:field>
                                 <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_name.field_label') }} (EN)</flux:label>
-                                <flux:input wire:model="name.en" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                <flux:input wire:model="name.en" class="{{ $fieldClass }}" />
                             </flux:field>
                         </x-slot:en>
                     </x-partner.locale-tabs>
+
+                    {{-- Tipologie a scelta multipla, facoltative (risposte della cliente,
+                         27/09/2026): le categorie professionali per le attività, le
+                         tipologie di evento per gli eventi. Le voci le dà
+                         ServiceOptionLabels, la stessa lista che valida lo step. --}}
+                    <div class="mt-6">
+                        <p class="text-xs font-normal text-[#555555]">{{ __($isEvent ? 'partner.activity_name.field_categories_event' : 'partner.activity_name.field_categories') }}</p>
+                        <p class="mt-1 text-xs font-normal text-[#959595]">{{ __('partner.activity_name.field_categories_hint') }}</p>
+
+                        {{-- wire:model.live: senza `.live` il testo libero di "Altro" qui
+                             sotto non comparirebbe fino al submit. --}}
+                        {{-- `$optionLabel` e non `$label`: la variabile sopravvive al
+                             foreach, e `flux:input` elenca `label` fra i prop che
+                             eredita dallo scope del chiamante — i campi qui sotto si
+                             auto-avvolgerebbero in un campo con l'ultima etichetta
+                             dell'elenco. --}}
+                        <div class="mt-3 grid grid-cols-1 gap-y-2 sm:grid-cols-2 sm:gap-x-4 {{ $checkboxWrap }}">
+                            @foreach ($categoryOptions as $slug => $optionLabel)
+                                <flux:checkbox wire:model.live="categories" value="{{ $slug }}" :label="$optionLabel" wire:key="cat-{{ $slug }}" />
+                            @endforeach
+                        </div>
+
+                        {{-- Campo composto a mano: Flux non inietta l'errore, va messo qui.
+                             `name="categories"` prende anche gli errori di
+                             `categories.*` (flux:error cerca la chiave `.*` in
+                             fallback), che è dove finisce uno slug forgiato. --}}
+                        <flux:error name="categories" />
+
+                        @if (in_array('altro', $categories, true))
+                            <div class="mt-3">
+                                <x-partner.locale-tabs>
+                                    <x-slot:it>
+                                        <flux:field>
+                                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_name.field_categories_other') }}</flux:label>
+                                            <flux:input wire:model="categoriesOther.it" maxlength="200" class="{{ $fieldClass }}" />
+                                            <flux:error name="categoriesOther.it" />
+                                        </flux:field>
+                                    </x-slot:it>
+                                    <x-slot:en>
+                                        <flux:field>
+                                            <flux:label class="!text-xs !font-normal !text-[#555555]">{{ __('partner.activity_name.field_categories_other') }} (EN)</flux:label>
+                                            <flux:input wire:model="categoriesOther.en" maxlength="200" class="{{ $fieldClass }}" />
+                                            <flux:error name="categoriesOther.en" />
+                                        </flux:field>
+                                    </x-slot:en>
+                                </x-partner.locale-tabs>
+                            </div>
+                        @endif
+                    </div>
 
                     {{-- Azioni: Indietro (a tipologia attività/eventi) + Avanti (pill scuro) --}}
                     <div class="mt-8 flex items-center justify-end gap-6">

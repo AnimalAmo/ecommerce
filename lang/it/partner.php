@@ -486,6 +486,10 @@ return [
         // Categorie professionali a scelta multipla (risposta della cliente,
         // 27/09/2026: «un maneggio può essere anche fattoria didattica»).
         'field_categories' => 'Tipologia di attività o servizio',
+        // Gemella per il ramo eventi: la stessa etichetta su un evento diceva
+        // «Tipologia di attività o servizio: Fiere / Mercatini», sia nel wizard
+        // sia sulla scheda pubblica.
+        'field_categories_event' => 'Tipologia di evento',
         'field_categories_hint' => 'Puoi selezionarne più di una.',
         'field_categories_other' => 'Descrivi la tipologia',
         'back' => 'Indietro',

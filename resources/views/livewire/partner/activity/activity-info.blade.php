@@ -69,6 +69,51 @@
                         <p class="mt-2 text-xs text-[#555555]">{{ __('partner.activity_info.date_optional_hint') }}</p>
                     @endunless
 
+                    {{-- Prenotazione, ricorrenza e posti (risposte della cliente,
+                         27/09/2026). La prenotazione la chiede a professionisti ed
+                         eventi, quindi sta fuori dal ramo; ricorrenza e posti sono
+                         solo degli eventi.
+
+                         Prima voce con `value=""` invece del prop `placeholder`: Flux
+                         disegna l'opzione-placeholder `disabled`, e su un campo
+                         facoltativo il partner non potrebbe più tornare a "nessuna
+                         scelta" dopo averne fatta una. --}}
+                    <div class="mt-5 flex flex-wrap items-start gap-4">
+                        <flux:field class="w-full sm:w-[272px]">
+                            <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.booking_requirement') }}</flux:label>
+                            <flux:select wire:model="form.bookingRequirement" class="{{ $selectClass }}">
+                                <flux:select.option value="">{{ __('partner.activity_info.booking_requirement') }}</flux:select.option>
+                                {{-- `$optionLabel` e non `$label`: la variabile sopravvive al foreach e
+                                     `flux:input` eredita `label` dallo scope del chiamante. --}}
+                                @foreach ($form->bookingOptions() as $slug => $optionLabel)<flux:select.option value="{{ $slug }}">{{ $optionLabel }}</flux:select.option>@endforeach
+                            </flux:select>
+                            {{-- Campo composto a mano: Flux non inietta l'errore, va messo qui. --}}
+                            <flux:error name="form.bookingRequirement" />
+                            <p class="mt-1 text-xs text-[#959595]">{{ __('partner.activity_info.booking_requirement_hint') }}</p>
+                        </flux:field>
+
+                        @if ($form->isEvent)
+                            {{-- Sola etichetta per la scheda: la cliente ha escluso la
+                                 generazione automatica delle date ripetute, quindi da
+                                 'ricorrente' non deve nascere nessuna logica. --}}
+                            <flux:field class="w-full sm:w-[272px]">
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.recurrence') }}</flux:label>
+                                <flux:select wire:model="form.recurrence" class="{{ $selectClass }}">
+                                    <flux:select.option value="">{{ __('partner.activity_info.recurrence') }}</flux:select.option>
+                                    @foreach ($form->recurrenceOptions() as $slug => $optionLabel)<flux:select.option value="{{ $slug }}">{{ $optionLabel }}</flux:select.option>@endforeach
+                                </flux:select>
+                                <flux:error name="form.recurrence" />
+                            </flux:field>
+
+                            <flux:field class="w-full sm:w-[176px]">
+                                <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.max_participants') }}</flux:label>
+                                <flux:input wire:model="form.maxParticipants" type="number" min="1" max="65535" inputmode="numeric" class="[&_input]:!h-10 [&_input]:!rounded-[3px] [&_input]:!border-[#C8C8C8]" />
+                                <flux:error name="form.maxParticipants" />
+                                <p class="mt-1 text-xs text-[#959595]">{{ __('partner.activity_info.max_participants_hint') }}</p>
+                            </flux:field>
+                        @endif
+                    </div>
+
                     {{-- Azioni: Indietro (a descrizione) + Avanti (pill scuro) --}}
                     <div class="mt-8 flex items-center justify-end gap-6">
                         <flux:button href="{{ route('partner.activity.description') }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.activity_info.back') }}</flux:button>

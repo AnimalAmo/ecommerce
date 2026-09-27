@@ -40,6 +40,17 @@ class ActivityType extends Component
      * Si azzera solo al cambio effettivo: ripassare da questo step senza
      * toccare la scelta non deve cancellare il lavoro già fatto.
      *
+     * Con i campi nati dalle risposte della cliente del 27/09/2026 la regola
+     * resta la stessa, applicata a una lista più lunga. Quello che NON si
+     * azzera, e perché:
+     *   - `activity_categories` e il suo testo libero: sono l'identità del
+     *     professionista, non dell'attività, e il publisher già non le porta
+     *     sugli eventi veri. Azzerarle farebbe ricompilare a un maneggio che
+     *     apre un evento la risposta che aveva già dato.
+     *   - `booking_requirement`: la cliente la chiede a entrambi i rami, quindi
+     *     la risposta resta valida dopo il cambio.
+     *   - `date_start` e `date_end`: anche le attività possono averle.
+     *
      * @return array<string, null>
      */
     private function clearedFields(): array
@@ -60,10 +71,24 @@ class ActivityType extends Component
             );
         }
 
-        // Da Evento ad Attività: gli orari non esistono più su questo ramo.
+        // Verso Attività: si abbandona il ramo evento. Orari e punto d'incontro
+        // (al suo posto c'è la zona operativa), ricorrenza, posti e tipologie di
+        // evento — «Fiere / Mercatini» non descrive un servizio professionale, e
+        // riaprendo lo step 2 il partner ritroverebbe caselle spuntate credendo
+        // di aver risposto. `max_participants` è quello che pesa davvero: il
+        // publisher lo copia senza guardare il tipo, quindi restando scritto
+        // farebbe esaurire un servizio professionale.
         if ($this->type === 'attivita') {
-            $cleared['time_start'] = null;
-            $cleared['time_end'] = null;
+            $cleared = array_merge($cleared, array_fill_keys(
+                ['time_start', 'time_end', 'meeting_point', 'recurrence', 'max_participants', 'event_categories', 'event_categories_other'],
+                null,
+            ));
+        }
+
+        // Verso Eventi: si abbandona il ramo professionale. La zona operativa è
+        // di chi lavora su un territorio; un evento ha un punto d'incontro.
+        if ($this->type === 'eventi') {
+            $cleared['operating_area'] = null;
         }
 
         return $cleared;
