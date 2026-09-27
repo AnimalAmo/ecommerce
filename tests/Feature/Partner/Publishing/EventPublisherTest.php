@@ -148,11 +148,44 @@ class EventPublisherTest extends TestCase
         $this->assertSame(2, Venue::count());
     }
 
-    public function test_publish_skips_activity_drafts_without_dates(): void
+    /**
+     * Era `test_publish_skips_activity_drafts_without_dates`, e il nome
+     * prometteva il contrario di quel che la fixture fa: `activityDraft()` nasce
+     * `type => 'eventi'`, quindi il caso provato è sempre stato quello
+     * dell'EVENTO senza data. Che è il caso giusto da tenere — un evento senza
+     * `starts_at` renderebbe una card cliccabile con un detail rotto — sotto il
+     * nome che lo dice. Il caso dell'attività è quello qui sotto, e dal
+     * 27/09/2026 va nel verso opposto.
+     */
+    public function test_publish_skips_event_drafts_without_dates(): void
     {
-        // Un evento senza starts_at renderebbe una card cliccabile con detail rotto.
         $this->assertNull(app(DraftPublisher::class)->publish($this->activityDraft(['date_start' => null, 'date_end' => null])));
         $this->assertSame(0, Event::count());
+    }
+
+    /**
+     * Il buco che non aveva nessuna prova: un servizio professionale senza data
+     * DEVE arrivare a catalogo (risposta della cliente, 27/09/2026). Prima la
+     * data obbligatoria per tutti teneva fuori dal catalogo, per sempre, ogni
+     * dog sitter e ogni toelettatore.
+     */
+    public function test_publish_carries_an_activity_without_dates_to_the_catalog(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'date_start' => null,
+            'date_end' => null,
+            'time_start' => null,
+            'time_end' => null,
+        ]));
+
+        $this->assertInstanceOf(Event::class, $event);
+        $this->assertSame('activity', $event->type->value);
+        // Nessuna data inventata a valle: `composeDateTime` torna null, e senza
+        // le due date `durationDays` non può calcolare niente.
+        $this->assertNull($event->starts_at);
+        $this->assertNull($event->ends_at);
+        $this->assertNull($event->duration_days);
     }
 
     public function test_publish_creates_a_free_activity_with_duration(): void
@@ -177,5 +210,139 @@ class EventPublisherTest extends TestCase
         $this->assertNull($event->price_cents);
         $this->assertTrue($event->is_free);
         $this->assertTrue($event->hasJoinCta());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Colonne nate dalle risposte della cliente del 27/09/2026
+    |--------------------------------------------------------------------------
+    | Ognuna ha la sua gemella su `events`: è la trappola che su questo repo è
+    | già costata due volte, perché senza la colonna a valle il valore resta
+    | nella bozza e la scheda pubblica non lo vede mai. Le guardie sul tipo si
+    | provano nei due versi: quel che il ramo non pubblica NON deve arrivare,
+    | perché un cambio di ramo può lasciare il valore addosso alla bozza.
+    */
+
+    public function test_publish_carries_the_event_types(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'event_categories' => ['fiere_mercatini', 'altro'],
+            'event_categories_other' => 'Sagra del cane',
+        ]));
+
+        $this->assertSame(['fiere_mercatini', 'altro'], $event->event_categories);
+        $this->assertSame('Sagra del cane', $event->event_categories_other);
+    }
+
+    public function test_an_activity_does_not_carry_event_types(): void
+    {
+        // «Fiere / Mercatini» non descrive un servizio professionale: se lo slug
+        // resta sulla bozza dopo un cambio di ramo, non deve arrivare a catalogo.
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'event_categories' => ['fiere_mercatini'],
+            'event_categories_other' => 'residuo',
+        ]));
+
+        $this->assertNull($event->event_categories);
+        // Non `assertNull`: un attributo tradotto spatie legge la stringa vuota
+        // quando la lingua non c'è, mai null.
+        $this->assertSame([], $event->getTranslations('event_categories_other'));
+    }
+
+    public function test_publish_carries_the_operating_area_of_an_activity(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'meeting_point' => [],
+            'operating_area' => ['it' => 'Milano e provincia', 'en' => 'Milan and province'],
+        ]));
+
+        $this->assertSame('Milano e provincia', $event->getTranslation('operating_area', 'it'));
+        $this->assertSame('Milan and province', $event->getTranslation('operating_area', 'en'));
+    }
+
+    public function test_an_event_does_not_carry_the_operating_area(): void
+    {
+        // La zona sta AL POSTO del punto d'incontro: dove un ritrovo c'è, non
+        // vale.
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'operating_area' => ['it' => 'Lombardia'],
+        ]));
+
+        $this->assertSame([], $event->getTranslations('operating_area'));
+    }
+
+    /**
+     * Senza punto d'incontro il Venue prendeva il NOME DEL SERVIZIO, e la scheda
+     * stampava «Ritrovo: <nome dell'attività>» — un ritrovo che non esiste. Il
+     * Venue continua a nascere (regge indirizzo e mappa), col nome vuoto, che è
+     * il segnale su cui la scheda decide se stampare quella riga.
+     */
+    public function test_an_activity_without_a_meeting_point_gets_a_venue_without_a_name(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'meeting_point' => [],
+        ]));
+
+        $this->assertNotNull($event->venue);
+        $this->assertSame('', $event->venue->name);
+        $this->assertSame('Piazza Duomo 1 20121 Milano (MI)', $event->venue->address);
+        $this->assertNotSame($event->title, $event->venue->name);
+    }
+
+    public function test_publish_carries_the_recurrence_of_an_event(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft(['recurrence' => 'ricorrente']));
+
+        $this->assertSame('ricorrente', $event->recurrence);
+    }
+
+    public function test_an_activity_does_not_carry_the_recurrence(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'recurrence' => 'ricorrente',
+        ]));
+
+        $this->assertNull($event->recurrence);
+    }
+
+    /**
+     * La prenotazione NON ha guardie sul tipo, ed è voluto: la cliente la chiede
+     * ai professionisti come «possibilità di prenotazione» e agli eventi come
+     * «obbligatoria o facoltativa», cioè è la stessa informazione.
+     */
+    public function test_publish_carries_the_booking_requirement_on_both_branches(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft(['booking_requirement' => 'obbligatoria']));
+        $activity = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'booking_requirement' => 'facoltativa',
+        ]));
+
+        $this->assertSame('obbligatoria', $event->booking_requirement);
+        $this->assertSame('facoltativa', $activity->booking_requirement);
+    }
+
+    /**
+     * Capienza: dal 27/09/2026 il wizard ha il campo, quindi un evento può
+     * finalmente esaurirsi. Nessuna guardia sul tipo — un workshop ha dei posti
+     * anche se è un'attività — e NULL resta "illimitata", che è quello che hanno
+     * tutte le schede pubblicate prima della modifica.
+     */
+    public function test_publish_carries_the_seats(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft(['max_participants' => 30]));
+
+        $this->assertSame(30, $event->max_participants);
+    }
+
+    public function test_seats_left_empty_stay_unlimited(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft(['max_participants' => null]));
+
+        $this->assertNull($event->max_participants);
     }
 }

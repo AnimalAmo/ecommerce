@@ -75,7 +75,15 @@ class EventDiscussionTest extends TestCase
             ->assertSee(__('events.general_info'))
             ->assertSee(__('events.included'))
             // Box prenotazione a destra: la colonna non si è persa con la tab.
-            ->assertSee(__('events.checkin'))
+            // Era `events.checkin`, che dal 27/09/2026 non prova più questo:
+            // `Event::factory()->activity()` nasce senza `starts_at`, e la
+            // cliente ha chiesto che senza data la coppia Check-in/Check-out
+            // sparisca (mostrava due trattini). Gli stepper Ospiti e Animali
+            // stanno nello stesso riquadro e non dipendono dalle date: sono
+            // l'elemento su cui l'intento del test — la colonna destra esiste —
+            // si riasserta senza allentare niente.
+            ->assertSee(__('events.guests'))
+            ->assertSee(__('events.animals'))
             ->assertSee(__('events.faq'))
             ->assertSee('Quanti animali posso portare?')
             ->assertSee('Attività scritta dal partner.');

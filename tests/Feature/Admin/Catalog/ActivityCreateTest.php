@@ -51,10 +51,19 @@ class ActivityCreateTest extends TestCase
             ->set('location.province', 'MI')
             ->set('location.zip', '20121')
             ->set('location.meetingPoint.it', 'Piazza Duomo')
+            // Campi nati dalle risposte della cliente del 27/09/2026. Stanno DOPO
+            // `set('type')` non per ordine estetico: `updatedType()` azzera
+            // `categories` e `categoriesOther`, quindi scritti prima verrebbero
+            // cancellati dallo stesso set del tipo.
+            ->set('categories', ['fiere_mercatini', 'altro'])
+            ->set('categoriesOther.it', 'Sagra del cane')
             ->set('info.dateStart', '2026-08-01')
             ->set('info.dateEnd', '2026-08-01')
             ->set('info.timeStart', '10:00')
             ->set('info.timeEnd', '18:00')
+            ->set('info.bookingRequirement', 'obbligatoria')
+            ->set('info.recurrence', 'ricorrente')
+            ->set('info.maxParticipants', '30')
             ->set('included.services', ['wifi'])
             ->set('included.additional', ['colazione'])
             ->set('animalServices', ['veterinario'])
@@ -81,6 +90,12 @@ class ActivityCreateTest extends TestCase
             'name' => ['it' => 'Aperitivo a 6 zampe', 'en' => 'Six-legged happy hour'],
             'description' => ['it' => 'Un aperitivo con i vostri amici pelosi.'],
             'meeting_point' => ['it' => 'Piazza Duomo'],
+            // Le stesse colonne che `fill()` scrive dal lato pannello (27/09/2026).
+            'event_categories' => ['fiere_mercatini', 'altro'],
+            'event_categories_other' => ['it' => 'Sagra del cane'],
+            'booking_requirement' => 'obbligatoria',
+            'recurrence' => 'ricorrente',
+            'max_participants' => 30,
             'address' => 'Piazza Duomo 1',
             'city' => 'Milano',
             'province' => 'MI',
@@ -113,6 +128,19 @@ class ActivityCreateTest extends TestCase
             'ends_at' => $event->ends_at->toDateTimeString(),
             'duration_days' => $event->duration_days,
             'max_participants' => $event->max_participants,
+            // Le colonne del 27/09/2026, in questa lista e non in un test a
+            // parte: è questo confronto che impedisce al pannello di divergere
+            // dal wizard, e una colonna che non ci sta dentro può divergere
+            // senza che nessuno se ne accorga. Le tipologie si confrontano su
+            // TUTTE E QUATTRO le colonne, comprese quelle del ramo abbandonato:
+            // il valore che non deve arrivare è metà della regola.
+            'activity_categories' => $event->activity_categories,
+            'activity_categories_other' => $event->getTranslations('activity_categories_other'),
+            'event_categories' => $event->event_categories,
+            'event_categories_other' => $event->getTranslations('event_categories_other'),
+            'operating_area' => $event->getTranslations('operating_area'),
+            'recurrence' => $event->recurrence,
+            'booking_requirement' => $event->booking_requirement,
             'price_cents' => $event->price_cents,
             'is_free' => $event->is_free,
             'cancellation_policy_days' => $event->cancellation_policy_days,
@@ -374,5 +402,183 @@ class ActivityCreateTest extends TestCase
             ->assertHasErrors(['info.dateEnd' => 'after_or_equal']);
 
         $this->assertSame(0, StructureDraft::query()->count());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ramo professionale e campi del 27/09/2026
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Il gemello di `fill()` sull'altro ramo. Non si ottiene da `fill()` con un
+     * `set('type','attivita')` dopo: quel set passa da `updatedType()`, che
+     * azzera le tipologie, quindi il tipo va scelto PRIMA di tutto il resto.
+     * `detailedDescription.it` è obbligatoria solo qui (come ActivityDescription),
+     * e la data non c'è: dal 27/09/2026 un servizio professionale non ne ha una.
+     */
+    private function fillActivity(Testable $component): Testable
+    {
+        return $component
+            ->set('type', 'attivita')
+            ->set('name.it', 'Toelettatura a domicilio')
+            ->set('description.it', 'Toelettatura per cani e gatti, a casa tua.')
+            ->set('detailedDescription.it', 'Lavaggio, taglio e asciugatura, con prodotti naturali.')
+            ->set('categories', ['toelettatore', 'dog_sitter'])
+            ->set('location.address', 'Via Roma 1')
+            ->set('location.city', 'Milano')
+            ->set('location.province', 'MI')
+            ->set('location.zip', '20121')
+            ->set('location.operatingArea.it', 'Milano e provincia')
+            ->set('info.bookingRequirement', 'facoltativa')
+            ->set('costType', 'pagamento')
+            ->set('pricePerPerson', '40')
+            ->set('when', '1')
+            ->set('photos', [
+                UploadedFile::fake()->image('uno.jpg'),
+                UploadedFile::fake()->image('due.jpg'),
+                UploadedFile::fake()->image('tre.jpg'),
+                UploadedFile::fake()->image('quattro.jpg'),
+            ]);
+    }
+
+    /**
+     * Il percorso completo del ramo professionale dal pannello: zona operativa e
+     * categorie nella loro colonna, punto d'incontro e colonne dell'altro ramo
+     * intonse, e nessuna data — che prima di questa modifica era obbligatoria e
+     * rendeva impubblicabile ogni servizio professionale.
+     */
+    public function test_an_activity_created_from_the_panel_carries_the_operating_area(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fillActivity($this->componentFor($partner))->call('save')->assertHasNoErrors();
+
+        $draft = StructureDraft::sole();
+        $this->assertSame('Milano e provincia', $draft->getTranslation('operating_area', 'it'));
+        $this->assertSame(['toelettatore', 'dog_sitter'], $draft->activity_categories);
+        $this->assertNull($draft->event_categories);
+        $this->assertSame([], $draft->getTranslations('meeting_point'));
+        $this->assertNull($draft->date_start);
+
+        $event = Event::withHidden()->where('user_id', $partner->id)->sole();
+        $this->assertSame('activity', $event->type->value);
+        $this->assertSame('Milano e provincia', $event->getTranslation('operating_area', 'it'));
+        $this->assertSame(['toelettatore', 'dog_sitter'], $event->activity_categories);
+        $this->assertSame('facoltativa', $event->booking_requirement);
+        // Nessun ritrovo inventato: il Venue nasce col nome vuoto, ed è il
+        // segnale su cui la scheda decide se stampare la riga «Ritrovo».
+        $this->assertSame('', $event->venue->name);
+    }
+
+    /**
+     * La whitelist di `categories.*` è quella del ramo corrente. Uno slug
+     * dell'altra lista — forgiato, o rimasto in una richiesta partita prima del
+     * cambio di tipo — è rifiutato, non scritto nella colonna sbagliata.
+     */
+    public function test_the_panel_refuses_a_category_from_the_other_branch(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('categories', ['toelettatore'])
+            ->call('save')
+            ->assertHasErrors(['categories.0' => 'in'])
+            ->assertSee(__('admin-catalog.create.validation.option_unknown'));
+
+        $this->assertSame(0, StructureDraft::count());
+    }
+
+    public function test_the_panel_refuses_an_invented_booking_requirement(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('info.bookingRequirement', 'forse')
+            ->call('save')
+            ->assertHasErrors(['info.bookingRequirement' => 'in'])
+            ->assertSee(__('admin-catalog.create.validation.option_unknown'));
+
+        $this->assertSame(0, StructureDraft::count());
+    }
+
+    /**
+     * `required_with:dateEnd` di ActivityInfoForm nomina una chiave di primo
+     * livello: qui i campi stanno sotto `info.`, e `required_with` su un campo
+     * assente è sempre soddisfatto — la regola passava in silenzio e una data di
+     * fine senza inizio arrivava alla bozza, dove il publisher ne farebbe un
+     * `ends_at` senza `starts_at`. La riscrittura del riferimento è la gemella
+     * di quella di `after_or_equal`, e come lei vale solo sul ramo dove la
+     * regola esiste.
+     */
+    public function test_an_end_date_without_a_start_is_refused_on_an_activity(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fillActivity($this->componentFor($partner))
+            ->set('info.dateEnd', '2026-08-03')
+            ->call('save')
+            ->assertHasErrors(['info.dateStart' => 'required_with']);
+
+        $this->assertSame(0, StructureDraft::count());
+    }
+
+    /**
+     * Il tetto è quello della colonna (`unsignedSmallInteger`): in MySQL strict
+     * un valore più grande è un errore SQL, non una validazione, e la suite gira
+     * su SQLite, dove passerebbe in silenzio.
+     */
+    public function test_seats_above_the_column_ceiling_are_refused_by_the_panel(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('info.maxParticipants', '65536')
+            ->call('save')
+            ->assertHasErrors(['info.maxParticipants' => 'max']);
+
+        $this->assertSame(0, StructureDraft::count());
+    }
+
+    /**
+     * Cambiando ramo le tipologie si azzerano SEMPRE, in tutte due le direzioni:
+     * le due liste non hanno uno slug in comune, e una scelta rimasta in memoria
+     * sarebbe rifiutata da `categories.*` sotto una casella che non viene più
+     * disegnata — un errore che l'admin non potrebbe correggere.
+     */
+    public function test_switching_branch_clears_the_categories(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->componentFor($partner)
+            ->set('type', 'attivita')
+            ->set('categories', ['toelettatore'])
+            ->set('categoriesOther.it', 'Pensione per conigli')
+            ->set('type', 'eventi')
+            ->assertSet('categories', [])
+            ->assertSet('categoriesOther.it', '')
+            // Lo stesso set decide anche quale dei due campi del luogo viene
+            // chiesto e salvato: senza questa riga il pannello smetterebbe di
+            // chiedere il punto d'incontro di un evento.
+            ->assertSet('location.isEvent', true)
+            ->assertSet('info.isEvent', true);
+    }
+
+    /** Il ramo professionale nasce col luogo sul suo ramo, senza passare da un cambio di tipo. */
+    public function test_the_form_opens_on_the_activity_branch(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->componentFor($partner)
+            ->assertSet('type', 'attivita')
+            ->assertSet('location.isEvent', false)
+            ->assertSet('info.isEvent', false);
     }
 }

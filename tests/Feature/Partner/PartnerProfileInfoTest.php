@@ -5,6 +5,7 @@ namespace Tests\Feature\Partner;
 use App\Livewire\Partner\Profile\PartnerProfileInfo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -90,5 +91,92 @@ class PartnerProfileInfoTest extends TestCase
             'vat' => '12345678901',
             'city' => 'Padova',
         ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orari di apertura o disponibilità (risposta della cliente, 27/09/2026)
+    |--------------------------------------------------------------------------
+    | Sono sul profilo e non sulla bozza perché la cliente li nomina in due
+    | punti — fra i recapiti pubblici e fra i campi dell'attività — e due campi
+    | che possono contraddirsi sono peggio di uno. Le schede attività li leggono
+    | da qui (ActivityDetail::openingHours).
+    */
+
+    /** I campi ci sono, con il loro avviso: sono facoltativi e si vedono a catalogo. */
+    private function fillRequired(Testable $component): Testable
+    {
+        return $component
+            ->set('form.firstName', 'Mario')
+            ->set('form.lastName', 'Rossi')
+            ->set('form.businessName', 'Pet Hotel Srl')
+            ->set('form.address', 'Via Roma 1')
+            ->set('form.province', 'PD')
+            ->set('form.city', 'Padova')
+            ->set('form.zip', '35100')
+            ->set('form.vat', '12345678901')
+            ->set('form.phone', '3331234567')
+            ->set('form.taxCode', 'RSSMRA80A01H501U');
+    }
+
+    public function test_page_renders_the_opening_hours_field(): void
+    {
+        $this->actingAsActivePartner();
+
+        $this->get(route('partner.profile'))
+            ->assertOk()
+            ->assertSee(__('partner.profile.opening_hours'))
+            ->assertSee(__('partner.profile.opening_hours_hint'));
+    }
+
+    public function test_save_persists_the_opening_hours_in_both_languages(): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        $this->fillRequired(Livewire::test(PartnerProfileInfo::class))
+            ->set('form.openingHours.it', 'Lun-Ven 9-18')
+            ->set('form.openingHours.en', 'Mon-Fri 9-18')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $profile = $partner->refresh()->partnerProfile;
+        $this->assertSame('Lun-Ven 9-18', $profile->getTranslation('opening_hours', 'it'));
+        $this->assertSame('Mon-Fri 9-18', $profile->getTranslation('opening_hours', 'en'));
+    }
+
+    public function test_it_rehydrates_the_saved_opening_hours(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $partner->partnerProfile()->create([
+            'business_name' => 'Toelettatura Bau',
+            'opening_hours' => ['it' => 'Lun-Sab 8-20', 'en' => 'Mon-Sat 8-20'],
+        ]);
+
+        Livewire::test(PartnerProfileInfo::class)
+            ->assertSet('form.openingHours.it', 'Lun-Sab 8-20')
+            ->assertSet('form.openingHours.en', 'Mon-Sat 8-20');
+    }
+
+    /** «Eventuali»: un profilo salvato senza orari resta valido e la colonna vuota. */
+    public function test_the_opening_hours_are_optional(): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        $this->fillRequired(Livewire::test(PartnerProfileInfo::class))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame([], $partner->refresh()->partnerProfile->getTranslations('opening_hours'));
+    }
+
+    /** 200 caratteri come gli altri testi liberi localizzati del partner; 201 no. */
+    public function test_opening_hours_longer_than_the_limit_are_refused(): void
+    {
+        $this->actingAsActivePartner();
+
+        $this->fillRequired(Livewire::test(PartnerProfileInfo::class))
+            ->set('form.openingHours.it', str_repeat('a', 201))
+            ->call('save')
+            ->assertHasErrors(['form.openingHours.it' => 'max']);
     }
 }

@@ -265,4 +265,48 @@ class PartnerProfilePaymentTest extends TestCase
             // Può preparare Stripe in anticipo per passare online.
             ->assertSee(__('partner.profile.stripe.connect'));
     }
+
+    /**
+     * Gli orari di apertura (27/09/2026) vivono sullo STESSO profilo, ma li
+     * scrive l'altra schermata: questa pagina salva con
+     * `partnerProfile()->updateOrCreate([], $this->form->toProfile())`, cioè un
+     * update parziale che non deve toccare le colonne di cui non sa niente.
+     * Una riscrittura completa qui cancellerebbe in silenzio gli orari che il
+     * partner vede sulle sue schede pubbliche, senza un errore e senza un modo
+     * di accorgersene prima di guardare il catalogo.
+     */
+    public function test_saving_the_bank_data_does_not_wipe_the_opening_hours(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $partner->partnerProfile()->create([
+            'business_name' => 'Toelettatura Bau',
+            'opening_hours' => ['it' => 'Lun-Ven 9-18'],
+        ]);
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('form.accountHolder', 'Susanna Rossi')
+            ->set('form.iban', 'IT60X0542811101000000123456')
+            ->set('form.bic', 'UNCRITMM')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Lun-Ven 9-18', $partner->partnerProfile->fresh()->getTranslation('opening_hours', 'it'));
+    }
+
+    /** Stessa cosa per la modalità di pagamento, che passa da un altro metodo. */
+    public function test_saving_the_payment_mode_does_not_wipe_the_opening_hours(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $partner->partnerProfile()->create([
+            'business_name' => 'Toelettatura Bau',
+            'opening_hours' => ['it' => 'Lun-Ven 9-18'],
+        ]);
+
+        Livewire::test(PartnerProfilePayment::class)
+            ->set('paymentMode', 'on_site')
+            ->call('savePaymentMode')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Lun-Ven 9-18', $partner->partnerProfile->fresh()->getTranslation('opening_hours', 'it'));
+    }
 }
