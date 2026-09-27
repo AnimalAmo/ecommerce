@@ -179,6 +179,69 @@ class StripeGatewayTest extends TestCase
         $this->assertFalse($result->succeeded);
     }
 
+    /**
+     * Difetto C1, terzo anello. Uno storno NON tocca `status` né
+     * `amount_received`: su Stripe il rimborso vive sull'addebito
+     * (`latest_charge.refunded`, `latest_charge.amount_refunded`). La verifica
+     * server-side legge solo i due campi del PaymentIntent, quindi lo stesso
+     * intent già stornato — quello che il checkout ha rimborsato dopo un
+     * sold-out post-capture — torna a dire "incassato" e l'ordine nasce Paid
+     * con zero euro davvero in cassa.
+     *
+     * Il `with()` lascia libero l'argomento dell'expand: la cura richiede di
+     * chiedere anche `latest_charge`, e una prova che pretenda l'expand di oggi
+     * fallirebbe proprio quando il difetto è chiuso.
+     */
+    public function test_un_intent_gia_stornato_non_vale_come_incasso(): void
+    {
+        $intent = $this->intent('pi_123', status: 'succeeded', amountReceived: 47600);
+        $intent->latest_charge = StripeObject::constructFrom([
+            'id' => 'ch_123',
+            'refunded' => true,
+            'amount_refunded' => 47600,
+            'balance_transaction' => ['id' => 'txn_123', 'net' => 41595, 'currency' => 'eur'],
+        ]);
+
+        $this->paymentIntents->shouldReceive('retrieve')
+            ->once()
+            ->with('pi_123', Mockery::any(), ['stripe_account' => self::ACCOUNT])
+            ->andReturn($intent);
+
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
+
+        $this->assertFalse(
+            $result->succeeded,
+            'Un PaymentIntent il cui addebito è stato stornato non è un incasso valido: '
+            .'status resta succeeded e amount_received non cambia, il rimborso si legge su latest_charge.',
+        );
+        // Niente da stornare una seconda volta: i soldi sono già tornati indietro.
+        $this->assertFalse($result->fundsCaptured);
+    }
+
+    /** Storno parziale: l'incasso non copre più il totale atteso, quindi non è valido. */
+    public function test_un_intent_stornato_in_parte_non_vale_come_incasso(): void
+    {
+        $intent = $this->intent('pi_123', status: 'succeeded', amountReceived: 47600);
+        $intent->latest_charge = StripeObject::constructFrom([
+            'id' => 'ch_123',
+            'refunded' => false,
+            'amount_refunded' => 10000,
+            'balance_transaction' => ['id' => 'txn_123', 'net' => 41595, 'currency' => 'eur'],
+        ]);
+
+        $this->paymentIntents->shouldReceive('retrieve')
+            ->once()
+            ->with('pi_123', Mockery::any(), ['stripe_account' => self::ACCOUNT])
+            ->andReturn($intent);
+
+        $result = $this->gateway->captureFromCheckout(['payment_intent_id' => 'pi_123'], 47600, self::ACCOUNT);
+
+        $this->assertFalse(
+            $result->succeeded,
+            'Con 100 € già rimborsati sui 476 incassati, il capture non copre il totale atteso.',
+        );
+    }
+
     // ── refund ──────────────────────────────────────────────────────────
 
     public function test_refund_creates_a_stripe_refund_by_payment_intent(): void

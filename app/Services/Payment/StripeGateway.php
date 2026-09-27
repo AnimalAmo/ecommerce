@@ -151,6 +151,35 @@ class StripeGateway implements PaymentGatewayInterface
             return CheckoutCaptureResult::failure(__('payment.errors.capture_failed'));
         }
 
+        // Terzo anello: un intent già stornato resta `succeeded` e conserva
+        // `amount_received`: lo storno non tocca nessuno dei due campi. Senza
+        // questo controllo un PaymentIntent incassato e poi rimborsato — per
+        // esempio da un rollback post-capture, che annulla anche la riga
+        // `order_payments` e quindi sfugge al guard idempotente — si fa
+        // riverificare e nasce un ordine pagato con zero euro incassati.
+        // `latest_charge` arriva espansa dalla retrieve qui sopra, quindi il
+        // controllo non costa una chiamata in più.
+        //
+        // Si rifiuta SOLO su prova positiva di storno, mai sull'assenza del
+        // dato: se l'espansione non arriva non sappiamo, e rifiutare un incasso
+        // che Stripe ha già preso lo lascerebbe orfano — il chiamante storna
+        // solo il ramo `capturedButInvalid`, non questo. Fra i due errori
+        // possibili, il silenzio su un rimborso che non c'è costa meno dei
+        // soldi di un cliente trattenuti senza ordine.
+        $charge = $intent->latest_charge;
+        $refunded = is_object($charge)
+            && ($charge->refunded === true || (int) ($charge->amount_refunded ?? 0) > 0);
+
+        if ($refunded) {
+            Log::warning('Stripe capture: intent già stornato o charge non leggibile', [
+                'payment_intent_id' => $paymentIntentId,
+                'amount_refunded' => is_object($charge) ? $charge->amount_refunded : null,
+                'refunded' => is_object($charge) ? $charge->refunded : null,
+            ]);
+
+            return CheckoutCaptureResult::failure(__('payment.errors.capture_failed'));
+        }
+
         if ($intent->amount_received !== $expectedAmountCents || $intent->currency !== 'eur') {
             // Incassato ma NON valido (carrello cambiato in un'altra tab fra
             // init e conferma, PI manomesso): i soldi sono transitati — il

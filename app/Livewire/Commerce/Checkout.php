@@ -40,7 +40,25 @@ class Checkout extends Component
     #[Url(as: 'regalo', except: false)]
     public bool $gift = false;
 
-    /** Step interno del funnel: 1 = I tuoi dati, 2 = Pagamento, 3 = Fatto! (nessun parametro in URL). */
+    /**
+     * Step interno del funnel: 1 = I tuoi dati, 2 = Pagamento, 3 = Fatto!
+     * (nessun parametro in URL).
+     *
+     * Locked, e non è una precauzione teorica: dallo step 2 si incassa, e
+     * `handlePaymentCallback()` è un metodo pubblico che il client può chiamare
+     * col payload che vuole. Senza il lucchetto bastava montare il checkout,
+     * scrivere `step = 2` dal payload e chiamare la callback con un
+     * PaymentIntent qualunque: la sessione non era mai stata aperta, quindi
+     * `paymentIntentId` era nullo e `payloadMatchesSession()` — scritta
+     * `=== null || ...` — lasciava passare l'id del client.
+     *
+     * `goToStep()` resta la sola via: avanza di uno solo, valida i dati
+     * personali, ricontrolla la disponibilità del carrello e apre la sessione
+     * di pagamento. Con il lucchetto, allo step 2 un PaymentIntent di questa
+     * sessione esiste sempre, e il confronto del payload torna a essere quello
+     * che era stato disegnato per fare.
+     */
+    #[Locked]
     public int $step = 1;
 
     /** Dati personali: precompilati dall'utente autenticato, vuoti da guest. */
