@@ -87,7 +87,11 @@ class ServiceOptionLabelsTest extends TestCase
     {
         $this->assertSame([
             'services', 'additional', 'rules', 'animal_services', 'type',
-            'structure_type', 'activity_type', 'activity_category', 'smartbox_type',
+            'structure_type', 'activity_type', 'activity_category',
+            // Tipologie di evento a scelta multipla, ricorrenza come etichetta e
+            // stato della prenotazione: risposte della cliente del 27/09/2026.
+            'event_category', 'event_recurrence', 'booking_requirement',
+            'smartbox_type',
             'room_type', 'room_type_whole', 'cancellation',
             'consent', 'smartbox_consent',
             'smartbox_amenities', 'smartbox_additional',

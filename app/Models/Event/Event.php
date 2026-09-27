@@ -22,7 +22,7 @@ class Event extends Model
     use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasFaqs, HasTranslations;
 
     /** SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale. */
-    public array $translatable = ['title', 'description', 'activity_categories_other'];
+    public array $translatable = ['title', 'description', 'activity_categories_other', 'operating_area', 'event_categories_other'];
 
     protected $fillable = [
         'user_id',
@@ -31,6 +31,14 @@ class Event extends Model
         'type',
         'activity_categories',
         'activity_categories_other',
+        // Gemelle delle colonne di bozza nate dalle risposte della cliente del
+        // 27/09/2026: senza di loro il dato resta nella bozza e la scheda
+        // pubblica non lo vede mai.
+        'operating_area',
+        'event_categories',
+        'event_categories_other',
+        'recurrence',
+        'booking_requirement',
         'title',
         'slug',
         'location',
@@ -56,6 +64,7 @@ class Event extends Model
         return [
             'type' => ProductType::class,
             'activity_categories' => 'array',
+            'event_categories' => 'array',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancellation_policy_days' => 'integer',

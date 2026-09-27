@@ -103,6 +103,42 @@ class ServiceOptionLabels
             'fattoria_didattica' => 'partner.activity_category.fattoria_didattica',
             'altro' => 'partner.activity_category.altro',
         ],
+        // Tipologie di EVENTO, a scelta MULTIPLA (risposta della cliente,
+        // 27/09/2026). Sono le gemelle di `activity_category` sull'altro ramo
+        // dello stesso step: quelle dicono chi offre il servizio, queste che
+        // cos'è l'evento. Gruppo separato e non un riuso, perché un partner
+        // passa da `attivita` a `eventi` e le due liste di slug non si
+        // sovrappongono. Colonna `event_categories` della bozza, JSON: la
+        // regola va dentro `event_categories.*`, non sul valore intero.
+        'event_category' => [
+            'passeggiate_trekking' => 'partner.event_category.passeggiate_trekking',
+            'educativi_esperti' => 'partner.event_category.educativi_esperti',
+            'corsi_workshop' => 'partner.event_category.corsi_workshop',
+            'sportivi' => 'partner.event_category.sportivi',
+            'fattoria' => 'partner.event_category.fattoria',
+            'fiere_mercatini' => 'partner.event_category.fiere_mercatini',
+            'solidali_adozioni' => 'partner.event_category.solidali_adozioni',
+            'speciali_pet_friendly' => 'partner.event_category.speciali_pet_friendly',
+            'altro' => 'partner.event_category.altro',
+        ],
+        // Colonna `recurrence`: scelta SINGOLA, ed è solo un'etichetta per la
+        // scheda. La cliente ha escluso la generazione delle date ripetute in
+        // questa fase, quindi nessuno deve leggere 'ricorrente' come una regola
+        // di ripetizione.
+        'event_recurrence' => [
+            'singolo' => 'partner.event_recurrence.singolo',
+            'ricorrente' => 'partner.event_recurrence.ricorrente',
+        ],
+        // Colonna `booking_requirement`: un gruppo solo per attività ed eventi.
+        // La cliente chiede la «possibilità di prenotazione» ai professionisti e
+        // «obbligatoria o facoltativa» agli eventi: stessa informazione, tre
+        // stati. Due gruppi quasi omonimi si contraddirebbero appena il partner
+        // cambia ramo.
+        'booking_requirement' => [
+            'obbligatoria' => 'partner.booking_requirement.obbligatoria',
+            'facoltativa' => 'partner.booking_requirement.facoltativa',
+            'non_prevista' => 'partner.booking_requirement.non_prevista',
+        ],
         'smartbox_type' => [
             'soggiorno' => 'partner.smartbox_type.soggiorno',
             'benessere' => 'partner.smartbox_type.benessere',

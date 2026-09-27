@@ -38,6 +38,12 @@ class StructureDraft extends Model
         'additional_other',
         'animal_services_other',
         'activity_categories_other',
+        // Testi liberi nati dalle risposte della cliente del 27/09/2026. Vanno
+        // qui e non nei cast: spatie legge '' e non null quando la lingua
+        // manca, quindi un `=== null` a valle non vedrebbe il vuoto — si
+        // controlla con blank()/filled(), come per le sorelle qui sopra.
+        'operating_area',
+        'event_categories_other',
     ];
 
     protected $fillable = [
@@ -64,6 +70,7 @@ class StructureDraft extends Model
         'price_per_person',
         'price',
         'duration_days',
+        'max_participants',
         'rooms',
         'checkin_from',
         'checkin_to',
@@ -82,6 +89,11 @@ class StructureDraft extends Model
         'animal_services_other',
         'activity_categories',
         'activity_categories_other',
+        'operating_area',
+        'event_categories',
+        'event_categories_other',
+        'recurrence',
+        'booking_requirement',
         'smartbox_consent',
         'smartbox_types',
         'smartbox_structures',
@@ -97,6 +109,9 @@ class StructureDraft extends Model
             'publish_requested_at' => 'datetime',
             'current_step' => 'integer',
             'duration_days' => 'integer',
+            // Capienza: intero esplicito perché entra nell'aritmetica della
+            // disponibilità appena il publisher la copia su events (27/09/2026).
+            'max_participants' => 'integer',
             'date_start' => 'date',
             'date_end' => 'date',
             'rooms' => 'array',
@@ -109,6 +124,8 @@ class StructureDraft extends Model
             'rules' => 'array',
             'animal_services' => 'array',
             'activity_categories' => 'array',
+            // Tipologie di evento, scelta multipla (cliente, 27/09/2026).
+            'event_categories' => 'array',
             'smartbox_types' => 'array',
             'smartbox_structures' => 'array',
             'photos' => 'array',
