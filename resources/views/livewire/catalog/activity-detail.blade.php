@@ -82,15 +82,25 @@
                     <section class="mt-10 first:mt-0">
                         <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.general_info') }}</h2>
                         <ul class="mt-3 space-y-4">
-                            <li class="flex items-start gap-4">
-                                <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
-                                <div>
-                                    <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $durationLabel }}</p>
-                                    @if (filled($activity->time_note))
-                                        <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->time_note }}</p>
-                                    @endif
-                                </div>
-                            </li>
+                            {{-- Durata: la riga c'è solo se una durata esiste davvero. Dal
+                                 27/09/2026 la data è facoltativa per le attività, e senza date
+                                 EventPublisher lascia `duration_days` nullo: il fallback "3
+                                 giorni" di ActivityDetail stamperebbe una durata inventata.
+                                 Il fallback però resta, perché serve alle attività mock del
+                                 catalogo XD — quelle non hanno una bozza dietro
+                                 (`structure_draft_id` nullo, lo stesso segnale che usa
+                                 PurgeMockCatalog per distinguerle) e devono conservare la riga. --}}
+                            @if ($activity->duration_days !== null || $activity->structure_draft_id === null)
+                                <li class="flex items-start gap-4">
+                                    <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ $durationLabel }}</p>
+                                        @if (filled($activity->time_note))
+                                            <p class="mt-[7px] max-w-[613px] text-[15px] leading-[21px] text-[#555555]">{{ $activity->time_note }}</p>
+                                        @endif
+                                    </div>
+                                </li>
+                            @endif
                             <li class="flex items-start gap-4">
                                 <flux:icon.pin class="mt-0.5 h-[15px] w-3 shrink-0 text-[#0D171A]" />
                                 <div>

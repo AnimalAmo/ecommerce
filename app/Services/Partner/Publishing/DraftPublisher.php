@@ -95,7 +95,11 @@ class DraftPublisher
         }
 
         return match ($draft->family()) {
-            'attivita' => $draft->date_start !== null,
+            // Data obbligatoria solo per gli eventi: un'attività o un servizio
+            // professionale (dog sitter, toelettatore) può non averne una
+            // (risposta della cliente, 27/09/2026), e pretenderla lo teneva
+            // fuori dal catalogo per sempre.
+            'attivita' => $draft->type !== 'eventi' || $draft->date_start !== null,
             'smartbox' => filled($draft->price),
             default => filled($draft->rooms),
         };

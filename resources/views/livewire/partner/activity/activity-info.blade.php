@@ -26,15 +26,20 @@
                 <p class="mt-4 text-[15px] font-medium text-black">{{ $form->isEvent ? __('partner.activity_info.section_event') : __('partner.activity_info.section_activity') }}</p>
 
                 <form wire:submit="next" class="mt-6">
-                    <div class="flex flex-wrap gap-4">
-                        {{-- Data inizio / Data fine --}}
+                    {{-- items-start: l'errore sotto un campo allungherebbe in stretch anche i fratelli. --}}
+                    <div class="flex flex-wrap items-start gap-4">
+                        {{-- Data inizio / Data fine. Facoltative per un'attività, obbligatorie
+                             per un evento (risposta della cliente, 27/09/2026). --}}
                         <flux:field class="w-full sm:w-[176px]">
                             <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.date_start') }}</flux:label>
                             <flux:date-picker wire:model="form.dateStart" placeholder="{{ __('partner.activity_info.date_start') }}" class="{{ $datePickerClass }}" />
+                            {{-- Campo composto a mano: Flux non inietta l'errore, va messo qui. --}}
+                            <flux:error name="form.dateStart" />
                         </flux:field>
                         <flux:field class="w-full sm:w-[176px]">
                             <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.date_end') }}</flux:label>
                             <flux:date-picker wire:model="form.dateEnd" placeholder="{{ __('partner.activity_info.date_end') }}" class="{{ $datePickerClass }}" />
+                            <flux:error name="form.dateEnd" />
                         </flux:field>
 
                         {{-- Ora inizio / Ora fine: solo Eventi --}}
@@ -44,15 +49,25 @@
                                 <flux:select wire:model="form.timeStart" placeholder="--:--" class="{{ $selectClass }}">
                                     @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                 </flux:select>
+                                <flux:error name="form.timeStart" />
                             </flux:field>
                             <flux:field class="w-full sm:w-[176px]">
                                 <flux:label class="{{ $labelClass }}">{{ __('partner.activity_info.time_end') }}</flux:label>
                                 <flux:select wire:model="form.timeEnd" placeholder="--:--" class="{{ $selectClass }}">
                                     @foreach ($times as $t)<flux:select.option value="{{ $t }}">{{ $t }}</flux:select.option>@endforeach
                                 </flux:select>
+                                <flux:error name="form.timeEnd" />
                             </flux:field>
                         @endif
                     </div>
+
+                    {{-- La data è facoltativa solo per le attività (risposta della cliente,
+                         27/09/2026): un dog sitter o un toelettatore non ne ha una, e prima
+                         restava bloccato sullo step. Sotto la coppia di date e non dentro un
+                         campo, perché vale per tutte e due. --}}
+                    @unless ($form->isEvent)
+                        <p class="mt-2 text-xs text-[#555555]">{{ __('partner.activity_info.date_optional_hint') }}</p>
+                    @endunless
 
                     {{-- Azioni: Indietro (a descrizione) + Avanti (pill scuro) --}}
                     <div class="mt-8 flex items-center justify-end gap-6">
