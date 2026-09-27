@@ -71,6 +71,32 @@
                             </flux:field>
                         </div>
 
+                        {{-- Orari di apertura o disponibilità (richiesta della cliente, 27/09/2026):
+                             facoltativi, testo libero localizzato it/en. Fuori dalla griglia a tre
+                             colonne dei dati anagrafici: è una riga sola, più larga, e i tab lingua
+                             non stanno in una colonna. Tab presi da
+                             livewire/partner/structure/hotel-title.blade.php (x-partner.locale-tabs). --}}
+                        <div class="mt-6 max-w-[520px]">
+                            <x-partner.locale-tabs>
+                                <x-slot:it>
+                                    {{-- Campo composto a mano: Flux non inietta l'errore, flux:error va messo a mano. --}}
+                                    <flux:field>
+                                        <flux:label class="{{ $labelClass }}">{{ __('partner.profile.opening_hours') }}</flux:label>
+                                        <flux:input wire:model="form.openingHours.it" class="{{ $fieldClass }}" />
+                                        <flux:error name="form.openingHours.it" />
+                                    </flux:field>
+                                </x-slot:it>
+                                <x-slot:en>
+                                    <flux:field>
+                                        <flux:label class="{{ $labelClass }}">{{ __('partner.profile.opening_hours') }} (EN)</flux:label>
+                                        <flux:input wire:model="form.openingHours.en" class="{{ $fieldClass }}" />
+                                        <flux:error name="form.openingHours.en" />
+                                    </flux:field>
+                                </x-slot:en>
+                            </x-partner.locale-tabs>
+                            <p class="mt-2 text-xs text-[#555555]">{{ __('partner.profile.opening_hours_hint') }}</p>
+                        </div>
+
                         <div class="mt-10 flex items-center justify-end">
                             <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-10 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.profile.save') }}</flux:button>
                         </div>

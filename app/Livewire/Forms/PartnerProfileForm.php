@@ -9,7 +9,8 @@ use Livewire\Form;
 
 /**
  * Profilo partner — "Informazioni personali". Dati personali (su users) +
- * anagrafica fiscale (su partner_profiles), come da mock XD.
+ * anagrafica fiscale (su partner_profiles), come da mock XD, più gli orari di
+ * apertura o disponibilità chiesti dalla cliente il 27/09/2026.
  */
 class PartnerProfileForm extends Form
 {
@@ -37,6 +38,18 @@ class PartnerProfileForm extends Form
 
     public string $taxCode = '';
 
+    /**
+     * Orari di apertura o disponibilità (richiesta della cliente, 27/09/2026:
+     * fra i recapiti pubblici, e al punto 3 «eventuali orari di
+     * apertura/disponibilità» al posto delle date sulla scheda dell'attività).
+     *
+     * Un campo solo e sul partner, non sulla bozza: la cliente li nomina in due
+     * punti e due campi che possono contraddirsi sono peggio di uno. Testo
+     * libero localizzato it/en (spatie), facoltativo in entrambe le lingue,
+     * nella stessa forma dei testi del wizard ({@see ActivityLocationForm}).
+     */
+    public array $openingHours = ['it' => '', 'en' => ''];
+
     public function rules(): array
     {
         return [
@@ -51,6 +64,14 @@ class PartnerProfileForm extends Form
             'zip' => ['required', 'digits:5'],
             'vat' => ['required', 'string', 'max:13'],
             'taxCode' => ['required', 'string', 'max:16'],
+            // Facoltativi in tutte due le lingue: la cliente li chiama
+            // «eventuali». `max:200` non è un numero nuovo — è il tetto che il
+            // repo dà già ai testi liberi localizzati del partner
+            // (`additionalOther` in HotelServicesForm e ActivityIncludedForm).
+            // I 128 dei campi qui sopra valgono per dati strutturati (ragione
+            // sociale, indirizzo), non per una riga di orari con più fasce.
+            'openingHours.it' => ['nullable', 'string', 'max:200'],
+            'openingHours.en' => ['nullable', 'string', 'max:200'],
         ];
     }
 
@@ -69,6 +90,15 @@ class PartnerProfileForm extends Form
         $this->zip = $profile->zip ?? '';
         $this->vat = $profile->vat ?? '';
         $this->taxCode = $profile->tax_code ?? '';
+        // Idioma preso da ActivityLocationForm::setFromDraft() (meeting_point):
+        // array_merge sui default, così una lingua mai scritta resta ''.
+        // `?->` e non `->` come le righe qui sopra: chi non ha ancora un profilo
+        // (lo crea il primo salvataggio) sopravvive a una lettura di proprietà,
+        // non a una chiamata di metodo.
+        $this->openingHours = array_merge(
+            ['it' => '', 'en' => ''],
+            $profile?->getTranslations('opening_hours') ?? [],
+        );
     }
 
     /** Campi personali per l'update di users. */
@@ -93,6 +123,9 @@ class PartnerProfileForm extends Form
             'zip' => $this->zip,
             'vat' => $this->vat,
             'tax_code' => $this->taxCode,
+            // Le traduzioni vuote non si salvano (come
+            // ActivityLocationForm::toDraft): su EN scatta il fallback IT.
+            'opening_hours' => array_filter($this->openingHours, fn ($value) => filled($value)),
         ];
     }
 

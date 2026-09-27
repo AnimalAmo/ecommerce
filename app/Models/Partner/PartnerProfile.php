@@ -8,6 +8,7 @@ use Database\Factories\Partner\PartnerProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * Profilo B2B (1:1 con {@see User} di ruolo partner): dati fiscali + coordinate
@@ -16,7 +17,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PartnerProfile extends Model
 {
     /** @use HasFactory<PartnerProfileFactory> */
-    use HasFactory;
+    use HasFactory, HasTranslations;
+
+    /**
+     * Orari di apertura o disponibilità, localizzati (richiesta della cliente,
+     * 27/09/2026): un campo solo, sul partner, perché li nomina sia fra i campi
+     * dell'attività sia fra i recapiti pubblici e due campi che possono
+     * contraddirsi sono peggio di uno. Le schede li leggono da qui.
+     *
+     * SOLO colonne stringa, come sugli altri model: spatie tratterebbe un array
+     * come mappa di locale. E un attributo tradotto legge `''` e non `null`
+     * quando la lingua manca — si controlla con blank()/filled().
+     */
+    public array $translatable = ['opening_hours'];
 
     protected $fillable = [
         'business_name',
@@ -37,6 +50,7 @@ class PartnerProfile extends Model
         'commission_min_cents',
         'online_payment',
         'payment_url',
+        'opening_hours',
         // Tipologia scelta nello step 2 dell'iscrizione, conservata per
         // preselezionare la card giusta al primo "Crea servizio" (richiesta
         // della cliente, 27/09/2026). Stringa nullable: nessun cast serve.
