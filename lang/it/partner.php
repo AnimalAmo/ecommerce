@@ -171,6 +171,11 @@ return [
         'first_name' => 'Nome',
         'last_name' => 'Cognome',
         'business_name' => 'Ragione Sociale',
+        // Un campo solo, sul partner (27/09/2026): la cliente li nomina sia fra
+        // i campi dell'attività sia fra i recapiti pubblici, e due campi che
+        // possono contraddirsi sono peggio di uno.
+        'opening_hours' => 'Orari di apertura o disponibilità',
+        'opening_hours_hint' => 'Facoltativi. Compaiono sulle tue schede, per esempio «Lun-Ven 9-18».',
         'email' => 'Email',
         'address' => 'Indirizzo',
         'province' => 'Provincia',
@@ -335,10 +340,14 @@ return [
         'section' => 'Seleziona il servizio che vorrai proporre',
         'struttura_title' => 'Struttura ricettiva',
         'struttura_subtitle' => 'Come Hotel, Agriturismo, B&B, altro',
-        'attivita_title' => 'Attività ed Eventi',
+        'attivita_title' => 'Attività',
         'attivita_subtitle' => 'Come una gita di un giorno, un ritrovo con i propri animali',
-        'servizi_title' => 'Servizi',
-        'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
+        // Il testo cambia (richiesta della cliente, 27/09/2026), la chiave no:
+        // due test leggono 'servizi_title', e il valore del radio resta 'servizi'.
+        'servizi_title' => 'Servizio professionale',
+        'servizi_subtitle' => 'Come Toelettatore, Dog sitter, Educatore cinofilo, Maneggio, altro',
+        'eventi_title' => 'Evento',
+        'eventi_subtitle' => 'Come una passeggiata, un corso, una fiera pet-friendly',
         'submit' => 'Crea un account',
         'error_required' => 'Seleziona almeno un servizio.',
         'payment_mode' => [
@@ -406,6 +415,15 @@ return [
         'date_end' => 'Data fine',
         'time_start' => 'Ora inizio',
         'time_end' => 'Ora fine',
+        // Campi nati dalle risposte della cliente del 27/09/2026. La data è
+        // facoltativa per un'attività e obbligatoria per un evento, quindi
+        // l'etichetta lo dice invece di lasciarlo scoprire dall'errore.
+        'date_optional_hint' => 'Facoltativa: un servizio professionale può non avere una data.',
+        'recurrence' => 'L’evento è singolo o ricorrente?',
+        'booking_requirement' => 'Prenotazione',
+        'booking_requirement_hint' => 'Compare sulla scheda: il cliente sa subito se deve prenotare.',
+        'max_participants' => 'Posti disponibili',
+        'max_participants_hint' => 'Lascia vuoto se non c’è un limite. Al raggiungimento del limite le iscrizioni si chiudono.',
         'back' => 'Indietro',
         'next' => 'Avanti',
     ],
@@ -445,6 +463,10 @@ return [
         'province' => 'Provincia',
         'zip' => 'Cap',
         'meeting_point' => 'Punto d’incontro',
+        // Al posto del punto d'incontro per chi non fa eventi (27/09/2026): un
+        // professionista non ha un ritrovo, ha un raggio in cui lavora.
+        'operating_area' => 'Zona in cui operi',
+        'operating_area_hint' => 'Per esempio «Milano e provincia» oppure «Lombardia».',
         'back' => 'Indietro',
         'next' => 'Avanti',
     ],
@@ -461,6 +483,11 @@ return [
         'section' => 'Qual’è il nome della tua attività?',
         'helper' => 'Aiuterà gli utenti a trovare la tua struttura velocemente',
         'field_label' => 'Nome attività',
+        // Categorie professionali a scelta multipla (risposta della cliente,
+        // 27/09/2026: «un maneggio può essere anche fattoria didattica»).
+        'field_categories' => 'Tipologia di attività o servizio',
+        'field_categories_hint' => 'Puoi selezionarne più di una.',
+        'field_categories_other' => 'Descrivi la tipologia',
         'back' => 'Indietro',
         'next' => 'Avanti',
         'error_required' => 'Inserisci il nome dell’attività.',
@@ -715,6 +742,43 @@ return [
         'altro' => 'Altro',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tipologie di evento (risposta della cliente, 27/09/2026) — scelta multipla
+    |--------------------------------------------------------------------------
+    | Uno slug per voce anche dove la voce accorpa sinonimi con la barra: due
+    | slug per la stessa voce sdoppierebbero ogni filtro futuro.
+    */
+
+    'event_category' => [
+        'passeggiate_trekking' => 'Passeggiate / Trekking con animali',
+        'educativi_esperti' => 'Eventi educativi / Incontri con esperti',
+        'corsi_workshop' => 'Corsi / Workshop',
+        'sportivi' => 'Eventi sportivi',
+        'fattoria' => 'Giornate in fattoria / Attività con animali',
+        'fiere_mercatini' => 'Fiere / Mercatini / Manifestazioni',
+        'solidali_adozioni' => 'Eventi solidali / Adozioni',
+        'speciali_pet_friendly' => 'Eventi e giornate speciali pet-friendly',
+        'altro' => 'Altro',
+    ],
+
+    // Sola etichetta sulla scheda: la cliente ha escluso la generazione delle
+    // date ripetute («non serve in questa fase creare automaticamente tutte le
+    // ricorrenze»).
+    'event_recurrence' => [
+        'singolo' => 'Evento singolo',
+        'ricorrente' => 'Evento ricorrente',
+    ],
+
+    // Vale per attività, servizi professionali ed eventi: la cliente chiede la
+    // «possibilità di prenotazione» per i primi e «obbligatoria o facoltativa»
+    // per i secondi, che è la stessa informazione con tre stati.
+    'booking_requirement' => [
+        'obbligatoria' => 'Prenotazione obbligatoria',
+        'facoltativa' => 'Prenotazione facoltativa',
+        'non_prevista' => 'Nessuna prenotazione',
+    ],
+
     'activity_type' => [
         'title' => 'AnimalAmo — Attività ed Eventi',
         'step' => 'Step 1 di 10',
@@ -737,10 +801,12 @@ return [
         'helper' => 'Questo ci aiuta a classificare il tuo prodotto in modo che i clienti possano trovarlo.',
         'struttura_title' => 'Struttura ricettiva',
         'struttura_subtitle' => 'Come Hotel, Agriturismo, B&B, altro',
-        'attivita_title' => 'Attività ed Eventi',
+        'attivita_title' => 'Attività',
         'attivita_subtitle' => 'Come una gita di un giorno, un ritrovo con i propri animali',
-        'servizi_title' => 'Servizi',
-        'servizi_subtitle' => 'Come Pet sitting, Addestramento, altro',
+        'servizi_title' => 'Servizio professionale',
+        'servizi_subtitle' => 'Come Toelettatore, Dog sitter, Educatore cinofilo, Maneggio, altro',
+        'eventi_title' => 'Evento',
+        'eventi_subtitle' => 'Come una passeggiata, un corso, una fiera pet-friendly',
         'smartbox_title' => 'Smartbox',
         'smartbox_subtitle' => 'Un’esperienza da regalare',
         'back' => 'Indietro',
