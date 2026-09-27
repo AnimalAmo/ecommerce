@@ -205,11 +205,17 @@ return [
         // Avviso PREVENTIVO, senza segnaposto: lo si asserisce nei test di pagina.
         'stripe_missing_notice' => 'Questo partner chiede il pagamento online e non ha ancora collegato Stripe: la scheda nascerà in attesa e andrà online da sola appena lo collega.',
         'awaiting_stripe_heading' => 'Questo partner non può ancora essere pagato',
+        // Smartbox di un partner che incassa fuori dalla piattaforma (richiesta
+        // della cliente del 27/09/2026): il motivo non è Stripe, e dirlo prima
+        // vale dodici sezioni non compilate a vuoto.
+        'smartbox_payment_heading' => 'Questo partner non incassa online',
+        'smartbox_payment_notice' => 'Una Smartbox è un cofanetto prepagato e si vende solo con l’incasso online: questo partner si fa pagare direttamente, quindi la scheda nascerà in attesa e non andrà in vetrina. Va online da sola quando passa al pagamento online con Stripe collegato.',
 
         // Esiti
         'submit' => 'Crea la scheda',
         'published' => 'Scheda creata e pubblicata.',
         'awaiting_stripe' => 'La scheda è pronta, ma resta in attesa: :name chiede il pagamento online e non ha ancora collegato Stripe. Va online da sola appena lo collega.',
+        'awaiting_smartbox_payment' => 'La Smartbox è pronta, ma resta in attesa: :name si fa pagare direttamente e un cofanetto prepagato si vende solo con l’incasso online. Va in vetrina da sola quando passa al pagamento online con Stripe collegato.',
         'awaiting_open_partner' => 'Apri la scheda del partner',
         'awaiting_back' => 'Torna al catalogo',
         'moderation_note' => 'L’approvazione preventiva è accesa, ma una scheda inserita da qui nasce già pubblicata e il partner non riceve nessuna mail.',

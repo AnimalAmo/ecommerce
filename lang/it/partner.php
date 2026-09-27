@@ -7,6 +7,11 @@ return [
         'stripe_onboarding_required' => 'Per pubblicare un servizio devi prima completare il collegamento del conto su Stripe.',
         // Bozza chiusa senza i dati minimi per il catalogo (nome, stanze, data o prezzo).
         'draft_not_publishable' => 'Non possiamo ancora pubblicare questo servizio: mancano alcuni dati obbligatori. Ricontrolla gli step e riprova.',
+        // Utente partner senza riga `partner_profiles`: prima creava l'account su
+        // Stripe e poi esplodeva, lasciando un account orfano a ogni click.
+        'partner_profile_missing' => 'Non possiamo aprire il collegamento con Stripe: il tuo profilo partner non è completo. Scrivici e lo sistemiamo.',
+        // Smartbox di un partner che non incassa online (richiesta della cliente, 27/09/2026).
+        'smartbox_requires_online_payment' => 'Una Smartbox è un cofanetto prepagato: per pubblicarla e venderla è necessario incassare online e collegare il sistema di pagamento.',
     ],
 
     // Pubblicazione automatica al collegamento Stripe (P4): avviso in dashboard dopo il wizard.
@@ -14,6 +19,12 @@ return [
         'awaiting_stripe' => 'Il tuo servizio è pronto: lo pubblicheremo in automatico appena completi il collegamento del conto su Stripe.',
         // Modifica di un servizio già completato: la versione precedente resta quella pubblicata.
         'awaiting_stripe_changes' => "Modifiche salvate: la versione già pubblicata resta com'era e pubblicheremo le modifiche in automatico appena completi il collegamento del conto su Stripe.",
+        // Avviso del wizard smartbox e della card Smartbox: avvisa, non blocca
+        // (richiesta della cliente del 27/09/2026). La prima riga è la frase
+        // della cliente, la seconda dice che si può compilare comunque.
+        'smartbox_payment_required' => 'Per pubblicare e vendere una Smartbox è necessario collegare il sistema di pagamento',
+        'smartbox_payment_required_hint' => 'Puoi compilare e salvare il cofanetto da subito: andrà in vetrina da solo quando ricevi i pagamenti online su AnimalAmo con il conto Stripe collegato.',
+        'smartbox_payment_required_cta' => 'Collega il sistema di pagamento',
     ],
 
     // "I miei servizi": bozze chiuse dal partner e ferme finché non è pagabile su Stripe.
@@ -22,6 +33,10 @@ return [
     // un altro motivo leggeva una diagnosi falsa (segnalazione del 29/09/2026).
     'my_services' => [
         'awaiting_stripe' => 'In attesa del collegamento Stripe',
+        // Smartbox ritirata dalla vetrina, o ferma prima di entrarci, perché il
+        // partner non incassa online (27/09/2026): non è una sospensione.
+        'awaiting_payment_method' => 'Serve il sistema di pagamento',
+        'awaiting_payment_method_hint' => 'Una Smartbox si vende solo con i pagamenti online: collega il sistema di pagamento e torna in vetrina da sola.',
         'publishing' => 'In pubblicazione',
         'publishing_hint' => 'Va online entro pochi minuti.',
         'incomplete' => 'Mancano dei dati',
@@ -997,6 +1012,11 @@ return [
         // P4: servizi chiusi prima del collegamento Stripe, pubblicati in automatico dopo.
         'awaiting_stripe_banner' => ':count servizio è in attesa del collegamento Stripe: lo pubblicheremo appena il conto è attivo.|:count servizi sono in attesa del collegamento Stripe: li pubblicheremo appena il conto è attivo.',
         'awaiting_stripe_cta' => 'Collega Stripe',
+        // Smartbox ferme perché manca l'incasso online: il titolo è la frase
+        // che la cliente ha chiesto testualmente (27/09/2026).
+        'smartbox_payment_heading' => 'Per pubblicare e vendere una Smartbox è necessario collegare il sistema di pagamento',
+        'smartbox_payment_banner' => 'Hai :count Smartbox pronta che non possiamo mettere in vetrina: torna in vendita da sola appena ricevi i pagamenti online.|Hai :count Smartbox pronte che non possiamo mettere in vetrina: tornano in vendita da sole appena ricevi i pagamenti online.',
+        'smartbox_payment_cta' => 'Collega il sistema di pagamento',
     ],
 
     /*

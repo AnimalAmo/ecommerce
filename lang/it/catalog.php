@@ -50,6 +50,10 @@ return [
     'close_filters' => 'Chiudi i filtri',
     // Schede dettaglio di un partner senza pagamento online: il totale si salda a lui.
     'pay_on_site' => 'Pagamento direttamente al partner, in struttura o sul suo sito',
+    // Pill al posto del pulsante carrello nelle griglie, e rimando alla scheda dal
+    // carrello (richiesta della cliente, 27/09/2026). Deve funzionare per una
+    // struttura, un evento e un cofanetto: «Contatta la struttura» non andrebbe bene.
+    'book_with_partner' => 'Scopri come prenotare',
 
     // Card che prende il posto del box prenotazione quando il partner non
     // prende ordini online (richiesta della cliente, 29/09/2026).
