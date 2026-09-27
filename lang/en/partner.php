@@ -698,6 +698,18 @@ return [
     | Activity/event type (step 1 of 10 of the activities & events flow)
     |--------------------------------------------------------------------------
     */
+    // Professional categories of an activity, multiple choice (client, 26/09/2026).
+    'activity_category' => [
+        'toelettatore' => 'Pet groomer',
+        'asilo_cani' => 'Dog daycare',
+        'dog_sitter' => 'Dog sitter / Pet sitter',
+        'educatore_cinofilo' => 'Dog trainer / Behaviourist',
+        'fotografo_pet' => 'Pet photographer',
+        'maneggio' => 'Riding stable / Equestrian centre',
+        'fattoria_didattica' => 'Educational farm',
+        'altro' => 'Other',
+    ],
+
     'activity_type' => [
         'title' => 'AnimalAmo — Activities and Events',
         'step' => 'Step 1 of 10',

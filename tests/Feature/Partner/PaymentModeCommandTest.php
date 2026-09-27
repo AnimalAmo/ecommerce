@@ -125,6 +125,44 @@ class PaymentModeCommandTest extends TestCase
         $this->assertTrue((bool) $other->fresh()->online_payment);
     }
 
+    public function test_a_number_is_the_user_id_not_the_profile_id(): void
+    {
+        // L'id che l'operatore ha sotto gli occhi è quello dell'utente: il
+        // pannello admin apre /admin/users/{id} e la creazione scheda passa
+        // ?partner={id}, entrambi risolti con User::find(). L'id del profilo
+        // non compare in nessuna schermata. Quando i due divergono, prendere
+        // il numero per l'id del profilo cambia la modalità al partner
+        // sbagliato, e nessuno se ne accorge.
+        User::factory()->create(); // sposta di uno gli id: nessun profilo
+
+        $target = PartnerProfile::factory()->for(User::factory())->create(['business_name' => 'Bio Boutique Hotel Laurino']);
+        $other = PartnerProfile::factory()->for(User::factory())->create(['business_name' => 'Un altro partner']);
+
+        $this->assertNotSame($target->id, $target->user_id, 'il test non discrimina se i due id coincidono');
+
+        $this->artisan('animalamo:payment-mode', [
+            'partner' => (string) $target->user_id,
+            '--offline' => true,
+            '--force' => true,
+        ])->assertSuccessful();
+
+        $this->assertFalse((bool) $target->fresh()->online_payment);
+        $this->assertTrue((bool) $other->fresh()->online_payment);
+    }
+
+    public function test_it_refuses_a_number_that_is_not_a_partner(): void
+    {
+        $profile = $this->onlineWithoutStripe();
+
+        $this->artisan('animalamo:payment-mode', [
+            'partner' => '9999',
+            '--offline' => true,
+            '--force' => true,
+        ])->assertFailed();
+
+        $this->assertTrue((bool) $profile->fresh()->online_payment);
+    }
+
     public function test_it_finds_the_partner_by_email(): void
     {
         $user = User::factory()->create(['email' => 'laurino@example.test']);

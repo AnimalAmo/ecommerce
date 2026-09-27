@@ -49,9 +49,16 @@ con dieci test ([PaymentModeCommandTest.php](tests/Feature/Partner/PaymentModeCo
 modifica va fatta senza interfaccia, o ripetuta.
 
 ```bash
-# senza --force: stampa il quadro e chiede conferma. In produzione si usa così.
-php artisan animalamo:payment-mode "Bio Boutique Laurino" --offline --url=https://…
+# Letto il quadro, si conferma. Su Laurino (utente 11), eseguito il 26/09/2026.
+php artisan animalamo:payment-mode 11 --offline --force
 ```
+
+**`--force` non è opzionale fuori da un terminale interattivo.** Senza di esso il comando aspetta una
+risposta che nessuno può dare — in una sessione `ssh comando`, in un runner o in una console web la
+domanda non ha un tty — e non scrive niente. Quindi: lancia **prima** senza `--force` solo se hai un
+terminale vero e vuoi leggere l'anteprima; altrimenti leggi il quadro che il comando stampa comunque
+(nome, modalità attuale, stato Stripe, numero di schede) sopra la riga di conferma, e usa `--force`.
+Il controllo che conta resta l'anteprima: verifica la ragione sociale prima di rilanciare.
 
 Stampa prima di scrivere:
 
@@ -65,7 +72,7 @@ Confermi il passaggio a pagamento diretto? (yes/no)
 ```
 
 Regole del comando:
-- accetta ragione sociale, email del titolare o id del profilo;
+- accetta ragione sociale, email del titolare o **id utente** — quello che vedi in `/admin/users/{id}` e in `?partner={id}`, non quello del profilo;
 - **rifiuta un nome ambiguo** invece di scegliere: se il testo corrisponde a più partner stampa i
   candidati ed esce senza scrivere. Attenzione: un nome parziale che corrisponde a **un solo** partner
   passa — perciò leggi la ragione sociale nell'anteprima prima di confermare, e non usare `--force`;
@@ -84,7 +91,30 @@ B2C e nelle mail) e il rilascio delle bozze in attesa. E se la si fa, deve esser
 
 ## 3. Da controllare PRIMA, sul database di produzione
 
-Sostituisci `:uid` con `partner_profiles.user_id` trovato al primo passo.
+**Il partner è questo:** «Bio Boutique Hotel Laurino», **utente 11** — letto dall'URL del pannello
+(`/admin/catalog/new/structure?partner=11`, che risolve con `User::find()`). Quindi la sua pagina è
+`/admin/users/11`, e al comando si passa `11`. Il nome completo contiene «Hotel»: cercarlo come
+«Bio Boutique Laurino» **non lo trova**, perché il LIKE non è una ricerca a parole.
+
+Che l'alert «Questo partner non può ancora essere pagato» compaia su quella pagina è la conferma del
+problema: il riquadro esce quando `can_publish` è falso
+(`partner-aside.blade.php:56`, `can_publish = $profile->canPublish()`). Passando a pagamento diretto
+`canPublish()` diventa vero, quindi **l'alert sparisce da sé** e le schede create da lì nascono online
+invece che in attesa. Non c'è niente da cambiare nel codice per farlo sparire.
+
+**Il database è un MySQL gestito di DigitalOcean.** Cosa comporta:
+
+- le credenziali stanno nel `.env` sul server, non qui: io non ho né accesso né modo di ottenerlo da
+  questa sessione;
+- la connessione vuole TLS e la porta del managed MySQL non è 3306 (tipicamente 25060), e l'IP di chi si
+  collega deve stare fra le *trusted sources* del cluster. Un client nuovo va aggiunto lì prima, quindi
+  lanciare le query da una postazione non ancora autorizzata non funziona e non è un errore di password;
+- il modo comodo di lanciare le query resta la console del database su DigitalOcean, oppure il
+  `mysql` del droplet, che è già autorizzato;
+- **il pannello admin non è toccato da nulla di tutto questo**, ed è l'argomento più forte per preferirlo:
+  agisce attraverso l'applicazione, che le credenziali le ha già.
+
+Sostituisci `:uid` con l'id utente del partner (per Laurino: `11`).
 
 ```sql
 -- 1. Chi è, e com'è oggi

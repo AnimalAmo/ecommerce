@@ -51,6 +51,50 @@ class EventPublisherTest extends TestCase
         ], $attributes));
     }
 
+    public function test_publish_carries_the_professional_categories_of_an_activity(): void
+    {
+        // Otto categorie a scelta multipla (cliente, 26/09/2026). Senza la
+        // colonna gemella su `events` il valore resterebbe nella bozza e la
+        // scheda pubblica non lo vedrebbe mai.
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'activity_categories' => ['maneggio', 'fattoria_didattica'],
+        ]));
+
+        $this->assertSame(['maneggio', 'fattoria_didattica'], $event->activity_categories);
+    }
+
+    public function test_publish_carries_the_free_text_of_the_other_category(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'activity_categories' => ['altro'],
+            'activity_categories_other' => 'Pensione per conigli',
+        ]));
+
+        $this->assertSame(['altro'], $event->activity_categories);
+        $this->assertSame('Pensione per conigli', $event->activity_categories_other);
+    }
+
+    public function test_an_event_does_not_carry_professional_categories(): void
+    {
+        // Le categorie sono del professionista, non dell'evento. Se restano
+        // addosso alla bozza dopo un cambio di ramo, il publisher non deve
+        // portarle a catalogo: è lo stesso difetto dei campi orfani chiuso il
+        // 26/09 sul wizard.
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'activity_categories' => ['toelettatore'],
+            'activity_categories_other' => 'residuo',
+        ]));
+
+        $this->assertNull($event->activity_categories);
+        // Non `assertNull`: un attributo tradotto spatie legge la stringa vuota
+        // quando la lingua non c'è, mai null. Le traduzioni grezze dicono la
+        // cosa che conta — nessun testo, in nessuna lingua — e non dipendono
+        // dal locale con cui gira la suite.
+        $this->assertSame([], $event->getTranslations('activity_categories_other'));
+    }
+
     public function test_publish_creates_a_paid_event_with_composed_datetimes(): void
     {
         $draft = $this->activityDraft();

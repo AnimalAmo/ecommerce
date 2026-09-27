@@ -22,13 +22,15 @@ class Event extends Model
     use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasFaqs, HasTranslations;
 
     /** SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale. */
-    public array $translatable = ['title', 'description'];
+    public array $translatable = ['title', 'description', 'activity_categories_other'];
 
     protected $fillable = [
         'user_id',
         'structure_draft_id',
         'venue_id',
         'type',
+        'activity_categories',
+        'activity_categories_other',
         'title',
         'slug',
         'location',
@@ -53,6 +55,7 @@ class Event extends Model
     {
         return [
             'type' => ProductType::class,
+            'activity_categories' => 'array',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancellation_policy_days' => 'integer',

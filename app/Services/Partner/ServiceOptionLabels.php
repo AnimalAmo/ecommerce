@@ -86,6 +86,23 @@ class ServiceOptionLabels
             'attivita' => 'partner.activity_type.attivita',
             'eventi' => 'partner.activity_type.eventi',
         ],
+        // Categorie professionali dell'attività, a scelta MULTIPLA (richiesta
+        // della cliente, 26/09/2026: un maneggio può essere anche fattoria
+        // didattica). Colonna `activity_categories` della bozza, JSON, quindi
+        // qui vale come whitelist di ogni elemento della lista — non del
+        // valore intero: `Rule::in(slugs('activity_category'))` va dentro
+        // `activity_categories.*`, o la regola confronta un array con delle
+        // stringhe e rifiuta tutto.
+        'activity_category' => [
+            'toelettatore' => 'partner.activity_category.toelettatore',
+            'asilo_cani' => 'partner.activity_category.asilo_cani',
+            'dog_sitter' => 'partner.activity_category.dog_sitter',
+            'educatore_cinofilo' => 'partner.activity_category.educatore_cinofilo',
+            'fotografo_pet' => 'partner.activity_category.fotografo_pet',
+            'maneggio' => 'partner.activity_category.maneggio',
+            'fattoria_didattica' => 'partner.activity_category.fattoria_didattica',
+            'altro' => 'partner.activity_category.altro',
+        ],
         'smartbox_type' => [
             'soggiorno' => 'partner.smartbox_type.soggiorno',
             'benessere' => 'partner.smartbox_type.benessere',

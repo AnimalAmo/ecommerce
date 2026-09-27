@@ -190,7 +190,41 @@ Il difetto di fondo: **i due wizard scrivono la stessa colonna `structure_drafts
 3. La card "Servizi" del funnel deve portare al wizard Attività. **Non toccare `StructureDraft::family()`**: le bozze storiche con `service_category='servizi'` sono state compilate col wizard hotel e pubblicate come `Structure`; rimapparle le trasformerebbe in `Event` alla prima ri-pubblicazione.
 4. Far sopravvivere la scelta fatta in registrazione: oggi `PartnerRegisterStep2::createAccount()` la dimentica e si atterra sempre in dashboard.
 
-### WP5 — R4, attività professionali · 3–4 g · **dopo WP4**
+### WP5 — R4, attività professionali · 3,5–4,5 g · 🟡 **cominciato il 26/09**
+
+**Fatto, e verde (76 test):**
+
+1. **Gruppo di opzioni condiviso** `activity_category` in `ServiceOptionLabels`, le otto voci nell'ordine
+   della cliente, più le label in `lang/it` e `lang/en`. È la classe che si dichiara «l'unico posto dove
+   si aggiungono gruppi», e da lì le prende anche il pannello admin: `options()` disegna, `slugs()`
+   valida. Il data provider di `ServiceOptionLabelsTest` blocca la lista.
+2. **Colonne e percorso del dato**: `activity_categories` (JSON, cast `array`) e
+   `activity_categories_other` (`text`, **tradotto** it/en come i fratelli `additional_other` e
+   `animal_services_other`) su `structure_drafts` **e** su `events`, più la mappatura in
+   `EventPublisher`. Senza la colonna gemella su `events` il valore sarebbe rimasto nella bozza.
+   Le categorie restano NULL sugli eventi veri anche se la bozza le porta addosso: sono del
+   professionista, e un cambio di ramo può lasciarle lì.
+
+**Resta da fare, in quest'ordine:**
+
+3. **Il campo nel wizard**, dentro lo step **ActivityName** e non in uno step nuovo. Motivo decisivo:
+   chi entra dalla card "Servizi" — cioè proprio i toelettatori e i dog sitter per cui la lista esiste —
+   **salta lo step 1** (`CreateService` redirige a `partner.activity.name`), e `ActivityName` è l'unico
+   componente che entrambe le strade attraversano. Uno step nuovo costerebbe 9 indici `saveStep`
+   spostati, 20 stringhe "Step N di 10", una rotta con due slug localizzati, i link "Indietro" e — la
+   parte non ovvia — la soglia `looksFinished()` di `animalamo:stuck-drafts`, che è
+   `current_step >= finalStep() - 1`: dopo la rinumerazione una bozza abbandonata alle foto la
+   soddisfa, e `--fix` inizierebbe a pubblicarla.
+4. **Pannello admin**: `Admin\Catalog\ActivityCreate` comprime gli step in una pagina con la sua lista
+   di regole. Se i due divergono, un'attività creata dall'admin non è più risalvabile dal partner.
+5. **Scheda pubblica**: mostrare le categorie sul dettaglio attività.
+
+Trappola da ricordare al punto 3: la regola va su `activity_categories.*`, non sul campo intero
+(`Rule::in(slugs('activity_category'))` confronterebbe un array con delle stringhe e rifiuterebbe tutto),
+e il testo libero di "Altro" si rivela con `wire:model.live` — senza `.live` non compare finché non si
+fa submit.
+
+### Il perimetro originale di WP5 · **dopo WP4**
 
 **Prerequisito bloccante: l'elenco delle tipologie e la risposta sulla data (§3).**
 
@@ -234,6 +268,25 @@ Oggi senza `date_start` non è pubblicabile. Se la data sparisce, l'attività no
 
 **4. Qual è l'elenco definitivo delle tipologie?** Per le attività la mail ne nomina sette più "altri professionisti"; **per gli eventi non ne nomina nessuna**. Serve la lista chiusa: gli slug vanno a database e cambiarli dopo significa migrare i dati. E: **si può scegliere più di una tipologia** (un maneggio che è anche fattoria didattica)? La differenza è strutturale — colonna stringa contro colonna json.
 → *Default: scelta singola, le sette voci della mail + "Altro"; per gli eventi si resta fermi finché non arriva la lista.*
+
+> ✅ **RISPOSTO dalla cliente il 26/09/2026 — e non come il default.** Le tipologie sono queste otto, e la
+> scelta è **multipla**, perché una realtà può rientrare in più categorie (maneggio + fattoria didattica):
+> Toelettatore · Asilo per cani · Dog sitter / Pet sitter · Educatore cinofilo / Addestratore ·
+> Fotografo pet · Maneggio / Centro equestre · Fattoria didattica · Altro.
+>
+> Conseguenze, perché la multipla era il ramo costoso dei due:
+> - la colonna è **JSON su `structure_drafts` e JSON su `events`**, non una stringa: senza la seconda il
+>   valore resta nella bozza e non arriva mai al B2C;
+> - filtrare il catalogo per categoria diventa una query su JSON, con le due trappole già pagate altrove:
+>   `LIKE` su colonna JSON è case-sensitive, e un `json_extract` che torna null non è SQL NULL. In SQLite
+>   (la suite) le funzioni JSON non si comportano come in MySQL: il test può passare e la produzione no;
+> - tre voci accorpano sinonimi con la barra (dog sitter/pet sitter, educatore/addestratore,
+>   maneggio/centro equestre): **uno slug per voce**, non due, o il filtro si sdoppia;
+> - "Altro" resta con il campo libero sotto, ma ora può convivere con altre scelte.
+>
+> Stima R4 aggiornata: **3,5–4,5 g** (era 3–4 con la scelta singola).
+>
+> Resta aperta la domanda gemella: **per gli eventi la lista non è ancora arrivata.**
 
 **5. "Evento ricorrente": etichetta o ricorrenza gestita?** Vedi il riquadro in WP6.
 → *Default: etichetta.*

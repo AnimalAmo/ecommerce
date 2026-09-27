@@ -97,6 +97,12 @@ che è anche fattoria didattica?
 → *Se non mi dici niente: quelle sette più "Altro", scelta singola.* La lista va messa a database, e
 cambiarla dopo significa rimettere a posto i dati già inseriti: meglio decidere adesso.
 
+> **CHIUSA il 26/09/2026.** Otto voci confermate e **scelta multipla**: Toelettatore, Asilo per cani,
+> Dog sitter / Pet sitter, Educatore cinofilo / Addestratore, Fotografo pet, Maneggio / Centro equestre,
+> Fattoria didattica, Altro. La multipla è mezza giornata in più della singola — il dato diventa una
+> lista e non un valore — e la sto implementando così. Resta da avere la lista degli **eventi**
+> (domanda 2).
+
 **2. L'elenco delle tipologie di evento.** Chiedi il campo ma non elenchi le voci, e senza la lista
 non posso disegnare il menu a tendina. Mi serve da te.
 
