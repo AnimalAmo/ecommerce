@@ -18,8 +18,13 @@ use InvalidArgumentException;
  * slug che nessun publisher sa tradurre. Da qui `options()` e `slugs()`: la
  * stessa lista disegna i controlli e li valida, così non possono divergere.
  *
- * Le viste del wizard restano come sono (fuori perimetro P3): questa classe è
- * la fonte per l'admin, non ancora l'unico posto dove gli slug esistono.
+ * Dal 28/09/2026 (WP8) anche il wizard disegna da qui i gruppi `services`,
+ * `additional`, `rules` e `animal_services`, e gli step li validano con
+ * `Rule::in(slugs())`, filtrando alla rilettura gli slug che la bozza porta
+ * ancora da prima: uno slug tolto da qui sparisce dal wizard e si perde alla
+ * successiva risalvata dello step, non blocca il partner. Hanno ancora una
+ * lista propria nella vista smartbox-offers, smartbox-meals, smartbox-type,
+ * hotel-smartbox, structure-type e activity-type.
  *
  * Questa costante è l'unico posto dove si aggiungono gruppi: un secondo task
  * che la riapre finisce per definire due volte la stessa lista con due nomi.
@@ -28,8 +33,18 @@ class ServiceOptionLabels
 {
     /** Mappa chiave draft => chiave lang, per gruppo. */
     private const MAPS = [
-        // Colonna `services`. Gli stessi sette slug servono "cosa è incluso"
-        // di attività e smartbox: stessa colonna, stesse label.
+        // Colonna `services`. Gli stessi slug servono "cosa è incluso" di
+        // attività e smartbox: stessa colonna, stesse label.
+        //
+        // Ogni slug di questo gruppo è un servizio che la scheda pubblica può
+        // mostrare: FamilyPublisher::AMENITY_MAP lo porta sulla sua voce del
+        // catalogo amenity (AmenitySeeder). Uno slug nuovo qui senza la sua
+        // riga là è una spunta che il partner mette e il cliente non vede.
+        //
+        // Gli ultimi tre in coda, per non spostare gli altri: sono voci del
+        // catalogo amenity che nessuno slug raggiungeva, quindi non comparivano
+        // mai su una scheda. La cliente, 26-27/09/2026: «Vorrei invece renderli
+        // selezionabili dove pertinenti».
         'services' => [
             'aria_condizionata' => 'partner.hotel_services.svc_ac',
             'riscaldamento' => 'partner.hotel_services.svc_heating',
@@ -38,6 +53,9 @@ class ServiceOptionLabels
             'tv' => 'partner.hotel_services.svc_tv',
             'piscina' => 'partner.hotel_services.svc_pool',
             'sauna' => 'partner.hotel_services.svc_sauna',
+            'lavanderia' => 'partner.hotel_services.svc_laundry',
+            'ascensore' => 'partner.hotel_services.svc_lift',
+            'noleggio_bici' => 'partner.hotel_services.svc_bike_rental',
         ],
         // Colonna `additional_services` di struttura e attività. 'colazione',
         // 'pranzo' e 'cena' li rilegge StructurePublisher per le righe pasti.
@@ -52,12 +70,28 @@ class ServiceOptionLabels
             'vietato_fumare' => 'partner.hotel_services.rule_no_smoking',
             'vietato_feste' => 'partner.hotel_services.rule_no_parties',
         ],
+        // Colonna `animal_services`. Come per `services`, ogni slug tranne
+        // 'nessuno' e 'altro' ha la sua voce del catalogo amenity.
+        //
+        // I quattro nuovi (cliente, 26-27/09/2026) stanno prima di 'altro' e
+        // non in coda: 'altro' apre il campo di testo libero ed è l'ultima
+        // scelta di ogni elenco del wizard. «Supplemento animali» non è un
+        // servizio ma un costo, e la cliente lo tiene apposta: «per il cliente
+        // è un'informazione importante».
+        //
+        // 'dog_sitter' esiste anche in `activity_category`: è un altro gruppo e
+        // un'altra colonna (chi è il professionista, non cosa offre la
+        // struttura), e il publisher non la legge per le amenity.
         'animal_services' => [
             'nessuno' => 'partner.hotel_animal_services.opt_none',
             'omaggio' => 'partner.hotel_animal_services.opt_welcome',
             'pet_sitting' => 'partner.hotel_animal_services.opt_petsitting',
             'veterinario' => 'partner.hotel_animal_services.opt_vet',
             'area_animali' => 'partner.hotel_animal_services.opt_area',
+            'dog_sitter' => 'partner.hotel_animal_services.opt_dogsitter',
+            'dog_beach' => 'partner.hotel_animal_services.opt_dog_beach',
+            'supplemento_animali' => 'partner.hotel_animal_services.opt_surcharge',
+            'piscina_cani' => 'partner.hotel_animal_services.opt_dog_pool',
             'altro' => 'partner.hotel_animal_services.opt_other',
         ],
         // Gruppo storico misto (struttura|attività|smartbox): lo usa

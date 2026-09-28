@@ -9,6 +9,7 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Support\Translations;
+use Database\Seeders\AmenitySeeder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -25,20 +26,53 @@ use Illuminate\Support\Str;
 abstract class FamilyPublisher
 {
     /**
-     * Slug del wizard → nome Amenity (AmenitySeeder). Gli slug senza equivalente
-     * a catalogo (riscaldamento, tv, area_animali, ...) vengono ignorati; le
-     * amenity del gruppo non selezionate finiscono nel pivot con included=false
-     * (le righe ✗ del template).
+     * Slug del wizard → nome Amenity (AmenitySeeder::AMENITIES). Le amenity
+     * del gruppo non selezionate finiscono nel pivot con included=false, e la
+     * scheda non le mostra (HasAmenities::amenityRows()).
+     *
+     * Completa in entrambe le direzioni dal 28/09/2026: ogni slug dei gruppi
+     * `services` e `animal_services` di ServiceOptionLabels (tranne 'nessuno' e
+     * 'altro') ha la sua voce, e ogni voce del catalogo ha almeno uno slug.
+     * Prima ne mancavano tredici: sette voci del catalogo che nessuno slug
+     * selezionava (la cliente, 26-27/09/2026: «Vorrei invece renderli
+     * selezionabili dove pertinenti») e sei slug spuntabili senza una voce,
+     * campo_da_tennis della smartbox compreso, che il partner indicava e la
+     * scheda non mostrava mai.
+     *
+     * La chiave è lo slug e non il gruppo: 'piscina' vale per i servizi della
+     * struttura e per gli aggiuntivi della smartbox, ed è la piscina delle
+     * persone. Quella per i cani è 'piscina_cani', un'altra voce.
+     *
+     * Pubblica perché la legge `animalamo:resync-amenities`, che si rifiuta
+     * di girare se una di queste voci manca a catalogo.
      */
-    protected const AMENITY_MAP = [
-        'wifi' => 'Wifi',
+    public const AMENITY_MAP = [
+        // Gruppo `services` (servizi della struttura, "cosa è incluso").
         'aria_condizionata' => 'Aria condizionata negli spazi comuni',
+        'riscaldamento' => 'Riscaldamento',
+        'wifi' => 'Wifi',
+        'ricarica_elettrica' => 'Ricarica auto elettriche',
+        'tv' => 'TV',
+        'piscina' => 'Piscina',
         'sauna' => 'Spa', // approssimazione: il wizard non ha una voce "Spa" propria
+        'lavanderia' => 'Lavanderia',
+        'ascensore' => 'Ascensore',
+        'noleggio_bici' => 'Noleggio bici',
+        // Aggiuntivi: 'spa' e 'campo_da_tennis' della smartbox, 'pranzo' di
+        // struttura e smartbox. Il campo da tennis era la sesta voce orfana
+        // (tester, 28/09/2026): spuntabile, mai sulla scheda.
         'spa' => 'Spa',
+        'campo_da_tennis' => 'Campo da tennis',
         'pranzo' => 'Pranzo',
+        // Gruppo `animal_services`.
+        'omaggio' => 'Omaggio di benvenuto',
         'pet_sitting' => 'Pet sitting',
         'veterinario' => 'Servizio veterinario',
-        'omaggio' => 'Omaggio di benvenuto',
+        'area_animali' => 'Area dedicata agli animali',
+        'dog_sitter' => 'Dog sitter',
+        'dog_beach' => 'Dog Beach nelle vicinanze',
+        'supplemento_animali' => 'Supplemento animali',
+        'piscina_cani' => 'Piscina per cani',
     ];
 
     /**
@@ -328,21 +362,51 @@ abstract class FamilyPublisher
     /**
      * Sincronizza il pivot amenityables riproducendo la semantica del template:
      * per OGNI amenity dei due gruppi una riga, included=true se selezionata
-     * nel wizard (✓ verde), false altrimenti (✗ rosa). Posizioni 1..n per
-     * gruppo, come AmenitySeeder::pivot().
+     * nel wizard (✓ verde), false altrimenti (✗ rosa). Vedi amenityPivot().
      *
      * @param  list<string>  $selectedSlugs  slug wizard selezionati (tutte le colonne json rilevanti)
      */
     protected function syncAmenities(Model $model, array $selectedSlugs): void
+    {
+        $model->amenities()->sync(self::amenityPivot($selectedSlugs));
+    }
+
+    /**
+     * Payload sync() del pivot amenityables per gli slug selezionati nel
+     * wizard: amenity_id => [included, position], una riga per ogni amenity
+     * dei due gruppi, posizioni 1..n per gruppo.
+     *
+     * Pubblica e statica perché la usa anche `animalamo:resync-amenities`, che
+     * ricalcola il pivot delle schede già pubblicate senza ripubblicarle: il
+     * calcolo deve essere lo stesso, non una copia.
+     *
+     * L'ordine dentro il gruppo è quello di AmenitySeeder::AMENITIES, non
+     * l'id (28/09/2026). Con l'id, le voci aggiunte dalla migrazione
+     * 2026_09_28_140001 sarebbero finite in coda nel database del cliente e al
+     * loro posto solo in un database seminato da zero. Una voce che la lista
+     * non conosce (creata a mano) va in fondo al suo gruppo, per id: il sort
+     * di PHP è stabile e la query arriva già ordinata così.
+     *
+     * @param  list<string>  $selectedSlugs
+     * @return array<int, array{included: bool, position: int}>
+     */
+    public static function amenityPivot(array $selectedSlugs): array
     {
         $names = array_values(array_intersect_key(self::AMENITY_MAP, array_flip($selectedSlugs)));
 
         $payload = [];
 
         foreach ([Amenity::GROUP_HOTEL, Amenity::GROUP_ANIMAL] as $group) {
+            $rowOrder = array_flip(AmenitySeeder::AMENITIES[$group] ?? []);
             $position = 0;
 
-            foreach (Amenity::query()->where('group', $group)->orderBy('id')->get() as $amenity) {
+            $amenities = Amenity::query()
+                ->where('group', $group)
+                ->orderBy('id')
+                ->get()
+                ->sortBy(fn (Amenity $amenity): int => $rowOrder[$amenity->name] ?? PHP_INT_MAX);
+
+            foreach ($amenities as $amenity) {
                 $payload[$amenity->id] = [
                     'included' => in_array($amenity->name, $names, true),
                     'position' => ++$position,
@@ -350,6 +414,6 @@ abstract class FamilyPublisher
             }
         }
 
-        $model->amenities()->sync($payload);
+        return $payload;
     }
 }

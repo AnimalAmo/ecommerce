@@ -1,13 +1,28 @@
 {{-- Dashboard B2B – struttura ricettiva - servizi animali (XD, artboard 1920x1099) --}}
+@use('App\Services\Partner\ServiceOptionLabels')
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
-    $options = [
-        'nessuno' => ['label' => 'partner.hotel_animal_services.opt_none'],
-        'omaggio' => ['label' => 'partner.hotel_animal_services.opt_welcome', 'desc' => 'partner.hotel_animal_services.opt_welcome_desc'],
-        'pet_sitting' => ['label' => 'partner.hotel_animal_services.opt_petsitting', 'desc' => 'partner.hotel_animal_services.opt_petsitting_desc'],
-        'veterinario' => ['label' => 'partner.hotel_animal_services.opt_vet', 'desc' => 'partner.hotel_animal_services.opt_vet_desc'],
-        'area_animali' => ['label' => 'partner.hotel_animal_services.opt_area', 'desc' => 'partner.hotel_animal_services.opt_area_desc'],
-        'altro' => ['label' => 'partner.hotel_animal_services.opt_other'],
+    // Slug => label già tradotta, dalla stessa mappa con cui
+    // HandlesAnimalServicesStep valida lo step: una voce nuova si aggiunge in
+    // ServiceOptionLabels e compare qui da sola (richiesta della cliente,
+    // 27/09/2026: dog sitter, dog beach, supplemento animali, piscina per cani).
+    // `$optionLabel` e non `$label`: flux:checkbox e flux:textarea ereditano
+    // `label` dallo scope del chiamante.
+    $options = ServiceOptionLabels::options('animal_services');
+    // Il sottotitolo delle voci che ne hanno uno. ServiceOptionLabels è
+    // slug => label e le descrizioni non le conosce, quindi stanno qui (uguali
+    // nelle tre viste dei servizi animali): una voce senza riga esce senza
+    // sottotitolo, non sparisce. `$descriptions` e non `$description`:
+    // flux:checkbox eredita `description` dallo scope del chiamante.
+    $descriptions = [
+        'omaggio' => 'partner.hotel_animal_services.opt_welcome_desc',
+        'pet_sitting' => 'partner.hotel_animal_services.opt_petsitting_desc',
+        'veterinario' => 'partner.hotel_animal_services.opt_vet_desc',
+        'area_animali' => 'partner.hotel_animal_services.opt_area_desc',
+        'dog_sitter' => 'partner.hotel_animal_services.opt_dogsitter_desc',
+        'dog_beach' => 'partner.hotel_animal_services.opt_dog_beach_desc',
+        'supplemento_animali' => 'partner.hotel_animal_services.opt_surcharge_desc',
+        'piscina_cani' => 'partner.hotel_animal_services.opt_dog_pool_desc',
     ];
     // Checkbox tondi cyan + label SemiBold 15 #555 / descrizione 14 #627277.
     $checkboxWrap = '[--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full [&_[data-flux-label]]:!text-[15px] [&_[data-flux-label]]:!font-semibold [&_[data-flux-label]]:!text-[#555555] [&_[data-flux-subheading]]:!text-sm [&_[data-flux-subheading]]:!text-[#627277]';
@@ -32,9 +47,9 @@
                 <p class="mt-2 text-[15px] font-medium text-[#959595]">{{ __('partner.hotel_animal_services.helper') }}</p>
 
                 <form wire:submit="next" class="mt-6 {{ $checkboxWrap }}">
-                    @foreach ($options as $key => $opt)
+                    @foreach ($options as $key => $optionLabel)
                         <div class="border-b border-[#E2EAEB] py-3" wire:key="anim-{{ $key }}">
-                            <flux:checkbox wire:model.live="services" value="{{ $key }}" :label="__($opt['label'])" :description="isset($opt['desc']) ? __($opt['desc']) : null" />
+                            <flux:checkbox wire:model.live="services" value="{{ $key }}" :label="$optionLabel" :description="isset($descriptions[$key]) ? __($descriptions[$key]) : null" />
 
                             @if ($key === 'altro' && in_array('altro', $services, true))
                                 {{-- Dettaglio "Altro" localizzato it/en --}}

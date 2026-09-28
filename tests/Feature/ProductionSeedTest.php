@@ -71,7 +71,9 @@ class ProductionSeedTest extends TestCase
         // Le province si agganciano alla regione: l'ordine dei due seeder regge.
         $this->assertSame(0, Province::whereNull('region_id')->count());
 
-        $this->assertSame(14, Amenity::count());
+        // 20 dal 28/09/2026 (WP8): le sei voci che il wizard spuntava
+        // senza una riga a catalogo (il campo da tennis della smartbox compreso).
+        $this->assertSame(20, Amenity::count());
         $this->assertSame(1, PaymentGateway::where('code', 'stripe')->count());
 
         // Contenuti della cliente, non del mock: legali + Animal Times.

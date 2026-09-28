@@ -8,11 +8,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * Gli slug che il wizard salva su StructureDraft vivono, oggi, nei @php delle
- * viste: gli stessi sette servizi sono scritti in hotel-services,
- * activity-included e smartbox-included. L'admin li deve validare, non solo
- * disegnare, quindi questo test blocca la lista: se una vista aggiunge
- * un'opzione senza passare di qui, l'admin la rifiuterebbe in silenzio.
+ * Gli slug che il wizard salva su StructureDraft. Dal 28/09/2026 (WP8) le viste
+ * del wizard leggono da qui i gruppi services, additional, rules e
+ * animal_services, e i loro step li validano con `in:`, come già il pannello
+ * admin: questo test blocca la lista, perché uno slug tolto o rinominato qui
+ * sparisce dal wizard e si perde alla successiva risalvata della bozza che lo
+ * porta. Alcune viste smartbox e i tipi hanno ancora una lista propria.
  *
  * Niente RefreshDatabase: si leggono solo una costante e i lang file.
  */
@@ -29,10 +30,15 @@ class ServiceOptionLabelsTest extends TestCase
     public static function optionGroups(): array
     {
         return [
-            'servizi struttura' => ['services', ['aria_condizionata', 'riscaldamento', 'wifi', 'ricarica_elettrica', 'tv', 'piscina', 'sauna']],
+            // Gli ultimi tre in coda: voci del catalogo amenity che nessuno
+            // slug raggiungeva (cliente, 26-27/09/2026: «Vorrei invece renderli
+            // selezionabili dove pertinenti»).
+            'servizi struttura' => ['services', ['aria_condizionata', 'riscaldamento', 'wifi', 'ricarica_elettrica', 'tv', 'piscina', 'sauna', 'lavanderia', 'ascensore', 'noleggio_bici']],
             'servizi aggiuntivi' => ['additional', ['nessuno', 'colazione', 'pranzo', 'cena', 'altro']],
             'regole' => ['rules', ['vietato_fumare', 'vietato_feste']],
-            'servizi animali' => ['animal_services', ['nessuno', 'omaggio', 'pet_sitting', 'veterinario', 'area_animali', 'altro']],
+            // Le quattro della cliente (26-27/09/2026) prima di 'altro', che
+            // apre il testo libero e resta l'ultima scelta.
+            'servizi animali' => ['animal_services', ['nessuno', 'omaggio', 'pet_sitting', 'veterinario', 'area_animali', 'dog_sitter', 'dog_beach', 'supplemento_animali', 'piscina_cani', 'altro']],
             'tipologia struttura' => ['structure_type', ['hotel', 'bb', 'agriturismo', 'casa_vacanza']],
             'tipologia attività' => ['activity_type', ['attivita', 'eventi']],
             // Categorie professionali: otto voci confermate dalla cliente il
@@ -127,6 +133,27 @@ class ServiceOptionLabelsTest extends TestCase
         }
 
         $this->assertSame('Other', ServiceOptionLabels::options('activity_category')['altro']);
+    }
+
+    /**
+     * I due gruppi che diventano righe della scheda (WP8, 28/09/2026). La
+     * parità delle chiavi la guarda LangParityTest; qui si guarda che lo step
+     * inglese non stampi la chiave grezza né ricada sull'italiano per le voci
+     * nuove.
+     */
+    public function test_the_services_and_the_animal_services_exist_in_english_too(): void
+    {
+        app()->setLocale('en');
+
+        foreach (['services', 'animal_services'] as $group) {
+            foreach (ServiceOptionLabels::options($group) as $slug => $label) {
+                $this->assertNotSame($slug, $label, "manca la traduzione inglese di {$group}.{$slug}");
+                $this->assertFalse(str_contains($label, '.'), "chiave lang inglese mancante per {$group}.{$slug}");
+            }
+        }
+
+        $this->assertSame('Laundry', ServiceOptionLabels::options('services')['lavanderia']);
+        $this->assertSame('Pet surcharge', ServiceOptionLabels::options('animal_services')['supplemento_animali']);
     }
 
     public function test_the_holiday_home_is_no_longer_shown_as_a_raw_slug(): void
