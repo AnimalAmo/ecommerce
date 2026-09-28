@@ -86,9 +86,10 @@ class CreateService extends Component
      * la card cliccata, che si riscrive). Oltre, solo se la card resta nella
      * sua famiglia e non le cambia il tipo: cambiarle famiglia lascerebbe
      * scritte le colonne dell'altro ramo, e le card «Servizio professionale» ed
-     * «Evento» fissano il tipo senza passare dallo step del tipo, che è il solo
-     * ad azzerare i campi del ramo abbandonato (ActivityType::clearedFields).
-     * La card «Attività» passa da lì, quindi può riprendere anche un evento.
+     * «Evento» fissano il tipo senza passare da uno step del tipo, che sono i
+     * soli ad azzerare i campi del ramo abbandonato
+     * (StructureDraft::attributesForType()). La card «Attività» passa da lì,
+     * quindi può riprendere anche un evento.
      */
     private function fitsDraft(StructureDraft $draft, string $category, ?string $presetType): bool
     {

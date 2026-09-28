@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -91,6 +92,66 @@ class StructureDraft extends Model
             11 => 'partner.smartbox.photos',
             12 => 'partner.smartbox.price',
         ],
+    ];
+
+    /** Le card di StructureType: le quattro tipologie di struttura ricettiva. */
+    public const STRUCTURE_TYPES = ['hotel', 'bb', 'agriturismo', 'casa_vacanza'];
+
+    /** Le card di ActivityType: servizio professionale ed evento. */
+    public const ACTIVITY_TYPES = ['attivita', 'eventi'];
+
+    /**
+     * Colonne che non tutti i rami del wizard riempiono, ciascuna coi rami in
+     * cui resta valida. I rami sono tre: `struttura` (una delle
+     * STRUCTURE_TYPES), `attivita` (servizio professionale) ed `eventi`. Le
+     * colonne che qui non compaiono sono comuni a tutti (nome, luogo,
+     * descrizione breve, servizi, foto, prezzo, cancellazione) e un cambio di
+     * ramo non le tocca. Chi aggiunge una colonna a un ramo solo la scrive
+     * qui, e i due step del tipo la azzerano insieme (attributesForType).
+     *
+     * Difetto F5 dell'audit dei flussi (28/09/2026): la lista stava scritta
+     * due volte, in StructureType e in ActivityType, e solo la seconda era
+     * stata estesa alle colonne del 26-27/09. Passando da Evento a hotel
+     * restavano posti, ricorrenza, tipologie di evento e zona operativa.
+     *
+     * Le scelte che non si vedono dai nomi:
+     *   - le categorie professionali, la descrizione dettagliata, le date e la
+     *     prenotazione valgono per entrambi i rami della famiglia attività:
+     *     le categorie sono l'identità del professionista (EventPublisher già
+     *     non le porta sugli eventi veri), la cliente chiede la prenotazione a
+     *     tutti e due, e le date le può avere anche un'attività;
+     *   - `max_participants` solo agli eventi: il wizard lo chiede lì, ed
+     *     EventPublisher lo copia senza guardare il tipo, quindi un residuo
+     *     farebbe esaurire un servizio professionale.
+     */
+    private const BRANCH_COLUMNS = [
+        // Struttura ricettiva: licenza (step 3), stanze e orari (step 5),
+        // adesione alle smartbox (step 9).
+        'license' => ['struttura'],
+        'rooms' => ['struttura'],
+        'checkin_from' => ['struttura'],
+        'checkin_to' => ['struttura'],
+        'checkout_from' => ['struttura'],
+        'checkout_to' => ['struttura'],
+        'smartbox_consent' => ['struttura'],
+        'smartbox_types' => ['struttura'],
+        // I due rami della famiglia attività.
+        'activity_categories' => ['attivita', 'eventi'],
+        'activity_categories_other' => ['attivita', 'eventi'],
+        'detailed_description' => ['attivita', 'eventi'],
+        'date_start' => ['attivita', 'eventi'],
+        'date_end' => ['attivita', 'eventi'],
+        'booking_requirement' => ['attivita', 'eventi'],
+        // Servizio professionale: lavora su un territorio, non ha un ritrovo.
+        'operating_area' => ['attivita'],
+        // Evento.
+        'meeting_point' => ['eventi'],
+        'time_start' => ['eventi'],
+        'time_end' => ['eventi'],
+        'recurrence' => ['eventi'],
+        'max_participants' => ['eventi'],
+        'event_categories' => ['eventi'],
+        'event_categories_other' => ['eventi'],
     ];
 
     /**
@@ -346,6 +407,72 @@ class StructureDraft extends Model
             'attivita' => 'attivita',
             'smartbox' => 'smartbox',
             default => 'struttura',
+        };
+    }
+
+    /**
+     * Gli attributi che lo step del tipo (StructureType, ActivityType) salva
+     * quando il partner sceglie la tipologia `$type`. Una regola sola per i due
+     * step, al posto delle due liste che divergevano (difetto F5, 28/09/2026):
+     *
+     *   - `type`;
+     *   - `service_category`, quando la famiglia della bozza non è quella del
+     *     tipo scelto. È lei che decide il publisher: prima StructureType
+     *     riscriveva solo `type`, `family()` restava 'attivita' e un evento
+     *     diventato hotel usciva da EventPublisher come Attività, esauribile
+     *     coi posti dell'evento abbandonato. Le bozze storiche con 'servizi'
+     *     sono già strutture (familyOf) e restano come sono;
+     *   - le colonne del ramo abbandonato che il ramo scelto non usa
+     *     (BRANCH_COLUMNS), solo se la scelta cambia ramo. Confermare la stessa
+     *     tipologia, o passare da hotel a B&B, non cancella il lavoro fatto. Un
+     *     tipo vuoto o di un altro wizard non ha ramo: conta come cambio.
+     *
+     * Un testo tradotto si svuota in tutte le lingue con `[]`: un NULL, per
+     * spatie, toglierebbe solo la lingua corrente e l'inglese resterebbe lì.
+     * Si azzera solo ciò che c'è, così una bozza appena nata resta com'è.
+     *
+     * @return array<string, mixed>
+     */
+    public function attributesForType(string $type): array
+    {
+        $branch = self::branchOf($type)
+            ?? throw new InvalidArgumentException("Tipologia di bozza sconosciuta: {$type}");
+        $family = $branch === 'struttura' ? 'struttura' : 'attivita';
+
+        $attributes = ['type' => $type];
+
+        if ($this->service_category === null || $this->family() !== $family) {
+            $attributes['service_category'] = $family;
+        }
+
+        if ($this->type !== null && self::branchOf($this->type) === $branch) {
+            return $attributes;
+        }
+
+        foreach (self::BRANCH_COLUMNS as $column => $branches) {
+            if (in_array($branch, $branches, true)) {
+                continue;
+            }
+
+            if ($this->isTranslatableAttribute($column)) {
+                if ($this->getTranslations($column) !== []) {
+                    $attributes[$column] = [];
+                }
+            } elseif ($this->getAttribute($column) !== null) {
+                $attributes[$column] = null;
+            }
+        }
+
+        return $attributes;
+    }
+
+    /** Ramo del wizard di una tipologia: struttura | attivita | eventi, null se di un altro wizard. */
+    private static function branchOf(string $type): ?string
+    {
+        return match (true) {
+            in_array($type, self::STRUCTURE_TYPES, true) => 'struttura',
+            in_array($type, self::ACTIVITY_TYPES, true) => $type,
+            default => null,
         };
     }
 }

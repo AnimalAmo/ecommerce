@@ -2,11 +2,20 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Partner\PartnerProfile;
 use App\Models\Structure\StructureDraft;
 use Livewire\Form;
 
 /**
  * Struttura (hotel) — step 11 "Pagamento". Coordinate bancarie per gli accrediti.
+ *
+ * Sono le stesse di Profilo → "Metodo di pagamento" (PartnerPaymentForm), e il
+ * profilo è la fonte. Difetto W7 dell'audit dei flussi (28/09/2026): lo step le
+ * scriveva solo sulla bozza, il profilo restava vuoto e il partner le doveva
+ * digitare una seconda volta. Ora le scrive anche sul profilo (toProfile) e si
+ * precompila da lì (setFrom). Sulla bozza restano perché il dettaglio del
+ * servizio le mostra. Nessuno dei due punti le usa per pagare: i bonifici
+ * passano da Stripe Connect.
  */
 class HotelPaymentForm extends Form
 {
@@ -25,11 +34,20 @@ class HotelPaymentForm extends Form
         ];
     }
 
-    public function setFromDraft(StructureDraft $draft): void
+    /**
+     * Precompila dal profilo. Dalla bozza solo se il profilo non ha ancora
+     * coordinate: è il servizio di chi le ha date al wizard prima di questa
+     * correzione, e le ritrova invece di riscriverle.
+     */
+    public function setFrom(StructureDraft $draft, ?PartnerProfile $profile): void
     {
-        $this->accountHolder = $draft->account_holder ?? '';
-        $this->iban = $draft->iban ?? '';
-        $this->bic = $draft->bic ?? '';
+        $source = filled($profile?->account_holder) || filled($profile?->iban) || filled($profile?->bic)
+            ? $profile
+            : $draft;
+
+        $this->accountHolder = $source->account_holder ?? '';
+        $this->iban = $source->iban ?? '';
+        $this->bic = $source->bic ?? '';
     }
 
     /** Attributi nel formato colonne della bozza (snake_case). */
@@ -40,5 +58,11 @@ class HotelPaymentForm extends Form
             'iban' => $this->iban,
             'bic' => $this->bic,
         ];
+    }
+
+    /** Le stesse coordinate per `partner_profiles`, come PartnerPaymentForm::toProfile(). */
+    public function toProfile(): array
+    {
+        return $this->toDraft();
     }
 }
