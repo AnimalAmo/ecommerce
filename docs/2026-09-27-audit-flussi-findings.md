@@ -16,14 +16,37 @@ chiudono. Su `main` non ci sono, perché `main` resta verde.
 | | difetto | stato |
 |---|---|---|
 | **C1** | bloccante — ordine pagato con zero euro incassati | ✅ **chiuso** (`a90bec9`), test verdi |
-| F1 | foto cancellata dal disco mentre il catalogo la punta | ⏳ da fare |
-| W1 | `detailed_description` obbligatoria che non arriva a catalogo | ⏳ da fare (deciso: colonna gemella + posto sulla scheda) |
-| W2 | «Indietro» orfana la bozza — **è il caso Metina** | ⏳ da fare |
-| C2 | CTA carrello accesa con meno posti dei 2 ospiti di default | ⏳ da fare |
-| C5 | liste e preferiti ignorano la capienza | ⏳ da fare |
-| C6 | borsa e cuore finti sulle card suggerite del carrello | ⏳ da fare |
+| F1 | foto cancellata dal disco mentre il catalogo la punta | ✅ **chiuso** 28/09 (`ae0f646`) |
+| W1 | `detailed_description` obbligatoria che non arriva a catalogo | ✅ **chiuso** 28/09 (`d58aca9`), colonna gemella + travaso |
+| W2 | «Indietro» orfana la bozza — **è il caso Metina** | ✅ **chiuso** 28/09 (`cd13ce3`) |
+| C2 | CTA carrello accesa con meno posti dei 2 ospiti di default | ✅ **chiuso** 28/09 (`d58aca9`) |
+| C5 | liste e preferiti ignorano la capienza | ✅ **chiuso** 28/09 (`d34676d`) |
+| C6 | borsa e cuore finti sulle card suggerite del carrello | ✅ **chiuso** 28/09 (`d34676d`) |
 | C4 | «Partecipa» dichiara un fatto non avvenuto | 🔸 **rimandato per scelta**: si aspetta la partecipazione vera (tranche C) |
 | gli altri 20 | medi e cosmetici | ⏳ da triare |
+
+## Giro del 28/09/2026: i sei gravi
+
+Branch `fix/audit-flussi-2026-09-28`, nato da `audit/flussi-2026-09-27` (cioè main + i test rossi). Quattro
+builder su file disgiunti, un tester, poi una code review a tre lenti con due verificatori avversariali.
+Suite VM: **50 rossi, 2257 verdi** contro la baseline di **64 rossi, 2192 verdi**. Zero rossi nuovi: i 14
+chiusi sono esattamente i test delle sezioni F1, W1, C2, W2, C5 e C6, e i 50 rimasti sono le sezioni dei
+difetti ancora aperti. Il branch non va su `main` finché quei 50 non sono chiusi o spostati.
+
+Il tester ha trovato due difetti nuovi dentro le correzioni, chiusi nello stesso giro:
+
+- **A, sicurezza.** `saved` dello step foto è una proprietà Livewire pubblica: `removeSaved()` la scriveva
+  nella bozza **prima** di controllare il path contro la bozza, quindi due chiamate forgiate cancellavano
+  un file qualsiasi del disco public; `next()` faceva entrare un path altrui nella bozza e in copertina.
+  Ora decide la bozza, e un file che un'altra bozza contiene non si cancella comunque.
+- **B.** Le liste usavano la soglia di una persona, ma l'aggiunta rapida di un'attività mette due adulti:
+  con un posto libero la borsa c'era e il click veniva rifiutato. Soglia e aggiunta leggono ora
+  `Event::quickAddPersons()`; per chi incassa in struttura la soglia resta una persona, come in scheda.
+
+La review ha confermato 3 rilievi e ne ha dati per parziali 7 (tutti minori o medi, tutti applicati): un
+test del `saved` forgiato protetto a vuoto dalla seconda guardia, un test di pubblicazione fallita che non
+distingueva `afterCommit` da una cancellazione immediata, una migrazione non rilanciabile su MySQL, un hex
+al posto del token, commenti rimasti al comportamento di prima.
 
 ## Come riprendere
 
