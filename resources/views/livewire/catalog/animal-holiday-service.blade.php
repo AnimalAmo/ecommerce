@@ -96,7 +96,7 @@
                             <h2 class="text-[25px] font-bold leading-[30px] text-black">{{ __('holiday.where_we_are') }}</h2>
                             <div class="relative mt-5 overflow-hidden rounded-[4px]">
                                 <x-google-map :query="$service->mapQuery()" :fallback="$service->mapFallbackUrl()" :alt="__('holiday.map_alt', ['name' => $service->name])" class="h-[389px]" />
-                                <span class="pointer-events-none absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
+                                <span data-map-pill class="pointer-events-none absolute left-1/2 top-[269px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
                                     <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                                     {{ $service->name }}
                                 </span>

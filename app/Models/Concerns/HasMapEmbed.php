@@ -7,6 +7,9 @@ namespace App\Models\Concerns;
  * configurata, altrimenti lo screenshot statico dell'XD (mapFallbackUrl).
  * Con la chiave la mappa appare anche per i prodotti partner, che non hanno
  * screenshot ma hanno località/indirizzo.
+ * L'iframe si carica solo col consenso Iubenda alla finalità 3 ("Esperienza"),
+ * e sta sotto wire:ignore perché il morph di Livewire non ne riscriva il src:
+ * vedi components/google-map.blade.php.
  */
 trait HasMapEmbed
 {

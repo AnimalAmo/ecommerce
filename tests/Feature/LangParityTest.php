@@ -32,6 +32,7 @@ class LangParityTest extends TestCase
                 'holiday',
                 'home',
                 'legal',
+                'maps',
                 'nav',
                 'news',
                 'newsletter',
