@@ -75,6 +75,9 @@ class CatalogAdminTest extends TestCase
             'Una scheda che il sito non mostra non può avere il badge verde «Pubblicata»: '
             .'lo scope e la diagnostica partner conoscono già il ritiro, il pannello no.',
         );
+        // Tester 28/09/2026: l'assertNotSame passava con qualunque altro stato
+        // (anche «Sospesa», cioè un'accusa all'admin che non ha fatto niente).
+        $this->assertSame(CatalogAdmin::STATUS_WITHHELD, app(CatalogAdmin::class)->status($box));
     }
 
     public function test_il_filtro_pubblicate_non_include_una_scheda_ritirata(): void
@@ -99,7 +102,9 @@ class CatalogAdminTest extends TestCase
         $this->get(route('admin.catalog.index'))
             ->assertOk()
             ->assertSee('Cofanetto ritirato')
-            ->assertDontSee(__('admin-catalog.status.published'));
+            ->assertDontSee(__('admin-catalog.status.published'))
+            // Tester 28/09/2026: senza, passava anche una riga senza nessun badge.
+            ->assertSee(__('admin-catalog.status.withheld'));
     }
 
     /**

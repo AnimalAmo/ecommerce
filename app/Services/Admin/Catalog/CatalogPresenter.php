@@ -14,19 +14,33 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CatalogPresenter
 {
-    /** Tono di x-admin.badge per ogni stato; le etichette sono in lang/it/admin-catalog.php. */
+    /**
+     * Tono di x-admin.badge per ogni stato; le etichette sono in
+     * lang/it/admin-catalog.php. La ritirata (difetto F4, 28/09/2026) è gialla
+     * come «In attesa»: fuori dal sito finché qualcuno — qui il partner, col
+     * sistema di pagamento — non fa la sua parte.
+     */
     public const STATUS_TONES = [
         CatalogAdmin::STATUS_PUBLISHED => 'success',
         CatalogAdmin::STATUS_SUSPENDED => 'muted',
+        CatalogAdmin::STATUS_WITHHELD => 'warning',
         CatalogAdmin::STATUS_PENDING => 'warning',
         CatalogAdmin::STATUS_CHANGES => 'pink',
     ];
 
-    /** @return array<string, string> stato => etichetta, nell'ordine del filtro */
+    /**
+     * Voci del filtro "Stato", al plurale (`admin-catalog.status_filter.*`) e
+     * non le etichette del badge. Difetto F4 (28/09/2026): con il ritiro il
+     * pannello deve poter dire che nessuna riga dell'elenco è «Pubblicata», e
+     * la voce del filtro con la stessa parola lo rendeva impossibile — oltre a
+     * leggersi male, «Stato: Pubblicata» per un elenco di schede.
+     *
+     * @return array<string, string> stato => etichetta, nell'ordine del filtro
+     */
     public static function statusLabels(): array
     {
         return collect(self::STATUS_TONES)
-            ->mapWithKeys(fn (string $tone, string $status) => [$status => __("admin-catalog.status.{$status}")])
+            ->mapWithKeys(fn (string $tone, string $status) => [$status => __("admin-catalog.status_filter.{$status}")])
             ->all();
     }
 
@@ -41,7 +55,11 @@ class CatalogPresenter
     public function __construct(private readonly CatalogAdmin $catalog) {}
 
     /**
-     * @return array{family: string, id: int, key: string, name: string, type: string, typeTone: string, partner: string, place: string, region: ?string, price: string, status: string, statusLabel: string, statusTone: string, img: ?string, suspended: bool, url: string}
+     * `withheld` è il ritiro della piattaforma (difetto F4, 28/09/2026),
+     * indipendente dallo stato del badge: la scheda ne dice il motivo anche
+     * quando il badge mostra la sospensione o l'attesa.
+     *
+     * @return array{family: string, id: int, key: string, name: string, type: string, typeTone: string, partner: string, place: string, region: ?string, price: string, status: string, statusLabel: string, statusTone: string, img: ?string, suspended: bool, withheld: bool, url: string}
      */
     public function row(Model $item): array
     {
@@ -68,6 +86,7 @@ class CatalogPresenter
             'statusTone' => self::STATUS_TONES[$status],
             'img' => $item->imageUrl(),
             'suspended' => $item->suspended_at !== null,
+            'withheld' => $item->withheld_at !== null,
             'url' => route('admin.catalog.show', ['type' => $family, 'id' => $item->getKey()]),
         ];
     }

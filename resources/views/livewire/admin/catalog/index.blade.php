@@ -1,9 +1,12 @@
 <div class="flex flex-col gap-[18px]">
+    {{-- Il ritiro entra nell'intestazione solo quando c'è (difetto F4, 28/09/2026):
+         senza, una scheda che nessuno vede contava come una in vetrina. --}}
     <x-admin.page-header
         :heading="__('admin-catalog.index.heading')"
-        :sub="__('admin-catalog.index.sub', [
+        :sub="__($totals['withheld'] > 0 ? 'admin-catalog.index.sub_withheld' : 'admin-catalog.index.sub', [
             'items' => trans_choice('admin-catalog.index.items', $totals['total']),
             'suspended' => trans_choice('admin-catalog.index.suspended', $totals['suspended']),
+            'withheld' => trans_choice('admin-catalog.index.withheld', $totals['withheld']),
         ])"
     >
         <x-slot:actions>

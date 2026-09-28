@@ -119,7 +119,7 @@ trait CreatesPartnerService
      * UserDirectory lo risolve il container perché le viste non ricevono
      * iniezioni.
      *
-     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string, stripe_status: string, can_publish: bool, smartbox_payment_block: bool}|null
+     * @return array{business_name: ?string, listings: int, suspended: int, withheld: int, bookings: int, payment_mode: string, stripe_status: string, can_publish: bool, smartbox_payment_block: bool}|null
      */
     public function partnerSummary(): ?array
     {

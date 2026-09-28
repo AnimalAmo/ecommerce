@@ -61,7 +61,10 @@
         <x-admin.kpi
             :label="__('admin-dashboard.home.kpi.catalog')"
             :value="$number($catalog['published'])"
-            :note="trans_choice('admin-dashboard.home.kpi.catalog_note', $catalog['suspended'], ['count' => $number($catalog['suspended'])])"
+            :note="collect([
+                trans_choice('admin-dashboard.home.kpi.catalog_note', $catalog['suspended'], ['count' => $number($catalog['suspended'])]),
+                $catalogWithheld > 0 ? trans_choice('admin-dashboard.home.kpi.catalog_note_withheld', $catalogWithheld, ['count' => $number($catalogWithheld)]) : null,
+            ])->filter()->implode(', ')"
         />
         <x-admin.kpi
             :label="__('admin-dashboard.home.kpi.users')"

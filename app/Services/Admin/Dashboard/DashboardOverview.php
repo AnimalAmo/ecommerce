@@ -74,9 +74,16 @@ class DashboardOverview
     }
 
     /**
-     * Schede visibili sul sito (approvate e non sospese) e schede sospese,
-     * sulle tre famiglie. Query builder e non model: lo scope di visibilità
-     * nasconderebbe proprio le sospese.
+     * Schede visibili sul sito (approvate, non sospese e non ritirate) e
+     * schede sospese, sulle tre famiglie. Query builder e non model: lo scope
+     * di visibilità nasconderebbe proprio le sospese.
+     *
+     * `published` è la condizione di CatalogVisibleScope. Difetto F4
+     * dell'audit del 27/09/2026, corretto il 28/09/2026: mancava `withheld_at`,
+     * e «Schede pubblicate» contava anche le smartbox ritirate perché il
+     * partner non incassa online. Le ritirate si contano a parte, in
+     * catalogWithheld(): l'array a due chiavi resta quello di prima, che
+     * DashboardOverviewTest confronta per intero.
      *
      * @return array{published: int, suspended: int}
      */
@@ -88,11 +95,24 @@ class DashboardOverview
             $counts['published'] += DB::table($table)
                 ->where('approval_status', Structure::APPROVAL_APPROVED)
                 ->whereNull('suspended_at')
+                ->whereNull('withheld_at')
                 ->count();
             $counts['suspended'] += DB::table($table)->whereNotNull('suspended_at')->count();
         }
 
         return $counts;
+    }
+
+    /**
+     * Schede ritirate dalla piattaforma (`withheld_at`), sulle tre famiglie:
+     * la nota del riquadro «Schede pubblicate» le nomina accanto alle
+     * sospese, con la stessa regola del filtro «Ritirate» del catalogo
+     * (difetto F4, 28/09/2026).
+     */
+    public function catalogWithheld(): int
+    {
+        return collect(AdminCounters::CATALOG_TABLES)
+            ->sum(fn (string $table): int => DB::table($table)->whereNotNull('withheld_at')->count());
     }
 
     /**

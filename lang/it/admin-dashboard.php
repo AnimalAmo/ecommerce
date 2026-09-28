@@ -38,6 +38,8 @@ return [
         'kpi' => [
             'catalog' => 'Schede pubblicate',
             'catalog_note' => '{0} nessuna sospesa|{1} :count sospesa|[2,*] :count sospese',
+            // Accanto alle sospese, solo se ce ne sono: smartbox ritirate perché il partner non incassa online (difetto F4, 28/09/2026).
+            'catalog_note_withheld' => '{1} :count ritirata|[2,*] :count ritirate',
             'users' => 'Iscritti',
             'users_note' => '{0} nessuno negli ultimi 30 giorni|[1,*] +:count negli ultimi 30 giorni',
             'orders' => 'Ordini del mese',

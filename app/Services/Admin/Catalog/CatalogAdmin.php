@@ -7,6 +7,7 @@ use App\Mail\CatalogModerationMail;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Services\Cart\DatabaseCartStorage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -41,6 +42,16 @@ class CatalogAdmin
     public const STATUS_CHANGES = 'changes_requested';
 
     /**
+     * Ritirata dalla piattaforma: `withheld_at`, una smartbox il cui partner
+     * non incassa online (27/09/2026). Difetto F4 dell'audit del 27/09/2026,
+     * corretto il 28/09/2026: il pannello non conosceva il ritiro, e una
+     * scheda che CatalogVisibleScope nasconde al sito usciva «Pubblicata» col
+     * badge verde, rientrava nel filtro delle pubblicate e non entrava in
+     * nessun contatore.
+     */
+    public const STATUS_WITHHELD = 'withheld';
+
+    /**
      * @param  array{search?: string, partner?: string, family?: string, region?: string, status?: string}  $filters
      */
     public function paginate(array $filters, int $perPage = 20): LengthAwarePaginator
@@ -68,15 +79,23 @@ class CatalogAdmin
         return $this->hydrate($rows);
     }
 
-    /** @return array{total: int, suspended: int, pending: int} */
+    /**
+     * Contatori dell'intestazione. `withheld` (difetto F4, 28/09/2026) conta
+     * con la stessa regola del filtro «ritirate», come `suspended` fa con il
+     * suo: senza, una scheda che nessuno può vedere stava dentro `total` e
+     * fuori da ogni altro numero.
+     *
+     * @return array{total: int, suspended: int, pending: int, withheld: int}
+     */
     public function totals(): array
     {
-        $totals = ['total' => 0, 'suspended' => 0, 'pending' => 0];
+        $totals = ['total' => 0, 'suspended' => 0, 'pending' => 0, 'withheld' => 0];
 
         foreach (self::FAMILIES as [, $table]) {
             $totals['total'] += DB::table($table)->count();
             $totals['suspended'] += DB::table($table)->whereNotNull('suspended_at')->count();
             $totals['pending'] += DB::table($table)->where('approval_status', Structure::APPROVAL_PENDING)->count();
+            $totals['withheld'] += DB::table($table)->whereNotNull('withheld_at')->count();
         }
 
         return $totals;
@@ -107,13 +126,28 @@ class CatalogAdmin
         return $class::withHidden()->with(['user.partnerProfile'])->findOrFail($id);
     }
 
-    /** Stato amministrativo unico, quello del badge: in attesa e modifiche vincono sulla sospensione. */
+    /**
+     * Stato amministrativo unico, quello del badge: in attesa e modifiche
+     * vincono sulla sospensione, la sospensione vince sul ritiro.
+     *
+     * Il ritiro (difetto F4, 28/09/2026) è l'ultimo prima di «Pubblicata», e
+     * `published` resta esattamente il negativo di CatalogVisibleScope: il
+     * badge verde solo per ciò che il sito mostra. L'ordine è l'opposto di
+     * DraftPublicationState, dove il ritiro vince su tutto, e di proposito:
+     * il partner deve leggere la causa che dipende da lui (il sistema di
+     * pagamento), l'admin prima le sue — da approvare, o sospesa da lui con
+     * accanto il bottone «Riattiva». Un badge «Ritirata» accanto a
+     * «Riattiva» farebbe credere che quel bottone rimetta in vetrina il
+     * cofanetto, e non è così. Il motivo del ritiro la scheda lo dice comunque
+     * in un avviso, qualunque sia il badge.
+     */
     public function status(Model $item): string
     {
         return match (true) {
             $item->approval_status === Structure::APPROVAL_PENDING => self::STATUS_PENDING,
             $item->approval_status === Structure::APPROVAL_CHANGES_REQUESTED => self::STATUS_CHANGES,
             $item->suspended_at !== null => self::STATUS_SUSPENDED,
+            $item->withheld_at !== null => self::STATUS_WITHHELD,
             default => self::STATUS_PUBLISHED,
         };
     }
@@ -238,7 +272,11 @@ class CatalogAdmin
             $family = $this->family($item);
             $id = $item->getKey();
 
-            DB::table('cart_items')->where('purchasable_type', $family)->where('purchasable_id', $id)->delete();
+            // Dal carrello si esce con l'avviso al cliente (difetto C9,
+            // 28/09/2026): una DELETE diretta lasciava il cliente con un totale
+            // più basso e nessuna parola, e svuotava le righe prima che
+            // l'evento `deleted` del prodotto potesse annotarle.
+            app(DatabaseCartStorage::class)->withdrawProduct($item);
             DB::table('favorites')->where('favoritable_type', $family)->where('favoritable_id', $id)->delete();
             DB::table('faqs')->where('faqable_type', $family)->where('faqable_id', $id)->delete();
             DB::table('reviews')->where('reviewable_type', $family)->where('reviewable_id', $id)->delete();
@@ -412,9 +450,13 @@ class CatalogAdmin
             $query->where("{$table}.region_id", (int) $filters['region']);
         }
 
+        // «Pubblicate» è la stessa condizione di CatalogVisibleScope: fino al
+        // difetto F4 (28/09/2026) mancava `withheld_at`, e le smartbox
+        // ritirate finivano fra le pubblicate.
         match ($filters['status'] ?? null) {
-            self::STATUS_PUBLISHED => $query->where('approval_status', Structure::APPROVAL_APPROVED)->whereNull('suspended_at'),
+            self::STATUS_PUBLISHED => $query->where('approval_status', Structure::APPROVAL_APPROVED)->whereNull('suspended_at')->whereNull('withheld_at'),
             self::STATUS_SUSPENDED => $query->whereNotNull('suspended_at'),
+            self::STATUS_WITHHELD => $query->whereNotNull('withheld_at'),
             self::STATUS_PENDING => $query->where('approval_status', Structure::APPROVAL_PENDING),
             self::STATUS_CHANGES => $query->where('approval_status', Structure::APPROVAL_CHANGES_REQUESTED),
             default => null,

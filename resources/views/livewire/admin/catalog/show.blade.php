@@ -39,6 +39,15 @@
         </x-admin.notice>
     @endif
 
+    {{-- Il motivo del ritiro, qualunque sia il badge: una scheda sospesa o in
+         attesa può essere anche ritirata, e «Riattiva» non la rimette in
+         vetrina (difetto F4, 28/09/2026). --}}
+    @if ($row['withheld'])
+        <x-admin.notice tone="warning" :heading="__('admin-catalog.show.withheld_heading')">
+            {{ __('admin-catalog.show.withheld_body') }}
+        </x-admin.notice>
+    @endif
+
     <div class="grid items-start gap-3.5 lg:grid-cols-3">
         <x-admin.card :heading="__('admin-catalog.show.texts')" class="lg:col-span-2">
             <x-slot:aside>

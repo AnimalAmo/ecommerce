@@ -9,6 +9,19 @@ return [
     'status' => [
         'published' => 'Pubblicata',
         'suspended' => 'Sospesa',
+        // Ritiro della piattaforma, non dell'admin (difetto F4, 28/09/2026):
+        // una smartbox il cui partner non incassa online.
+        'withheld' => 'Ritirata',
+        'pending' => 'In attesa',
+        'changes_requested' => 'Modifiche chieste',
+    ],
+
+    // Voci del filtro "Stato": al plurale, diverse di proposito dal badge
+    // (CatalogPresenter::statusLabels()).
+    'status_filter' => [
+        'published' => 'Pubblicate',
+        'suspended' => 'Sospese',
+        'withheld' => 'Ritirate',
         'pending' => 'In attesa',
         'changes_requested' => 'Modifiche chieste',
     ],
@@ -32,8 +45,11 @@ return [
         'title' => 'Catalogo',
         'heading' => 'Catalogo',
         'sub' => 'Strutture, attività e Smartbox di tutti i partner. :items, :suspended.',
+        // Con almeno una scheda ritirata: la frase di prima più il ritiro.
+        'sub_withheld' => 'Strutture, attività e Smartbox di tutti i partner. :items, :suspended, :withheld.',
         'items' => ':count scheda|:count schede',
         'suspended' => ':count sospesa|:count sospese',
+        'withheld' => ':count ritirata (il partner non può vendere online)|:count ritirate (il partner non può vendere online)',
         'export' => 'Esporta',
         'search_placeholder' => 'Cerca per nome, luogo o partner',
         'search_label' => 'Cerca nel catalogo',
@@ -71,6 +87,9 @@ return [
         'save' => 'Salva modifiche',
         'changes_heading' => 'Hai chiesto modifiche al partner',
         'changes_body' => '«:note» — la scheda resta fuori dal sito finché il partner non la ripubblica.',
+        // Il motivo del ritiro, detto qualunque sia il badge (difetto F4, 28/09/2026).
+        'withheld_heading' => 'Ritirata dalla vetrina: il partner oggi non può venderla online',
+        'withheld_body' => 'Una Smartbox è un cofanetto prepagato e si vende solo con l’incasso online su AnimalAmo e un conto Stripe operativo. Oggi questo partner non li ha entrambi (incassa in struttura, oppure non ha finito il collegamento a Stripe), quindi la scheda è fuori dal sito. Non è una sospensione e non si riattiva da qui: di norma torna in vetrina da sola quando il partner incassa online con Stripe operativo.',
         'texts' => 'Testi pubblicati',
         'lang_it' => 'Italiano',
         'lang_en' => 'Inglese',
