@@ -23,7 +23,11 @@ chiudono. Su `main` non ci sono, perché `main` resta verde.
 | C5 | liste e preferiti ignorano la capienza | ✅ **chiuso** 28/09 (`d34676d`) |
 | C6 | borsa e cuore finti sulle card suggerite del carrello | ✅ **chiuso** 28/09 (`d34676d`) |
 | C4 | «Partecipa» dichiara un fatto non avvenuto | 🔸 **rimandato per scelta**: si aspetta la partecipazione vera (tranche C) |
-| gli altri 20 | medi e cosmetici | ⏳ da triare |
+| F2, F3 | messaggi al partner sulla causa dell'attesa | ✅ **chiusi** 28/09 (`3d21ea3`) |
+| C9 | righe che spariscono dal carrello in silenzio | ✅ **chiuso** 28/09 (`055790a`) |
+| C8, F4 | smartbox non ritirate, pannello cieco al ritiro | ✅ **chiusi** 28/09 (`f97c7d2`) |
+| C7, C10 | guardie server-side delle schede, checkout di un venditore non pagabile | ✅ **chiusi** 28/09 (`b92bc42`) |
+| gli altri 13 | F5–F9, W4–W9, C3 (cosmetici compresi) | ⏳ da fare |
 
 ## Giro del 28/09/2026: i sei gravi
 
@@ -47,6 +51,29 @@ La review ha confermato 3 rilievi e ne ha dati per parziali 7 (tutti minori o me
 test del `saved` forgiato protetto a vuoto dalla seconda guardia, un test di pubblicazione fallita che non
 distingueva `afterCommit` da una cancellazione immediata, una migrazione non rilanciabile su MySQL, un hex
 al posto del token, commenti rimasti al comportamento di prima.
+
+## Giro del 28/09/2026, fase 2: i medi dietro «ho collegato Stripe ma la scheda non va online»
+
+Quattro builder, un tester, una review a tre lenti con due verificatori. Suite VM: **29 rossi, 2340 verdi**; zero
+rossi nuovi, 21 chiusi in questa fase. I 29 sono le sezioni F5–F9, W4–W9, C3, C4 e un buco di copertura del
+publisher.
+
+Il tester ha trovato tre difetti nelle correzioni, chiusi: la cancellazione dal pannello toglieva le righe dal
+carrello con una DELETE diretta (quindi senza avviso); il dettaglio di «I miei servizi» diceva un'altra causa dalla
+lista; la prima versione di F3 lasciava senza nessun banner chi aveva in attesa solo smartbox.
+
+La review ne ha confermati due medi, che erano lo stesso difetto: il ritiro delle smartbox scriveva il segnale di
+pubblicazione sulle bozze, e al ritorno online il job avrebbe pubblicato anche una modifica riaperta e lasciata a
+metà nel wizard (rimandando in moderazione una scheda già approvata). Ora il ritiro non segna le bozze: il
+ritorno lo fa `set()` sulla riga, e la dashboard conta le righe ritirate. Gli altri rilievi applicati: la chiave di
+sessione del carrello ospite è rimasta `cart` (con `cart.items` un rollback del codice dava 500 a ogni ospite con un
+carrello), l'avviso vive in `cart_notice`; lock dei carrelli in ordine di id; testi admin del ritiro veri anche per
+le smartbox ritirate dalla migrazione del 27/09 a partner online senza Stripe.
+
+**Restano aperte, e servono decisioni di prodotto:** le righe *legittime* di un partner passato poi al pagamento
+diretto restano in carrello e lo legano a quel venditore; la metà di C10 sul catalogo (`canBePaid()` dove si decide
+la CTA); con `DemoUserSeeder` il partner demo è online senza Stripe, quindi su un ambiente col catalogo demo ogni
+checkout si ferma allo step 1.
 
 ## Come riprendere
 
