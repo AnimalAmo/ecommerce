@@ -84,7 +84,10 @@ class AnimalHolidayRegion extends Component
                     $like = self::like($term);
                     // name è JSON translatable: LIKE sul path del locale corrente,
                     // non sulla colonna raw (matcherebbe chiavi locale e testo cross-lingua).
-                    $query->where(fn ($sub) => $sub->whereLike('name->'.app()->getLocale(), $like)->orWhereLike('location', $like));
+                    // Col caso piegato su tutti e due i motori: su MySQL il valore
+                    // estratto dal JSON ha collation binaria (difetto W9, 28/09/2026 —
+                    // vedi HasCatalogFilters::whereTranslatedLike).
+                    $query->where(fn ($sub) => self::whereTranslatedLike($sub, 'name', $like)->orWhereLike('location', $like));
                 })
                 ->when(count($productTypes) === 1, fn ($query) => $query->where(
                     'type',
@@ -109,7 +112,14 @@ class AnimalHolidayRegion extends Component
                 ->whereIn('type', $eventTypes)
                 ->when(! $showAll, function ($query) use ($term): void {
                     $like = self::like($term);
-                    $query->where(fn ($sub) => $sub->whereLike('title->'.app()->getLocale(), $like)->orWhereLike('location', $like));
+                    // Stessa ricerca di Events::applyWhereFilter() (difetto W9,
+                    // 28/09/2026): titolo col caso piegato e zona in cui opera il
+                    // professionista, che su un evento è NULL.
+                    $query->where(function ($sub) use ($like): void {
+                        self::whereTranslatedLike($sub, 'title', $like);
+                        self::whereTranslatedLike($sub, 'operating_area', $like, 'or');
+                        $sub->orWhereLike('location', $like);
+                    });
                 })
                 ->when($this->priceFiltered(), fn ($query) => $query->whereBetween('price_cents', $this->priceRangeCents()))
                 ->orderBy('position')
@@ -126,7 +136,7 @@ class AnimalHolidayRegion extends Component
             ? SmartboxPackage::query()->whereRaw('1 = 0')->get()
             : SmartboxPackage::query()
                 ->when($boxTypes !== [], fn ($query) => $query->whereIn('type', $boxTypes))
-                ->when(! $showAll, fn ($query) => $query->whereLike('title->'.app()->getLocale(), self::like($term)))
+                ->when(! $showAll, fn ($query) => self::whereTranslatedLike($query, 'title', self::like($term)))
                 ->when($this->priceFiltered(), fn ($query) => $query->whereBetween('price_from_cents', $this->priceRangeCents()))
                 ->orderBy('position')
                 ->get();

@@ -3,6 +3,8 @@
 namespace App\Livewire\Concerns;
 
 use App\Enums\ProductType;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+use Spatie\Translatable\Translatable;
 
 /**
  * Filtri catalogo mobile (XD app "Filtri 2 ricerca"): chip attive, fascia di prezzo,
@@ -187,5 +189,54 @@ trait HasCatalogFilters
     private static function like(string $term): string
     {
         return '%'.addcslashes($term, '\%_').'%';
+    }
+
+    /**
+     * LIKE senza distinzione fra maiuscole e minuscole sul testo di una colonna
+     * tradotta (spatie/laravel-translatable): quello della lingua della pagina
+     * e, dove manca, quello della lingua di ripiego — cioè il testo che la
+     * card mostra davvero.
+     *
+     * Difetto W9 (audit del 27/09/2026, corretto il 28/09/2026). Era un
+     * `whereLike('title->'.$locale, …)`, che compila un `like` nudo sul valore
+     * estratto dal JSON. Su SQLite (la suite) quel LIKE ignora il caso
+     * sull'ASCII, quindi «weekend» trovava «Weekend di escursioni»; su MySQL
+     * (la produzione) il valore di `json_unquote(json_extract(…))` ha
+     * collation binaria e lo stesso LIKE distingue il caso: la ricerca non
+     * trovava niente, e solo l'OR su `location` (varchar con collation _ci) lo
+     * nascondeva in parte. `lower()` su TUTTI E DUE i lati piega il caso nello
+     * stesso modo su entrambi i motori (MySQL anche sulle lettere accentate,
+     * SQLite solo sull'ASCII, come già faceva il suo LIKE). Il percorso JSON lo
+     * scrive la grammatica del motore (`wrap()`), quindi nessun SQL è scritto
+     * per un motore solo.
+     *
+     * Il ripiego (`coalesce`) segue la regola di spatie con la lingua di
+     * AppServiceProvider (`Translatable::fallback('it')`): su /en una scheda
+     * senza titolo inglese mostra quello italiano, e cercando quello la si
+     * deve trovare. `nullif(…, '')` perché anche spatie salta la traduzione
+     * vuota; `nullif(…, 'null')` perché su MySQL `json_unquote` di un valore
+     * JSON null (spatie scrive `{"it":null}` per una lingua tolta) dà la
+     * stringa 'null', e cercando «nu» si trovava ogni riga così (tester,
+     * 28/09/2026). Un titolo che fosse letteralmente «null» resterebbe fuori:
+     * è il prezzo accettato.
+     *
+     * @param  string  $like  pattern già pronto, da self::like()
+     * @param  string  $boolean  'and' | 'or', come l'ultimo argomento di whereRaw
+     */
+    private static function whereTranslatedLike(Builder $query, string $column, string $like, string $boolean = 'and'): Builder
+    {
+        $grammar = $query->getGrammar();
+        $locale = app()->getLocale();
+        $fallback = app(Translatable::class)->fallbackLocale ?? config('app.fallback_locale');
+
+        $translation = fn (string $in): string => "nullif(nullif({$grammar->wrap($column.'->'.$in)}, ''), 'null')";
+
+        $text = $translation($locale);
+
+        if (filled($fallback) && $fallback !== $locale) {
+            $text = "coalesce({$text}, {$translation($fallback)})";
+        }
+
+        return $query->whereRaw("lower({$text}) like lower(?)", [$like], $boolean);
     }
 }

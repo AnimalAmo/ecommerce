@@ -25,6 +25,7 @@ use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Exists;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -878,7 +879,7 @@ class ActivityCreateTest extends TestCase
 
         $existsRules = array_filter(
             $rules['location.province'],
-            fn ($rule): bool => $rule instanceof \Illuminate\Validation\Rules\Exists,
+            fn ($rule): bool => $rule instanceof Exists,
         );
 
         $this->assertCount(
@@ -886,5 +887,102 @@ class ActivityCreateTest extends TestCase
             $existsRules,
             'La sigla si verifica una volta: due Exists identici sono due query identiche.',
         );
+    }
+
+    // ── Giro del tester, 28/09/2026: F6 e F9 nel pannello, sul comportamento ──
+    //
+    // Le prove F9 qui sopra leggono rules(). Queste guardano cosa succede
+    // all'admin: un valore rimasto in un campo che la vista non disegna non
+    // deve bloccare il salvataggio, e il testo di «Altro» tolto non deve
+    // arrivare né alla bozza né alla scheda (F6, portato nel pannello dalla
+    // lane admin).
+
+    /**
+     * Il caso concreto che F9 descriveva come «innocuo oggi»: l'admin parte da
+     * Evento, scrive un punto d'incontro lungo, passa ad Attività. Col
+     * `max:110` accodato senza condizione il salvataggio si fermava su un campo
+     * che la pagina non mostra più.
+     */
+    public function test_un_punto_dincontro_rimasto_dal_ramo_evento_non_blocca_unattivita(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $component = $this->componentFor($partner)
+            ->set('type', 'eventi')
+            ->set('location.meetingPoint.it', str_repeat('p', 150));
+
+        $this->fillActivity($component)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $draft = StructureDraft::sole();
+        $this->assertSame('attivita', $draft->type);
+        $this->assertSame([], $draft->getTranslations('meeting_point'));
+    }
+
+    public function test_il_campo_di_altro_compare_solo_con_la_casella(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->componentFor($partner)
+            ->set('type', 'eventi')
+            ->set('categories', ['fiere_mercatini'])
+            ->assertDontSeeHtml('wire:model="categoriesOther.it"')
+            ->assertDontSee(__('admin-catalog.create.activity.categories_other_help'))
+            ->set('categories', ['fiere_mercatini', 'altro'])
+            ->assertSeeHtml('wire:model="categoriesOther.it"')
+            ->assertSeeHtml('wire:model="categoriesOther.en"')
+            ->assertSee(__('admin-catalog.create.activity.categories_other_help'));
+    }
+
+    public function test_togliere_altro_dal_pannello_non_porta_il_suo_testo_ne_alla_bozza_ne_alla_scheda(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('categoriesOther.en', 'Village fair')
+            ->set('categories', ['fiere_mercatini'])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $draft = StructureDraft::sole();
+        $this->assertSame(['fiere_mercatini'], $draft->event_categories);
+        $this->assertSame([], $draft->getTranslations('event_categories_other'));
+
+        $event = Event::withHidden()->where('user_id', $partner->id)->sole();
+        $this->assertTrue(blank($event->getTranslation('event_categories_other', 'it', false)));
+        $this->assertTrue(blank($event->getTranslation('event_categories_other', 'en', false)));
+    }
+
+    /** Senza la casella il testo non si valida: un limite superato su un campo nascosto non blocca. */
+    public function test_un_testo_di_altro_troppo_lungo_ma_nascosto_non_blocca_il_pannello(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('categoriesOther.it', str_repeat('a', 201))
+            ->set('categories', ['fiere_mercatini'])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(1, StructureDraft::count());
+    }
+
+    /** Con la casella il limite resta. */
+    public function test_con_altro_spuntato_il_pannello_rifiuta_un_testo_troppo_lungo(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        $this->actingAsSuperadmin();
+
+        $this->fill($this->componentFor($partner))
+            ->set('categoriesOther.it', str_repeat('a', 201))
+            ->call('save')
+            ->assertHasErrors(['categoriesOther.it' => 'max']);
+
+        $this->assertSame(0, StructureDraft::count());
     }
 }

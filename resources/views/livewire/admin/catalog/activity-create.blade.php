@@ -49,6 +49,11 @@
                             @endforeach
                         </flux:checkbox.group>
                         <p class="m-0 text-[13px] text-gray-600">{{ __('admin-catalog.create.activity.categories_help') }}</p>
+                        {{-- Il campo di «Altro» compare nei Testi della scheda, non qui
+                             sotto: la riga dice all'admin dove cercarlo. --}}
+                        @if (in_array('altro', $categories, true))
+                            <p class="m-0 text-[13px] text-gray-600">{{ __('admin-catalog.create.activity.categories_other_help') }}</p>
+                        @endif
                         <flux:error name="categories" />
                         <flux:error name="categories.*" />
                     </div>
@@ -67,11 +72,17 @@
                         <div wire:key="activity-texts-{{ $locale }}" @class(['flex flex-col gap-4', 'hidden' => $lang !== $locale])>
                             <flux:input wire:model="name.{{ $locale }}" maxlength="110" :label="__('admin-catalog.create.activity.field_name')" />
                             {{-- Il testo libero di «Altro» delle tipologie, subito sotto il
-                                 titolo come nello step 2 del wizard. Sempre visibile e non legato alla casella
-                                 'altro': è l'idioma di questa pagina, dove gli altri due
-                                 testi liberi (servizi aggiuntivi, servizi animali) stanno
-                                 qui mentre le loro caselle stanno in un'altra scheda. --}}
-                            <flux:input wire:model="categoriesOther.{{ $locale }}" maxlength="200" :label="__('admin-catalog.create.activity.field_categories_other')" />
+                                 titolo come nello step 2 del wizard, e come là SOLO con la
+                                 casella 'altro' spuntata (difetto F6, 28/09/2026): prima era
+                                 sempre a video e scollegato dalla casella, e un testo scritto
+                                 per un «Altro» poi tolto finiva stampato sulla scheda sotto
+                                 la tipologia scelta al suo posto. Sta qui e non sotto le
+                                 caselle perché questa è l'unica pila di schede lingua della
+                                 pagina; `categories` è `wire:model.live`, quindi il campo
+                                 compare appena la casella si spunta. --}}
+                            @if (in_array('altro', $categories, true))
+                                <flux:input wire:model="categoriesOther.{{ $locale }}" maxlength="200" :label="__('admin-catalog.create.activity.field_categories_other')" />
+                            @endif
                             <flux:textarea wire:model="description.{{ $locale }}" rows="3" maxlength="200" :label="__('admin-catalog.create.activity.field_description')" />
                             @if ($type === 'attivita')
                                 <flux:textarea wire:model="detailedDescription.{{ $locale }}" rows="5" maxlength="200" :label="__('admin-catalog.create.activity.field_detailed_description')" :description="__('admin-catalog.create.activity.detailed_help')" />

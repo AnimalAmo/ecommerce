@@ -65,7 +65,9 @@ class Smartbox extends Component
             : SmartboxPackage::query()->whereRaw('1 = 0'))
             // Chip Soggiorno/Benessere/Avventura: nessuna accesa = tutti i cofanetti.
             ->when($this->smartboxProductTypes() !== [], fn (Builder $query) => $query->whereIn('type', $this->smartboxProductTypes()))
-            ->when(trim($this->where) !== '', fn (Builder $query) => $query->whereLike('title->'.app()->getLocale(), self::like(trim($this->where))))
+            // Titolo JSON tradotto: il LIKE piega il caso su tutti e due i motori
+            // (difetto W9, 28/09/2026 — vedi HasCatalogFilters::whereTranslatedLike).
+            ->when(trim($this->where) !== '', fn (Builder $query) => self::whereTranslatedLike($query, 'title', self::like(trim($this->where))))
             // Fascia di prezzo: attiva solo se l'utente si è mosso dai default XD.
             ->when($this->priceFiltered(), fn (Builder $query) => $query->whereBetween('price_from_cents', $this->priceRangeCents()))
             // Ordine di griglia XD (riga per riga).

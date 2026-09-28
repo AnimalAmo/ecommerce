@@ -346,7 +346,10 @@ return [
             'field_categories' => 'Tipologia di attività o servizio',
             'field_categories_event' => 'Tipologia di evento',
             'categories_help' => 'Facoltativa: se ne può selezionare più di una.',
-            'field_categories_other' => 'Tipologia, se è stato scelto «Altro»',
+            // Il campo compare solo con «Altro» spuntato (difetto F6,
+            // 28/09/2026): l'etichetta non deve più ripetere la condizione.
+            'field_categories_other' => 'Dettaglio della tipologia «Altro»',
+            'categories_other_help' => 'Hai scelto «Altro»: descrivilo nei testi della scheda, qui sotto.',
             'field_operating_area' => 'Zona in cui opera',
             'operating_area_help' => 'Solo per le attività, al posto del punto di incontro: per esempio «Milano e provincia».',
             'field_booking_requirement' => 'Prenotazione',

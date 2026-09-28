@@ -6,8 +6,10 @@ use App\Livewire\Catalog\AnimalHoliday;
 use App\Livewire\Catalog\AnimalHolidayRegion;
 use App\Livewire\Catalog\Events;
 use App\Livewire\Catalog\HomePage;
+use App\Livewire\Catalog\Smartbox;
 use App\Models\Event\Event;
 use App\Models\Region\Region;
+use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Venue\Venue;
 use DateTimeImmutable;
@@ -270,5 +272,142 @@ class CatalogSearchTest extends TestCase
         Livewire::test(Events::class)
             ->set('where', 'Milano')
             ->assertSee('Toelettatura Bau');
+    }
+
+    // ── Giro del tester, 28/09/2026: W9 su tutte le pagine che cercano ────────
+    //
+    // La prova sul SQL qui sopra guarda solo la pagina Eventi. La stessa
+    // ricerca sul JSON tradotto vive anche nella pagina Smartbox e nei tre rami
+    // della pagina regione (strutture, attività ed eventi, cofanetti): senza
+    // prova, una di queste poteva restare col LIKE nudo e la suite, su SQLite,
+    // non se ne sarebbe accorta.
+
+    /**
+     * Esegue la ricerca e controlla ogni query che fa un LIKE sul JSON: il
+     * valore estratto non deve arrivare nudo al `like` (su MySQL ha collation
+     * binaria), deve passare da lower().
+     *
+     * @return list<string> le query con il LIKE sul JSON
+     */
+    private function assertEveryJsonLikeFoldsTheCase(callable $search): array
+    {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $search();
+
+        $queries = collect(DB::getQueryLog())
+            ->pluck('query')
+            ->filter(fn (string $query): bool => str_contains($query, 'json_extract') && str_contains(strtolower($query), ' like '))
+            ->values()
+            ->all();
+
+        $this->assertNotEmpty($queries, 'La ricerca deve interrogare il JSON tradotto.');
+
+        foreach ($queries as $query) {
+            $this->assertDoesNotMatchRegularExpression(
+                '/json_extract\("[a-z_]+", \'\$\."[a-z]+"\'\)\s+like/i',
+                $query,
+                "LIKE nudo sul path JSON: passa su SQLite e non trova niente su MySQL.\nSQL: {$query}",
+            );
+            $this->assertStringContainsString('lower(', strtolower($query), "SQL: {$query}");
+        }
+
+        return $queries;
+    }
+
+    public function test_la_pagina_smartbox_cerca_il_titolo_senza_distinguere_il_caso(): void
+    {
+        SmartboxPackage::factory()->create(['title' => 'Fuga nelle Dolomiti', 'slug' => 'fuga-dolomiti', 'position' => 1]);
+        SmartboxPackage::factory()->create(['title' => 'Relax al lago', 'slug' => 'relax-lago', 'position' => 2]);
+
+        $this->assertEveryJsonLikeFoldsTheCase(function (): void {
+            Livewire::test(Smartbox::class)
+                ->set('where', 'dolomiti')
+                ->call('search')
+                ->assertSee('Fuga nelle Dolomiti')
+                ->assertDontSee('Relax al lago');
+        });
+    }
+
+    public function test_la_pagina_regione_piega_il_caso_in_tutti_e_tre_i_rami(): void
+    {
+        Region::factory()->create(['name' => 'Lombardia', 'slug' => 'lombardia', 'position' => 1]);
+        Structure::factory()->create(['name' => 'Hotel Alfa', 'location' => 'Milano, Italia', 'position' => 1]);
+        Event::factory()->create(['title' => 'Weekend di escursioni', 'location' => 'Aosta, Italia']);
+        SmartboxPackage::factory()->create(['title' => 'Weekend nelle Langhe', 'slug' => 'weekend-langhe', 'position' => 1]);
+
+        $queries = $this->assertEveryJsonLikeFoldsTheCase(function (): void {
+            Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+                ->set('activeTypes', ['hotel', 'servizi', 'attivita', 'eventi', 'smartbox'])
+                ->set('where', 'weekend')
+                ->call('search')
+                ->assertSee('Weekend di escursioni')
+                ->assertSee('Weekend nelle Langhe')
+                ->assertDontSee('Hotel Alfa');
+        });
+
+        // I tre rami: nome della struttura, titolo e zona dell'evento, titolo del cofanetto.
+        $all = strtolower(implode("\n", $queries));
+        $this->assertStringContainsString('"structures"', $all);
+        $this->assertStringContainsString('"events"', $all);
+        $this->assertStringContainsString('"smartbox_packages"', $all);
+        $this->assertStringContainsString('operating_area', $all);
+    }
+
+    /** L'altra metà di W9 anche sulla pagina regione: il professionista si trova dalla zona in cui opera. */
+    public function test_la_pagina_regione_trova_un_professionista_dalla_zona(): void
+    {
+        Region::factory()->create(['name' => 'Lombardia', 'slug' => 'lombardia', 'position' => 1]);
+        Event::factory()->activity(3)->create([
+            'title' => 'Toelettatura Bau',
+            'location' => 'Sesto San Giovanni, Italia',
+            'operating_area' => ['it' => 'Milano e provincia'],
+        ]);
+        Event::factory()->activity(3)->create(['title' => 'Dog sitter a Bari', 'location' => 'Bari, Italia']);
+
+        Livewire::test(AnimalHolidayRegion::class, ['region' => 'lombardia'])
+            ->set('activeTypes', ['attivita'])
+            ->set('where', 'milano')
+            ->call('search')
+            ->assertSee('Toelettatura Bau')
+            ->assertDontSee('Dog sitter a Bari');
+    }
+
+    /** La zona si cerca senza distinguere il caso, come il titolo. */
+    public function test_la_zona_si_cerca_in_minuscolo(): void
+    {
+        Event::factory()->activity(3)->create([
+            'title' => 'Toelettatura Bau',
+            'location' => 'Sesto San Giovanni, Italia',
+            'operating_area' => ['it' => 'Milano e Provincia'],
+        ]);
+
+        $this->assertEveryJsonLikeFoldsTheCase(function (): void {
+            Livewire::test(Events::class)
+                ->set('where', 'PROVINCIA')
+                ->assertSee('Toelettatura Bau');
+        });
+    }
+
+    /**
+     * Su /en una scheda senza titolo inglese mostra quello italiano (ripiego di
+     * spatie): cercandolo, la si deve trovare. Il ramo del ripiego è SQL solo
+     * fuori dall'italiano, quindi nessuna prova lo eseguiva.
+     */
+    public function test_in_inglese_si_trova_una_scheda_col_solo_titolo_italiano(): void
+    {
+        app()->setLocale('en');
+        Event::factory()->create(['title' => ['it' => 'Weekend di escursioni'], 'location' => 'Aosta, Italia']);
+        Event::factory()->create(['title' => ['it' => 'Altro evento', 'en' => 'Another event'], 'location' => 'Bari, Italia']);
+
+        $queries = $this->assertEveryJsonLikeFoldsTheCase(function (): void {
+            Livewire::test(Events::class)
+                ->set('where', 'weekend')
+                ->assertSee('Weekend di escursioni')
+                ->assertDontSee('Another event');
+        });
+
+        $this->assertStringContainsString('coalesce(', strtolower(implode("\n", $queries)));
     }
 }
