@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Cart;
 
+use App\Exceptions\CartValidationException;
 use App\Models\CartItem\CartItem;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
+use App\Services\Cart\CartNotice;
 use App\Services\Cart\SessionCartStorage;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -430,6 +432,13 @@ class CartStorageTest extends TestCase
             'Una riga che non si può più mostrare va rimossa dal carrello (e il cliente avvisato), '
             .'non lasciata a database come fantasma che sposta il totale in silenzio.',
         );
+
+        // Tester 28/09/2026: il nome del test promette anche il «dirlo», che
+        // l'asserzione sopra non guardava. L'avviso nomina la smartbox e il motivo.
+        $this->assertSame(
+            [__('cart.notice.withheld', ['title' => $box->title])],
+            app(CartNotice::class)->pull(),
+        );
     }
 
     public function test_una_riga_sospesa_dallamministrazione_non_sparisce_senza_dirlo(): void
@@ -443,9 +452,27 @@ class CartStorageTest extends TestCase
         $structure->forceFill(['suspended_at' => now()])->save();
 
         $this->assertSame(0, CartItem::query()->count());
+        // Tester 28/09/2026: come sopra, anche il «dirlo». Al cliente non si
+        // spiega che l'ha sospesa l'amministrazione: «non è più disponibile».
+        $this->assertSame(
+            [__('cart.notice.unavailable', ['title' => $structure->name])],
+            app(CartNotice::class)->pull(),
+        );
     }
 
-    /** Lo stesso dal carrello guest, dove la riga vive come entry di sessione. */
+    /**
+     * Lo stesso dal carrello guest, dove la riga vive come entry di sessione.
+     *
+     * Riscritto dal tester il 28/09/2026. La prima versione leggeva la sessione
+     * subito dopo il `save()` del prodotto, senza che nessuno riaprisse il
+     * carrello: nel test la sessione di chi ritira (admin, partner, comando) e
+     * quella dell'ospite sono lo stesso oggetto, in produzione no — la sessione
+     * dell'ospite in quella richiesta non esiste, e farlo passare avrebbe
+     * voluto dire ripulire la sessione di chi salva il prodotto. Il difetto vero
+     * è «a vita»: l'entry restava anche dopo che l'ospite aveva riaperto il
+     * carrello. Quindi l'ospite lo riapre, e dopo l'entry non c'è più e
+     * l'avviso sì.
+     */
     public function test_una_riga_guest_ritirata_non_resta_in_sessione(): void
     {
         $box = $this->smartbox();
@@ -453,10 +480,17 @@ class CartStorageTest extends TestCase
 
         $box->forceFill(['withheld_at' => now()])->save();
 
+        // L'ospite torna: qualunque lettura del carrello (badge, pagina, checkout).
+        $this->assertCount(0, $this->manager()->items());
+
         $this->assertSame(
             [],
             session()->get(SessionCartStorage::SESSION_KEY, []),
             'La entry di sessione che non si può più mostrare non deve restare in sessione a vita.',
+        );
+        $this->assertSame(
+            [__('cart.notice.withheld', ['title' => $box->title])],
+            app(CartNotice::class)->pull(),
         );
     }
 
@@ -487,10 +521,22 @@ class CartStorageTest extends TestCase
 
         // Oggi: la riga di A viene buttata con un Log::info e nessun avviso.
         $this->assertNotNull(
-            session('cart.notice'),
+            session(CartNotice::SESSION_KEY),
             'Le righe scartate al merge («un ordine, un venditore») devono essere dette: senza, il '
             .'cliente deve indovinare che il carrello è cambiato accedendo.',
         );
+
+        // Tester 28/09/2026: un avviso qualunque non basta. Deve nominare la riga
+        // scartata e dire perché, con il messaggio della regola violata; e la riga
+        // di B, quella che l'utente aveva già, resta.
+        $this->assertSame(
+            [trim(__('cart.notice.not_merged', [
+                'title' => $ofA->name,
+                'reason' => CartValidationException::singlePartner()->getMessage(),
+            ]))],
+            app(CartNotice::class)->pull(),
+        );
+        $this->assertSame([$ofB->id], CartItem::query()->pluck('purchasable_id')->all());
     }
 
     public function test_login_with_an_empty_session_cart_is_a_noop(): void

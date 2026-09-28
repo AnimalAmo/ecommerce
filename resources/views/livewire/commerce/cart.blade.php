@@ -11,6 +11,26 @@
         {{-- Su mobile la pagina finisce sopra la barra CTA fissa + tabbar (XD app "Carrello - click 'procedi'") --}}
         <div class="{{ $px }} pb-[140px] pt-14 max-lg:pb-[70px] max-lg:pt-5">
             <div class="mx-auto w-full max-w-[1496px]">
+                {{-- Avviso «il tuo carrello è cambiato» (difetto C9, audit 28/09/2026): righe tolte senza che
+                     le togliesse il cliente — prodotto ritirato o sospeso, righe scartate all'accesso. Prima
+                     sparivano in silenzio e il totale scendeva senza una parola. Sopra i due rami apposta:
+                     se era l'unica riga, il cliente atterra sullo stato vuoto e deve sapere perché. --}}
+                @if ($removedNotice !== [])
+                    <flux:callout variant="warning" icon="exclamation-triangle" class="mb-8 max-lg:mb-5" :heading="__('cart.notice.heading')">
+                        <flux:callout.text>
+                            <ul class="list-disc space-y-1 pl-5">
+                                @foreach ($removedNotice as $sentence)
+                                    <li>{{ $sentence }}</li>
+                                @endforeach
+                            </ul>
+                        </flux:callout.text>
+
+                        <x-slot name="controls">
+                            <flux:button variant="ghost" size="sm" icon="x-mark" wire:click="dismissRemovedNotice" :aria-label="__('cart.notice.dismiss')" />
+                        </x-slot>
+                    </flux:callout>
+                @endif
+
                 @if ($items === [])
                     {{-- Titolo stato vuoto: "Carrello" Nunito Bold 36 nero (artboard "Carrello vuoto", niente conteggio).
                          L'artboard app apre direttamente sulla card: su mobile il titolo non c'è. --}}

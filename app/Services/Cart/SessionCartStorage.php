@@ -4,21 +4,38 @@ namespace App\Services\Cart;
 
 use App\Data\Cart\CartData;
 use App\Data\Cart\CartItemData;
+use App\Models\Scopes\CatalogVisibleScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 /**
- * Storage carrello del guest: puro array in sessione (chiave 'cart'), nessuna
- * riga a db. Entry: chiave md5 → {type, id, is_gift, price_cents, options}.
- * I prezzi arrivano già quotati dal CartManager (mai dal client); le righe il
- * cui prodotto è sparito dal catalogo vengono scartate silenziosamente in lettura.
+ * Storage carrello del guest: puro array in sessione (chiave 'cart'),
+ * nessuna riga a db. Entry: chiave md5 → {type, id, is_gift, price_cents, options}.
+ * I prezzi arrivano già quotati dal CartManager (mai dal client).
+ *
+ * Difetto C9 (audit 28/09/2026): le entry il cui prodotto era uscito dal
+ * catalogo (ritirato, sospeso, cancellato) venivano scartate in silenzio a
+ * ogni lettura e restavano in sessione per sempre. Ora la lettura le toglie
+ * davvero e lascia l'avviso in session('cart_notice') (CartNotice), che la
+ * pagina Carrello mostra una volta.
  */
 class SessionCartStorage
 {
-    /** Chiave dell'array carrello in sessione (come matsuri). */
+    /**
+     * Chiave delle entry in sessione. L'avviso delle righe tolte vive a
+     * primo livello accanto a lei (CartNotice::SESSION_KEY, 'cart_notice'),
+     * non annidato sotto: la forma delle entry resta quella di sempre, così
+     * un rollback del codice legge le sessioni scritte dopo il deploy (review
+     * del 28/09/2026: con 'cart.items' la versione precedente dava 500 a ogni
+     * ospite con un carrello).
+     */
     public const SESSION_KEY = 'cart';
+
+    public function __construct(
+        private readonly CartNotice $notices,
+    ) {}
 
     public function get(): CartData
     {
@@ -115,31 +132,49 @@ class SessionCartStorage
 
     /**
      * Righe presentate, filtrabili per flusso regalo (null = tutte). Prodotti
-     * bulk-loaded per tipo; le entry orfane vengono saltate.
+     * bulk-loaded per tipo, SENZA lo scope di catalogo: così un prodotto
+     * ritirato o sospeso si distingue da uno cancellato e si può nominare
+     * nell'avviso. Le entry non più vendibili si tolgono dalla sessione
+     * (difetto C9, vedi sopra); si controlla tutto il carrello, non solo il
+     * flusso chiesto.
      *
      * @return Collection<int, CartItemData>
      */
     public function items(?bool $gift = null): Collection
     {
-        $entries = collect($this->getSessionCart())
-            ->when($gift !== null, fn (Collection $all): Collection => $all->filter(
-                fn (array $entry): bool => (bool) $entry['is_gift'] === $gift,
-            ));
+        $entries = collect($this->getSessionCart());
 
         // Un findMany per tipo morph invece di una query per riga.
         $purchasables = $entries
             ->groupBy('type')
-            ->map(fn (Collection $group, string $type) => Relation::getMorphedModel($type)::findMany($group->pluck('id'))->keyBy(
-                fn (Model $model) => $model->getKey(),
-            ));
+            ->map(fn (Collection $group, string $type) => Relation::getMorphedModel($type)::withoutGlobalScope(CatalogVisibleScope::class)
+                ->findMany($group->pluck('id'))
+                ->keyBy(fn (Model $model) => $model->getKey()));
 
-        return $entries
-            ->map(function (array $entry, string $key) use ($purchasables): ?CartItemData {
-                $purchasable = $purchasables[$entry['type']][$entry['id']] ?? null;
+        $gone = [];
+        $items = [];
 
-                return $purchasable !== null ? CartItemData::fromSessionEntry($key, $entry, $purchasable) : null;
-            })
-            ->filter()
+        foreach ($entries as $key => $entry) {
+            $purchasable = $purchasables[$entry['type']][$entry['id']] ?? null;
+
+            if ($purchasable === null || ! $purchasable->isVisibleInCatalog()) {
+                $gone[$key] = CartNotice::leftCatalog($purchasable);
+
+                continue;
+            }
+
+            $items[] = CartItemData::fromSessionEntry($key, $entry, $purchasable);
+        }
+
+        if ($gone !== []) {
+            session()->put(self::SESSION_KEY, array_diff_key($this->getSessionCart(), $gone));
+            $this->notices->remember(array_values($gone));
+        }
+
+        return collect($items)
+            ->when($gift !== null, fn (Collection $all): Collection => $all->filter(
+                fn (CartItemData $item): bool => $item->isGift === $gift,
+            ))
             ->values();
     }
 

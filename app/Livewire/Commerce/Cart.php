@@ -10,6 +10,7 @@ use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
+use App\Services\Cart\CartNotice;
 use App\Services\Content\FaqService;
 use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
@@ -17,6 +18,7 @@ use DateTimeImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -52,6 +54,22 @@ class Cart extends Component
 
     /** Campi espandibili ammessi nel pop-up ('date' copre anche il giorno singolo del service). */
     public const FIELDS = ['date', 'ospiti', 'animali', 'orari'];
+
+    /**
+     * Frasi dell'avviso «il tuo carrello è cambiato»: righe tolte senza che le
+     * togliesse il cliente — prodotto ritirato, sospeso o cancellato, righe
+     * ospite scartate all'accesso.
+     *
+     * Difetto C9 (audit 28/09/2026): prima quelle righe sparivano in silenzio e
+     * il totale scendeva senza una parola. CartNotice::pull() svuota l'avviso
+     * mentre lo consegna, quindi si vede una volta; qui resta per tutta la
+     * visita (modificare o eliminare un'altra riga non lo fa sparire) finché
+     * il cliente non lo chiude. Locked: lo scrive solo il server.
+     *
+     * @var list<string>
+     */
+    #[Locked]
+    public array $removedNotice = [];
 
     public function mount(): void
     {
@@ -143,6 +161,12 @@ class Cart extends Component
 
         $this->dispatch('cart-updated');
         Flux::toast(text: __('cart.added'), variant: 'success');
+    }
+
+    /** La X dell'avviso «il tuo carrello è cambiato»: il cliente l'ha letto. */
+    public function dismissRemovedNotice(): void
+    {
+        $this->removedNotice = [];
     }
 
     /** Il bottone "Elimina" rimuove la riga dal carrello; totale e conteggio si aggiornano da soli. */
@@ -245,6 +269,17 @@ class Cart extends Component
     public function render()
     {
         $cartItems = $this->cart()->items($this->gift);
+
+        // Dopo la lettura delle righe, non prima: è la lettura stessa che toglie
+        // le righe fantasma e ne scrive l'avviso (difetto C9), e va detto adesso.
+        $removed = app(CartNotice::class)->pull();
+
+        if ($removed !== []) {
+            $this->removedNotice = array_values(array_unique([...$this->removedNotice, ...$removed]));
+
+            // Il badge dell'header conta le righe per conto suo: che non resti indietro.
+            $this->dispatch('cart-updated');
+        }
 
         // Un carrello = un partner (CartManager::guardSinglePartner): basta la
         // prima riga già caricata, senza rileggere il carrello. Nessuna riga
