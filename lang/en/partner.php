@@ -294,6 +294,13 @@ return [
         'section_extra' => 'Additional information',
         'section_photos' => 'Photos',
         'section_payment' => 'Payment method',
+        // Detail rows for the non-structure families and for the fields the
+        // detail did not show (audit of 28/09/2026, F7 and W6).
+        'section_service_type' => 'Type',
+        'section_detailed_description' => 'Detailed description',
+        'section_cost' => 'Price',
+        'section_smartbox' => 'Smartbox participation',
+        'max_participants_unlimited' => 'No limit',
         'rooms_count' => 'rooms',
         'rooms_price' => 'price per night',
         'checkin' => 'Check-in',

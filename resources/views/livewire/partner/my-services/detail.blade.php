@@ -1,6 +1,8 @@
-{{-- Dettaglio servizio struttura (XD "Dettaglio prenotazione strutture – dettagli"): card con
+{{-- Dettaglio servizio (XD "Dettaglio prenotazione strutture – dettagli"): card con
      Indietro + tag tipologia + titolo, e le voci come righe accordion (label + caret + divider).
-     Dati preparati da PartnerServiceDetail::rows() (chiavi-opzione già localizzate). --}}
+     Dati preparati da PartnerServiceDetail::rows(), una riga per step del wizard della famiglia
+     (chiavi-opzione già localizzate): ogni riga ha un paragrafo (`text`) e/o delle righe sotto
+     (`details`), oppure il corpo proprio di stanze e foto. --}}
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 
 <div class="flex min-h-screen flex-col bg-white font-sans text-ink antialiased">
@@ -58,7 +60,18 @@
                                     </ul>
                                     <p class="mt-2 text-sm text-[#959595]">{{ __('partner.services.checkin') }}: {{ $row['checkin'][0] ?: '—' }}–{{ $row['checkin'][1] ?: '—' }} · {{ __('partner.services.checkout') }}: {{ $row['checkout'][0] ?: '—' }}–{{ $row['checkout'][1] ?: '—' }}</p>
                                 @else
-                                    <p class="text-[15px] leading-relaxed text-[#627277]">{{ $row['text'] }}</p>
+                                    @if (filled($row['text'] ?? null))
+                                        <p class="text-[15px] leading-relaxed text-[#627277]">{{ $row['text'] }}</p>
+                                    @endif
+                                    {{-- Dettagli della voce (difetto F7, 28/09/2026): date, orari, posti, zona,
+                                         testo libero di «Altro»… una riga ciascuno, come nella scheda pubblica. --}}
+                                    @if (filled($row['details'] ?? []))
+                                        <ul @class(['space-y-1 text-[15px] leading-relaxed text-[#627277]', 'mt-2' => filled($row['text'] ?? null)])>
+                                            @foreach ($row['details'] as $detail)
+                                                <li>{{ $detail }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
                                 @endif
                             </div>
                         </div>

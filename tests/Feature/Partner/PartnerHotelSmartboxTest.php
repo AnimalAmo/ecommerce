@@ -68,13 +68,14 @@ class PartnerHotelSmartboxTest extends TestCase
     // ── Difetto W6: lo step è interamente inerte ──────────────────────────────
     //
     // `smartbox_consent` e `smartbox_types` compaiono solo negli step (wizard e
-    // pannello), nei fillable/cast della bozza, in ServiceOptionLabels e in
-    // `ActivityType::clearedFields()`. NESSUN publisher le legge:
-    // `StructurePublisher::publish()` non le nomina e `syncAmenities()` usa
-    // services/additional/animal. La scelta delle strutture di un cofanetto si fa
-    // dall'altro lato, su SmartboxStructures, quindi l'adesione dichiarata non
-    // viene mai onorata — e non compare nemmeno in `PartnerServiceDetail::rows()`.
-    // Undici risposte che nessuno legge sono undici occasioni di sbagliare.
+    // pannello), nei fillable/cast della bozza, in ServiceOptionLabels e nella
+    // regola del cambio di ramo (`StructureDraft::BRANCH_COLUMNS`). NESSUN
+    // publisher le legge: `StructurePublisher::publish()` non le nomina e
+    // `syncAmenities()` usa services/additional/animal. La scelta delle strutture
+    // di un cofanetto si fa dall'altro lato, su SmartboxStructures, quindi
+    // l'adesione dichiarata non viene mai onorata. Dal 28/09/2026 il partner la
+    // può almeno rileggere nel dettaglio del servizio; collegarla al cofanetto o
+    // togliere lo step è una decisione aperta con la cliente.
 
     /** Struttura completata che ha dichiarato l'adesione e le sue tipologie. */
     private function structureThatJoinedSmartboxes(int $userId): StructureDraft

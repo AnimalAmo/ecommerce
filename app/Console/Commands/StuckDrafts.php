@@ -14,8 +14,11 @@ use Illuminate\Support\Collection;
  * cliente, 29/09/2026: «alcune strutture hanno collegato Stripe ma la scheda
  * non viene pubblicata»).
  *
- * Il comando non indovina: divide le bozze ferme in tre gruppi, ognuno con una
- * causa diversa e una cura diversa.
+ * Il comando non indovina: divide le bozze ferme in tre gruppi disgiunti,
+ * ognuno con una causa diversa e una cura diversa. Una bozza compare al più in
+ * un gruppo; quelle col segnale, complete, di un partner che non può ancora
+ * pubblicare non compaiono in nessuno, perché stanno aspettando il partner
+ * esattamente come devono.
  *
  *  1. SENZA SEGNALE — la bozza è pronta, il partner è arrivato in fondo al
  *     wizard, ma `publish_requested_at` è vuoto. È il buco lasciato dalla
@@ -27,18 +30,28 @@ use Illuminate\Support\Collection;
  *     Il partner ha compilato undici step e il servizio non esiste da nessuna
  *     parte. È `--fix` a recuperarle.
  *
- *  2. PRONTE MA FERME — hanno il segnale e il partner PUÒ già pubblicare.
- *     Dovevano andare a catalogo da sole: o il cron `schedule:run` non gira in
- *     produzione, o i flag Stripe erano già a posto quando il webhook è
- *     arrivato e `publishAwaitingDraftsOnPayable()` è uscito subito
- *     (esce se i flag non sono CAMBIATI). Si sbloccano con
- *     `animalamo:publish-awaiting-drafts`. Se quel comando ne pubblica,
- *     il cron non sta girando: è la diagnosi, non la cura.
+ *  2. PRONTE MA FERME — hanno il segnale, hanno i dati minimi per il
+ *     catalogo E il partner PUÒ già pubblicare. Dovevano andare a catalogo da
+ *     sole: o il cron `schedule:run` non gira in produzione, o i flag Stripe
+ *     erano già a posto quando il webhook è arrivato e
+ *     `publishAwaitingDraftsOnPayable()` è uscito subito (esce se i flag non
+ *     sono CAMBIATI). Si sbloccano con `animalamo:publish-awaiting-drafts`.
+ *     Se quel comando ne pubblica, il cron non sta girando: è la diagnosi,
+ *     non la cura. Se non ne pubblica, il cron è innocente: una bozza che qui
+ *     compare e resta ferma ha un'altra causa, non la mancanza dei dati.
  *
  *  3. IN ATTESA MA INCOMPLETE — hanno il segnale e mancano i dati minimi per
- *     il catalogo. La rete di sicurezza le ritenta ogni dieci minuti e non
- *     andranno mai a buon fine: le deve correggere il partner. Intanto la sua
- *     schermata dice "in attesa del collegamento Stripe", che è falso.
+ *     il catalogo, qualunque sia lo stato del partner. La rete di sicurezza le
+ *     ritenta ogni dieci minuti e non andranno mai a buon fine: nessun cron le
+ *     sblocca, le deve correggere il partner. Intanto la sua schermata dice
+ *     "in attesa del collegamento Stripe", che è falso.
+ *
+ * Difetto F8 (audit del 28/09/2026): il gruppo 2 guardava solo il partner e non
+ * i dati, quindi una bozza incompleta di un partner pagabile compariva nel 2 E
+ * nel 3. Chi leggeva seguiva il gruppo 2, lanciava il comando di pubblicazione,
+ * non vedeva pubblicare nulla e ne concludeva che mancasse `schedule:run`,
+ * mentre la causa era scritta nel gruppo sotto. Ora il gruppo 2 esclude chi sta
+ * nel 3.
  */
 class StuckDrafts extends Command
 {
@@ -67,7 +80,10 @@ class StuckDrafts extends Command
 
         $this->report(
             'Pronte ma ferme: il partner può già pubblicare',
-            $awaiting->filter(fn (StructureDraft $draft): bool => $draft->user?->partnerProfile?->canPublishFamily($draft->family()) === true),
+            // isPublishable per primo (difetto F8, 28/09/2026): una bozza
+            // incompleta sta nel gruppo sotto, e nessun cron la pubblicherebbe.
+            $awaiting->filter(fn (StructureDraft $draft): bool => self::isPublishable($draft)
+                && $draft->user?->partnerProfile?->canPublishFamily($draft->family()) === true),
             'Nessuna: niente di pubblicabile è rimasto indietro.',
         );
 

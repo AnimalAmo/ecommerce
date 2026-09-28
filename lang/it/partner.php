@@ -303,6 +303,14 @@ return [
         'section_extra' => 'Informazioni aggiuntive',
         'section_photos' => 'Foto',
         'section_payment' => 'Metodo di pagamento',
+        // Righe del dettaglio per le famiglie diverse dalla struttura e per i
+        // campi che il dettaglio non mostrava (audit del 28/09/2026, F7 e W6):
+        // «Tipologia struttura» su un evento o una smartbox non è vero.
+        'section_service_type' => 'Tipologia',
+        'section_detailed_description' => 'Descrizione dettagliata',
+        'section_cost' => 'Costo',
+        'section_smartbox' => 'Adesione alle smartbox',
+        'max_participants_unlimited' => 'Nessun limite',
         'rooms_count' => 'stanze',
         'rooms_price' => 'prezzo a notte',
         'checkin' => 'Check-in',
