@@ -17,7 +17,7 @@
         @if (filled(config('services.google.maps_key')))
             <section class="relative h-[380px] w-full overflow-hidden max-lg:h-[200px]">
                 <x-google-map query="Via Cattani 11, Contà (Trento), Italia" :alt="__('contact.map_alt')" class="h-full" />
-                <span class="pointer-events-none absolute left-1/2 top-[260px] max-lg:top-[130px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
+                <span data-map-pill class="pointer-events-none absolute left-1/2 top-[260px] max-lg:top-[130px] inline-flex h-[38px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-brand-yellow px-[18px] text-[13px] font-semibold text-black">
                     <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                     Animal Amo Srl
                 </span>

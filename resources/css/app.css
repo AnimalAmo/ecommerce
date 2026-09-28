@@ -106,6 +106,23 @@ textarea[data-flux-control] {
     display: none !important;
 }
 
+/* Mappa Google (components/google-map): finché Iubenda la blocca l'iframe è
+   about:blank, quindi sotto resta il segnaposto e la pill del chiamante (sorella
+   successiva del wrapper) sparisce. Col consenso Iubenda cambia il src: le prime
+   due regole smettono di valere da sole e la terza toglie il segnaposto anche a
+   screen reader e tastiera, che altrimenti lo troverebbero sotto la mappa. */
+[data-map] > iframe[src="about:blank"] {
+    visibility: hidden;
+}
+
+[data-map]:has(> iframe[src="about:blank"]) ~ [data-map-pill] {
+    display: none;
+}
+
+[data-map]:has(> iframe:not([src="about:blank"])) > [data-map-placeholder] {
+    visibility: hidden;
+}
+
 /* Corpo delle pagine legali: HTML dal DB, quindi senza classi Tailwind sui tag.
    Colonna di lettura stretta, gerarchia h2/h3, liste numerate annidate. */
 .legal-content {

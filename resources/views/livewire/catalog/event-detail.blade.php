@@ -239,7 +239,7 @@
                                 <div class="relative overflow-hidden rounded-[4px]">
                                     <x-google-map :query="$event->venue->mapQuery()" :fallback="$event->venue->mapFallbackUrl()" alt="Mappa della zona — {{ $event->venue->name }}" class="h-[576px]" />
                                     {{-- Pill puramente descrittiva: pointer-events-none per non rubare i click alla mappa --}}
-                                    <flux:button class="!pointer-events-none !absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
+                                    <flux:button data-map-pill class="!pointer-events-none !absolute !left-[310px] !top-[348px] !h-[38px] !gap-2 !rounded-full !border-0 !bg-brand-yellow !px-[18px] !text-[13px] !font-semibold !text-black !shadow-none">
                                         <flux:icon.pin class="h-[15px] w-3 shrink-0" />
                                         {{ $event->venue->name }}
                                     </flux:button>
