@@ -934,6 +934,15 @@ class CheckoutPaymentTest extends TestCase
             // indietro, è un vicolo cieco: meglio non aprirlo.
             ->assertSet('step', 1)
             ->assertSet('firstName', 'Giulia')
-            ->assertDispatched('toast-show');
+            ->assertDispatched('toast-show')
+            // Tester 28/09/2026: un toast qualsiasi passava anche per un rifiuto
+            // di disponibilità del carrello, che lascia a sua volta lo step 1. Il
+            // motivo deve essere il venditore, e i dati devono aver superato la
+            // validazione: è proprio chi li ha compilati che non deve perderli.
+            ->assertHasNoErrors()
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('checkout.seller_not_payable.toast'));
+
+        // Nessuna sessione di pagamento aperta su un conto che non può incassare.
+        $this->assertSame([], $this->gateway->initCalls);
     }
 }

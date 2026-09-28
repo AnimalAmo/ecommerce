@@ -4,23 +4,22 @@ namespace App\Livewire\Catalog;
 
 use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
-use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Models\Partner\PartnerProfile;
-use App\Services\Cart\CartManager;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Partner\ServiceOptionLabels;
 use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class ActivityDetail extends Component
 {
+    use AddsCatalogProductToCart;
     use HasBookingCalendar;
     use TogglesFavorites;
 
@@ -76,20 +75,16 @@ class ActivityDetail extends Component
             return;
         }
 
-        try {
-            // Date NON nelle options: derivano da starts_at/ends_at/duration_days del purchasable.
-            app(CartManager::class)->addItem('event', $activity->id, [
-                'guests' => $this->editGuests,
-                'animals' => $this->editAnimals,
-            ], false);
-        } catch (CartValidationException $exception) {
-            // Violazione disponibilità (es. capienza esaurita): toast danger, niente pop-up.
-            Flux::toast(text: $exception->getMessage(), variant: 'danger');
-
+        // Date NON nelle options: derivano da starts_at/ends_at/duration_days del
+        // purchasable. Titolare che incassa in struttura (difetto C7, 28/09/2026)
+        // o capienza esaurita: toast danger, niente pop-up.
+        if (! $this->addCatalogProductToCart($activity, [
+            'guests' => $this->editGuests,
+            'animals' => $this->editAnimals,
+        ])) {
             return;
         }
 
-        $this->dispatch('cart-updated');
         $this->cartPopupOpen = true;
     }
 

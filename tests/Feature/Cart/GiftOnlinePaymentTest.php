@@ -47,6 +47,17 @@ class GiftOnlinePaymentTest extends TestCase
             ->assertDontSeeHtml('setGift(false)');
     }
 
+    /**
+     * La prima metà resta: `?regalo=1` verso un partner offline riparte da
+     * Acquista, non da Regala.
+     *
+     * La seconda metà è cambiata col difetto C7 (tester, 28/09/2026). Prima si
+     * aspettava che la smartbox entrasse in carrello «per sé»; ma la scheda di
+     * un partner che incassa in struttura non ha il pulsante carrello, quindi
+     * quella chiamata è una pagina vecchia o un payload forgiato, e la riga che
+     * entrava era la riga fantasma di C7 (vedi AddToCartTest). Ora il rifiuto è
+     * quello di ogni prodotto di chi incassa in struttura, e il carrello resta vuoto.
+     */
     public function test_il_link_regalo_verso_un_partner_offline_riparte_da_acquista(): void
     {
         $this->ownedBy(User::factory()->offlinePartner()->create());
@@ -55,11 +66,10 @@ class GiftOnlinePaymentTest extends TestCase
             ->test(SmartboxDetail::class, ['box' => 'relax-lombardia'])
             ->assertSet('gift', false)
             ->call('addToCart')
-            ->assertNotDispatched('toast-show')
-            ->assertSet('cartPopupOpen', true);
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable'))
+            ->assertSet('cartPopupOpen', false);
 
-        $entry = array_values(session()->get(SessionCartStorage::SESSION_KEY, []))[0];
-        $this->assertFalse($entry['is_gift']);
+        $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
     }
 
     public function test_il_dettaglio_di_un_partner_online_mostra_ancora_regala(): void

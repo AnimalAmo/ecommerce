@@ -376,7 +376,13 @@ class AddToCartTest extends TestCase
 
         Livewire::test(EventDetail::class, ['event' => $event->slug])
             ->call('addToCart')
-            ->assertSet('cartPopupOpen', false);
+            ->assertSet('cartPopupOpen', false)
+            // Tester 28/09/2026: il rifiuto deve venire dalla guardia sul pagamento
+            // diretto, non da un altro motivo (date, capienza) che lascerebbe il
+            // carrello vuoto lo stesso e farebbe passare il test a vuoto.
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable')
+                && ($params['dataset']['variant'] ?? null) === 'danger')
+            ->assertNotDispatched('cart-updated');
 
         $this->assertSame(
             [],
@@ -396,7 +402,13 @@ class AddToCartTest extends TestCase
 
         Livewire::test(ActivityDetail::class, ['activity' => $activity->slug])
             ->call('addToCart')
-            ->assertSet('cartPopupOpen', false);
+            ->assertSet('cartPopupOpen', false)
+            // Tester 28/09/2026: il rifiuto deve venire dalla guardia sul pagamento
+            // diretto, non da un altro motivo (date, capienza) che lascerebbe il
+            // carrello vuoto lo stesso e farebbe passare il test a vuoto.
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable')
+                && ($params['dataset']['variant'] ?? null) === 'danger')
+            ->assertNotDispatched('cart-updated');
 
         $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
     }
@@ -408,7 +420,13 @@ class AddToCartTest extends TestCase
 
         Livewire::test(SmartboxDetail::class, ['box' => $box->slug])
             ->call('addToCart')
-            ->assertSet('cartPopupOpen', false);
+            ->assertSet('cartPopupOpen', false)
+            // Tester 28/09/2026: il rifiuto deve venire dalla guardia sul pagamento
+            // diretto, non da un altro motivo (date, capienza) che lascerebbe il
+            // carrello vuoto lo stesso e farebbe passare il test a vuoto.
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable')
+                && ($params['dataset']['variant'] ?? null) === 'danger')
+            ->assertNotDispatched('cart-updated');
 
         $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
     }
@@ -420,7 +438,13 @@ class AddToCartTest extends TestCase
 
         Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'hotel-brescia'])
             ->call('addToCart')
-            ->assertSet('cartPopupOpen', false);
+            ->assertSet('cartPopupOpen', false)
+            // Tester 28/09/2026: il rifiuto deve venire dalla guardia sul pagamento
+            // diretto, non da un altro motivo (date, capienza) che lascerebbe il
+            // carrello vuoto lo stesso e farebbe passare il test a vuoto.
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable')
+                && ($params['dataset']['variant'] ?? null) === 'danger')
+            ->assertNotDispatched('cart-updated');
 
         $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
     }
@@ -434,7 +458,13 @@ class AddToCartTest extends TestCase
         Livewire::test(AnimalHolidayService::class, ['region' => 'lombardia', 'service' => 'dog-sitting'])
             ->set('editCheckIn', CarbonImmutable::today()->addDays(8)->format('d/m/Y'))
             ->call('addToCart')
-            ->assertSet('cartPopupOpen', false);
+            ->assertSet('cartPopupOpen', false)
+            // Tester 28/09/2026: il rifiuto deve venire dalla guardia sul pagamento
+            // diretto, non da un altro motivo (date, capienza) che lascerebbe il
+            // carrello vuoto lo stesso e farebbe passare il test a vuoto.
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.not_purchasable')
+                && ($params['dataset']['variant'] ?? null) === 'danger')
+            ->assertNotDispatched('cart-updated');
 
         $this->assertSame([], session()->get(SessionCartStorage::SESSION_KEY, []));
     }

@@ -6,6 +6,15 @@ return [
     // JS: conferma Stripe terminata senza esito positivo
     'payment_incomplete' => 'Il pagamento non è stato completato. Riprova.',
 
+    // Difetto C10 (audit 28/09/2026): il partner vende online ma Stripe non lo fa
+    // incassare (charges o payouts spenti dopo la pubblicazione). Lo step 2 non si
+    // apre: l'avviso sta allo step 1, il toast arriva se si prova a proseguire.
+    'seller_not_payable' => [
+        'notice' => 'In questo momento il partner non può ricevere pagamenti online, quindi questo acquisto non si può completare. Riprova più tardi, oppure togli i suoi prodotti dal carrello per acquistare da un altro partner.',
+        'toast' => 'Il partner in questo momento non può ricevere pagamenti online: non si può proseguire. I dati che hai inserito restano qui.',
+        'back_to_cart' => 'Torna al carrello',
+    ],
+
     // Ramo "paga in struttura" (partner senza pagamento online): lo step 2 è una conferma, niente Stripe
     'on_site' => [
         'step_label' => 'Conferma',

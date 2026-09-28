@@ -2,12 +2,8 @@
 
 namespace App\Livewire\Concerns;
 
-use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
-use App\Exceptions\CartValidationException;
 use App\Models\Event\Event;
-use App\Services\Cart\CartManager;
-use App\Services\Partner\PartnerPaymentModeService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
  */
 trait AddsEventToCart
 {
+    use AddsCatalogProductToCart;
+
     /**
      * Eventi = 1 partecipante (decisione ratificata); attività = gli stessi
      * default del widget di dettaglio (2 adulti, 1 animale), modificabili
@@ -32,32 +30,22 @@ trait AddsEventToCart
             return;
         }
 
-        // Titolare che incassa in struttura: si prenota contattando lui, non da
-        // qui (richiesta della cliente, 27/09/2026). Nella griglia il pulsante
-        // non c'è nemmeno, ma addToCart() arriva dal payload del client: la
-        // guardia sta qui, non nel CartManager, dove taglierebbe la modalità
-        // anche quando la cliente deciderà di riaccenderla.
-        if (app(PartnerPaymentModeService::class)->forPurchasable($event) === OrderPaymentMode::OnSite) {
-            Flux::toast(text: __('cart.not_purchasable'), variant: 'danger');
-
-            return;
-        }
-
         // Persone da Event::quickAddPersons(): la stessa regola con cui la
         // griglia decide se la borsa si mostra, così click e soglia non divergono.
         $options = $event->type === ProductType::Activity
             ? ['guests' => ['adulti' => $event->quickAddPersons(), 'ragazzi' => 0, 'bambini' => 0], 'animals' => [self::defaultSpecies() => 1]]
             : ['participants' => $event->quickAddPersons()];
 
-        try {
-            app(CartManager::class)->addItem('event', $event->id, $options, false);
-        } catch (CartValidationException $exception) {
-            Flux::toast(text: $exception->getMessage(), variant: 'danger');
-
+        // Titolare che incassa in struttura: si prenota contattando lui, non da
+        // qui (richiesta della cliente, 27/09/2026). Nella griglia il pulsante
+        // non c'è nemmeno, ma addToCart() arriva dal payload del client: la
+        // guardia è in AddsCatalogProductToCart, la stessa delle schede di dettaglio
+        // (difetto C7, 28/09/2026), e il perché non stia nel CartManager è
+        // scritto lì.
+        if (! $this->addCatalogProductToCart($event, $options)) {
             return;
         }
 
-        $this->dispatch('cart-updated');
         Flux::toast(text: __('cart.added'), variant: 'success');
     }
 

@@ -4,22 +4,21 @@ namespace App\Livewire\Catalog;
 
 use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
-use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
-use App\Services\Cart\CartManager;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use DateTimeImmutable;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class AnimalHolidayService extends Component
 {
+    use AddsCatalogProductToCart;
     use HasBookingCalendar;
     use TogglesFavorites;
 
@@ -91,15 +90,12 @@ class AnimalHolidayService extends Component
      */
     public function addToCart(): void
     {
-        try {
-            app(CartManager::class)->addItem('structure', $this->service()->id, $this->bookingOptions(), false);
-        } catch (CartValidationException $exception) {
-            Flux::toast(text: $exception->getMessage(), variant: 'danger');
-
+        // Titolare che incassa in struttura (difetto C7, 28/09/2026): la CTA non
+        // c'è, ma il metodo arriva dal payload del client — lo rifiuta il trait.
+        if (! $this->addCatalogProductToCart($this->service(), $this->bookingOptions())) {
             return;
         }
 
-        $this->dispatch('cart-updated');
         $this->expandedField = null;
         $this->cartPopupOpen = true;
     }
