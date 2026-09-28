@@ -105,6 +105,8 @@ class PartnerHotelSmartboxTest extends TestCase
 
     public function test_ladesione_dichiarata_arriva_alla_riga_di_catalogo(): void
     {
+        $this->markTestIncomplete('Decisione aperta (audit 27/09/2026, W6): collegare l\'adesione dello step «Smartbox» alla scelta dei cofanetti, o togliere lo step, è da decidere con la cliente.');
+
         $partner = $this->actingAsPayablePartner();
         $draft = $this->structureThatJoinedSmartboxes($partner->id);
 

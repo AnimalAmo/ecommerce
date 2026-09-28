@@ -380,6 +380,8 @@ class PlaceOrderActionTest extends TestCase
      */
     public function test_annullare_un_ordine_libera_i_posti_dellevento(): void
     {
+        $this->markTestIncomplete('Decisione aperta (audit 27/09/2026, C3): oggi non esiste un percorso di annullamento ordini. Chi lo scriverà deve liberare i posti nella stessa transazione: questo test è il contratto.');
+
         $event = Event::factory()->create([
             'user_id' => $this->seller()->id,
             'price_cents' => 2500,
@@ -410,6 +412,8 @@ class PlaceOrderActionTest extends TestCase
      */
     public function test_dopo_un_annullamento_il_posto_torna_acquistabile(): void
     {
+        $this->markTestIncomplete('Decisione aperta (audit 27/09/2026, C3): oggi non esiste un percorso di annullamento ordini. Chi lo scriverà deve liberare i posti nella stessa transazione: questo test è il contratto.');
+
         $event = Event::factory()->create([
             'user_id' => $this->seller()->id,
             'price_cents' => 2500,

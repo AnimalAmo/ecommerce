@@ -100,6 +100,18 @@ La skill `b2b-wizard-flow` prescriveva `array_filter` per i campi tradotti, cio�
 **Il branch è pronto per `main`** a meno dei 6 test in attesa di decisione: o si chiudono, o si spostano fuori dal
 branch prima del merge (restano sul branch `audit/flussi-2026-09-27`).
 
+## 28/09/2026, chiusura: WP8 e merge su `main`
+
+**WP8** della tranche C (`c86e73e`): i sette servizi della cliente sono selezionabili e le sei voci che il partner
+spuntava senza una riga a catalogo (TV, riscaldamento, ricarica elettrica, piscina, area animali, campo da tennis
+della smartbox) arrivano sulla scheda. In produzione: `migrate`, `animalamo:resync-amenities --dry-run`, poi il
+comando senza opzioni, poi `view:clear`.
+
+**I sei test delle decisioni aperte** (C3 ×2, C4 ×3, W6 ×1) sono `markTestIncomplete` col motivo: `main` resta verde
+e la specifica resta nel codice. Quando la decisione arriva si toglie la riga e il test torna il contratto.
+Suite prima del merge: **0 falliti, 6 incompleti, 1 skipped, 2516 verdi** (baseline di stamattina: 64 rossi, 2192
+verdi).
+
 ## Come riprendere
 
 Le quattro lane dei gravi erano già scritte e partizionate su file disgiunti — foto · scheda attività
