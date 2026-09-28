@@ -8,6 +8,7 @@ use App\Models\Event\Event;
 use App\Models\Partner\PartnerProfile;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
+use App\Services\Cart\CartManager;
 use App\Services\Partner\Publishing\DraftPublisher;
 use Database\Seeders\AmenitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -372,18 +373,124 @@ class ActivityEventSheetFieldsTest extends TestCase
 
     /**
      * L'altra metà di C2: senza sapere quanti posti restano, il cliente non ha
-     * modo di capire che scendendo a un ospite l'acquisto passerebbe.
-     * `remainingSeats` esiste solo su EventDetail.
+     * modo di capire che scendendo a un ospite l'acquisto passerebbe. Prima
+     * della correzione `remainingSeats` esisteva solo su EventDetail; ora
+     * ActivityDetail::render() lo passa anche alla scheda attività.
+     *
+     * Riscritta il 28/09/2026: la versione precedente cercava l'etichetta e poi
+     * un '3' QUALSIASI dopo di lei (`assertSeeInOrder`), e un '3' dopo quel
+     * punto della pagina c'è sempre — `mt-3`, prezzi, date. Passava con
+     * qualunque numero di posti. Ora si guarda la riga intera, col valore.
      */
     public function test_la_scheda_attivita_dice_quanti_posti_restano(): void
     {
         $activity = $this->publishActivity(['max_participants' => 10]);
         $activity->update(['booked_participants' => 7]);
 
-        // Stesso idioma della prova gemella sulla scheda evento.
+        $label = __('partner.activity_info.max_participants');
+
         $this->activityPage($activity->fresh())
-            ->assertSee(__('partner.activity_info.max_participants'))
-            ->assertSeeInOrder([__('partner.activity_info.max_participants'), '3']);
+            ->assertSeeText($label.': 3')
+            // Né la capienza totale né i venduti al posto dei residui.
+            ->assertDontSeeText($label.': 10')
+            ->assertDontSeeText($label.': 7')
+            // Tre posti per due ospiti di default: la CTA c'è.
+            ->assertSee(__('events.add_to_cart'));
+    }
+
+    /** Capienza illimitata (`max_participants` nullo, tutte le schede pre-27/09): nessuna riga, non «illimitati». */
+    public function test_un_attivita_senza_capienza_non_mostra_la_riga_dei_posti(): void
+    {
+        $activity = $this->publishActivity(['max_participants' => null]);
+
+        $this->activityPage($activity)
+            ->assertDontSee(__('partner.activity_info.max_participants'))
+            ->assertSee(__('events.add_to_cart'));
+    }
+
+    /**
+     * Posti che non bastano per gli ospiti scelti: al posto della CTA la
+     * ragione e il numero di posti che restano, così il cliente sa di quanto
+     * scendere.
+     */
+    public function test_con_posti_insufficienti_la_scheda_dice_quanti_ne_restano_al_posto_della_cta(): void
+    {
+        $activity = $this->publishActivity(['max_participants' => 10]);
+        $activity->update(['booked_participants' => 9]);
+
+        Livewire::test(ActivityDetail::class, ['activity' => $activity->slug])
+            ->assertSet('editGuests', ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0])
+            ->assertSee(__('cart.sold_out'))
+            ->assertSeeText(__('partner.activity_info.max_participants').': 1')
+            ->assertDontSeeHtml('wire:click="addToCart"');
+    }
+
+    /**
+     * Un posto libero e un adulto: la richiesta sta nella capienza, quindi la
+     * CTA torna e il carrello la accetta davvero. È il «−» che la dicitura
+     * suggerisce al cliente.
+     */
+    public function test_con_un_posto_libero_e_un_adulto_la_cta_ce_e_aggiunge(): void
+    {
+        $activity = $this->publishActivity(['max_participants' => 10]);
+        $activity->update(['booked_participants' => 9]);
+
+        Livewire::test(ActivityDetail::class, ['activity' => $activity->slug])
+            ->call('decrementGuest', 'adulti')
+            ->assertSet('editGuests', ['adulti' => 1, 'ragazzi' => 0, 'bambini' => 0])
+            ->assertSeeHtml('wire:click="addToCart"')
+            ->assertSee(__('events.add_to_cart'))
+            ->assertDontSee(__('cart.sold_out'))
+            ->call('addToCart')
+            ->assertNotDispatched('toast-show')
+            ->assertSet('cartPopupOpen', true);
+
+        $this->assertCount(1, app(CartManager::class)->items());
+    }
+
+    /**
+     * Lo stepper non porta il cliente in uno stato che il carrello rifiuta:
+     * con tre posti liberi si sale fino a tre ospiti, in qualunque fascia, e lì
+     * ci si ferma. `incrementGuest()` si chiama direttamente, come farebbe un
+     * payload wire, perché il clamp deve valere lato server e non solo sul
+     * pulsante disabilitato.
+     */
+    public function test_lo_stepper_ospiti_non_supera_i_posti_residui(): void
+    {
+        $activity = $this->publishActivity(['max_participants' => 10]);
+        $activity->update(['booked_participants' => 7]);
+
+        Livewire::test(ActivityDetail::class, ['activity' => $activity->slug])
+            ->call('incrementGuest', 'bambini')
+            ->assertSet('editGuests', ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 1])
+            ->call('incrementGuest', 'adulti')
+            ->call('incrementGuest', 'ragazzi')
+            ->call('incrementGuest', 'bambini')
+            ->assertSet('editGuests', ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 1])
+            // Al limite la CTA resta: tre ospiti su tre posti è una richiesta valida.
+            ->assertSee(__('events.add_to_cart'))
+            ->call('addToCart')
+            ->assertSet('cartPopupOpen', true);
+
+        $this->assertCount(1, app(CartManager::class)->items());
+    }
+
+    /**
+     * Il clamp sui posti è un override di ActivityDetail: il trait
+     * HasBookingCalendar lo condivide con strutture e servizi, e senza capienza
+     * deve restare il tetto fisso di sempre (MAX_GUESTS = 10), non sparire.
+     */
+    public function test_senza_capienza_lo_stepper_resta_al_tetto_fisso(): void
+    {
+        $activity = $this->publishActivity(['max_participants' => null]);
+
+        $component = Livewire::test(ActivityDetail::class, ['activity' => $activity->slug]);
+
+        foreach (range(1, 12) as $click) {
+            $component->call('incrementGuest', 'adulti');
+        }
+
+        $component->assertSet('editGuests.adulti', 10);
     }
 
     /*
@@ -519,6 +626,46 @@ class ActivityEventSheetFieldsTest extends TestCase
             'La descrizione breve compare una volta sola: la sezione «Attività» deve portare '
             .'la descrizione dettagliata, non ripetere quella di sopra.',
         );
+    }
+
+    /**
+     * Con la dettagliata, la sezione «Attività» c'è e porta QUEL testo, una
+     * volta; la breve resta nella sua sezione e non si ripete.
+     */
+    public function test_la_sezione_attivita_porta_la_dettagliata_e_la_breve_resta_una(): void
+    {
+        $activity = $this->publishActivity([
+            'description' => ['it' => 'Breve: educazione di base.'],
+            'detailed_description' => ['it' => 'Lunga: percorso in sei incontri con verifica finale.'],
+        ]);
+
+        $html = $this->activityPage($activity)
+            ->assertSeeHtml('>'.__('events.activity').'</h2>')
+            ->assertSeeInOrder([__('events.activity'), 'Lunga: percorso in sei incontri con verifica finale.'])
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, 'Breve: educazione di base.'));
+        $this->assertSame(1, substr_count($html, 'Lunga: percorso in sei incontri con verifica finale.'));
+    }
+
+    /**
+     * Senza dettagliata (catalogo demo, attività non raggiunte dal travaso) la
+     * sezione sparisce: titolo compreso, non un «Attività» con niente sotto.
+     * La colonna tradotta legge '' e non null (spatie), quindi la guardia del
+     * blade deve essere filled(), e questa prova lo tiene fermo.
+     */
+    public function test_la_sezione_attivita_sparisce_senza_dettagliata(): void
+    {
+        $activity = $this->publishActivity([
+            'description' => ['it' => 'Solo la breve.'],
+            'detailed_description' => null,
+        ]);
+
+        $this->assertSame([], $activity->getTranslations('detailed_description'));
+
+        $this->activityPage($activity)
+            ->assertSee('Solo la breve.')
+            ->assertDontSeeHtml('>'.__('events.activity').'</h2>');
     }
 
     /*

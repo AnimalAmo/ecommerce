@@ -69,6 +69,16 @@ class EventPublisher extends FamilyPublisher
             'img' => $this->coverPhoto($draft),
             'hero_img' => $this->coverPhoto($draft),
             'description' => $this->translations($draft, 'description'),
+            // Descrizione dettagliata (audit 28/09/2026, difetto W1):
+            // ActivityDescription la rende obbligatoria per le attività, ma
+            // qui non veniva mai nominata e la scheda ristampava la breve al
+            // suo posto. Stessa copia di SmartboxPublisher
+            // (`detailed_description` → `extended_description`). Vuota sugli
+            // eventi veri, come le categorie professionali: il wizard non la
+            // chiede per un evento, e una bozza passata da Attività a Evento
+            // se la porta addosso. Vuota e non NULL: su un attributo tradotto
+            // spatie scrive `{"it":null}`, quindi la scheda la legge con filled().
+            'detailed_description' => $isEvent ? null : $this->translations($draft, 'detailed_description'),
             'position' => $current->position ?? ((int) Event::withHidden()->max('position') + 1),
             'cancellation_policy_days' => $this->cancellationDays($draft),
             ...$this->moderationAttributes($current),

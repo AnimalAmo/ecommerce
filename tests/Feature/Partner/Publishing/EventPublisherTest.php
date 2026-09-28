@@ -345,4 +345,60 @@ class EventPublisherTest extends TestCase
 
         $this->assertNull($event->max_participants);
     }
+
+    /**
+     * Difetto W1 (audit 28/09/2026): il wizard pretende la descrizione
+     * dettagliata per le attività e la salva sulla bozza, ma senza la colonna
+     * gemella su `events` il cliente non la leggeva mai. Entrambe le lingue,
+     * come la breve.
+     */
+    public function test_publish_carries_the_detailed_description_of_an_activity(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'type' => 'attivita',
+            'detailed_description' => ['it' => 'Percorso in sei incontri.', 'en' => 'Six-session course.'],
+        ]));
+
+        $this->assertSame(
+            ['it' => 'Percorso in sei incontri.', 'en' => 'Six-session course.'],
+            $event->fresh()->getTranslations('detailed_description'),
+        );
+    }
+
+    /**
+     * Un evento vero non ha la dettagliata (il wizard non la chiede), e una
+     * bozza passata da Attività a Evento se la porta addosso: il publisher la
+     * lascia NULL, come le categorie professionali.
+     */
+    public function test_an_event_does_not_carry_the_detailed_description(): void
+    {
+        $event = app(DraftPublisher::class)->publish($this->activityDraft([
+            'detailed_description' => ['it' => 'Residuo del ramo Attività.'],
+        ]));
+
+        // Non la colonna grezza: spatie scrive `{"it":null}` per un null, come
+        // per la zona e le categorie. Conta che non ci sia testo in nessuna lingua.
+        $this->assertSame([], $event->fresh()->getTranslations('detailed_description'));
+    }
+
+    /**
+     * Il cambio di ramo DOPO una pubblicazione: la riga a catalogo è la stessa
+     * (updateOrCreate su structure_draft_id), quindi il NULL deve sovrascrivere
+     * il testo scritto quando era un'attività, non limitarsi a non scriverlo.
+     */
+    public function test_republishing_an_activity_as_an_event_clears_the_detailed_description(): void
+    {
+        $draft = $this->activityDraft([
+            'type' => 'attivita',
+            'detailed_description' => ['it' => 'Scritto da attività.'],
+        ]);
+        $activity = app(DraftPublisher::class)->publish($draft);
+        $this->assertSame(['it' => 'Scritto da attività.'], $activity->fresh()->getTranslations('detailed_description'));
+
+        $draft->update(['type' => 'eventi']);
+        $event = app(DraftPublisher::class)->publish($draft->fresh());
+
+        $this->assertSame($activity->id, $event->id);
+        $this->assertSame([], $event->fresh()->getTranslations('detailed_description'));
+    }
 }

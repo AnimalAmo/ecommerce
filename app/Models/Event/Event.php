@@ -21,8 +21,13 @@ class Event extends Model
     /** @use HasFactory<EventFactory> */
     use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasFaqs, HasTranslations;
 
-    /** SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale. */
-    public array $translatable = ['title', 'description', 'activity_categories_other', 'operating_area', 'event_categories_other'];
+    /**
+     * SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale.
+     *
+     * Spatie legge '' e non null quando la lingua manca (e per una colonna
+     * nulla): a valle il vuoto si controlla con blank()/filled(), mai `=== null`.
+     */
+    public array $translatable = ['title', 'description', 'detailed_description', 'activity_categories_other', 'operating_area', 'event_categories_other'];
 
     protected $fillable = [
         'user_id',
@@ -52,6 +57,10 @@ class Event extends Model
         'img',
         'hero_img',
         'description',
+        // Gemella di `structure_drafts.detailed_description` (audit 28/09/2026,
+        // difetto W1): il wizard la pretende per le attività, e senza colonna
+        // qui restava nella bozza — la scheda ristampava la descrizione breve.
+        'detailed_description',
         'time_note',
         'venue_note',
         'position',
