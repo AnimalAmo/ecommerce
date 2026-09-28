@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
-use Illuminate\Support\Facades\Storage;
+use App\Services\Partner\Publishing\FamilyPublisher;
 use Livewire\WithFileUploads;
 
 /**
@@ -44,14 +44,60 @@ trait HandlesPhotoUploads
         }
     }
 
+    /**
+     * Toglie una foto già salvata: dalla bozza subito (il partner la vede
+     * sparire), dal disco solo se nessuna pagina la mostra più.
+     *
+     * Difetto F1 (audit 27/09/2026): qui il file si cancellava nello stesso
+     * clic, fuori dal ciclo salva step → completa → pubblica. Se era la
+     * copertina di un servizio già pubblicato, `img`/`hero_img` a catalogo la
+     * puntavano ancora e la scheda pubblica serviva un'immagine rotta; se poi
+     * il partner abbandonava la modifica (magari bloccato da collectPhotos()
+     * sotto il minimo), la scheda restava online così e il file era perso.
+     *
+     * Ora decide FamilyPublisher::deletePhotoIfUnreferenced(): una foto che
+     * nessuna pagina mostra (tutte quelle di una bozza mai pubblicata, e le
+     * non-copertina di una pubblicata) si cancella subito; una che il catalogo
+     * o uno storico ordini punta ancora resta su disco. Se è la copertina, la
+     * pota il publisher quando la versione nuova è a catalogo; se il partner
+     * abbandona, resta dov'è e la scheda online resta integra.
+     *
+     * La fonte di verità è la bozza, non `saved`: `saved` è una proprietà
+     * pubblica che il client può riscrivere. Prima si salvava `saved` nella
+     * bozza e solo dopo si controllava il path contro la bozza, quindi due
+     * chiamate forgiate bastavano (la prima scriveva un path altrui nella
+     * bozza, la seconda lo trovava "posseduto" e lo cancellava). Ora un path
+     * che la bozza non contiene non tocca niente, e `saved` si riallinea.
+     */
     public function removeSaved(int $index): void
     {
-        if (isset($this->saved[$index])) {
-            Storage::disk('public')->delete($this->saved[$index]);
-            unset($this->saved[$index]);
-            $this->saved = array_values($this->saved);
-            $this->draft()->update(['photos' => $this->saved]);
+        $draft = $this->draft();
+        $current = $draft->photos ?? [];
+        $path = $this->saved[$index] ?? null;
+
+        if ($path === null || ! in_array($path, $current, true)) {
+            $this->saved = $current;
+
+            return;
         }
+
+        $this->saved = array_values(array_filter($current, fn (string $photo): bool => $photo !== $path));
+        $draft->update(['photos' => $this->saved]);
+
+        FamilyPublisher::deletePhotoIfUnreferenced($path);
+    }
+
+    /**
+     * Le foto già salvate che la bozza possiede davvero, nell'ordine del
+     * client. `saved` arriva dal payload: senza questo filtro un path qualsiasi
+     * del disco public entrava nella bozza con next(), contava nel minimo e
+     * finiva in copertina a catalogo. array_unique perché array_intersect
+     * conserva i doppioni: lo stesso path ripetuto quattro volte avrebbe
+     * soddisfatto il minimo con una foto sola.
+     */
+    protected function ownedSavedPhotos(): array
+    {
+        return array_values(array_unique(array_intersect($this->saved, $this->draft()->photos ?? [])));
     }
 
     /**
@@ -60,7 +106,9 @@ trait HandlesPhotoUploads
      */
     protected function collectPhotos(): ?array
     {
-        if (count($this->saved) + count($this->photos) < $this->minPhotos) {
+        $saved = $this->ownedSavedPhotos();
+
+        if (count($saved) + count($this->photos) < $this->minPhotos) {
             $this->addError('photos', $this->photoMinError());
 
             return null;
@@ -68,7 +116,7 @@ trait HandlesPhotoUploads
 
         $this->validate(['photos.*' => ['image', 'max:8192']]);
 
-        $paths = $this->saved;
+        $paths = $saved;
         foreach ($this->photos as $photo) {
             $paths[] = $photo->store($this->photoDirectory(), 'public');
         }
