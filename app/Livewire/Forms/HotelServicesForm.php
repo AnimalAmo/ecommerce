@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Structure\StructureDraft;
+use App\Support\Translations;
 use Livewire\Form;
 
 /**
@@ -64,7 +65,7 @@ class HotelServicesForm extends Form
         return [
             'services' => $this->services,
             'additional_services' => $this->additional,
-            'additional_other' => array_filter($this->additionalOther, fn ($value) => filled($value)),
+            'additional_other' => Translations::replacing($this->additionalOther),
             'meal_times' => $this->mealTimes,
             'rules' => $this->structureRules,
         ];

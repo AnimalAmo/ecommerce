@@ -8,6 +8,7 @@ use App\Models\OrderItem\OrderItem;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
+use App\Support\Translations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -150,12 +151,21 @@ abstract class FamilyPublisher
     /**
      * Traduzioni compilate del campo draft, da assegnare alla colonna
      * translatable del catalogo. Mai vuoto: le colonne testo sono NOT NULL.
+     *
+     * Le lingue che la bozza non ha più arrivano a null (Translations::replacing):
+     * la riga di catalogo esiste già a ogni ripubblicazione, e spatie non
+     * toglie le lingue che non riceve. Difetto W5 (tester, 28/09/2026): il
+     * wizard toglieva ormai la traduzione inglese dalla bozza, ma la scheda su
+     * /en continuava a mostrare quella vecchia.
      */
     protected function translations(StructureDraft $draft, string $field): array
     {
         $values = array_filter($draft->getTranslations($field), fn ($value) => filled($value));
 
-        return $values ?: ['it' => ''];
+        // Tutto vuoto: '' in italiano per le colonne NOT NULL, e le altre lingue
+        // a null anche qui, o un testo inglese tolto (un «Altro» deselezionato)
+        // resterebbe sulla scheda /en.
+        return $values === [] ? ['it' => ''] + Translations::replacing([]) : Translations::replacing($values);
     }
 
     /** Slug unico e stabile: nome it + id draft (events/smartbox hanno unique index). */

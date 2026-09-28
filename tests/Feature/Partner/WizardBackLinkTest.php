@@ -188,4 +188,117 @@ class WizardBackLinkTest extends TestCase
             .'rimandarlo sullo «Step 1 di 10» gli chiede due volte la stessa cosa.',
         );
     }
+
+    // ── Giro del tester, 28/09/2026: l'«Indietro» dello step Nome da ogni ingresso ─
+    //
+    // Le prove W4 qui sopra guardano l'href. Queste seguono il partner anche
+    // DOPO il clic: le card devono riprendere la stessa bozza (niente orfane,
+    // difetto W2) con la card giusta già scelta, e il nome scritto deve restare.
+
+    #[DataProvider('cardsThatSkipTheTypeStep')]
+    public function test_tornando_alle_card_dallo_step_del_nome_si_riprende_la_stessa_bozza(string $card): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        Livewire::test(CreateService::class)->set('service', $card)->call('next');
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Servizio in corso')
+            ->call('next')
+            ->assertHasNoErrors();
+        $draftId = session('structure_draft_id');
+
+        $this->assertSame(route('partner.service.create'), $this->backHref(Livewire::test(ActivityName::class)->html()));
+
+        // «Evento» si riconosce dai dati; «Servizio professionale» scrive la
+        // stessa bozza della card «Attività» e le card mostrano quella
+        // (CreateService::cardOf, limite dichiarato dalla lane nome).
+        Livewire::test(CreateService::class)
+            ->assertSet('service', $card === 'eventi' ? 'eventi' : 'attivita')
+            ->call('next')
+            ->assertRedirect(route($card === 'eventi' ? 'partner.activity.name' : 'partner.activity.type'));
+
+        $this->assertSame($draftId, session('structure_draft_id'));
+        $this->assertSame(1, StructureDraft::query()->where('user_id', $partner->id)->count());
+        $this->assertSame('Servizio in corso', StructureDraft::findOrFail($draftId)->getTranslation('name', 'it'));
+    }
+
+    /** Card «Attività»: passa dallo step del tipo, e dal Nome torna comunque alle card, sulla stessa bozza. */
+    public function test_dalla_card_attivita_lo_step_del_nome_torna_alle_card_sulla_stessa_bozza(): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        Livewire::test(CreateService::class)
+            ->set('service', 'attivita')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.type'));
+        Livewire::test(ActivityType::class)
+            ->set('type', 'attivita')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.name'));
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Toelettatura Bau')
+            ->call('next')
+            ->assertHasNoErrors();
+        $draftId = session('structure_draft_id');
+
+        $this->assertSame(route('partner.service.create'), $this->backHref(Livewire::test(ActivityName::class)->html()));
+
+        Livewire::test(CreateService::class)
+            ->assertSet('service', 'attivita')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.type'));
+
+        $this->assertSame($draftId, session('structure_draft_id'));
+        $this->assertSame(1, StructureDraft::query()->where('user_id', $partner->id)->count());
+    }
+
+    /** «Modifica» di un evento pubblicato: dal Nome si torna alla lista, non alle card che aprirebbero un servizio nuovo. */
+    public function test_chi_modifica_un_evento_torna_alla_lista_dallo_step_del_nome(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->serviceOf($partner, 'attivita', 'eventi');
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('edit', $draft->id)
+            ->assertRedirect(route('partner.activity.type'));
+
+        $this->assertSame(route('partner.services'), $this->backHref(Livewire::test(ActivityName::class)->html()));
+        $this->assertSame($draft->id, session('structure_draft_id'));
+    }
+
+    public function test_chi_modifica_un_evento_in_attesa_torna_alla_lista_dallo_step_del_nome(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->serviceOf($partner, 'attivita', 'eventi', [
+            'status' => StructureDraft::STATUS_DRAFT,
+            'publish_requested_at' => now(),
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        $this->assertSame(route('partner.services'), $this->backHref(Livewire::test(ActivityName::class)->html()));
+    }
+
+    /**
+     * «Riprendi» di una bozza in corso entrata dalla card «Evento» (nome già
+     * salvato): risalendo fino allo step Nome, il suo «Indietro» porta alle
+     * card, che la riprendono invece di aprirne una nuova.
+     */
+    public function test_chi_riprende_una_bozza_in_corso_dal_nome_torna_alle_card_senza_perderla(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->serviceOf($partner, 'attivita', 'eventi', [
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => StructureDraft::STARTED_STEP,
+        ]);
+
+        Livewire::test(PartnerMyServices::class)->call('resume', $draft->id);
+        $this->assertSame($draft->id, session('structure_draft_id'));
+
+        $this->assertSame(route('partner.service.create'), $this->backHref(Livewire::test(ActivityName::class)->html()));
+
+        Livewire::test(CreateService::class)->assertSet('service', 'eventi');
+
+        $this->assertSame($draft->id, session('structure_draft_id'));
+        $this->assertSame(1, StructureDraft::query()->where('user_id', $partner->id)->count());
+    }
 }

@@ -366,6 +366,85 @@ class PartnerActivityNameTest extends TestCase
         $this->assertTrue(blank($draft->fresh()->getTranslation('activity_categories_other', 'en', false)));
     }
 
+    // ── Giro del tester, 28/09/2026: F6 e W5 oltre l'italiano ────────────────
+    //
+    // Le prove F6 qui sopra hanno fixture solo italiane: la traduzione inglese
+    // di un «Altro» abbandonato non era guardata da nessuno.
+
+    public function test_togliere_altro_svuota_il_testo_libero_in_tutte_le_lingue(): void
+    {
+        $draft = $this->draftInSession('attivita', [
+            'name' => ['it' => 'Pensione per conigli'],
+            'activity_categories' => ['altro'],
+            'activity_categories_other' => ['it' => 'Pensione per conigli', 'en' => 'Rabbit boarding'],
+        ]);
+
+        Livewire::test(ActivityName::class)
+            // La fixture arriva davvero allo step: senza, la prova sarebbe verde a vuoto.
+            ->assertSet('categoriesOther.en', 'Rabbit boarding')
+            ->set('categories', ['toelettatore'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame([], $draft->fresh()->getTranslations('activity_categories_other'));
+    }
+
+    /**
+     * La property non si svuota alla deselezione (scelta della lane nome):
+     * rispuntando «Altro» prima di salvare il partner ritrova il testo, e il
+     * salvataggio lo scrive.
+     */
+    public function test_rispuntare_altro_prima_di_salvare_ritrova_il_testo(): void
+    {
+        $draft = $this->draftInSession('eventi', [
+            'name' => ['it' => 'Sagra del cane'],
+            'event_categories' => ['altro'],
+            'event_categories_other' => ['it' => 'Sagra paesana'],
+        ]);
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['sportivi'])
+            ->set('categories', ['sportivi', 'altro'])
+            ->assertSet('categoriesOther.it', 'Sagra paesana')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Sagra paesana', $draft->fresh()->getTranslation('event_categories_other', 'it'));
+    }
+
+    /**
+     * Senza «Altro» il campo non è disegnato: un suo errore non avrebbe dove
+     * comparire. Un testo troppo lungo rimasto nella property non deve
+     * bloccare lo step, e non si salva.
+     */
+    public function test_un_testo_di_altro_troppo_lungo_ma_nascosto_non_blocca_lo_step(): void
+    {
+        $draft = $this->draftInSession('attivita', ['name' => ['it' => 'Toelettatura Bau']]);
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['toelettatore'])
+            ->set('categoriesOther.it', str_repeat('a', 201))
+            ->assertDontSeeHtml('wire:model="categoriesOther.it"')
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.location'));
+
+        $this->assertSame([], $draft->fresh()->getTranslations('activity_categories_other'));
+    }
+
+    /** Con «Altro» spuntato invece il limite vale, e il campo c'è per mostrare l'errore. */
+    public function test_con_altro_spuntato_il_testo_troppo_lungo_e_rifiutato(): void
+    {
+        $this->draftInSession('attivita', ['name' => ['it' => 'Toelettatura Bau']]);
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', str_repeat('a', 201))
+            ->assertSeeHtml('wire:model="categoriesOther.it"')
+            ->call('next')
+            ->assertHasErrors(['categoriesOther.it' => 'max']);
+    }
+
     public function test_it_rehydrates_the_saved_categories_of_the_branch(): void
     {
         $this->draftInSession('eventi', [

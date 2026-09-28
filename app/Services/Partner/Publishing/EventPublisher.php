@@ -7,6 +7,7 @@ use App\Models\Event\Event;
 use App\Models\Structure\StructureDraft;
 use App\Models\Venue\Venue;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 
 /**
@@ -21,7 +22,7 @@ class EventPublisher extends FamilyPublisher
         // Senza tipo prezzo o importo l'evento è gratuito ("Partecipa", hasJoinCta).
         $isFree = $draft->price_type !== 'pagamento' || blank($draft->price_per_person);
 
-        $event = Event::withHidden()->updateOrCreate(['structure_draft_id' => $draft->id], [
+        $values = [
             'user_id' => $draft->user_id,
             'venue_id' => $this->venue($draft)?->id,
             'type' => $isEvent ? ProductType::Event : ProductType::Activity,
@@ -73,16 +74,35 @@ class EventPublisher extends FamilyPublisher
             // ActivityDescription la rende obbligatoria per le attività, ma
             // qui non veniva mai nominata e la scheda ristampava la breve al
             // suo posto. Stessa copia di SmartboxPublisher
-            // (`detailed_description` → `extended_description`). Vuota sugli
+            // (`detailed_description` → `extended_description`). NULL sugli
             // eventi veri, come le categorie professionali: il wizard non la
             // chiede per un evento, e una bozza passata da Attività a Evento
-            // se la porta addosso. Vuota e non NULL: su un attributo tradotto
-            // spatie scrive `{"it":null}`, quindi la scheda la legge con filled().
+            // se la porta addosso. La scheda la legge comunque con filled():
+            // le righe scritte prima del 28/09/2026 portano `{"it":null}`.
             'detailed_description' => $isEvent ? null : $this->translations($draft, 'detailed_description'),
             'position' => $current->position ?? ((int) Event::withHidden()->max('position') + 1),
             'cancellation_policy_days' => $this->cancellationDays($draft),
             ...$this->moderationAttributes($current),
-        ]);
+        ];
+
+        // Le guardie sul tipo qui sopra mettono NULL anche su colonne TRADOTTE
+        // (categorie e zona del professionista, descrizione dettagliata sugli
+        // eventi; tipologie di evento sulle attività), e un NULL passato a
+        // fill() spatie non lo scrive: lo trasforma in una traduzione vuota,
+        // `{"it":null}`, che il getter legge come '' e non come null (audit del
+        // 28/09/2026: su un evento nato da una bozza passata da Attività a
+        // Evento `operating_area` risultava «vuota», non «assente»). Restano
+        // fuori da fill() e le porta a NULL davvero clearTranslations().
+        $translatable = (new Event)->getTranslatableAttributes();
+        $cleared = array_keys(array_filter(
+            $values,
+            fn ($value, string $key): bool => $value === null && in_array($key, $translatable, true),
+            ARRAY_FILTER_USE_BOTH,
+        ));
+
+        $event = Event::withHidden()->updateOrCreate(['structure_draft_id' => $draft->id], Arr::except($values, $cleared));
+
+        $this->clearTranslations($event, $cleared);
 
         $this->syncAmenities($event, [
             ...($draft->services ?? []),
@@ -91,6 +111,32 @@ class EventPublisher extends FamilyPublisher
         ]);
 
         return $event;
+    }
+
+    /**
+     * Porta a NULL, a database e sull'istanza, le colonne tradotte che la
+     * guardia sul tipo vuole vuote. Scrive solo se la riga ne porta ancora un
+     * valore: una scheda appena creata non le ha mai avute (la colonna nasce
+     * NULL), e una ripubblicata sullo stesso ramo le ha già a NULL. Scrive
+     * nel caso per cui la guardia esiste — la stessa bozza pubblicata prima
+     * come Attività e poi come Evento, o viceversa — e, una volta sola, sulle
+     * righe pubblicate prima di questa correzione, che portano `{"it":null}`.
+     *
+     * setRawAttributes() e non fill(): è l'unico modo di dare a una colonna
+     * tradotta un NULL vero senza passare dal setter di spatie.
+     *
+     * @param  list<string>  $keys
+     */
+    private function clearTranslations(Event $event, array $keys): void
+    {
+        $stale = array_filter(Arr::only($event->getAttributes(), $keys), fn ($raw): bool => $raw !== null);
+
+        if ($stale === []) {
+            return;
+        }
+
+        $event->setRawAttributes([...$event->getAttributes(), ...array_fill_keys(array_keys($stale), null)]);
+        $event->save();
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Structure\StructureDraft;
+use App\Support\Translations;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -101,11 +102,15 @@ class ActivityLocationForm extends Form
             'zip' => $this->zip,
         ];
 
-        // Le traduzioni vuote non vengono salvate: su EN scatta il fallback IT.
+        // Una lingua lasciata vuota va a null, non viene fatta cadere: su EN
+        // scatta il fallback IT anche se prima c'era una traduzione salvata
+        // (difetto W5, 28/09/2026 — vedi App\Support\Translations). Il
+        // pannello admin fonde questo array nella create() di una bozza nuova:
+        // lì le chiavi a null non cambiano niente, la lingua resta assente.
         if ($this->isEvent) {
-            $attributes['meeting_point'] = array_filter($this->meetingPoint, fn ($value) => filled($value));
+            $attributes['meeting_point'] = Translations::replacing($this->meetingPoint);
         } else {
-            $attributes['operating_area'] = array_filter($this->operatingArea, fn ($value) => filled($value));
+            $attributes['operating_area'] = Translations::replacing($this->operatingArea);
         }
 
         return $attributes;

@@ -16,7 +16,7 @@ Ogni step è un componente Livewire in `app/Livewire/Partner/<Flusso>/` (es. `St
 3. in `next()` valida, poi `$this->saveStep([...campi...], <numero step>)` e `$this->redirectRoute('partner.<flusso>.<step successivo>')`. `saveStep` avanza `current_step` solo in avanti;
 4. l'ULTIMO step chiama `$this->completeDraft(<finalStep>)`: transazione che marca la bozza `completed` e la pubblica sul catalogo B2C via `DraftPublisher` (MVP: pubblicazione automatica, la moderazione superadmin arriverà come gate a monte).
 
-Campi tradotti: proprietà array `['it' => '', 'en' => '']`, `it` obbligatorio, `en` opzionale; salva con `array_filter` così su EN scatta il fallback IT (spatie/laravel-translatable). Messaggi di validazione da `lang/it/partner.php` (`__('partner.<step>.error_…')`).
+Campi tradotti: proprietà array `['it' => '', 'en' => '']`, `it` obbligatorio, `en` opzionale; salva con `App\Support\Translations::replacing($campo)`, che porta a null le lingue vuote (MAI `array_filter(…, filled)`: fa cadere la chiave e spatie non toglie una lingua già salvata — difetto W5 del 28/09/2026); su EN scatta il fallback IT (spatie/laravel-translatable). Un publisher che ricopia un campo tradotto su una riga di catalogo esistente passa da `FamilyPublisher::translations()`, che fa lo stesso. Il cambio di ramo (struttura/attività/evento) azzera le colonne dell'altro ramo con `StructureDraft::attributesForType()`: una colonna nuova di un ramo solo va aggiunta a `StructureDraft::BRANCH_COLUMNS`. Messaggi di validazione da `lang/it/partner.php` (`__('partner.<step>.error_…')`).
 
 Validazione complessa/riusata → Form object in `app/Livewire/Forms/` (es. `HotelLocationForm`, `SmartboxMealsForm`) invece di regole inline.
 

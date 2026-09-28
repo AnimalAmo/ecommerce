@@ -8,6 +8,7 @@ use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Services\Cart\DatabaseCartStorage;
+use App\Support\Translations;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -302,8 +303,8 @@ class CatalogAdmin
     public function update(Model $item, array $data): void
     {
         $nameColumn = self::FAMILIES[$this->family($item)][2];
-        $name = array_filter($data['name'], fn ($value) => filled($value));
-        $description = array_filter($data['description'], fn ($value) => filled($value));
+        $name = Translations::replacing($data['name']);
+        $description = Translations::replacing($data['description']);
 
         DB::transaction(function () use ($item, $data, $nameColumn, $name, $description): void {
             $item->setTranslations($nameColumn, $name);

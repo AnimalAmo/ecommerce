@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Partner\Publishing;
 
+use App\Livewire\Partner\Activity\ActivityName;
 use App\Models\Event\Event;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
@@ -9,6 +10,8 @@ use App\Models\Venue\Venue;
 use App\Services\Partner\Publishing\DraftPublisher;
 use Database\Seeders\AmenitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class EventPublisherTest extends TestCase
@@ -400,5 +403,136 @@ class EventPublisherTest extends TestCase
 
         $this->assertSame($activity->id, $event->id);
         $this->assertSame([], $event->fresh()->getTranslations('detailed_description'));
+    }
+
+    // ── Giro del tester, 28/09/2026: le colonne tradotte che la guardia azzera ─
+    //
+    // La lane dettaglio porta a NULL vero le colonne tradotte che la guardia sul
+    // tipo vuole vuote (clearTranslations). La sola prova era sulla
+    // descrizione dettagliata e in italiano: qui le altre tre, con l'inglese, e
+    // le righe vecchie che portano `{"it":null}`.
+
+    public function test_ripubblicare_unattivita_come_evento_toglie_zona_e_categorie_in_ogni_lingua(): void
+    {
+        $draft = $this->activityDraft([
+            'type' => 'attivita',
+            'activity_categories' => ['altro'],
+            'activity_categories_other' => ['it' => 'Pensione per conigli', 'en' => 'Rabbit boarding'],
+            'operating_area' => ['it' => 'Milano e provincia', 'en' => 'Milan and province'],
+        ]);
+        $activity = app(DraftPublisher::class)->publish($draft);
+        $this->assertSame('Rabbit boarding', $activity->fresh()->getTranslation('activity_categories_other', 'en', false));
+
+        $draft->update(['type' => 'eventi']);
+        $event = app(DraftPublisher::class)->publish($draft->fresh());
+
+        $this->assertSame($activity->id, $event->id);
+        $raw = DB::table('events')->where('id', $event->id)->first();
+        $this->assertNull($raw->operating_area);
+        $this->assertNull($raw->activity_categories_other);
+        $this->assertNull($raw->activity_categories);
+        $this->assertNull($event->fresh()->operating_area);
+    }
+
+    public function test_ripubblicare_un_evento_come_attivita_toglie_le_tipologie_di_evento_in_ogni_lingua(): void
+    {
+        $draft = $this->activityDraft([
+            'event_categories' => ['altro'],
+            'event_categories_other' => ['it' => 'Sagra paesana', 'en' => 'Village fair'],
+        ]);
+        $event = app(DraftPublisher::class)->publish($draft);
+        $this->assertSame('Village fair', $event->fresh()->getTranslation('event_categories_other', 'en', false));
+
+        $draft->update(['type' => 'attivita']);
+        $activity = app(DraftPublisher::class)->publish($draft->fresh());
+
+        $raw = DB::table('events')->where('id', $activity->id)->first();
+        $this->assertNull($raw->event_categories_other);
+        $this->assertNull($raw->event_categories);
+    }
+
+    /** Le righe pubblicate prima della correzione portano `{"it":null}`: la ripubblicazione le porta a NULL. */
+    public function test_ripubblicare_un_evento_ripara_la_zona_scritta_come_traduzione_nulla(): void
+    {
+        $draft = $this->activityDraft();
+        $event = app(DraftPublisher::class)->publish($draft);
+        DB::table('events')->where('id', $event->id)->update(['operating_area' => '{"it":null}']);
+
+        app(DraftPublisher::class)->publish($draft->fresh());
+
+        $this->assertNull(DB::table('events')->where('id', $event->id)->value('operating_area'));
+    }
+
+    // ── Giro del tester, 28/09/2026: W5 e F6 fino alla riga di catalogo ─────
+    //
+    // Trovati dal tester e chiusi il 28/09/2026 (FamilyPublisher::translations()
+    // usa ora Translations::replacing). La lane nome aveva corretto W5 sulla
+    // BOZZA: svuotato il tab EN, la lingua va a null (Translations::replacing).
+    // Ma il danno raccontato dall'audit è a catalogo — «il visitatore su /en
+    // continua a vedere Dog Fair» — e lì non arriva niente:
+    // FamilyPublisher::translations() (FamilyPublisher.php:154-158) tiene solo
+    // le lingue piene, e setTranslations() di spatie sulla riga già pubblicata
+    // aggiorna quelle e lascia le altre. Stessa strada, stesso esito, per il
+    // testo di «Altro» tolto (F6 in inglese), e per descrizione, dettagliata,
+    // zona e tipologie di evento. La lane nome lo aveva segnalato come file
+    // non assegnato.
+
+    /** Evento pubblicato, riaperto dallo step Nome col tab EN svuotato, e ripubblicato. */
+    public function test_svuotato_il_nome_inglese_la_scheda_ripubblicata_torna_allitaliano(): void
+    {
+        $draft = $this->activityDraft();
+        $event = app(DraftPublisher::class)->publish($draft);
+        $this->assertSame('Six-legged happy hour', $event->getTranslation('title', 'en', false));
+
+        $this->actingAs($draft->user);
+        session(['structure_draft_id' => $draft->id]);
+        Livewire::test(ActivityName::class)
+            ->assertSet('name.en', 'Six-legged happy hour')
+            ->set('name.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        // Precondizione: la bozza è corretta (è la parte chiusa dalla lane nome).
+        $this->assertSame(['it' => 'Aperitivo a 6 zampe'], $draft->fresh()->getTranslations('name'));
+
+        app(DraftPublisher::class)->publish($draft->fresh());
+
+        $this->assertSame('Aperitivo a 6 zampe', $event->fresh()->getTranslation('title', 'it'));
+        $this->assertTrue(
+            blank($event->fresh()->getTranslation('title', 'en', false)),
+            'La bozza non ha più il nome inglese, ma la riga a catalogo tiene «Six-legged happy hour»: '
+            .'FamilyPublisher::translations() filtra le lingue vuote e spatie non toglie quelle che non riceve.',
+        );
+    }
+
+    /** F6 in inglese: «Altro» tolto dallo step Nome, ripubblicato, e la scheda /en stampa ancora il suo testo. */
+    public function test_togliendo_altro_la_scheda_ripubblicata_non_tiene_il_testo_inglese(): void
+    {
+        $draft = $this->activityDraft([
+            'type' => 'attivita',
+            'activity_categories' => ['altro'],
+            'activity_categories_other' => ['it' => 'Pensione per conigli', 'en' => 'Rabbit boarding'],
+        ]);
+        $event = app(DraftPublisher::class)->publish($draft);
+        $this->assertSame('Rabbit boarding', $event->getTranslation('activity_categories_other', 'en', false));
+
+        $this->actingAs($draft->user);
+        session(['structure_draft_id' => $draft->id]);
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['toelettatore'])
+            ->call('next')
+            ->assertHasNoErrors();
+        $this->assertSame([], $draft->fresh()->getTranslations('activity_categories_other'));
+
+        app(DraftPublisher::class)->publish($draft->fresh());
+
+        $event->refresh();
+        $this->assertSame(['toelettatore'], $event->activity_categories);
+        // In italiano la riga sparisce (il publisher scrive '').
+        $this->assertTrue(blank($event->getTranslation('activity_categories_other', 'it', false)));
+        $this->assertTrue(
+            blank($event->getTranslation('activity_categories_other', 'en', false)),
+            'Su /en la scheda stampa ancora «Tipologia: Toelettatore» con sotto «Rabbit boarding».',
+        );
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Smartbox;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Support\Translations;
 use Livewire\Component;
 
 class SmartboxName extends Component
@@ -27,8 +28,9 @@ class SmartboxName extends Component
             ['name.it.required' => __('partner.smartbox_name.error_required')],
         );
 
-        // Le traduzioni vuote non vengono salvate: su EN scatta il fallback IT.
-        $this->saveStep(['name' => array_filter($this->name, fn ($value) => filled($value))], 2);
+        // Le traduzioni vuote vanno a null (Translations::replacing, difetto W5):
+        // su EN scatta il fallback IT, anche per una lingua tolta dopo averla salvata.
+        $this->saveStep(['name' => Translations::replacing($this->name)], 2);
         $this->redirectRoute('partner.smartbox.description');
     }
 

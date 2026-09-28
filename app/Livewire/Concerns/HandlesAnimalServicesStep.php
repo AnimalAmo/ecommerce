@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Support\Translations;
+
 /**
  * Step "servizi per gli animali" condiviso tra i flussi hotel e attività:
  * multi-scelta dei servizi dedicati + campo libero "Altro". Persistenza e
@@ -33,7 +35,7 @@ trait HandlesAnimalServicesStep
         ]);
 
         $this->saveStep(
-            ['animal_services' => $this->services, 'animal_services_other' => array_filter($this->other, fn ($value) => filled($value))],
+            ['animal_services' => $this->services, 'animal_services_other' => Translations::replacing($this->other)],
             $this->animalServicesStep(),
         );
         $this->redirectRoute($this->animalServicesNextRoute());

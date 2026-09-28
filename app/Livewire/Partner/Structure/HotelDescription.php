@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Support\Translations;
 use Livewire\Component;
 
 class HotelDescription extends Component
@@ -27,8 +28,9 @@ class HotelDescription extends Component
             ['description.it.required' => __('partner.hotel_description.error_required')],
         );
 
-        // Le traduzioni vuote non vengono salvate: su EN scatta il fallback IT.
-        $this->saveStep(['description' => array_filter($this->description, fn ($value) => filled($value))], 4);
+        // Le traduzioni vuote vanno a null (Translations::replacing, difetto W5):
+        // su EN scatta il fallback IT, anche per una lingua tolta dopo averla salvata.
+        $this->saveStep(['description' => Translations::replacing($this->description)], 4);
         $this->redirectRoute('partner.structure.hotel.rooms');
     }
 
