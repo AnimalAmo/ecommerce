@@ -124,8 +124,10 @@ class StructurePublisherTest extends TestCase
         $hotel = collect($structure->amenityRows('hotel'))->pluck('label');
         $animal = collect($structure->amenityRows('animal'))->pluck('label');
 
-        // Selezionate nel wizard (sauna approssimata su Spa, pranzo dagli additional).
-        $this->assertEqualsCanonicalizing(['Wifi', 'Spa', 'Pranzo'], $hotel->all());
+        // Selezionate nel wizard (sauna approssimata su Spa, pranzo dagli
+        // additional). 'tv' fino al 28/09/2026 non aveva una voce a catalogo e
+        // la scheda la perdeva: ora c'è (WP8, orfane inverse).
+        $this->assertEqualsCanonicalizing(['Wifi', 'Spa', 'Pranzo', 'TV'], $hotel->all());
         $this->assertEqualsCanonicalizing(['Pet sitting', 'Omaggio di benvenuto'], $animal->all());
 
         // Il resto del gruppo non compare: dal 29/09/2026 la scheda mostra solo
@@ -137,12 +139,13 @@ class StructurePublisherTest extends TestCase
     public function test_the_pivot_still_records_the_amenities_not_offered(): void
     {
         // amenityRows() filtra in lettura: sotto, il pivot continua a portare
-        // una riga per ogni amenity del catalogo (7 + 7 dal seeder). È ciò che
-        // rende il filtro reversibile senza toccare i dati.
+        // una riga per ogni amenity del catalogo (12 + 8 dal seeder dal
+        // 28/09/2026). È ciò che rende il filtro reversibile senza toccare i
+        // dati. Incluse 6: Wifi, Spa, Pranzo, TV, Pet sitting, Omaggio.
         $structure = app(DraftPublisher::class)->publish($this->hotelDraft());
 
-        $this->assertCount(14, $structure->amenities);
-        $this->assertCount(9, $structure->amenities->where('pivot.included', false));
+        $this->assertCount(20, $structure->amenities);
+        $this->assertCount(14, $structure->amenities->where('pivot.included', false));
     }
 
     public function test_publish_skips_drafts_without_the_minimum_viable_data(): void

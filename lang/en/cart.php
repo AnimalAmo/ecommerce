@@ -19,6 +19,21 @@ return [
     // Validity line of the smartbox card ('Smartbox valid for 12 months', :validity via Format::validity)
     'gift_validity' => 'Smartbox valid for :validity',
 
+    // Notice of the lines removed from the cart without the customer removing them (finding C9,
+    // audit 28/09/2026: they used to vanish silently). One sentence per product, built by CartNotice.
+    'notice' => [
+        'heading' => 'Your cart has changed',
+        // Withheld smartbox: the partner now takes payment directly, it can no longer be bought online.
+        'withheld' => '“:title” can no longer be bought online, so we removed it from your cart.',
+        // Suspended, no longer approved or deleted: the customer does not need to know which.
+        'unavailable' => '“:title” is no longer available, so we removed it from your cart.',
+        // Deleted product whose name is gone too.
+        'untitled' => 'A product in your cart is no longer available, so we removed it.',
+        // Guest cart line refused at sign-in; :reason is the message of the rule it broke.
+        'not_merged' => '“:title”, which you added before signing in, was not moved into your cart. :reason',
+        'dismiss' => 'Dismiss the notice',
+    ],
+
     // Cart page UI strings (blade commerce/cart)
     'ui' => [
         'page_title' => 'Cart — AnimalAmo',

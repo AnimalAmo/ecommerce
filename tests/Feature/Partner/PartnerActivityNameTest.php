@@ -248,6 +248,203 @@ class PartnerActivityNameTest extends TestCase
         $this->assertSame([], $draft->refresh()->activity_categories);
     }
 
+    // ── Difetto F6: il testo di «Altro» sopravvive alla deselezione ───────────
+    //
+    // Il campo è disegnato SOLO dentro `@if (in_array('altro', $categories))`,
+    // ma `next()` scrive la colonna senza guardare se lo slug è ancora
+    // selezionato: il testo resta a bozza, il publisher lo copia e i due blade
+    // lo stampano gated solo su `filled(...)`. Dal wizard si può svuotare solo
+    // rispuntando «Altro», cancellandolo e ritogliendo la spunta.
+
+    public function test_togliere_altro_svuota_anche_il_suo_testo_libero(): void
+    {
+        $draft = $this->draftInSession('attivita');
+
+        // Primo salvataggio: «Altro» spuntato, col suo testo.
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Pensione per gatti')
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', 'Pensione per gatti a domicilio')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Pensione per gatti a domicilio', $draft->fresh()->getTranslation('activity_categories_other', 'it'));
+
+        // Si riapre lo step, si toglie «Altro» e si spunta un'altra casella. Il
+        // campo di testo non è più disegnato, quindi il partner non lo vede più.
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['toelettatore'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame(['toelettatore'], $draft->activity_categories);
+        $this->assertTrue(
+            blank($draft->getTranslation('activity_categories_other', 'it')),
+            'Senza «Altro» selezionato il suo testo libero non ha più un posto: la scheda stamperebbe '
+            .'«Tipologia: Toelettatore» con la sotto-riga grigia di un testo che il partner ha rinunciato a dare.',
+        );
+    }
+
+    /** Lo stesso sul ramo evento, dove la colonna gemella è `event_categories_other`. */
+    public function test_togliere_altro_svuota_il_testo_libero_anche_sugli_eventi(): void
+    {
+        $draft = $this->draftInSession('eventi');
+
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Sagra del cane')
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', 'Sagra paesana')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['fiere_mercatini'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(blank($draft->fresh()->getTranslation('event_categories_other', 'it')));
+    }
+
+    // ── Difetto W5: una traduzione inglese salvata non si può più togliere ─────
+    //
+    // `array_filter(..., filled)` fa CADERE la chiave del locale svuotato, e
+    // `setTranslations()` itera solo le chiavi che riceve: il locale assente non
+    // viene rimosso. Nel wizard non esiste una sola chiamata a
+    // `forgetTranslation()`/`replaceTranslations()`, che il lato contenuti usa
+    // invece regolarmente. L'unica via d'uscita — svuotare TUTTE le lingue — è
+    // chiusa dal `required` sull'italiano.
+
+    public function test_svuotare_la_traduzione_inglese_del_nome_la_rimuove(): void
+    {
+        $draft = $this->draftInSession('eventi');
+
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Sagra del cane')
+            ->set('name.en', 'Dog Fair')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Dog Fair', $draft->fresh()->getTranslation('name', 'en', false));
+
+        // Il partner riapre lo step, corregge l'italiano e SVUOTA il tab EN.
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Sagra del cane 2026')
+            ->set('name.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame('Sagra del cane 2026', $draft->getTranslation('name', 'it'));
+        $this->assertTrue(
+            blank($draft->getTranslation('name', 'en', false)),
+            'Svuotato il tab EN, il visitatore su /en deve tornare al fallback italiano: '
+            .'oggi FamilyPublisher riporta a catalogo il vecchio «Dog Fair» per sempre.',
+        );
+    }
+
+    /** Lo stesso sul testo libero di «Altro», che passa dallo stesso array_filter. */
+    public function test_svuotare_la_traduzione_inglese_del_testo_libero_la_rimuove(): void
+    {
+        $draft = $this->draftInSession('attivita');
+
+        Livewire::test(ActivityName::class)
+            ->set('name.it', 'Pensione per conigli')
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', 'Pensione per conigli')
+            ->set('categoriesOther.en', 'Rabbit boarding')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        Livewire::test(ActivityName::class)
+            ->set('categoriesOther.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(blank($draft->fresh()->getTranslation('activity_categories_other', 'en', false)));
+    }
+
+    // ── Giro del tester, 28/09/2026: F6 e W5 oltre l'italiano ────────────────
+    //
+    // Le prove F6 qui sopra hanno fixture solo italiane: la traduzione inglese
+    // di un «Altro» abbandonato non era guardata da nessuno.
+
+    public function test_togliere_altro_svuota_il_testo_libero_in_tutte_le_lingue(): void
+    {
+        $draft = $this->draftInSession('attivita', [
+            'name' => ['it' => 'Pensione per conigli'],
+            'activity_categories' => ['altro'],
+            'activity_categories_other' => ['it' => 'Pensione per conigli', 'en' => 'Rabbit boarding'],
+        ]);
+
+        Livewire::test(ActivityName::class)
+            // La fixture arriva davvero allo step: senza, la prova sarebbe verde a vuoto.
+            ->assertSet('categoriesOther.en', 'Rabbit boarding')
+            ->set('categories', ['toelettatore'])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame([], $draft->fresh()->getTranslations('activity_categories_other'));
+    }
+
+    /**
+     * La property non si svuota alla deselezione (scelta della lane nome):
+     * rispuntando «Altro» prima di salvare il partner ritrova il testo, e il
+     * salvataggio lo scrive.
+     */
+    public function test_rispuntare_altro_prima_di_salvare_ritrova_il_testo(): void
+    {
+        $draft = $this->draftInSession('eventi', [
+            'name' => ['it' => 'Sagra del cane'],
+            'event_categories' => ['altro'],
+            'event_categories_other' => ['it' => 'Sagra paesana'],
+        ]);
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['sportivi'])
+            ->set('categories', ['sportivi', 'altro'])
+            ->assertSet('categoriesOther.it', 'Sagra paesana')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Sagra paesana', $draft->fresh()->getTranslation('event_categories_other', 'it'));
+    }
+
+    /**
+     * Senza «Altro» il campo non è disegnato: un suo errore non avrebbe dove
+     * comparire. Un testo troppo lungo rimasto nella property non deve
+     * bloccare lo step, e non si salva.
+     */
+    public function test_un_testo_di_altro_troppo_lungo_ma_nascosto_non_blocca_lo_step(): void
+    {
+        $draft = $this->draftInSession('attivita', ['name' => ['it' => 'Toelettatura Bau']]);
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['toelettatore'])
+            ->set('categoriesOther.it', str_repeat('a', 201))
+            ->assertDontSeeHtml('wire:model="categoriesOther.it"')
+            ->call('next')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.activity.location'));
+
+        $this->assertSame([], $draft->fresh()->getTranslations('activity_categories_other'));
+    }
+
+    /** Con «Altro» spuntato invece il limite vale, e il campo c'è per mostrare l'errore. */
+    public function test_con_altro_spuntato_il_testo_troppo_lungo_e_rifiutato(): void
+    {
+        $this->draftInSession('attivita', ['name' => ['it' => 'Toelettatura Bau']]);
+
+        Livewire::test(ActivityName::class)
+            ->set('categories', ['altro'])
+            ->set('categoriesOther.it', str_repeat('a', 201))
+            ->assertSeeHtml('wire:model="categoriesOther.it"')
+            ->call('next')
+            ->assertHasErrors(['categoriesOther.it' => 'max']);
+    }
+
     public function test_it_rehydrates_the_saved_categories_of_the_branch(): void
     {
         $this->draftInSession('eventi', [

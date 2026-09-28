@@ -19,6 +19,21 @@ return [
     // Riga validità della card smartbox ('Smartbox valida per 12 mesi', :validity via Format::validity)
     'gift_validity' => 'Smartbox valida per :validity',
 
+    // Avviso delle righe tolte dal carrello senza che le togliesse il cliente (difetto C9, audit
+    // 28/09/2026: prima sparivano in silenzio). Una frase per prodotto, composte da CartNotice.
+    'notice' => [
+        'heading' => 'Il tuo carrello è cambiato',
+        // Smartbox ritirata: il partner ora si fa pagare direttamente, online non si compra più.
+        'withheld' => '«:title» non si può più acquistare online: l\'abbiamo tolto dal carrello.',
+        // Sospeso, non più approvato o cancellato: al cliente non serve sapere quale dei tre.
+        'unavailable' => '«:title» non è più disponibile: l\'abbiamo tolto dal carrello.',
+        // Prodotto cancellato di cui non resta nemmeno il nome.
+        'untitled' => 'Un prodotto che avevi nel carrello non è più disponibile: l\'abbiamo tolto.',
+        // Riga del carrello ospite rifiutata all'accesso; :reason è il messaggio della regola violata.
+        'not_merged' => '«:title», che avevi aggiunto prima di accedere, non è entrato nel carrello. :reason',
+        'dismiss' => 'Chiudi l\'avviso',
+    ],
+
     // Stringhe di UI della pagina Carrello (blade commerce/cart)
     'ui' => [
         'page_title' => 'Carrello — AnimalAmo',

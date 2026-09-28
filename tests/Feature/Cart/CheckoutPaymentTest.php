@@ -10,6 +10,7 @@ use App\Enums\ProductType;
 use App\Livewire\Commerce\Checkout;
 use App\Models\Event\Event;
 use App\Models\Order\Order;
+use App\Models\Partner\PartnerProfile;
 use App\Models\PaymentGateway\PaymentGateway;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
@@ -23,6 +24,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Locked;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use ReflectionProperty;
 use RuntimeException;
@@ -397,11 +399,19 @@ class CheckoutPaymentTest extends TestCase
         $component->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1']);
         $this->assertSame(1, Order::count());
 
-        // Replay con step manomesso via devtools: il guard idempotente a db
-        // (provider + gateway_session_id) intercetta — niente ordine, niente refund.
-        $component->set('step', 2)
-            ->call('handlePaymentCallback', ['payment_intent_id' => 'pi_fake_1'])
-            ->assertRedirect(route('profilo.ordini'));
+        // Replay con step manomesso via devtools: dal 29/09/2026 `$step` è
+        // #[Locked], quindi quella strada è chiusa a monte — il payload non
+        // riesce nemmeno a riportare il componente allo step 2. Il guard
+        // idempotente a db (provider + gateway_session_id) resta il backstop per
+        // i replay che arrivano da un'altra sessione, e ha la sua prova in
+        // PlaceOrderActionTest.
+        try {
+            $component->set('step', 2);
+
+            $this->fail('Atteso il rifiuto della scrittura su $step, che è #[Locked].');
+        } catch (CannotUpdateLockedPropertyException) {
+            // Il replay non arriva nemmeno alla callback.
+        }
 
         $this->assertSame(1, Order::count());
         $this->assertDatabaseCount('order_payments', 1);
@@ -834,5 +844,105 @@ class CheckoutPaymentTest extends TestCase
                 "{$property} deve essere #[Locked]: il client non può dettarla.",
             );
         }
+    }
+
+    // ── Difetto C1: lo step del funnel non è un input del client ──────────────
+    //
+    // C1 aveva tre anelli. Qui stanno i due che riguardano il componente: che
+    // `$step` sia bloccato e che il lucchetto regga. Il terzo — la verifica
+    // server-side che non legge lo storno, quindi lo stesso PaymentIntent già
+    // rimborsato torna a dire «incassato» — vive in StripeGatewayTest, che è
+    // l'unico posto dove la risposta di Stripe si può modellare: col gateway
+    // fittizio si proverebbe la fedeltà del doppio, non il codice di produzione.
+
+    /**
+     * Primo anello di C1. `$step` decide se una capture può avvenire
+     * (handlePaymentCallback esce subito con `step !== 2`), quindi è lo stato
+     * del funnel, non un input: esattamente la stessa ragione per cui
+     * `paymentIntentId` e `sessionAmountCents` sono bloccate. Senza
+     * l'attributo, `updates: {step: 2}` nel payload Livewire apre l'incasso su
+     * un componente appena montato, che non ha mai aperto una sessione.
+     */
+    public function test_lo_step_del_checkout_non_e_modificabile_dal_client(): void
+    {
+        $this->assertNotEmpty(
+            (new ReflectionProperty(Checkout::class, 'step'))->getAttributes(Locked::class),
+            'step deve essere #[Locked]: è lo stato del funnel, e da 2 si incassa. goToStep() resta la sola via.',
+        );
+    }
+
+    /**
+     * L'altra metà del primo anello: il lucchetto deve REGGERE davvero, non
+     * solo esistere come attributo. Un payload `updates: {step: 2}` su un
+     * componente appena montato — che non ha mai aperto una sessione gateway —
+     * va rifiutato prima di arrivare alla callback.
+     *
+     * Vale la pena tenerlo accanto al test sull'attributo: quello prova
+     * l'intenzione, questo prova l'effetto, e un `#[Locked]` messo sulla
+     * property sbagliata passerebbe il primo e non questo.
+     */
+    public function test_uno_step_manomesso_dal_payload_viene_rifiutato(): void
+    {
+        $this->actingAs($this->buyer());
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $this->seller()->id, 'price_cents' => 10000]));
+
+        $component = Livewire::test(Checkout::class)->assertSet('step', 1);
+
+        try {
+            $component->set('step', 2);
+
+            $this->fail('Atteso il rifiuto della scrittura su una property bloccata.');
+        } catch (CannotUpdateLockedPropertyException) {
+            // È il rifiuto che serve: dallo step 2 si incassa.
+        }
+
+        $this->assertSame([], $this->gateway->captureCalls);
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    // ── Difetto C10: online ma non pagabile, muro allo step 2 ───────────────
+
+    /**
+     * `paymentMode()` guarda solo `requiresOnlinePayment()`, quindi il catalogo
+     * disegna la CTA di un partner che ha perso charges_enabled o
+     * payouts_enabled. `preparePaymentStep()` distingue solo in-struttura
+     * sì/no e ritorna `true` anche quando `initPaymentSession()` è uscito su
+     * `! canBePaid()`: lo step 2 si apre senza element e senza «Paga ora», e
+     * `goToStep` accetta solo `step + 1` — non c'è ritorno allo step 1, quindi
+     * nome, cognome, email e telefono vanno riscritti ricaricando.
+     */
+    public function test_un_venditore_online_ma_non_pagabile_non_apre_lo_step_due(): void
+    {
+        $this->actingAs($this->buyer());
+
+        // online_payment resta true (default del profilo): manca solo Stripe.
+        $seller = User::factory()->create();
+        PartnerProfile::factory()->for($seller)->create();
+        $this->assertTrue($seller->partnerProfile->requiresOnlinePayment());
+        $this->assertFalse($seller->partnerProfile->canBePaid());
+
+        $this->addStructureLine(Structure::factory()->create([
+            'user_id' => $seller->id, 'price_cents' => 10000]));
+
+        Livewire::test(Checkout::class)
+            ->set('firstName', 'Giulia')
+            ->set('lastName', 'Rossi')
+            ->set('email', 'giulia@example.com')
+            ->call('goToStep', 2)
+            // Uno step 2 senza element e senza "Paga ora", da cui non si torna
+            // indietro, è un vicolo cieco: meglio non aprirlo.
+            ->assertSet('step', 1)
+            ->assertSet('firstName', 'Giulia')
+            ->assertDispatched('toast-show')
+            // Tester 28/09/2026: un toast qualsiasi passava anche per un rifiuto
+            // di disponibilità del carrello, che lascia a sua volta lo step 1. Il
+            // motivo deve essere il venditore, e i dati devono aver superato la
+            // validazione: è proprio chi li ha compilati che non deve perderli.
+            ->assertHasNoErrors()
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('checkout.seller_not_payable.toast'));
+
+        // Nessuna sessione di pagamento aperta su un conto che non può incassare.
+        $this->assertSame([], $this->gateway->initCalls);
     }
 }

@@ -4,19 +4,18 @@ namespace App\Livewire\Catalog;
 
 use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
-use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
-use App\Services\Cart\CartManager;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Partner\ServiceOptionLabels;
 use App\Support\Format;
-use Flux\Flux;
 use Livewire\Component;
 
 class EventDetail extends Component
 {
+    use AddsCatalogProductToCart;
     use TogglesFavorites;
 
     /** Slug evento dalla rotta (es. "brunch-pet-friendly"); il nome differisce dal parametro {event} per non collidere col binding Livewire. */
@@ -59,17 +58,13 @@ class EventDetail extends Component
             return;
         }
 
-        try {
-            // Pagina senza contatore partecipanti: sempre 1 persona per aggiunta (decisione ratificata).
-            app(CartManager::class)->addItem('event', $event->id, ['participants' => 1], false);
-        } catch (CartValidationException $exception) {
-            // Violazione disponibilità (es. capienza esaurita): toast danger, niente pop-up.
-            Flux::toast(text: $exception->getMessage(), variant: 'danger');
-
+        // Pagina senza contatore partecipanti: sempre 1 persona per aggiunta
+        // (decisione ratificata). Titolare che incassa in struttura (difetto C7,
+        // 28/09/2026) o capienza esaurita: toast danger, niente pop-up.
+        if (! $this->addCatalogProductToCart($event, ['participants' => 1])) {
             return;
         }
 
-        $this->dispatch('cart-updated');
         $this->cartPopupOpen = true;
     }
 
@@ -144,7 +139,7 @@ class EventDetail extends Component
      *
      * Dal 27/09/2026 il partner può mettere un limite di posti, quindi un
      * evento può riempirsi: la CTA sparisce invece di restare lì a fallire con
-     * un toast. `addToCart()` NON prende guardie nuove — la validazione vera
+     * un toast. `addToCart()` NON prende una guardia sui posti — la validazione vera
      * resta del carrello, che è l'unico a contare sotto lock, e una chiamata
      * wire manomessa deve continuare a passare da lì.
      */

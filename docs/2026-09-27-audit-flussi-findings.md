@@ -16,14 +16,101 @@ chiudono. Su `main` non ci sono, perché `main` resta verde.
 | | difetto | stato |
 |---|---|---|
 | **C1** | bloccante — ordine pagato con zero euro incassati | ✅ **chiuso** (`a90bec9`), test verdi |
-| F1 | foto cancellata dal disco mentre il catalogo la punta | ⏳ da fare |
-| W1 | `detailed_description` obbligatoria che non arriva a catalogo | ⏳ da fare (deciso: colonna gemella + posto sulla scheda) |
-| W2 | «Indietro» orfana la bozza — **è il caso Metina** | ⏳ da fare |
-| C2 | CTA carrello accesa con meno posti dei 2 ospiti di default | ⏳ da fare |
-| C5 | liste e preferiti ignorano la capienza | ⏳ da fare |
-| C6 | borsa e cuore finti sulle card suggerite del carrello | ⏳ da fare |
+| F1 | foto cancellata dal disco mentre il catalogo la punta | ✅ **chiuso** 28/09 (`ae0f646`) |
+| W1 | `detailed_description` obbligatoria che non arriva a catalogo | ✅ **chiuso** 28/09 (`d58aca9`), colonna gemella + travaso |
+| W2 | «Indietro» orfana la bozza — **è il caso Metina** | ✅ **chiuso** 28/09 (`cd13ce3`) |
+| C2 | CTA carrello accesa con meno posti dei 2 ospiti di default | ✅ **chiuso** 28/09 (`d58aca9`) |
+| C5 | liste e preferiti ignorano la capienza | ✅ **chiuso** 28/09 (`d34676d`) |
+| C6 | borsa e cuore finti sulle card suggerite del carrello | ✅ **chiuso** 28/09 (`d34676d`) |
 | C4 | «Partecipa» dichiara un fatto non avvenuto | 🔸 **rimandato per scelta**: si aspetta la partecipazione vera (tranche C) |
-| gli altri 20 | medi e cosmetici | ⏳ da triare |
+| F2, F3 | messaggi al partner sulla causa dell'attesa | ✅ **chiusi** 28/09 (`3d21ea3`) |
+| C9 | righe che spariscono dal carrello in silenzio | ✅ **chiuso** 28/09 (`055790a`) |
+| C8, F4 | smartbox non ritirate, pannello cieco al ritiro | ✅ **chiusi** 28/09 (`f97c7d2`) |
+| C7, C10 | guardie server-side delle schede, checkout di un venditore non pagabile | ✅ **chiusi** 28/09 (`b92bc42`) |
+| W5, F6, W4 | traduzioni che non si tolgono, «Altro» che sopravvive, «Indietro» dello step Nome | ✅ **chiusi** 28/09 (`c348f08`) |
+| F5, W7 | cambio di ramo, coordinate bancarie solo sulla bozza | ✅ **chiusi** 28/09 (`448e040`) |
+| F7, F8 | dettaglio servizio cieco ai campi nuovi, gruppi di stuck-drafts | ✅ **chiusi** 28/09 (`fbdc82d`) |
+| W9, F9 | ricerca case-sensitive su MySQL, regole del pannello | ✅ **chiusi** 28/09 (`8f35da0`) |
+| W8 | nessun test sulla preselezione dall'iscrizione | ✅ coperto dai test dell'audit, verdi |
+| W6 | step «Smartbox» del percorso Struttura inerte | 🔸 **metà**: il partner la rilegge nel dettaglio; collegarla ai cofanetti o togliere lo step è da decidere con la cliente |
+| C3 | i posti non si liberano mai | 🔸 **decisione**: non esiste un percorso di annullamento ordini; chi lo scriverà deve liberare i posti nella stessa transazione, e la riga «Cancellazione gratuita» del carrello promette una cosa che oggi non si fa |
+
+## Giro del 28/09/2026: i sei gravi
+
+Branch `fix/audit-flussi-2026-09-28`, nato da `audit/flussi-2026-09-27` (cioè main + i test rossi). Quattro
+builder su file disgiunti, un tester, poi una code review a tre lenti con due verificatori avversariali.
+Suite VM: **50 rossi, 2257 verdi** contro la baseline di **64 rossi, 2192 verdi**. Zero rossi nuovi: i 14
+chiusi sono esattamente i test delle sezioni F1, W1, C2, W2, C5 e C6, e i 50 rimasti sono le sezioni dei
+difetti ancora aperti. Il branch non va su `main` finché quei 50 non sono chiusi o spostati.
+
+Il tester ha trovato due difetti nuovi dentro le correzioni, chiusi nello stesso giro:
+
+- **A, sicurezza.** `saved` dello step foto è una proprietà Livewire pubblica: `removeSaved()` la scriveva
+  nella bozza **prima** di controllare il path contro la bozza, quindi due chiamate forgiate cancellavano
+  un file qualsiasi del disco public; `next()` faceva entrare un path altrui nella bozza e in copertina.
+  Ora decide la bozza, e un file che un'altra bozza contiene non si cancella comunque.
+- **B.** Le liste usavano la soglia di una persona, ma l'aggiunta rapida di un'attività mette due adulti:
+  con un posto libero la borsa c'era e il click veniva rifiutato. Soglia e aggiunta leggono ora
+  `Event::quickAddPersons()`; per chi incassa in struttura la soglia resta una persona, come in scheda.
+
+La review ha confermato 3 rilievi e ne ha dati per parziali 7 (tutti minori o medi, tutti applicati): un
+test del `saved` forgiato protetto a vuoto dalla seconda guardia, un test di pubblicazione fallita che non
+distingueva `afterCommit` da una cancellazione immediata, una migrazione non rilanciabile su MySQL, un hex
+al posto del token, commenti rimasti al comportamento di prima.
+
+## Giro del 28/09/2026, fase 2: i medi dietro «ho collegato Stripe ma la scheda non va online»
+
+Quattro builder, un tester, una review a tre lenti con due verificatori. Suite VM: **29 rossi, 2340 verdi**; zero
+rossi nuovi, 21 chiusi in questa fase. I 29 sono le sezioni F5–F9, W4–W9, C3, C4 e un buco di copertura del
+publisher.
+
+Il tester ha trovato tre difetti nelle correzioni, chiusi: la cancellazione dal pannello toglieva le righe dal
+carrello con una DELETE diretta (quindi senza avviso); il dettaglio di «I miei servizi» diceva un'altra causa dalla
+lista; la prima versione di F3 lasciava senza nessun banner chi aveva in attesa solo smartbox.
+
+La review ne ha confermati due medi, che erano lo stesso difetto: il ritiro delle smartbox scriveva il segnale di
+pubblicazione sulle bozze, e al ritorno online il job avrebbe pubblicato anche una modifica riaperta e lasciata a
+metà nel wizard (rimandando in moderazione una scheda già approvata). Ora il ritiro non segna le bozze: il
+ritorno lo fa `set()` sulla riga, e la dashboard conta le righe ritirate. Gli altri rilievi applicati: la chiave di
+sessione del carrello ospite è rimasta `cart` (con `cart.items` un rollback del codice dava 500 a ogni ospite con un
+carrello), l'avviso vive in `cart_notice`; lock dei carrelli in ordine di id; testi admin del ritiro veri anche per
+le smartbox ritirate dalla migrazione del 27/09 a partner online senza Stripe.
+
+**Restano aperte, e servono decisioni di prodotto:** le righe *legittime* di un partner passato poi al pagamento
+diretto restano in carrello e lo legano a quel venditore; la metà di C10 sul catalogo (`canBePaid()` dove si decide
+la CTA); con `DemoUserSeeder` il partner demo è online senza Stripe, quindi su un ambiente col catalogo demo ogni
+checkout si ferma allo step 1.
+
+## Giro del 28/09/2026, fase 3: il wizard, il dettaglio, il pannello, la ricerca
+
+Quattro builder, un tester, una review a tre lenti con due verificatori. Suite VM: **6 rossi, 2430 verdi**, zero rossi
+nuovi. I 6 rimasti aspettano decisioni, non codice: C4 (tre test, la partecipazione vera agli eventi gratuiti è la
+tranche C), C3 (due test, non esiste l'annullamento), W6 (un test, adesione dichiarata verso il catalogo).
+
+Il tester ha trovato cinque difetti nelle correzioni, chiusi: W5 sistemato sulla bozza ma non a catalogo (il publisher
+ricopiava solo le lingue piene); lo stesso W5 in nove altri punti (step hotel e smartbox, servizi, servizi per animali,
+pannello); F5 lasciava online la riga della famiglia vecchia; il dettaglio mostrava l'IBAN vecchio della bozza; su
+MySQL `json_unquote` di un `{"it":null}` dà la stringa 'null' e la ricerca «nu» trovava quelle righe. La review ha
+aggiunto una cosa: una riga di un'altra famiglia con **prenotazioni future** non si cancella, si ritira dalla vetrina,
+o il partner perdeva di vista prenotazioni già pagate.
+
+La skill `b2b-wizard-flow` prescriveva `array_filter` per i campi tradotti, cioè il difetto W5: ora prescrive
+`Translations::replacing()`.
+
+**Il branch è pronto per `main`** a meno dei 6 test in attesa di decisione: o si chiudono, o si spostano fuori dal
+branch prima del merge (restano sul branch `audit/flussi-2026-09-27`).
+
+## 28/09/2026, chiusura: WP8 e merge su `main`
+
+**WP8** della tranche C (`c86e73e`): i sette servizi della cliente sono selezionabili e le sei voci che il partner
+spuntava senza una riga a catalogo (TV, riscaldamento, ricarica elettrica, piscina, area animali, campo da tennis
+della smartbox) arrivano sulla scheda. In produzione: `migrate`, `animalamo:resync-amenities --dry-run`, poi il
+comando senza opzioni, poi `view:clear`.
+
+**I sei test delle decisioni aperte** (C3 ×2, C4 ×3, W6 ×1) sono `markTestIncomplete` col motivo: `main` resta verde
+e la specifica resta nel codice. Quando la decisione arriva si toglie la riga e il test torna il contratto.
+Suite prima del merge: **0 falliti, 6 incompleti, 1 skipped, 2516 verdi** (baseline di stamattina: 64 rossi, 2192
+verdi).
 
 ## Come riprendere
 

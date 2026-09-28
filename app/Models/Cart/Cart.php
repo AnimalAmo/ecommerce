@@ -20,4 +20,16 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
     ];
+
+    /**
+     * `notice`: righe tolte dal carrello e non ancora dette al cliente
+     * (difetto C9, audit 28/09/2026). La scrive e la svuota solo
+     * App\Services\Cart\CartNotice, con forceFill: fuori dal fillable apposta.
+     */
+    protected function casts(): array
+    {
+        return [
+            'notice' => 'array',
+        ];
+    }
 }

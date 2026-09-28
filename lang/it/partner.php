@@ -19,6 +19,11 @@ return [
         'awaiting_stripe' => 'Il tuo servizio è pronto: lo pubblicheremo in automatico appena completi il collegamento del conto su Stripe.',
         // Modifica di un servizio già completato: la versione precedente resta quella pubblicata.
         'awaiting_stripe_changes' => "Modifiche salvate: la versione già pubblicata resta com'era e pubblicheremo le modifiche in automatico appena completi il collegamento del conto su Stripe.",
+        // Smartbox chiusa da chi incassa in struttura (difetto F2, 28/09/2026):
+        // prima leggeva gli avvisi qui sopra, collegava Stripe e la smartbox
+        // restava ferma, perché le serve l'incasso online.
+        'awaiting_payment_method' => 'La tua Smartbox è pronta: la metteremo in vetrina in automatico appena scegli di ricevere i pagamenti online su AnimalAmo, con il conto Stripe collegato.',
+        'awaiting_payment_method_changes' => 'Modifiche salvate: le pubblicheremo in automatico appena scegli di ricevere i pagamenti online su AnimalAmo, con il conto Stripe collegato.',
         // Avviso del wizard smartbox e della card Smartbox: avvisa, non blocca
         // (richiesta della cliente del 27/09/2026). La prima riga è la frase
         // della cliente, la seconda dice che si può compilare comunque.
@@ -298,6 +303,14 @@ return [
         'section_extra' => 'Informazioni aggiuntive',
         'section_photos' => 'Foto',
         'section_payment' => 'Metodo di pagamento',
+        // Righe del dettaglio per le famiglie diverse dalla struttura e per i
+        // campi che il dettaglio non mostrava (audit del 28/09/2026, F7 e W6):
+        // «Tipologia struttura» su un evento o una smartbox non è vero.
+        'section_service_type' => 'Tipologia',
+        'section_detailed_description' => 'Descrizione dettagliata',
+        'section_cost' => 'Costo',
+        'section_smartbox' => 'Adesione alle smartbox',
+        'max_participants_unlimited' => 'Nessun limite',
         'rooms_count' => 'stanze',
         'rooms_price' => 'prezzo a notte',
         'checkin' => 'Check-in',
@@ -906,6 +919,15 @@ return [
         'opt_vet_desc' => 'Servizio interno alla struttura o nelle vicinanze',
         'opt_area' => 'Area Animali',
         'opt_area_desc' => 'Un’area dedicata agli animali',
+        // Voci del catalogo amenity che nessuno slug raggiungeva (cliente, 26-27/09/2026).
+        'opt_dogsitter' => 'Dog sitter',
+        'opt_dogsitter_desc' => 'Qualcuno che si prende cura del cane in tua assenza',
+        'opt_dog_beach' => 'Dog Beach nelle vicinanze',
+        'opt_dog_beach_desc' => 'Una spiaggia che accoglie i cani, a poca distanza',
+        'opt_surcharge' => 'Supplemento animali',
+        'opt_surcharge_desc' => 'Per l’animale è previsto un costo aggiuntivo',
+        'opt_dog_pool' => 'Piscina per cani',
+        'opt_dog_pool_desc' => 'Una piscina in cui i cani possono fare il bagno',
         'opt_other' => 'Altro',
         'other_placeholder' => 'Descrivi il servizio',
         'back' => 'Indietro',
@@ -935,6 +957,10 @@ return [
         'svc_tv' => 'TV',
         'svc_pool' => 'Piscina',
         'svc_sauna' => 'Sauna',
+        // Voci del catalogo amenity che nessuno slug raggiungeva (cliente, 26-27/09/2026).
+        'svc_laundry' => 'Lavanderia',
+        'svc_lift' => 'Ascensore',
+        'svc_bike_rental' => 'Noleggio bici',
         'add_none' => 'Nessuno',
         'add_breakfast' => 'Colazione',
         'add_lunch' => 'Pranzo',

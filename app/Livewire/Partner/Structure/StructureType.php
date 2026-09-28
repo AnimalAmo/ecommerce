@@ -3,17 +3,15 @@
 namespace App\Livewire\Partner\Structure;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Models\Structure\StructureDraft;
 use Livewire\Component;
 
 class StructureType extends Component
 {
     use InteractsWithStructureDraft;
 
-    /** Tipologia struttura ricettiva scelta: hotel | bb | agriturismo | casa_vacanza. */
+    /** Tipologia struttura ricettiva scelta: una di StructureDraft::STRUCTURE_TYPES. */
     public string $type = '';
-
-    /** Le quattro categorie di questo percorso: nessun'altra va precaricata nel radio. */
-    private const TYPES = ['hotel', 'bb', 'agriturismo', 'casa_vacanza'];
 
     public function mount(): void
     {
@@ -24,40 +22,25 @@ class StructureType extends Component
         // scelta che non ha fatto.
         $type = $this->draft()->type;
 
-        $this->type = in_array($type, self::TYPES, true) ? $type : '';
+        $this->type = in_array($type, StructureDraft::STRUCTURE_TYPES, true) ? $type : '';
     }
 
     public function next(): void
     {
         $this->validate(
-            ['type' => ['required', 'string', 'in:'.implode(',', self::TYPES)]],
+            ['type' => ['required', 'string', 'in:'.implode(',', StructureDraft::STRUCTURE_TYPES)]],
             ['type.required' => __('partner.structure_type.error_required'), 'type.in' => __('partner.structure_type.error_required')],
         );
 
-        $this->saveStep(['type' => $this->type, ...$this->clearedFields()], 1);
+        // Passando da Attività/Eventi a una struttura ricettiva, i campi
+        // dell'altro ramo restavano scritti sulla bozza e finivano in
+        // pubblicazione. Difetto F5 (audit del 28/09/2026): l'elenco da azzerare
+        // era scritto qui a mano e non era stato esteso alle colonne del
+        // 26-27/09, e la categoria del servizio non si riscriveva, così la bozza
+        // pubblicava ancora da EventPublisher coi posti dell'evento abbandonato.
+        // La regola, una sola per questo step e per ActivityType, sta nel modello.
+        $this->saveStep($this->draft()->attributesForType($this->type), 1);
         $this->redirectRoute('partner.structure.hotel.title');
-    }
-
-    /**
-     * Passando da Attività/Eventi a una struttura ricettiva, i campi dell'altro
-     * ramo restavano scritti sulla bozza e finivano in pubblicazione. Si
-     * azzerano solo al cambio effettivo di ramo: tornare su questo step senza
-     * cambiare nulla non deve cancellare il lavoro già fatto.
-     *
-     * @return array<string, null>
-     */
-    private function clearedFields(): array
-    {
-        $draft = $this->draft();
-
-        if ($draft->type === null || in_array($draft->type, self::TYPES, true)) {
-            return [];
-        }
-
-        return array_fill_keys(
-            ['meeting_point', 'date_start', 'date_end', 'time_start', 'time_end', 'detailed_description'],
-            null,
-        );
     }
 
     public function render()

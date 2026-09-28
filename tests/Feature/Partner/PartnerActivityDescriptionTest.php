@@ -90,4 +90,62 @@ class PartnerActivityDescriptionTest extends TestCase
             ->call('next')
             ->assertHasErrors('description.it');
     }
+
+    // ── Giro del tester, 28/09/2026: W5 sulle due descrizioni ────────────────
+    //
+    // Una traduzione inglese salvata non si toglieva più: `array_filter` faceva
+    // cadere la chiave e spatie non rimuove i locale assenti. La correzione è
+    // stata provata dalla lane solo sul nome; qui le due descrizioni, e che
+    // l'italiano resti.
+
+    public function test_svuotare_linglese_delle_due_descrizioni_lo_toglie_e_litaliano_resta(): void
+    {
+        $draft = StructureDraft::create([
+            'status' => 'draft',
+            'current_step' => 4,
+            'type' => 'attivita',
+            'description' => ['it' => 'Passeggiata guidata.', 'en' => 'Guided walk.'],
+            'detailed_description' => ['it' => 'Tre ore nei boschi.', 'en' => 'Three hours in the woods.'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(ActivityDescription::class)
+            // La fixture arriva davvero allo step (altrimenti la prova sarebbe verde a vuoto).
+            ->assertSet('description.en', 'Guided walk.')
+            ->assertSet('detailedDescription.en', 'Three hours in the woods.')
+            ->set('description.en', '')
+            ->set('detailedDescription.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame(['it' => 'Passeggiata guidata.'], $draft->getTranslations('description'));
+        $this->assertSame(['it' => 'Tre ore nei boschi.'], $draft->getTranslations('detailed_description'));
+        // Su /en il visitatore legge il ripiego italiano.
+        $this->assertSame('Passeggiata guidata.', $draft->getTranslation('description', 'en'));
+    }
+
+    /** Sull'evento la dettagliata non si chiede: lo step non la tocca, nemmeno la sua traduzione. */
+    public function test_levento_non_tocca_la_descrizione_dettagliata(): void
+    {
+        $draft = StructureDraft::create([
+            'status' => 'draft',
+            'current_step' => 4,
+            'type' => 'eventi',
+            'description' => ['it' => 'Sagra.', 'en' => 'Fair.'],
+            'detailed_description' => ['it' => 'Residuo del ramo attività.'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        Livewire::test(ActivityDescription::class)
+            ->set('description.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame(['it' => 'Sagra.'], $draft->getTranslations('description'));
+        $this->assertSame(['it' => 'Residuo del ramo attività.'], $draft->getTranslations('detailed_description'));
+    }
 }

@@ -6,7 +6,11 @@
         </a>
         <nav class="hidden flex-1 items-center justify-center gap-8 text-sm lg:flex">
             <a href="{{ route('partner.dashboard') }}" class="{{ request()->routeIs('partner.dashboard') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_dashboard') }}</a>
-            <a href="{{ route('partner.service.create') }}" class="{{ request()->routeIs('partner.service.create', 'partner.structure.*', 'partner.activity.*', 'partner.smartbox.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_create_service') }}</a>
+            {{-- `nuovo=1`: dalla nav si chiede un servizio NUOVO, anche a metà di un
+                 altro wizard. La bozza in corso non si perde: "I miei servizi" la
+                 elenca con «Riprendi». Senza parametro la pagina la riprenderebbe,
+                 ed è ciò che serve all'«Indietro» del wizard (difetto W2). --}}
+            <a href="{{ route('partner.service.create', ['nuovo' => 1]) }}" class="{{ request()->routeIs('partner.service.create', 'partner.structure.*', 'partner.activity.*', 'partner.smartbox.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_create_service') }}</a>
             <a href="{{ route('partner.services') }}" class="{{ request()->routeIs('partner.services', 'partner.services.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_my_services') }}</a>
             <a href="{{ route('partner.bookings') }}" class="{{ request()->routeIs('partner.bookings', 'partner.bookings.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_bookings') }}</a>
             <a href="{{ route('partner.profile') }}" class="{{ request()->routeIs('partner.profile', 'partner.profile.*') ? 'font-bold text-brand-cyan' : 'font-normal text-black hover:font-bold hover:text-brand-cyan' }}">{{ __('partner.nav_profile') }}</a>

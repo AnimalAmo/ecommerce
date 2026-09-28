@@ -21,8 +21,13 @@ class Event extends Model
     /** @use HasFactory<EventFactory> */
     use HasAmenities, HasCatalogImages, HasCatalogModeration, HasFactory, HasFaqs, HasTranslations;
 
-    /** SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale. */
-    public array $translatable = ['title', 'description', 'activity_categories_other', 'operating_area', 'event_categories_other'];
+    /**
+     * SOLO colonne stringa — mai le json: spatie tratterebbe l'array come mappa di locale.
+     *
+     * Spatie legge '' e non null quando la lingua manca (e per una colonna
+     * nulla): a valle il vuoto si controlla con blank()/filled(), mai `=== null`.
+     */
+    public array $translatable = ['title', 'description', 'detailed_description', 'activity_categories_other', 'operating_area', 'event_categories_other'];
 
     protected $fillable = [
         'user_id',
@@ -52,6 +57,10 @@ class Event extends Model
         'img',
         'hero_img',
         'description',
+        // Gemella di `structure_drafts.detailed_description` (audit 28/09/2026,
+        // difetto W1): il wizard la pretende per le attività, e senza colonna
+        // qui restava nella bozza — la scheda ristampava la descrizione breve.
+        'detailed_description',
         'time_note',
         'venue_note',
         'position',
@@ -98,5 +107,35 @@ class Event extends Model
     public function hasJoinCta(): bool
     {
         return $this->is_free || $this->price_cents === null;
+    }
+
+    /**
+     * Quante persone impegna la CTA di una lista (griglia /eventi, pagina
+     * regione, card dei preferiti e del carrello vuoto), che non ha un
+     * contatore di ospiti: l'aggiunta rapida di un'attività mette due adulti
+     * (AddsEventToCart, FavoriteService::defaultCartOptions), quella di un
+     * evento un partecipante. «Partecipa» non passa dal carrello e impegna
+     * una persona sola.
+     *
+     * Serve alla soglia di «esaurito» delle liste: con la persona minima,
+     * un'attività con un posto libero mostrava la borsa e il click veniva
+     * rifiutato da AvailabilityService con un toast (il difetto C2 della
+     * scheda, trasferito nelle liste).
+     */
+    public function quickAddPersons(): int
+    {
+        return $this->type === ProductType::Activity && ! $this->hasJoinCta() ? 2 : 1;
+    }
+
+    /**
+     * Restano posti per $persons? Stessa aritmetica di
+     * AvailabilityService::ensureEventAvailable() (`booked + persons > max`
+     * rifiuta), che resta l'autorità sotto lock: qui si decide solo cosa
+     * disegnare. Senza capienza, sempre sì.
+     */
+    public function hasSeatsFor(int $persons): bool
+    {
+        return $this->max_participants === null
+            || ($this->booked_participants ?? 0) + $persons <= $this->max_participants;
     }
 }

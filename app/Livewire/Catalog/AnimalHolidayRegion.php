@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Livewire\Concerns\AddsEventToCart;
 use App\Livewire\Concerns\HasCatalogFilters;
@@ -10,6 +11,7 @@ use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Title;
@@ -82,7 +84,10 @@ class AnimalHolidayRegion extends Component
                     $like = self::like($term);
                     // name è JSON translatable: LIKE sul path del locale corrente,
                     // non sulla colonna raw (matcherebbe chiavi locale e testo cross-lingua).
-                    $query->where(fn ($sub) => $sub->whereLike('name->'.app()->getLocale(), $like)->orWhereLike('location', $like));
+                    // Col caso piegato su tutti e due i motori: su MySQL il valore
+                    // estratto dal JSON ha collation binaria (difetto W9, 28/09/2026 —
+                    // vedi HasCatalogFilters::whereTranslatedLike).
+                    $query->where(fn ($sub) => self::whereTranslatedLike($sub, 'name', $like)->orWhereLike('location', $like));
                 })
                 ->when(count($productTypes) === 1, fn ($query) => $query->where(
                     'type',
@@ -107,7 +112,14 @@ class AnimalHolidayRegion extends Component
                 ->whereIn('type', $eventTypes)
                 ->when(! $showAll, function ($query) use ($term): void {
                     $like = self::like($term);
-                    $query->where(fn ($sub) => $sub->whereLike('title->'.app()->getLocale(), $like)->orWhereLike('location', $like));
+                    // Stessa ricerca di Events::applyWhereFilter() (difetto W9,
+                    // 28/09/2026): titolo col caso piegato e zona in cui opera il
+                    // professionista, che su un evento è NULL.
+                    $query->where(function ($sub) use ($like): void {
+                        self::whereTranslatedLike($sub, 'title', $like);
+                        self::whereTranslatedLike($sub, 'operating_area', $like, 'or');
+                        $sub->orWhereLike('location', $like);
+                    });
                 })
                 ->when($this->priceFiltered(), fn ($query) => $query->whereBetween('price_cents', $this->priceRangeCents()))
                 ->orderBy('position')
@@ -124,7 +136,7 @@ class AnimalHolidayRegion extends Component
             ? SmartboxPackage::query()->whereRaw('1 = 0')->get()
             : SmartboxPackage::query()
                 ->when($boxTypes !== [], fn ($query) => $query->whereIn('type', $boxTypes))
-                ->when(! $showAll, fn ($query) => $query->whereLike('title->'.app()->getLocale(), self::like($term)))
+                ->when(! $showAll, fn ($query) => self::whereTranslatedLike($query, 'title', self::like($term)))
                 ->when($this->priceFiltered(), fn ($query) => $query->whereBetween('price_from_cents', $this->priceRangeCents()))
                 ->orderBy('position')
                 ->get();
@@ -144,11 +156,22 @@ class AnimalHolidayRegion extends Component
         // lettura per card sarebbe una N+1 nascosta dentro una vista.
         $ownerModes = app(PartnerPaymentModeService::class)->forOwners($events->pluck('user_id'));
 
+        // Posti esauriti (difetto C5): come in /eventi, la card offriva
+        // «Acquista» anche a evento pieno. Stessa regola della scheda
+        // (FavoriteService::isSoldOut), sulle righe già caricate: zero query.
+        $favorites = app(FavoriteService::class);
+        $soldOutIds = $events->filter(fn (Event $event): bool => $favorites->isSoldOut(
+            $event,
+            ($ownerModes[$event->user_id] ?? OrderPaymentMode::Online) === OrderPaymentMode::OnSite,
+        ))->modelKeys();
+
         return view('livewire.catalog.animal-holiday-region', [
             'results' => $results,
             'events' => $events,
             // Mappa id titolare => OrderPaymentMode per le card evento (assente = online).
             'ownerModes' => $ownerModes,
+            // Id delle card evento a posti esauriti: al posto della CTA, la ragione.
+            'soldOutIds' => $soldOutIds,
             'boxes' => $boxes,
             'empty' => $empty,
             // Griglia vuota per due motivi opposti: filtri troppo stretti oppure catalogo

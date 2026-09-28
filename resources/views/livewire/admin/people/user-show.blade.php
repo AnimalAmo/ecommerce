@@ -120,6 +120,7 @@
                         {{ collect([
                             trans_choice('admin-people.users.listings_count', $partner['listings'], ['count' => $partner['listings']]),
                             $partner['suspended'] > 0 ? trans_choice('admin-people.users.listings_suspended', $partner['suspended'], ['count' => $partner['suspended']]) : null,
+                            $partner['withheld'] > 0 ? trans_choice('admin-people.users.listings_withheld', $partner['withheld'], ['count' => $partner['withheld']]) : null,
                         ])->filter()->implode(', ') }}
                     </span>
                     @if ($partner['listings'] > 0)

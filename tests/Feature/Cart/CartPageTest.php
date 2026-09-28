@@ -5,6 +5,7 @@ namespace Tests\Feature\Cart;
 use App\Livewire\Commerce\Cart;
 use App\Models\CartItem\CartItem;
 use App\Models\Event\Event;
+use App\Models\Favorite\Favorite;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
@@ -227,6 +228,176 @@ class CartPageTest extends TestCase
             ->call('goToCheckout')
             ->assertHasErrors('giftDedication.'.$key)
             ->assertNoRedirect();
+    }
+
+    // ── Difetto C6: borsa e cuore delle card suggerite sono solo colore ──────
+    //
+    // `toggleSuggestionCart()` e `toggleSuggestionFavorite()` si limitano a
+    // infilare la chiave in un array di componente: nessuna chiamata a
+    // CartManager né a FavoriteService. Il partial è LO STESSO di /preferiti,
+    // dove la borsa aggiunge davvero (Favorites::toggleCart): lo stesso
+    // componente, graficamente identico, ha due comportamenti opposti — e qui
+    // arriva perfino a dichiarare «Rimuovi dal carrello» su un carrello vuoto.
+
+    /** Le tre card «Le attività più amate» compaiono solo a carrello vuoto. */
+    private function suggestedHotel(): Structure
+    {
+        $hotel = $this->hotel();
+        $this->addFavorites('structure', $hotel->id, 3);
+
+        return $hotel;
+    }
+
+    public function test_la_borsa_di_una_card_suggerita_aggiunge_davvero_al_carrello(): void
+    {
+        $this->actingAs($this->giulia);
+        $hotel = $this->suggestedHotel();
+        $key = 'structure-'.$hotel->id;
+
+        Livewire::test(Cart::class)
+            ->assertSee($hotel->name)
+            ->call('toggleSuggestionCart', $key);
+
+        $this->assertCount(
+            1,
+            $this->cart()->items(),
+            'La borsa porta il bottone a giallo e l\'aria-label a «Rimuovi dal carrello»: '
+            .'uno stato visivo che mente è peggio di un bottone assente. '
+            .'Se la cura è togliere i due bottoni dalle card suggerite, questo test va con loro.',
+        );
+    }
+
+    /**
+     * Cliente SENZA preferiti: Giulia ha già Hotel Brescia dal
+     * DemoUserSeeder::seedFavorites(), quindi con lei questa prova era verde a
+     * vuoto quando il cuore non scriveva niente, e rossa appena il toggle è
+     * diventato vero (lo toglieva). Il cuore deve nascere spento, scrivere la
+     * riga, e accendersi dal dato salvato.
+     */
+    public function test_il_cuore_di_una_card_suggerita_salva_davvero_il_preferito(): void
+    {
+        $customer = User::factory()->create();
+        $this->actingAs($customer);
+        $hotel = $this->suggestedHotel();
+        $key = 'structure-'.$hotel->id;
+        $favorite = [
+            'user_id' => $customer->id,
+            'favoritable_type' => 'structure',
+            'favoritable_id' => $hotel->id,
+        ];
+
+        $this->assertDatabaseMissing('favorites', $favorite);
+
+        Livewire::test(Cart::class)
+            ->assertSee($hotel->name)
+            // Nessun preferito: nessun cuore acceso fra le card suggerite.
+            ->assertDontSee(__('nav.card.remove_from_favorites'))
+            ->call('toggleSuggestionFavorite', $key)
+            ->assertNotDispatched('modal-show')
+            // Il cuore si riaccende dai preferiti salvati, non da uno stato di componente.
+            ->assertSee(__('nav.card.remove_from_favorites'));
+
+        $this->assertDatabaseHas('favorites', $favorite);
+    }
+
+    /**
+     * Lo stato iniziale non deve mentire (prima partiva bianco anche sui
+     * preferiti veri), e il secondo clic toglie davvero: è un toggle, non un
+     * «aggiungi» che ignora quello che c'è già.
+     */
+    public function test_il_cuore_di_una_card_suggerita_nasce_acceso_su_un_preferito_e_lo_toglie(): void
+    {
+        $this->actingAs($this->giulia);
+        $hotel = $this->suggestedHotel();
+        $favorite = [
+            'user_id' => $this->giulia->id,
+            'favoritable_type' => 'structure',
+            'favoritable_id' => $hotel->id,
+        ];
+
+        // Fixture: Hotel Brescia è fra i preferiti seedati di Giulia.
+        $this->assertDatabaseHas('favorites', $favorite);
+
+        Livewire::test(Cart::class)
+            ->assertSee(__('nav.card.remove_from_favorites'))
+            ->call('toggleSuggestionFavorite', 'structure-'.$hotel->id);
+
+        $this->assertDatabaseMissing('favorites', $favorite);
+    }
+
+    /** Da ospite il cuore apre il login, come in tutto il catalogo, e non scrive niente. */
+    public function test_il_cuore_di_una_card_suggerita_da_ospite_apre_il_login(): void
+    {
+        $hotel = $this->suggestedHotel();
+        $before = Favorite::count();
+
+        Livewire::test(Cart::class)
+            ->call('toggleSuggestionFavorite', 'structure-'.$hotel->id)
+            ->assertOk()
+            ->assertDispatched('modal-show', name: 'login');
+
+        $this->assertSame($before, Favorite::count());
+    }
+
+    /**
+     * L'ospite ha un carrello (in sessione, CartManager): la borsa aggiunge
+     * anche per lui, con badge e toast come su /preferiti — mandarlo al login
+     * sarebbe un ostacolo che il resto del catalogo non mette.
+     */
+    public function test_la_borsa_di_una_card_suggerita_da_ospite_aggiunge_al_carrello_in_sessione(): void
+    {
+        $hotel = $this->suggestedHotel();
+
+        Livewire::test(Cart::class)
+            ->call('toggleSuggestionCart', 'structure-'.$hotel->id)
+            ->assertOk()
+            ->assertNotDispatched('modal-show')
+            ->assertDispatched('cart-updated')
+            ->assertDispatched('toast-show', fn (string $name, array $params): bool => ($params['slots']['text'] ?? null) === __('cart.added'));
+
+        $this->assertGuest();
+        $items = $this->cart()->items();
+        $this->assertCount(1, $items);
+        $this->assertSame('structure', $items->first()->type);
+        $this->assertSame($hotel->id, $items->first()->purchasableId);
+        // Nessuna riga su database: il carrello dell'ospite vive in sessione.
+        $this->assertSame(0, CartItem::count());
+    }
+
+    /**
+     * Nel flusso regalo la borsa aggiungerebbe una riga NORMALE, che la vista
+     * regalo (mai mista) non mostra: il bottone sembrerebbe morto. Il controllo
+     * sul flusso normale dice che le card e la borsa ci sono davvero.
+     */
+    public function test_nel_flusso_regalo_le_card_suggerite_non_hanno_la_borsa(): void
+    {
+        $this->actingAs($this->giulia);
+        $hotel = $this->suggestedHotel();
+
+        Livewire::test(Cart::class)
+            ->assertSee($hotel->name)
+            ->assertSee(__('nav.card.add_to_cart'));
+
+        Livewire::withQueryParams(['regalo' => 1])->test(Cart::class)
+            ->assertSet('gift', true)
+            ->assertSee($hotel->name)
+            ->assertDontSee(__('nav.card.add_to_cart'))
+            ->assertDontSeeHtml('toggleSuggestionCart(');
+    }
+
+    /** La chiave arriva dal payload del client: malformata è un 400, e non scrive niente. */
+    public function test_una_chiave_di_card_suggerita_malformata_e_un_400(): void
+    {
+        $this->actingAs($this->giulia);
+        $favoritesBefore = Favorite::count();
+
+        foreach (['structure', 'structure-', '-12', 'structure-12-3', 'Structure-12', 'structure-abc'] as $key) {
+            Livewire::test(Cart::class)->call('toggleSuggestionCart', $key)->assertStatus(400);
+            Livewire::test(Cart::class)->call('toggleSuggestionFavorite', $key)->assertStatus(400);
+        }
+
+        $this->assertCount(0, $this->cart()->items());
+        $this->assertSame($favoritesBefore, Favorite::count());
     }
 
     /** Facciata carrello (storage scelto dallo stato auth corrente). */

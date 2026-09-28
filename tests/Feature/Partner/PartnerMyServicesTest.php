@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
+use App\Livewire\Partner\MyServices\DeleteServiceModal;
 use App\Livewire\Partner\MyServices\PartnerMyServices;
 use App\Models\Partner\PartnerProfile;
 use App\Models\SmartboxPackage\SmartboxPackage;
@@ -276,5 +277,198 @@ class PartnerMyServicesTest extends TestCase
             ->assertNoRedirect();
 
         $this->assertNull(session('structure_draft_id'));
+    }
+
+    // ── Difetto W2: le bozze in corso ora compaiono, e si riprendono ──────────
+    //
+    // Prima una bozza a metà wizard scollegata dalla sessione restava a
+    // database con nome e indirizzo e nessuna schermata la riapriva (caso reale:
+    // Agriturismo Metina, 27/09/2026). `listableFor` — la scope di lista,
+    // modifica, eliminazione e dettaglio — ora le include dallo step del nome,
+    // e «Riprendi» riporta al primo step non ancora salvato.
+
+    /** Bozza a metà wizard: `draft`, senza segnale, oltre lo step del nome. */
+    private function inProgress(int $userId, array $attributes = []): StructureDraft
+    {
+        return $this->service($userId, array_merge([
+            'name' => 'Agriturismo Metina',
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 4,
+            'rooms' => null,
+        ], $attributes));
+    }
+
+    /**
+     * Si riparte dal primo step non salvato, per famiglia: `current_step` è lo
+     * step più avanzato raggiunto, quindi la ripresa è lo step successivo. Le
+     * rotte attese sono scritte qui a mano, non chieste al model: la prova è
+     * sul posto in cui il partner atterra.
+     */
+    public function test_riprendi_porta_al_primo_step_non_salvato_e_rimette_la_sessione(): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        $cases = [
+            'partner.structure.hotel.cancellation' => ['service_category' => 'struttura', 'current_step' => 5],
+            'partner.activity.description' => ['service_category' => 'attivita', 'type' => 'attivita', 'current_step' => 3],
+            'partner.smartbox.description' => ['service_category' => 'smartbox', 'type' => 'soggiorno', 'current_step' => 2],
+        ];
+
+        foreach ($cases as $route => $attributes) {
+            session()->forget('structure_draft_id');
+            $draft = $this->inProgress($partner->id, $attributes);
+
+            Livewire::test(PartnerMyServices::class)
+                ->call('resume', $draft->id)
+                ->assertRedirect(route($route));
+
+            $this->assertSame($draft->id, session('structure_draft_id'), "La ripresa verso {$route} deve rimettere la bozza in sessione.");
+        }
+    }
+
+    /**
+     * L'ultimo step dell'attività scrive 10, e la chiusura a 11 la scrive
+     * DraftCompleter: una bozza ferma a 10 si riprende dallo step 10 stesso, non
+     * da una rotta inesistente.
+     */
+    public function test_riprendi_all_ultimo_step_resta_dentro_il_wizard(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->inProgress($partner->id, ['service_category' => 'attivita', 'type' => 'attivita', 'current_step' => 10]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('resume', $draft->id)
+            ->assertRedirect(route('partner.activity.cancellation'));
+    }
+
+    public function test_riprendi_ignora_le_bozze_di_un_altro_partner(): void
+    {
+        $this->actingAsActivePartner();
+        $foreign = $this->inProgress(User::factory()->create()->id);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('resume', $foreign->id)
+            ->assertNoRedirect();
+
+        $this->assertNull(session('structure_draft_id'));
+    }
+
+    /** «Riprendi» è solo delle bozze in corso: un servizio completato si apre con edit(). */
+    public function test_riprendi_non_apre_un_servizio_completato(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $completed = $this->service($partner->id);
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('resume', $completed->id)
+            ->assertNoRedirect();
+
+        $this->assertNull(session('structure_draft_id'));
+    }
+
+    public function test_una_bozza_in_corso_compare_con_badge_e_riprendi(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->inProgress($partner->id);
+        $completed = $this->service($partner->id, ['name' => 'Hotel Brescia']);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee('Agriturismo Metina')
+            ->assertSee(__('partner.my_services.draft'))
+            ->assertSee(__('partner.my_services.draft_hint'))
+            ->assertSee(__('partner.my_services.resume'))
+            ->assertSeeHtml('wire:click="resume('.$draft->id.')"')
+            // Il servizio completato nella stessa lista non si "riprende".
+            ->assertSee('Hotel Brescia')
+            ->assertDontSeeHtml('wire:click="resume('.$completed->id.')"');
+    }
+
+    /**
+     * Sotto lo step del nome la bozza porta solo card e tipologia: ogni visita a
+     * «Crea servizio» ne apre una, ed elencarle riempirebbe la lista di righe
+     * senza nome. Il nome qui è messo apposta: si prova la soglia dello step,
+     * non l'assenza del nome.
+     */
+    public function test_una_bozza_appena_nata_non_compare_in_lista(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $this->inProgress($partner->id, ['name' => 'Nata allo step zero', 'current_step' => 0]);
+        $this->inProgress($partner->id, ['name' => 'Nata allo step uno', 'current_step' => 1]);
+        $this->inProgress($partner->id, ['name' => 'Arrivata al nome', 'current_step' => 2]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertDontSee('Nata allo step zero')
+            ->assertDontSee('Nata allo step uno')
+            ->assertSee('Arrivata al nome');
+    }
+
+    /**
+     * Lo step di chiusura è di famiglia: 11 per struttura e attività, 12 per la
+     * smartbox, che ha una sezione in più. La scope lo calcola in SQL (case
+     * when), il badge in PHP (isInProgress): una smartbox a 11 è ancora a metà,
+     * una struttura a 11 senza segnale è una chiusura tentata e annullata.
+     */
+    public function test_lo_step_di_chiusura_dipende_dalla_famiglia(): void
+    {
+        app()->setLocale('it');
+        $partner = $this->actingAsActivePartner();
+        $smartbox = $this->inProgress($partner->id, [
+            'name' => 'Cofanetto a metà',
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'current_step' => 11,
+        ]);
+        $this->inProgress($partner->id, ['name' => 'Struttura chiusa e annullata', 'current_step' => 11]);
+
+        Livewire::test(PartnerMyServices::class)
+            ->assertSee('Cofanetto a metà')
+            ->assertSeeHtml('wire:click="resume('.$smartbox->id.')"')
+            ->assertDontSee('Struttura chiusa e annullata');
+
+        Livewire::test(PartnerMyServices::class)
+            ->call('resume', $smartbox->id)
+            ->assertRedirect(route('partner.smartbox.price'));
+    }
+
+    /** Il dettaglio usa la stessa scope della lista: una bozza elencata si apre, senza 403. */
+    public function test_una_bozza_in_corso_si_apre_nel_dettaglio(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->inProgress($partner->id);
+
+        $this->get(route('partner.services.show', $draft))
+            ->assertOk()
+            ->assertSee('Agriturismo Metina');
+    }
+
+    /** Stessa scope anche per l'eliminazione: una bozza in corso si toglie, senza riga a catalogo da ritirare. */
+    public function test_una_bozza_in_corso_si_elimina(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->inProgress($partner->id);
+
+        Livewire::test(DeleteServiceModal::class)
+            ->call('open', $draft->id)
+            ->assertSet('serviceId', $draft->id)
+            ->call('delete')
+            ->assertDispatched('service-deleted');
+
+        $this->assertDatabaseMissing('structure_drafts', ['id' => $draft->id]);
+    }
+
+    /** Una bozza allo step 0/1 non è elencata, quindi non si elimina da qui con un id riscritto. */
+    public function test_una_bozza_appena_nata_non_si_elimina_da_qui(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $fresh = $this->inProgress($partner->id, ['current_step' => 1]);
+
+        Livewire::test(DeleteServiceModal::class)
+            ->call('open', $fresh->id)
+            ->assertSet('serviceId', null)
+            ->set('serviceId', $fresh->id)
+            ->call('delete');
+
+        $this->assertDatabaseHas('structure_drafts', ['id' => $fresh->id]);
     }
 }

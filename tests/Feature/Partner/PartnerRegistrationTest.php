@@ -226,6 +226,67 @@ class PartnerRegistrationTest extends TestCase
             ->assertSee('Scegli la modalità di pagamento.');
     }
 
+    // ── Difetto W8: la colonna dell'iscrizione non ha un solo test ─────────────
+    //
+    // `registration_service` compare in cinque punti, tutti in app/, models e
+    // migrazione: zero in tests/, zero nelle factory, zero nelle viste. La
+    // preselezione della card ha i suoi test in PartnerCreateServiceTest; qui si
+    // prova la metà che la alimenta.
+
+    public function test_liscrizione_registra_la_tipologia_scelta(): void
+    {
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::test(PartnerRegisterStep2::class)
+            ->set('service', 'eventi')
+            ->call('createAccount')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertSame(
+            'eventi',
+            User::where('email', 'susanna@example.com')->firstOrFail()->partnerProfile->registration_service,
+            'La scelta fatta iscrivendosi deve arrivare fino alla creazione della prima scheda.',
+        );
+    }
+
+    /** Un cliente promosso a partner: la colonna si scrive anche su quel ramo. */
+    public function test_un_cliente_promosso_porta_con_se_la_tipologia_scelta(): void
+    {
+        $client = User::factory()->create(['email' => 'susanna@example.com']);
+        $client->syncRoles(['client']);
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::actingAs($client)
+            ->test(PartnerRegisterStep2::class)
+            ->set('service', 'servizi')
+            ->call('createAccount')
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertSame('servizi', $client->fresh()->partnerProfile->registration_service);
+    }
+
+    /**
+     * A differenza di `online_payment`, questa colonna non decide niente e si
+     * riscrive a una seconda iscrizione: il funnel la consulta solo finché il
+     * partner non ha scelto nemmeno una volta.
+     */
+    public function test_una_seconda_iscrizione_riscrive_la_tipologia(): void
+    {
+        $partner = User::factory()->create(['email' => 'susanna@example.com']);
+        $partner->syncRoles(['client']);
+        PartnerProfile::factory()->for($partner)->create(['registration_service' => 'struttura']);
+        session(['partner_registration.step1' => $this->step1Data()]);
+
+        Livewire::actingAs($partner)
+            ->test(PartnerRegisterStep2::class)
+            ->set('service', 'attivita')
+            ->call('createAccount')
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertSame('attivita', $partner->fresh()->partnerProfile->registration_service);
+    }
+
     public function test_a_new_partner_is_online_by_default(): void
     {
         session(['partner_registration.step1' => $this->step1Data()]);

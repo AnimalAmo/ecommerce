@@ -31,7 +31,10 @@ class CatalogSeedTest extends TestCase
         $this->assertSame(4, Event::where('type', ProductType::Activity)->count());
 
         $this->assertSame(12, SmartboxPackage::count());
-        $this->assertSame(14, Amenity::count());
+        // 14 del mock XD + 6 voci che il wizard spuntava senza riga a catalogo
+        // (Riscaldamento, Ricarica auto elettriche, TV, Piscina, Campo da
+        // tennis, Area dedicata agli animali): WP8, 28/09/2026.
+        $this->assertSame(20, Amenity::count());
         $this->assertSame(2, Venue::count());
     }
 
@@ -43,7 +46,7 @@ class CatalogSeedTest extends TestCase
         $this->assertSame(12, Structure::count());
         $this->assertSame(17, Event::count());
         $this->assertSame(12, SmartboxPackage::count());
-        $this->assertSame(14, Amenity::count());
+        $this->assertSame(20, Amenity::count());
         $this->assertSame(2, Venue::count());
         $this->assertSame(12 * 12, Review::count());
     }

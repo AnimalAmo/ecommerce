@@ -27,15 +27,27 @@ use Illuminate\Support\Collection;
  *                         27/09/2026. Viene prima di tutto perché la riga a
  *                         catalogo c'è, marcata `withheld_at`, e senza questo
  *                         stato leggerebbe «Sospesa» — una cosa che l'admin
- *                         non ha fatto;
+ *                         non ha fatto. Per una bozza senza riga vale solo
+ *                         se la causa è la modalità di incasso
+ *                         (PartnerProfile::needsOnlinePaymentFor): una
+ *                         smartbox di chi è online e deve solo finire Stripe
+ *                         è `awaiting_stripe` (difetto F3, 28/09/2026);
  *  - `suspended`          la scheda è a catalogo ma sospesa dal pannello;
  *  - `awaiting_approval`  a catalogo, in attesa di approvazione (moderazione accesa);
  *  - `published`          online, nessun badge;
  *  - `incomplete`         mancano i dati minimi: non andrà mai a catalogo così;
- *  - `awaiting_stripe`    pronta, ma il partner non può ancora pubblicare;
+ *  - `awaiting_stripe`    pronta, ma il partner non può ancora pubblicare
+ *                         finché Stripe non è collegato e pagabile;
  *  - `publishing`         pronta e il partner può pubblicare: la rete di
  *                         sicurezza schedulata la prende entro dieci minuti;
- *  - `draft`              a metà wizard, nessun badge.
+ *  - `draft`              né a catalogo né col segnale: di norma a metà
+ *                         wizard. Dal difetto W2 (28/09/2026) le bozze in
+ *                         corso compaiono in "I miei servizi", e la lista le
+ *                         mostra con «Bozza in corso» e «Riprendi» quando
+ *                         StructureDraft::isInProgress() lo conferma. Lo
+ *                         stesso stato copre un servizio completato rimasto
+ *                         senza riga a catalogo (caso storico): quello resta
+ *                         senza badge, come prima.
  */
 class DraftPublicationState
 {
@@ -75,24 +87,34 @@ class DraftPublicationState
             ->mapWithKeys(fn (StructureDraft $draft): array => [
                 // Il gate si calcola per bozza: dal 27/09/2026 dipende dalla
                 // famiglia, e un solo bool per tutte direbbe il falso su metà.
+                // La causa accanto al gate (difetto F3): senza, una smartbox
+                // ferma per Stripe leggeva la stessa diagnosi di una ferma
+                // per la modalità di incasso.
                 $draft->id => $this->state(
                     $draft,
                     $published->get($draft->id),
                     $profile?->canPublishFamily($draft->family()) === true,
+                    $profile?->needsOnlinePaymentFor($draft->family()) === true,
                 ),
             ])
             ->all();
     }
 
-    private function state(StructureDraft $draft, ?Model $row, bool $canPublishFamily): string
+    private function state(StructureDraft $draft, ?Model $row, bool $canPublishFamily, bool $needsOnlinePayment): string
     {
         // Ritirata da noi, non sospesa dall'admin: `withheld_at` lascia la riga
         // dov'è, quindi senza questo ramo — che va prima del controllo sulla
         // riga — il badge direbbe «Sospesa», accusando l'admin di una cosa che
-        // non ha fatto. Copre anche la finestra fra il ritorno al pagamento
-        // online e la ripubblicazione del cron, che dura fino a dieci minuti.
+        // non ha fatto. La causa come nel ramo senza riga (review del
+        // 28/09/2026): la migrazione del 27/09 ha ritirato anche le smartbox di
+        // chi incassa online ma non ha finito Stripe, e a lui va detto Stripe,
+        // come dicono il dettaglio e la dashboard.
         if ($row?->isWithheld() === true) {
-            return self::AWAITING_PAYMENT_METHOD;
+            return match (true) {
+                $needsOnlinePayment => self::AWAITING_PAYMENT_METHOD,
+                $canPublishFamily => self::PUBLISHING,
+                default => self::AWAITING_STRIPE,
+            };
         }
 
         if ($row !== null) {
@@ -109,12 +131,17 @@ class DraftPublicationState
 
         // Prima i dati, poi il pagamento: dire "in attesa di Stripe" a chi ha
         // una bozza incompleta è la diagnosi falsa che ha generato la
-        // segnalazione. Per la smartbox il motivo non è l'onboarding a metà ma
-        // il sistema di pagamento, e il badge lo dice con parole sue.
+        // segnalazione. Poi la causa del blocco, come la sceglie DraftPublisher.
+        // Difetto F3 (28/09/2026): qui bastava che la bozza fosse una smartbox
+        // non pubblicabile per dire «Serve il sistema di pagamento», anche a
+        // chi incassa già online e deve solo finire Stripe — e la dashboard,
+        // con la stessa regola, gli mostrava due banner per un fatto solo.
+        // Ora il badge del pagamento è di chi incassa in struttura; gli altri
+        // leggono l'attesa di Stripe, come una struttura o un'attività.
         return match (true) {
             ! $this->isPublishable($draft) => self::INCOMPLETE,
-            ! $canPublishFamily && $draft->family() === 'smartbox' => self::AWAITING_PAYMENT_METHOD,
             $canPublishFamily => self::PUBLISHING,
+            $needsOnlinePayment => self::AWAITING_PAYMENT_METHOD,
             default => self::AWAITING_STRIPE,
         };
     }

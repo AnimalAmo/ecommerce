@@ -194,7 +194,18 @@
                                      Titolare assente (catalogo mock) o senza profilo: resta online. --}}
                                 @php $ownerOnSite = ($ownerModes[$event->user_id] ?? \App\Enums\OrderPaymentMode::Online) === \App\Enums\OrderPaymentMode::OnSite; @endphp
                                 <div class="mt-auto flex items-center justify-between gap-2 pt-[18px]">
-                                    @if (! $event->hasJoinCta() && $ownerOnSite)
+                                    @if (in_array($event->id, $soldOutIds, true))
+                                        {{-- Posti esauriti (difetto C5, audit 28/09/2026): prima la griglia offriva il carrello
+                                             anche a evento pieno e il click rispondeva solo con un toast d'errore, mentre la
+                                             scheda toglieva la CTA. Stesso ordine della scheda: il pieno vince su tutto, anche
+                                             su «Partecipa» (prometterebbe un posto che non c'è) e sul rimando al partner.
+                                             Frase della scheda e del carrello (cart.sold_out); niente z-[2]: non c'è niente
+                                             da cliccare, il click passa al link della card. --}}
+                                        <p class="flex min-w-0 max-w-[204px] items-start gap-1.5 text-sm leading-[18px] text-[#627277]">
+                                            <flux:icon.exclamation-circle class="mt-px h-4 w-4 shrink-0" />
+                                            <span>{{ __('cart.sold_out') }}</span>
+                                        </p>
+                                    @elseif (! $event->hasJoinCta() && $ownerOnSite)
                                         <flux:button href="{{ $event->type === \App\Enums\ProductType::Activity ? route('eventi.activity', $event->slug) : route('eventi.detail', $event->slug) }}" class="relative !z-[2] !h-[39px] !shrink-0 !rounded-full !border !border-[#C8C8C8] !bg-white !px-4 !text-sm !font-bold !text-[#0D171A] !shadow-none max-lg:!font-medium">
                                             {{ __('catalog.book_with_partner') }}
                                         </flux:button>

@@ -28,6 +28,8 @@ class PartnerMyServices extends Component
         // Vincolato all'utente: nessuno può modificare i servizi altrui. Si
         // aprono anche le bozze in attesa di Stripe: il partner le può
         // correggere, e l'ultimo step le rimette in attesa o le pubblica.
+        // E le bozze in corso, dal primo step: per ripartire da dove si era
+        // rimasti c'è resume().
         $draft = StructureDraft::listableFor(Auth::id())->firstWhere('id', $draftId);
 
         if ($draft === null) {
@@ -36,17 +38,35 @@ class PartnerMyServices extends Component
 
         session(['structure_draft_id' => $draft->id]);
 
-        $this->redirectRoute(match ($draft->family()) {
-            'attivita' => 'partner.activity.type',
-            'smartbox' => 'partner.smartbox.type',
-            default => 'partner.structure.type',
-        });
+        $this->redirectRoute($draft->wizardRoute(1));
+    }
+
+    /**
+     * «Riprendi» di una bozza in corso (difetto W2): rimette la sessione sulla
+     * bozza — è la sessione che ogni step legge — e porta il partner al primo
+     * step che non ha ancora salvato, non all'inizio del wizard. Quello che ha
+     * già compilato lo ritrova negli step precedenti, che si idratano dalla bozza.
+     */
+    public function resume(int $draftId): void
+    {
+        // Stessa scope della lista: solo bozze proprie e visibili qui. Le altre
+        // (servizi completati, in attesa) si aprono con edit().
+        $draft = StructureDraft::listableFor(Auth::id())->firstWhere('id', $draftId);
+
+        if ($draft === null || ! $draft->isInProgress()) {
+            return;
+        }
+
+        session(['structure_draft_id' => $draft->id]);
+
+        $this->redirectRoute($draft->resumeRoute());
     }
 
     public function render()
     {
-        // Completati e in attesa di Stripe (badge in vista): prima una bozza
-        // chiusa senza Stripe spariva da qui e restava solo in sessione.
+        // Completati, in attesa di Stripe e bozze in corso (badge in vista):
+        // prima una bozza chiusa senza Stripe, o lasciata a metà wizard,
+        // spariva da qui e restava solo in sessione.
         $services = StructureDraft::listableFor(Auth::id())->get();
 
         return view('livewire.partner.my-services.index', [

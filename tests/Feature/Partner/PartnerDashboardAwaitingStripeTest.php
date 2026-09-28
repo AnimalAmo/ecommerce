@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
+use App\Models\Partner\PartnerProfile;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,6 +53,93 @@ class PartnerDashboardAwaitingStripeTest extends TestCase
                 .preg_quote(__('partner.dashboard.awaiting_stripe_cta'), '/').'/s',
             $html,
         );
+    }
+
+    // ── Difetto F3: due banner per la stessa causa ────────────────────────────
+    //
+    // `canPublishFamily('smartbox')` è `requiresOnlinePayment() && canBePaid()`:
+    // un solo booleano per due cause. `smartboxAwaitingCount()` lo usa così com'è,
+    // mentre `awaitingCount()` usa `canPublish()`, quindi un partner online al
+    // quale manca soltanto Stripe vede CONTEMPORANEAMENTE il banner Stripe e il
+    // banner smartbox — due diagnosi dello stesso fatto sulla stessa pagina.
+    // DraftPublisher e il pannello admin separano le due cause con
+    // `! requiresOnlinePayment()`; questi due punti no.
+
+    /** Smartbox chiusa dal partner e ferma in attesa. */
+    private function awaitingSmartboxOf(int $userId): StructureDraft
+    {
+        return StructureDraft::create([
+            'user_id' => $userId,
+            'status' => StructureDraft::STATUS_DRAFT,
+            'current_step' => 12,
+            'service_category' => 'smartbox',
+            'name' => ['it' => 'Cofanetto in attesa'],
+            'price' => '99',
+            'publish_requested_at' => now(),
+        ]);
+    }
+
+    public function test_a_chi_manca_solo_stripe_la_smartbox_non_aggiunge_un_secondo_banner(): void
+    {
+        // online_payment resta true (default del profilo): manca solo Stripe.
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create();
+
+        $this->assertTrue($partner->partnerProfile->requiresOnlinePayment());
+        $this->assertFalse($partner->partnerProfile->canBePaid());
+
+        $this->awaitingSmartboxOf($partner->id);
+        $this->awaitingOf($partner->id);
+
+        // Corretto il 28/09/2026: il conteggio atteso era 1, cioè la sola
+        // struttura, ma la smartbox di un partner online aspetta Stripe come
+        // lei. Contarla fuori da tutti e due i banner lasciava senza nessun
+        // avviso chi in attesa aveva solo smartbox. L'intento del test resta:
+        // un banner solo, quello di Stripe, col conteggio di tutto ciò che aspetta.
+        $this->get(route('partner.dashboard'))
+            ->assertOk()
+            ->assertSee(trans_choice('partner.dashboard.awaiting_stripe_banner', 2, ['count' => 2]))
+            ->assertDontSee(
+                trans_choice('partner.dashboard.smartbox_payment_banner', 1, ['count' => 1]),
+            )
+            // Tester 28/09/2026: anche il titolo del banner smartbox, non solo il
+            // testo al singolare — un banner con un conteggio diverso passava.
+            ->assertDontSee(__('partner.dashboard.smartbox_payment_heading'));
+    }
+
+    /**
+     * Il negativo: per chi incassa in struttura il banner smartbox è la sola
+     * diagnosi giusta, e quello dello Stripe non deve comparire.
+     */
+    public function test_a_chi_incassa_in_struttura_resta_il_solo_banner_della_smartbox(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->offline()->for($partner)->create();
+
+        $this->awaitingSmartboxOf($partner->id);
+
+        $this->get(route('partner.dashboard'))
+            ->assertOk()
+            ->assertSee(trans_choice('partner.dashboard.smartbox_payment_banner', 1, ['count' => 1]))
+            ->assertDontSee(trans_choice('partner.dashboard.awaiting_stripe_banner', 1, ['count' => 1]));
+    }
+
+    /**
+     * Il badge di «I miei servizi» per la stessa bozza: a chi è online e manca
+     * solo Stripe, `DraftPublicationState` dice «Serve il sistema di pagamento»
+     * quando la diagnosi giusta è il collegamento Stripe.
+     */
+    public function test_il_badge_della_smartbox_di_chi_manca_solo_stripe_parla_di_stripe(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->for($partner)->create();
+
+        $this->awaitingSmartboxOf($partner->id);
+
+        $this->get(route('partner.services'))
+            ->assertOk()
+            ->assertSee(__('partner.my_services.awaiting_stripe'))
+            ->assertDontSee(__('partner.my_services.awaiting_payment_method'));
     }
 
     public function test_senza_servizi_in_attesa_il_banner_non_c_e(): void

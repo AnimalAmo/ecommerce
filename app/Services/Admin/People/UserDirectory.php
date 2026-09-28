@@ -186,7 +186,14 @@ class UserDirectory
      * del partner e stato del collegamento Stripe. Lo "speso" dei clienti
      * resta invece solo Paid: sono soldi passati da AnimalAmo.
      *
-     * @return array{business_name: ?string, listings: int, suspended: int, bookings: int, payment_mode: string, payment_url: ?string, stripe_status: string}
+     * `withheld` sono le schede ritirate dalla piattaforma (`withheld_at`:
+     * smartbox di un partner che non incassa online). Difetto F4 dell'audit
+     * del 27/09/2026, corretto il 28/09/2026: prima stavano dentro `listings`
+     * e fuori da `suspended`, quindi il riquadro le contava come in vetrina.
+     * Restano dentro `listings`, come le sospese: il totale sono le righe a
+     * catalogo, in qualunque stato.
+     *
+     * @return array{business_name: ?string, listings: int, suspended: int, withheld: int, bookings: int, payment_mode: string, payment_url: ?string, stripe_status: string}
      */
     public function partnerSummary(User $user): array
     {
@@ -196,6 +203,7 @@ class UserDirectory
             'business_name' => $user->partnerProfile?->business_name,
             'listings' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->count()),
             'suspended' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->whereNotNull('suspended_at')->count()),
+            'withheld' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->whereNotNull('withheld_at')->count()),
             'bookings' => DB::table('order_items')
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('order_items.partner_user_id', $user->id)

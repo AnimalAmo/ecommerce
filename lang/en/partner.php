@@ -19,6 +19,11 @@ return [
         'awaiting_stripe' => 'Your service is ready: we will publish it automatically as soon as you finish connecting your Stripe account.',
         // Edit of a service already completed: the previous version stays the published one.
         'awaiting_stripe_changes' => 'Changes saved: the version already published stays as it was, and we will publish your changes automatically as soon as you finish connecting your Stripe account.',
+        // Smartbox closed by a partner who is paid on site (defect F2, 28/09/2026):
+        // it used to get the notices above, connect Stripe, and the Smartbox
+        // stayed held, because it needs online payment.
+        'awaiting_payment_method' => 'Your Smartbox is ready: we will put it on sale automatically as soon as you choose to take payments online on AnimalAmo, with your Stripe account connected.',
+        'awaiting_payment_method_changes' => 'Changes saved: we will publish them automatically as soon as you choose to take payments online on AnimalAmo, with your Stripe account connected.',
         // Smartbox wizard and Smartbox card notice: it warns, it does not block
         // (client request, 27/09/2026). First line is the client's sentence,
         // second one says the wizard can be filled in anyway.
@@ -289,6 +294,13 @@ return [
         'section_extra' => 'Additional information',
         'section_photos' => 'Photos',
         'section_payment' => 'Payment method',
+        // Detail rows for the non-structure families and for the fields the
+        // detail did not show (audit of 28/09/2026, F7 and W6).
+        'section_service_type' => 'Type',
+        'section_detailed_description' => 'Detailed description',
+        'section_cost' => 'Price',
+        'section_smartbox' => 'Smartbox participation',
+        'max_participants_unlimited' => 'No limit',
         'rooms_count' => 'rooms',
         'rooms_price' => 'price per night',
         'checkin' => 'Check-in',
@@ -869,6 +881,14 @@ return [
         'opt_vet_desc' => 'Service inside the structure or nearby',
         'opt_area' => 'Animal area',
         'opt_area_desc' => 'An area dedicated to animals',
+        'opt_dogsitter' => 'Dog sitter',
+        'opt_dogsitter_desc' => 'Someone to look after the dog while you are out',
+        'opt_dog_beach' => 'Dog beach nearby',
+        'opt_dog_beach_desc' => 'A dog-friendly beach a short distance away',
+        'opt_surcharge' => 'Pet surcharge',
+        'opt_surcharge_desc' => 'An extra charge applies for the animal',
+        'opt_dog_pool' => 'Dog pool',
+        'opt_dog_pool_desc' => 'A pool where dogs can swim',
         'opt_other' => 'Other',
         'other_placeholder' => 'Describe the service',
         'back' => 'Back',
@@ -898,6 +918,9 @@ return [
         'svc_tv' => 'TV',
         'svc_pool' => 'Swimming pool',
         'svc_sauna' => 'Sauna',
+        'svc_laundry' => 'Laundry',
+        'svc_lift' => 'Lift',
+        'svc_bike_rental' => 'Bike rental',
         'add_none' => 'None',
         'add_breakfast' => 'Breakfast',
         'add_lunch' => 'Lunch',

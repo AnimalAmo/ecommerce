@@ -121,6 +121,8 @@ return [
         'listings' => 'Schede a catalogo',
         'listings_count' => '{0} Nessuna scheda|{1} :count scheda|[2,*] :count schede',
         'listings_suspended' => '{1} :count sospesa|[2,*] :count sospese',
+        // Ritirate dalla piattaforma: smartbox di un partner che non incassa online (difetto F4, 28/09/2026).
+        'listings_withheld' => '{1} :count ritirata perché oggi non può vendere online|[2,*] :count ritirate perché oggi non può vendere online',
         'listings_open' => 'Vedi le schede',
         'bookings_received' => 'Prenotazioni ricevute',
         // Pagate online e confermate da pagare in struttura: tutte prenotazioni valide.

@@ -1,26 +1,16 @@
 {{-- Dashboard B2B – tipologia attività/eventi - cosa è incluso (XD, artboard 1920x1400) --}}
+@use('App\Services\Partner\ServiceOptionLabels')
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
-    $servizi = [
-        'aria_condizionata' => 'partner.hotel_services.svc_ac',
-        'riscaldamento' => 'partner.hotel_services.svc_heating',
-        'wifi' => 'partner.hotel_services.svc_wifi',
-        'ricarica_elettrica' => 'partner.hotel_services.svc_ev',
-        'tv' => 'partner.hotel_services.svc_tv',
-        'piscina' => 'partner.hotel_services.svc_pool',
-        'sauna' => 'partner.hotel_services.svc_sauna',
-    ];
-    $aggiuntivi = [
-        'nessuno' => 'partner.hotel_services.add_none',
-        'colazione' => 'partner.hotel_services.add_breakfast',
-        'pranzo' => 'partner.hotel_services.add_lunch',
-        'cena' => 'partner.hotel_services.add_dinner',
-        'altro' => 'partner.hotel_services.add_other',
-    ];
-    $regole = [
-        'vietato_fumare' => 'partner.hotel_services.rule_no_smoking',
-        'vietato_feste' => 'partner.hotel_services.rule_no_parties',
-    ];
+    // Slug => label già tradotta, dalla stessa mappa con cui ActivityIncludedForm
+    // li valida (vedi hotel-services, stessi gruppi): una voce nuova si aggiunge
+    // in ServiceOptionLabels e compare qui da sola (richiesta della cliente,
+    // 27/09/2026). `$optionLabel` e non `$label` nei foreach: flux:checkbox,
+    // flux:select e flux:textarea ereditano `label` dallo scope del chiamante,
+    // e i select degli orari si avvolgerebbero in un campo con l'ultima voce.
+    $servizi = ServiceOptionLabels::options('services');
+    $aggiuntivi = ServiceOptionLabels::options('additional');
+    $regole = ServiceOptionLabels::options('rules');
     // Checkbox tondi cyan (come "check b2b" XD) + label SemiBold 15 #555, divisore per riga.
     $checkboxWrap = '[--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full [&_[data-flux-label]]:!text-[15px] [&_[data-flux-label]]:!font-semibold [&_[data-flux-label]]:!text-[#555555]';
 @endphp
@@ -46,9 +36,9 @@
                 <form wire:submit="next" class="mt-6 {{ $checkboxWrap }}">
                     {{-- Sezione 1: Servizi --}}
                     <div>
-                        @foreach ($servizi as $key => $labelKey)
+                        @foreach ($servizi as $key => $optionLabel)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="svc-{{ $key }}">
-                                <flux:checkbox wire:model="form.services" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model="form.services" value="{{ $key }}" :label="$optionLabel" />
                             </div>
                         @endforeach
                     </div>
@@ -56,9 +46,9 @@
                     {{-- Sezione 2: Servizi aggiuntivi presenti --}}
                     <h2 class="mt-6 text-lg font-medium text-[#0D171A]">{{ __('partner.hotel_services.additional_heading') }}</h2>
                     <div class="mt-2">
-                        @foreach ($aggiuntivi as $key => $labelKey)
+                        @foreach ($aggiuntivi as $key => $optionLabel)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="add-{{ $key }}">
-                                <flux:checkbox wire:model.live="form.additional" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model.live="form.additional" value="{{ $key }}" :label="$optionLabel" />
 
                                 {{-- Pasti (colazione/pranzo/cena): range orario Ora inizio / Ora fine --}}
                                 @if (in_array($key, ['colazione', 'pranzo', 'cena'], true) && in_array($key, $form->additional, true))
@@ -98,9 +88,9 @@
                     {{-- Sezione 3: Regole della struttura --}}
                     <h2 class="mt-6 text-lg font-medium text-[#0D171A]">{{ __('partner.hotel_services.rules_heading') }}</h2>
                     <div class="mt-2">
-                        @foreach ($regole as $key => $labelKey)
+                        @foreach ($regole as $key => $optionLabel)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="rule-{{ $key }}">
-                                <flux:checkbox wire:model="form.structureRules" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model="form.structureRules" value="{{ $key }}" :label="$optionLabel" />
                             </div>
                         @endforeach
                     </div>

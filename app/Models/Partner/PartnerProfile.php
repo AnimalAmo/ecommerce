@@ -129,6 +129,26 @@ class PartnerProfile extends Model
     }
 
     /**
+     * La famiglia è ferma per la modalità di incasso, non per Stripe: è una
+     * smartbox e il partner si fa pagare direttamente. Collegare Stripe non
+     * basta, deve passare all'incasso online. Quando è vero,
+     * `canPublishFamily()` è sempre falso; quando `canPublishFamily()` è falso
+     * e questo no, la causa è Stripe (onboarding a metà o conto non pagabile).
+     *
+     * `canPublishFamily()` comprime le due cause in un booleano e DraftPublisher
+     * le riapre per scegliere l'eccezione. Difetti F2 e F3 dell'audit dei
+     * flussi (28/09/2026): il messaggio di fine wizard, i banner della
+     * dashboard e il badge di "I miei servizi" leggevano il solo booleano. Chi
+     * incassa in struttura leggeva «completa il collegamento Stripe», lo
+     * collegava e la smartbox restava ferma; chi è online senza Stripe vedeva
+     * due banner per lo stesso fatto. Da qui leggono la causa tutti e tre.
+     */
+    public function needsOnlinePaymentFor(string $family): bool
+    {
+        return $family === 'smartbox' && ! $this->requiresOnlinePayment();
+    }
+
+    /**
      * Può scegliere (o tenere) il pagamento online. Resta online chi lo è già,
      * anche senza Stripe (appena iscritto, o creato dall'admin); chi è offline
      * ci torna solo da pagabile. Una sola regola per il service, che rifiuta,

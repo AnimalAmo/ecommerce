@@ -526,9 +526,13 @@ class Checkout extends Component
 
         // Il partner può essere passato a "online" fra lo step 2 e il click:
         // si riapre lo step 2 con Stripe invece di prenotare senza incasso.
+        // L'invito a pagare qui solo se la sessione si è aperta davvero: da
+        // quando preparePaymentStep() rifiuta chi è online ma non pagabile
+        // (difetto C10, 28/09/2026) il suo toast basta, e «paga qui» sarebbe falso.
         if ($modes->forOwner($sellerUserId) !== OrderPaymentMode::OnSite) {
-            Flux::toast(text: __('checkout.on_site.mode_changed'), variant: 'warning');
-            $this->preparePaymentStep();
+            if ($this->preparePaymentStep()) {
+                Flux::toast(text: __('checkout.on_site.mode_changed'), variant: 'warning');
+            }
 
             return;
         }
@@ -614,6 +618,9 @@ class Checkout extends Component
             'paysOnSite' => $this->paysOnSite(),
             // Modalità non più disponibile: pannello di spiegazione al posto del funnel.
             'onSiteBlocked' => $onSiteBlocked,
+            // Difetto C10: venditore online non pagabile, detto allo step 1 e non
+            // dopo i dati personali (preparePaymentStep ferma comunque il passaggio).
+            'sellerNotPayable' => $this->step === 1 && $this->sellerOnlineButNotPayable(),
             // Contatti del venditore per il pannello: ragione sociale, indirizzo e
             // link «dove pagare o prenotare», gli unici recapiti che esistono a db
             // (telefono, email pubblica e orari arrivano in un pacchetto successivo).
@@ -685,6 +692,9 @@ class Checkout extends Component
         // bonifico al giorno 14 non partirebbe — ReleaseMaturedPayouts e
         // DraftPublisher usano già canBePaid(), questa riga era rimasta
         // indietro (audit Connect del 14/09/2026, difetto ancora aperto).
+        // Dal difetto C10 (28/09/2026) preparePaymentStep() non apre lo step 2
+        // per un venditore così: qui resta la rete per chi smette di essere
+        // pagabile mentre il cliente è già allo step 2 (cambio metodo, re-init).
         if ($seller === null || ! $seller->canBePaid()) {
             $this->paymentUnavailable = true;
             Flux::toast(text: __('payment.errors.seller_unavailable'), variant: 'danger');
@@ -852,7 +862,9 @@ class Checkout extends Component
     /**
      * Fissa la modalità del venditore per tutto lo step 2. Online: sessione
      * Stripe come sempre. In struttura: solo il token di idempotenza, niente
-     * gateway. Falso quando lo step 2 non deve aprirsi.
+     * gateway. Falso quando lo step 2 non deve aprirsi: modalità in struttura
+     * spenta, regalo o ospite sul ramo in struttura, venditore online che
+     * Stripe non fa incassare.
      */
     private function preparePaymentStep(): bool
     {
@@ -898,10 +910,47 @@ class Checkout extends Component
 
         $this->paymentMode = OrderPaymentMode::Online->value;
         $this->checkoutToken = null;
+
+        // Difetto C10 (audit 27/09/2026, corretto il 28/09/2026): il venditore
+        // vende online ma non è pagabile (ha perso charges o payouts dopo la
+        // pubblicazione). initPaymentSession() se ne accorgeva, accendeva il box
+        // «pagamento non disponibile» e tornava, ma qui si proseguiva e si
+        // ritornava true: goToStep(2) apriva uno step senza element e senza
+        // «Paga ora», e siccome si avanza solo di uno non c'era modo di tornare
+        // allo step 1 — nome, email e telefono andavano riscritti ricaricando.
+        // Ora ci si ferma prima: step 1 con i dati al loro posto e un toast che
+        // dice perché. `paymentUnavailable` serve al solo chiamante che è già
+        // allo step 2 (confirmBooking, partner tornato online): lì la card
+        // online mostra il box invece di un «Paga ora» morto.
+        if ($this->sellerOnlineButNotPayable()) {
+            $this->paymentUnavailable = true;
+            Flux::toast(text: __('checkout.seller_not_payable.toast'), variant: 'danger');
+
+            return false;
+        }
+
         $this->ensureMethodIsAvailable();
         $this->initPaymentSession();
 
         return true;
+    }
+
+    /**
+     * Il venditore del carrello vende online ma Stripe non lo fa incassare:
+     * senza conto connesso, senza charges_enabled o senza payouts_enabled
+     * (canBePaid(), la stessa verifica di initPaymentSession, dei bonifici e
+     * della pubblicazione). Carrello vuoto = falso: lì non c'è un venditore di
+     * cui parlare, e il resto del funnel lo gestisce già.
+     *
+     * Difetto C10 (28/09/2026): è la risposta che preparePaymentStep() non
+     * sapeva dare, e che la vista usa per avvisare già allo step 1, prima che
+     * il cliente compili i dati per niente.
+     */
+    private function sellerOnlineButNotPayable(): bool
+    {
+        return $this->sellerUserId() !== null
+            && $this->sellerMode() === OrderPaymentMode::Online
+            && ! ($this->sellerProfile()?->canBePaid() ?? false);
     }
 
     /**

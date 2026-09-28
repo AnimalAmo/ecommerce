@@ -55,6 +55,17 @@
                             <div class="{{ $card }} px-6 pb-8">
                                 <h1 class="my-6 text-2xl font-bold leading-none text-[#0D171A]">{{ __('checkout.ui.verify_personal_data') }}</h1>
 
+                                @if ($sellerNotPayable)
+                                    {{-- Difetto C10 (audit 28/09/2026): il partner vende online ma Stripe non lo fa
+                                         incassare. Lo si dice qui, all'apertura, e non dopo i dati personali: il
+                                         passaggio allo step 2 lo ferma comunque il server (preparePaymentStep). I
+                                         campi restano, perché il blocco può essere temporaneo. --}}
+                                    <div role="status" class="mb-5 rounded-[3px] border border-gray-150 bg-gray-100 px-[15px] py-3 text-[13px] leading-5 text-[#555555]">
+                                        <p>{{ __('checkout.seller_not_payable.notice') }}</p>
+                                        <a href="{{ route('carrello', $gift ? ['regalo' => 1] : []) }}" class="mt-2 inline-block font-semibold text-[#0D171A] underline">{{ __('checkout.seller_not_payable.back_to_cart') }}</a>
+                                    </div>
+                                @endif
+
                                 <div class="mt-1 space-y-4">
                                     @foreach ([
                                         ['model' => 'firstName', 'label' => __('checkout.ui.field_first_name'), 'type' => 'text'],

@@ -3,6 +3,9 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Structure\StructureDraft;
+use App\Services\Partner\ServiceOptionLabels;
+use App\Support\Translations;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 /**
@@ -33,29 +36,43 @@ class HotelServicesForm extends Form
     /** Regole della struttura (multi-scelta). Colonna bozza: `rules`. */
     public array $structureRules = [];
 
+    /**
+     * Ogni voce delle tre liste contro la mappa da cui la vista la disegna
+     * (ServiceOptionLabels, gruppi `services`, `additional`, `rules`), come fa
+     * già il pannello admin. Senza `in:` un payload manomesso scriveva nella
+     * bozza slug che nessun publisher sa tradurre e che nessuno step disegna.
+     */
     public function rules(): array
     {
         return [
             'services' => ['array'],
-            'services.*' => ['string'],
+            'services.*' => ['string', Rule::in(ServiceOptionLabels::slugs('services'))],
             'additional' => ['array'],
-            'additional.*' => ['string'],
+            'additional.*' => ['string', Rule::in(ServiceOptionLabels::slugs('additional'))],
             'additionalOther.it' => ['nullable', 'string', 'max:200'],
             'additionalOther.en' => ['nullable', 'string', 'max:200'],
             'mealTimes.*.from' => ['nullable', 'string'],
             'mealTimes.*.to' => ['nullable', 'string'],
             'structureRules' => ['array'],
-            'structureRules.*' => ['string'],
+            'structureRules.*' => ['string', Rule::in(ServiceOptionLabels::slugs('rules'))],
         ];
     }
 
+    /**
+     * Le tre liste si rileggono filtrate sugli slug del gruppo: una bozza può
+     * averne uno che il wizard non disegna (DemoUserSeeder semina 'parcheggio'),
+     * e con l'`in:` di rules() il partner resterebbe fermo su un errore senza
+     * una casella da togliere, né un posto dove leggerlo. Si perde solo alla
+     * prossima risalvata, ed è una voce che la scheda pubblica non ha mai
+     * mostrato: i publisher ignorano gli slug fuori mappa.
+     */
     public function setFromDraft(StructureDraft $draft): void
     {
-        $this->services = $draft->services ?? [];
-        $this->additional = $draft->additional_services ?? [];
+        $this->services = self::known('services', $draft->services);
+        $this->additional = self::known('additional', $draft->additional_services);
         $this->additionalOther = array_merge(['it' => '', 'en' => ''], $draft->getTranslations('additional_other'));
         $this->mealTimes = $draft->meal_times ?: $this->mealTimes;
-        $this->structureRules = $draft->rules ?? [];
+        $this->structureRules = self::known('rules', $draft->rules);
     }
 
     /** Attributi nel formato colonne della bozza (snake_case). */
@@ -64,9 +81,15 @@ class HotelServicesForm extends Form
         return [
             'services' => $this->services,
             'additional_services' => $this->additional,
-            'additional_other' => array_filter($this->additionalOther, fn ($value) => filled($value)),
+            'additional_other' => Translations::replacing($this->additionalOther),
             'meal_times' => $this->mealTimes,
             'rules' => $this->structureRules,
         ];
+    }
+
+    /** Gli slug di `$values` che il gruppo conosce, nell'ordine della bozza. */
+    private static function known(string $group, ?array $values): array
+    {
+        return array_values(array_intersect($values ?? [], ServiceOptionLabels::slugs($group)));
     }
 }

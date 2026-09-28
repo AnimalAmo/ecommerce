@@ -207,7 +207,16 @@
                                  posto una pill verso la scheda, dove ci sono i contatti per prenotare. --}}
                             @php $ownerOnSite = ($ownerModes[$event->user_id] ?? \App\Enums\OrderPaymentMode::Online) === \App\Enums\OrderPaymentMode::OnSite; @endphp
                             <div class="mt-auto flex items-center justify-between gap-2 pt-[18px]">
-                                @if ($event->hasJoinCta())
+                                @if (in_array($event->id, $soldOutIds, true))
+                                    {{-- Posti esauriti (difetto C5, audit 28/09/2026): prima «Acquista» restava anche a
+                                         evento pieno e il click dava solo un toast d'errore. Stesso ordine della scheda: il
+                                         pieno vince su «Partecipa» e sul rimando al partner. Frase della scheda e del
+                                         carrello (cart.sold_out); niente z-[2], il click passa al link della card. --}}
+                                    <p class="flex min-w-0 max-w-[204px] items-start gap-1.5 text-sm leading-[18px] text-[#627277]">
+                                        <flux:icon.exclamation-circle class="mt-px h-4 w-4 shrink-0" />
+                                        <span>{{ __('cart.sold_out') }}</span>
+                                    </p>
+                                @elseif ($event->hasJoinCta())
                                     {{-- TODO: azione Partecipa (partecipazioni allo step 5) --}}
                                     <flux:button class="relative !z-[2] !h-[39px] !shrink-0 !gap-2 !rounded-full !border-0 !bg-[#E9E9E9] !px-4 !text-sm !font-bold !text-[#0D171A] !shadow-none [&>span]:flex [&>span]:items-center [&>span]:gap-2">
                                         <flux:icon.check-1 class="h-4 w-4 shrink-0" />

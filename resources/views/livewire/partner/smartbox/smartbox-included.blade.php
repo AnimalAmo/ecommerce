@@ -1,16 +1,12 @@
 {{-- Dashboard B2B - smartbox - cosa è incluso (XD, artboard 1920x1080) --}}
+@use('App\Services\Partner\ServiceOptionLabels')
 @php $px = 'mx-auto w-full max-w-[1600px] px-4 lg:px-8'; @endphp
 @php
-    // Opzioni identiche ai servizi struttura del flusso hotel: riuso le label.
-    $servizi = [
-        'aria_condizionata' => 'partner.hotel_services.svc_ac',
-        'riscaldamento' => 'partner.hotel_services.svc_heating',
-        'wifi' => 'partner.hotel_services.svc_wifi',
-        'ricarica_elettrica' => 'partner.hotel_services.svc_ev',
-        'tv' => 'partner.hotel_services.svc_tv',
-        'piscina' => 'partner.hotel_services.svc_pool',
-        'sauna' => 'partner.hotel_services.svc_sauna',
-    ];
+    // Stesso gruppo dei servizi struttura del flusso hotel, dalla mappa con cui
+    // SmartboxIncluded lo valida: una voce nuova si aggiunge in
+    // ServiceOptionLabels e compare qui da sola (richiesta della cliente,
+    // 27/09/2026). Slug => label già tradotta.
+    $servizi = ServiceOptionLabels::options('services');
     // Checkbox tondi cyan (come "check b2b" XD) + label SemiBold 15 #555, divisore per riga.
     $checkboxWrap = '[--color-accent:#6CD1EF] [&_[data-flux-checkbox]]:!rounded-full [&_[data-flux-checkbox]_*]:!rounded-full [&_[data-flux-label]]:!text-[15px] [&_[data-flux-label]]:!font-semibold [&_[data-flux-label]]:!text-[#555555]';
 @endphp
@@ -35,9 +31,9 @@
 
                 <form wire:submit="next" class="mt-6 {{ $checkboxWrap }}">
                     <div>
-                        @foreach ($servizi as $key => $labelKey)
+                        @foreach ($servizi as $key => $optionLabel)
                             <div class="border-b border-[#E2EAEB] py-3" wire:key="inc-{{ $key }}">
-                                <flux:checkbox wire:model="included" value="{{ $key }}" :label="__($labelKey)" />
+                                <flux:checkbox wire:model="included" value="{{ $key }}" :label="$optionLabel" />
                             </div>
                         @endforeach
                     </div>

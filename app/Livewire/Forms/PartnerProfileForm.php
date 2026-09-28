@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Models\User;
 use App\Support\Phone;
+use App\Support\Translations;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
@@ -123,9 +124,12 @@ class PartnerProfileForm extends Form
             'zip' => $this->zip,
             'vat' => $this->vat,
             'tax_code' => $this->taxCode,
-            // Le traduzioni vuote non si salvano (come
-            // ActivityLocationForm::toDraft): su EN scatta il fallback IT.
-            'opening_hours' => array_filter($this->openingHours, fn ($value) => filled($value)),
+            // Una lingua lasciata vuota va a null, non viene fatta cadere:
+            // updateOrCreate() la fonde sul profilo esistente, e senza la
+            // chiave gli orari inglesi salvati una volta restavano per sempre
+            // sulla scheda /en (difetto W5, 28/09/2026 — vedi
+            // App\Support\Translations). Su EN scatta il fallback IT.
+            'opening_hours' => Translations::replacing($this->openingHours),
         ];
     }
 

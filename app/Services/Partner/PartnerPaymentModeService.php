@@ -6,8 +6,10 @@ use App\Enums\OrderPaymentMode;
 use App\Exceptions\PaymentModeException;
 use App\Jobs\PublishAwaitingDrafts;
 use App\Models\Partner\PartnerProfile;
+use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +40,12 @@ class PartnerPaymentModeService
      * Il link finisce come href nelle pagine B2C e nelle mail: lo si verifica
      * qui, per ogni chiamante, anche se il form lo ha già validato.
      *
+     * La modalità e la vetrina delle smartbox si scrivono nella stessa
+     * transazione (difetto C8, vedi syncSmartboxWithholding()): un partner
+     * offline con un cofanetto ancora in vendita è proprio lo stato da evitare.
+     * La dispatch delle bozze resta fuori, dopo il commit, per la ragione
+     * scritta su publishAwaitingDrafts().
+     *
      * @throws PaymentModeException
      * @throws ValidationException link non http/https o troppo lungo, sotto la chiave `paymentUrl`
      */
@@ -52,10 +60,14 @@ class PartnerPaymentModeService
 
         Validator::make(['paymentUrl' => $url], ['paymentUrl' => self::PAYMENT_URL_RULES])->validate();
 
-        $profile->fill([
-            'online_payment' => $online,
-            'payment_url' => $url,
-        ])->save();
+        DB::transaction(function () use ($profile, $online, $url): void {
+            $profile->fill([
+                'online_payment' => $online,
+                'payment_url' => $url,
+            ])->save();
+
+            $this->syncSmartboxWithholding($profile);
+        });
 
         $this->profiles[(int) $profile->user_id] = $profile;
 
@@ -138,6 +150,62 @@ class PartnerPaymentModeService
         }
 
         return $this->profiles[$userId];
+    }
+
+    /**
+     * Il gemello del ritiro. Difetto C8 dell'audit del 27/09/2026, corretto il
+     * 28/09/2026: fino a qui `withheld_at` la scriveva solo la migrazione-dati
+     * una-tantum (2026_09_27_100002), e set() non toccava nessuna riga di
+     * catalogo. Un partner che passava al pagamento diretto DOPO la migrazione
+     * non poteva più pubblicare una smartbox nuova, ma quella già in vetrina
+     * restava in /smartbox, con la card «prenota col partner» al posto del
+     * pulsante: un invito che a un cofanetto prepagato da regalare non si
+     * applica. E restava aggiungibile al carrello con una chiamata forgiata.
+     *
+     * Le due direzioni:
+     *  - modalità offline → si ritirano le smartbox del partner non ancora
+     *    ritirate. Le bozze NON si segnano (review del 28/09/2026): il segnale
+     *    di pubblicazione fa ripubblicare la bozza al ritorno online, e una
+     *    bozza completata riaperta e lasciata a metà nel wizard sarebbe andata
+     *    online così, rimandando in moderazione una scheda già approvata. Il
+     *    ritorno lo fa il ramo qui sotto, direttamente sulla riga; l'avviso in
+     *    dashboard conta le righe ritirate (Partner\Dashboard);
+     *  - smartbox di nuovo pubblicabile (online E pagabile) → si annulla il
+     *    ritiro sulle righe del partner. Direttamente e non solo tramite la
+     *    ripubblicazione: una riga senza bozza (le smartbox della finestra in
+     *    cui il wizard era aperto agli ospiti, o una creata a mano) non ha un
+     *    segnale su cui ripartire e resterebbe fuori per sempre; e con la coda
+     *    asincrona il cofanetto torna in vetrina subito, non al giro del job.
+     *
+     * Solo la modalità offline ritira. Chi resta online senza Stripe operativo
+     * (canSwitchToOnline lo lascia salvare il link) non perde le sue smartbox
+     * da qui: il suo ritorno pagabile passa dal webhook di Stripe, che conosce
+     * solo le bozze col segnale, e un ritiro scritto qui non tornerebbe più
+     * indietro. Strutture ed eventi non si toccano mai: si vendono anche in
+     * struttura (vedi PartnerProfile::canPublishFamily()).
+     *
+     * Update di massa col query builder e withHidden(): servono proprio le
+     * righe già fuori dal sito (sospese, in attesa), e il ritiro è una colonna
+     * indipendente dalla sospensione dell'admin — annullarlo non riattiva una
+     * scheda sospesa.
+     */
+    private function syncSmartboxWithholding(PartnerProfile $profile): void
+    {
+        if ($profile->user_id === null) {
+            return;
+        }
+
+        $boxes = fn () => SmartboxPackage::withHidden()->where('user_id', $profile->user_id);
+
+        if (! $profile->requiresOnlinePayment()) {
+            $boxes()->whereNull('withheld_at')->update(['withheld_at' => now()]);
+
+            return;
+        }
+
+        if ($profile->canPublishFamily('smartbox')) {
+            $boxes()->whereNotNull('withheld_at')->update(['withheld_at' => null]);
+        }
     }
 
     /**

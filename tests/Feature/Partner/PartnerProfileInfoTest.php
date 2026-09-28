@@ -179,4 +179,46 @@ class PartnerProfileInfoTest extends TestCase
             ->call('save')
             ->assertHasErrors(['form.openingHours.it' => 'max']);
     }
+
+    // ── Giro del tester, 28/09/2026: W5 sugli orari del profilo ──────────────
+    //
+    // `toProfile()` va a `updateOrCreate()`, che fonde sul profilo esistente:
+    // con `array_filter` gli orari inglesi salvati una volta restavano per
+    // sempre sulla scheda /en. La scheda li legge dal profilo, non da una copia.
+
+    public function test_svuotare_gli_orari_inglesi_li_toglie_e_litaliano_resta(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $partner->partnerProfile()->create([
+            'business_name' => 'Toelettatura Bau',
+            'opening_hours' => ['it' => 'Lun-Sab 8-20', 'en' => 'Mon-Sat 8-20'],
+        ]);
+
+        $this->fillRequired(Livewire::test(PartnerProfileInfo::class))
+            ->assertSet('form.openingHours.en', 'Mon-Sat 8-20')
+            ->set('form.openingHours.en', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $profile = $partner->refresh()->partnerProfile;
+        $this->assertSame(['it' => 'Lun-Sab 8-20'], $profile->getTranslations('opening_hours'));
+        $this->assertSame('Lun-Sab 8-20', $profile->getTranslation('opening_hours', 'en'));
+    }
+
+    public function test_svuotare_gli_orari_in_tutte_le_lingue_li_toglie(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $partner->partnerProfile()->create([
+            'business_name' => 'Toelettatura Bau',
+            'opening_hours' => ['it' => 'Lun-Sab 8-20', 'en' => 'Mon-Sat 8-20'],
+        ]);
+
+        $this->fillRequired(Livewire::test(PartnerProfileInfo::class))
+            ->set('form.openingHours.it', '')
+            ->set('form.openingHours.en', '')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame([], $partner->refresh()->partnerProfile->getTranslations('opening_hours'));
+    }
 }

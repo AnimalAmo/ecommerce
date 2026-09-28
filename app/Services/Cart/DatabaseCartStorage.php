@@ -6,9 +6,11 @@ use App\Data\Cart\CartData;
 use App\Data\Cart\CartItemData;
 use App\Models\Cart\Cart as CartModel;
 use App\Models\CartItem\CartItem;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
@@ -16,9 +18,19 @@ use InvalidArgumentException;
  * unique) + righe cart_items. Le letture usano resolveCart() (nessuna riga
  * carts creata da un semplice render); solo le scritture creano il carrello.
  * Il dedup (purchasable + options canonicalizzate + is_gift) è applicativo.
+ *
+ * Una riga il cui prodotto esce dal catalogo viene tolta davvero e detta al
+ * cliente (CartNotice), per due strade (difetto C9, audit 28/09/2026):
+ * subito, dagli eventi del modello (withdrawIfHidden, registrato in
+ * CartServiceProvider), e comunque alla prima lettura (items), che copre chi
+ * scrive `withheld_at`/`suspended_at` senza passare dal modello.
  */
 class DatabaseCartStorage
 {
+    public function __construct(
+        private readonly CartNotice $notices,
+    ) {}
+
     public function get(): CartData
     {
         $items = $this->items();
@@ -106,8 +118,15 @@ class DatabaseCartStorage
     }
 
     /**
-     * Righe presentate, filtrabili per flusso regalo (null = tutte); le righe
-     * il cui prodotto è sparito dal catalogo vengono saltate (morph senza FK).
+     * Righe presentate, filtrabili per flusso regalo (null = tutte).
+     *
+     * Difetto C9 (audit 28/09/2026): le righe il cui prodotto era uscito dal
+     * catalogo venivano saltate in silenzio e restavano a database per
+     * sempre — il cliente trovava un totale più basso senza una parola. Ora
+     * la lettura le riconosce (la relazione purchasable non ha più lo scope
+     * di catalogo), le cancella e le annota sul carrello per l'avviso. Si
+     * controlla tutto il carrello, non solo il flusso chiesto: una riga
+     * regalo fantasma non deve aspettare che qualcuno apra la vista regalo.
      *
      * @return Collection<int, CartItemData>
      */
@@ -119,14 +138,79 @@ class DatabaseCartStorage
             return new Collection;
         }
 
-        return $cart->items()
-            ->when($gift !== null, fn ($query) => $query->where('is_gift', $gift))
+        [$sellable, $gone] = $cart->items()
             ->with('purchasable')
             ->orderBy('id')
             ->get()
-            ->filter(fn (CartItem $item): bool => $item->purchasable !== null)
+            ->partition(fn (CartItem $item): bool => $item->purchasable?->isVisibleInCatalog() === true);
+
+        if ($gone->isNotEmpty()) {
+            $this->withdraw($cart->id, $gone);
+        }
+
+        return $sellable
+            ->when($gift !== null, fn (Collection $items): Collection => $items->filter(
+                fn (CartItem $item): bool => $item->is_gift === $gift,
+            ))
             ->map(fn (CartItem $item): CartItemData => CartItemData::fromModel($item))
             ->values();
+    }
+
+    /**
+     * Un prodotto appena salvato non è più vendibile (ritirato, sospeso, non
+     * più approvato): va tolto da TUTTI i carrelli a database, subito, con
+     * l'avviso per ciascun cliente. Chiamato dall'evento `updated` dei modelli
+     * di catalogo (CartServiceProvider).
+     *
+     * Niente controllo su quale colonna sia cambiata: se il prodotto è
+     * nascosto, nessun carrello deve tenerlo — anche le righe rimaste da un
+     * ritiro scritto con una query secca (la migrazione del 27/09) vengono
+     * pulite alla prima modifica successiva della scheda.
+     *
+     * La domanda «è ancora in vetrina?» la fa CatalogVisibleScope a database,
+     * non isVisibleInCatalog() sugli attributi in memoria: un modello creato
+     * nella stessa richiesta non ha i default di colonna (approval_status
+     * resta null), e al primo update — basta l'increment dei posti prenotati —
+     * risulterebbe nascosto e verrebbe tolto da tutti i carrelli.
+     */
+    public function withdrawIfHidden(Model $product): void
+    {
+        if ($product->newQuery()->whereKey($product->getKey())->exists()) {
+            return;
+        }
+
+        $this->withdrawProduct($product);
+    }
+
+    /**
+     * Toglie un prodotto da tutti i carrelli a database e lo annota su
+     * ciascuno. Anche per un prodotto appena cancellato (evento `deleted`):
+     * il modello in memoria ha ancora il titolo da nominare.
+     */
+    public function withdrawProduct(Model $product): void
+    {
+        $items = CartItem::query()
+            ->where('purchasable_type', $product->getMorphClass())
+            ->where('purchasable_id', $product->getKey())
+            ->get(['id', 'cart_id']);
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $entry = CartNotice::leftCatalog($product);
+
+        DB::transaction(function () use ($items, $entry): void {
+            CartItem::query()->whereKey($items->modelKeys())->delete();
+
+            // Carrelli in ordine di id: rememberForCart li blocca uno a uno
+            // fino al commit, e due ritiri concorrenti che li prendessero in
+            // ordine diverso andrebbero in deadlock su MySQL (review del
+            // 28/09/2026: l'ordine di lettura segue l'indice del prodotto).
+            foreach ($items->pluck('cart_id')->unique()->sort()->values() as $cartId) {
+                $this->notices->rememberForCart($cartId, [$entry]);
+            }
+        });
     }
 
     public function count(): int
@@ -155,6 +239,25 @@ class DatabaseCartStorage
             'price_cents' => $item->price_cents,
             'options' => $item->options ?? [],
         ];
+    }
+
+    /**
+     * Cancella le righe fantasma trovate in lettura e le annota sul carrello.
+     * L'avviso si scrive solo se la cancellazione ha tolto qualcosa: due
+     * letture concorrenti non lo raddoppiano.
+     *
+     * @param  EloquentCollection<int, CartItem>  $gone
+     */
+    private function withdraw(int $cartId, EloquentCollection $gone): void
+    {
+        $deleted = CartItem::query()->whereKey($gone->modelKeys())->delete();
+
+        if ($deleted > 0) {
+            $this->notices->rememberForCart(
+                $cartId,
+                $gone->map(fn (CartItem $item): array => CartNotice::leftCatalog($item->purchasable))->values()->all(),
+            );
+        }
     }
 
     /** Riga cart_items dell'utente corrente (ownership by scoping), null se assente. */

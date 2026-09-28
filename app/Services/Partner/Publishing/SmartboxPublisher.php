@@ -44,9 +44,11 @@ class SmartboxPublisher extends FamilyPublisher
             'cancellation_policy_days' => $this->cancellationDays($draft),
             // Fine del ritiro (27/09/2026): se si arriva qui il gate per
             // famiglia è passato, quindi il partner incassa online e il
-            // cofanetto è vendibile. Azzerarla qui rende la ripubblicazione
-            // l'unico modo di rimettere una smartbox in vetrina, senza un
-            // secondo percorso da tenere in pari.
+            // cofanetto è vendibile. Dal difetto C8 (28/09/2026) non è più
+            // l'unica strada: PartnerPaymentModeService::set() ritira e
+            // rimette in vetrina anche le righe senza bozza. Le due regole sono
+            // la stessa, canPublishFamily('smartbox'): se una cambia, va
+            // cambiata anche l'altra.
             'withheld_at' => null,
             ...$this->moderationAttributes($current),
         ]);

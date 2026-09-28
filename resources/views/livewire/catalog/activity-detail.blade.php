@@ -77,7 +77,7 @@
                         </section>
                     @endif
 
-                    {{-- 4b. Informazioni generali: tipologia, durata, località, zona, orari, prenotazione, ritrovo.
+                    {{-- 4b. Informazioni generali: tipologia, durata, località, zona, orari, prenotazione, posti, ritrovo.
                            Le righe nuove (27/09/2026) riusano l'idioma della lista: icona + valore, con la
                            sotto-riga grigia per il testo libero. Ognuna ha la sua guardia, così una scheda
                            senza quel dato non mostra un'etichetta vuota. --}}
@@ -160,6 +160,21 @@
                                     </div>
                                 </li>
                             @endif
+                            {{-- Posti che restano (audit 28/09/2026, difetto C2), sullo stampo della scheda evento:
+                                 senza questa riga il cliente non ha modo di capire che scendendo di un ospite
+                                 l'acquisto passerebbe. Solo quando un limite esiste (capienza illimitata = nessuna
+                                 riga, non "illimitati"); a posti esauriti la riga non c'è, lo dice la dicitura che
+                                 prende il posto della CTA — «Posti disponibili: 0» direbbe sì e no insieme. Accanto
+                                 alla prenotazione, come sulla scheda evento: sono le due righe su come si prenota. --}}
+                            @if ($remainingSeats !== null)
+                                <li class="flex items-start gap-4">
+                                    {{-- icona users e non team: quella custom ha fill/stroke fissi (ciano e verde) e sarebbe la sola voce colorata della lista --}}
+                                    <flux:icon.users variant="micro" class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
+                                    <div>
+                                        <p class="text-[15px] font-medium leading-[21px] text-[#0D171A]">{{ __('partner.activity_info.max_participants') }}: {{ $remainingSeats }}</p>
+                                    </div>
+                                </li>
+                            @endif
                             {{-- Ritrovo: venue_id è nullable, e un venue che si chiama come la scheda non è un
                                  ritrovo ma il ripiego del publisher — la guardia sta in
                                  ActivityDetail::showsMeetingPoint(). --}}
@@ -176,11 +191,17 @@
                         </ul>
                     </section>
 
-                    {{-- 4c. Attività (nascosta senza copy) --}}
-                    @if (filled($activity->description))
+                    {{-- 4c. Attività: la descrizione DETTAGLIATA (audit 28/09/2026, difetto W1). Il wizard la
+                         pretende per le attività, ma la sezione ristampava la descrizione breve della 4a: lo
+                         stesso testo due volte, e quello lungo da nessuna parte. Ora legge la gemella
+                         `events.detailed_description`, come la smartbox legge `extended_description` nella
+                         sua «Il tuo weekend». Tradotta con spatie: senza testo torna '' e non null, quindi
+                         filled(). Nascosta quando manca (catalogo demo, attività mai ripubblicate e non
+                         raggiunte dal travaso): meglio nessuna sezione che la breve ripetuta. --}}
+                    @if (filled($activity->detailed_description))
                         <section class="mt-10">
                             <h2 class="text-[22px] font-bold leading-[30px] text-black">{{ __('events.activity') }}</h2>
-                            <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->description }}</p>
+                            <p class="mt-3 text-[15px] leading-[22px] text-[#2B2B2B]">{{ $activity->detailed_description }}</p>
                         </section>
                     @endif
 
@@ -296,7 +317,23 @@
                                 @include('partials.catalog.partner-contacts-card')
                             </div>
                         @elseif (! $isSoldOut)
-                            <flux:button wire:click="addToCart" class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('events.add_to_cart') }}</flux:button>
+                            @if ($notEnoughSeats)
+                                {{-- Posti ci sono, ma non per gli ospiti scelti (audit 28/09/2026, difetto C2): il
+                                     carrello rifiuterebbe con `booked + ospiti > capienza`, quindi al posto del
+                                     pulsante la stessa frase che darebbe il toast (cart.sold_out) e quanti posti
+                                     restano, così il cliente sa di quanto scendere. Il «+» degli ospiti è già spento
+                                     a quel limite (ActivityDetail::guestsAtMax); il riepilogo sotto resta, perché
+                                     segue gli stepper e al primo «−» utile il pulsante torna. --}}
+                                <p class="mt-[26px] flex items-start gap-2 text-sm leading-[19px] text-[#627277]">
+                                    <flux:icon.exclamation-circle class="mt-[2px] h-4 w-4 shrink-0" />
+                                    <span>
+                                        {{ __('cart.sold_out') }}
+                                        <span class="mt-1 block font-semibold text-[#0D171A]">{{ __('partner.activity_info.max_participants') }}: {{ $remainingSeats }}</span>
+                                    </span>
+                                </p>
+                            @else
+                                <flux:button wire:click="addToCart" class="!mt-[26px] !flex !h-[39px] !w-full !rounded-full !border-0 !bg-brand-yellow !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('events.add_to_cart') }}</flux:button>
+                            @endif
 
                             {{-- Riepilogo reale dagli stepper: prezzo × persone + totale quotato server-side --}}
                             <div class="mt-[25px] flex items-center justify-between text-[17px] leading-[23px] text-[#2B2B2B]">

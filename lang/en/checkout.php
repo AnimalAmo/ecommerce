@@ -6,6 +6,15 @@ return [
     // JS: Stripe confirmation finished without a successful outcome
     'payment_incomplete' => 'The payment was not completed. Please try again.',
 
+    // Finding C10 (audit 28/09/2026): the partner sells online but Stripe no longer
+    // lets them take payments (charges or payouts switched off after publishing).
+    // Step 2 does not open: the notice sits on step 1, the toast comes on Continue.
+    'seller_not_payable' => [
+        'notice' => 'The partner cannot receive online payments right now, so this purchase cannot be completed. Please try again later, or remove their products from your cart to buy from another partner.',
+        'toast' => 'The partner cannot receive online payments right now, so you cannot continue. The details you entered stay here.',
+        'back_to_cart' => 'Back to the cart',
+    ],
+
     // "Pay at the property" branch (partner without online payment): step 2 is a confirmation, no Stripe
     'on_site' => [
         'step_label' => 'Confirm',

@@ -7,8 +7,10 @@ use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
+use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
+use App\Services\Cart\CartNotice;
 use App\Services\Content\FaqService;
 use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
@@ -16,12 +18,16 @@ use DateTimeImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class Cart extends Component
 {
     use HasBookingCalendar;
+
+    // I cuori delle card «più amate» dello stato vuoto sono quelli del catalogo (difetto C6).
+    use TogglesFavorites;
 
     /** Flag ?regalo=1 (deep-link come ?tab della community): mostra SOLO le righe regalo (flussi separati, mai vista mista). */
     #[Url(as: 'regalo', except: false)]
@@ -31,11 +37,6 @@ class Cart extends Component
     public array $giftDedication = [];
 
     public array $giftMessage = [];
-
-    /** Chiavi ('alias-id') delle card suggerite (stato vuoto) marcate preferite / aggiunte al carrello (solo visivo). */
-    public array $suggestFavorites = [];
-
-    public array $suggestInCart = [];
 
     /** Chiave della riga in modifica nel pop-up: id cart_items (auth) o hash md5 (sessione); null = pop-up chiuso. */
     public int|string|null $editingKey = null;
@@ -53,6 +54,22 @@ class Cart extends Component
 
     /** Campi espandibili ammessi nel pop-up ('date' copre anche il giorno singolo del service). */
     public const FIELDS = ['date', 'ospiti', 'animali', 'orari'];
+
+    /**
+     * Frasi dell'avviso «il tuo carrello è cambiato»: righe tolte senza che le
+     * togliesse il cliente — prodotto ritirato, sospeso o cancellato, righe
+     * ospite scartate all'accesso.
+     *
+     * Difetto C9 (audit 28/09/2026): prima quelle righe sparivano in silenzio e
+     * il totale scendeva senza una parola. CartNotice::pull() svuota l'avviso
+     * mentre lo consegna, quindi si vede una volta; qui resta per tutta la
+     * visita (modificare o eliminare un'altra riga non lo fa sparire) finché
+     * il cliente non lo chiude. Locked: lo scrive solo il server.
+     *
+     * @var list<string>
+     */
+    #[Locked]
+    public array $removedNotice = [];
 
     public function mount(): void
     {
@@ -89,24 +106,67 @@ class Cart extends Component
         return $this->redirectRoute('checkout', ['regalo' => 1]);
     }
 
-    /** Cuore sulle card suggerite dello stato vuoto: parte bianco e diventa giallo (toggle, solo visivo). */
+    /**
+     * Cuore sulle card suggerite dello stato vuoto ($key = 'alias-id' della
+     * card FavoriteService::topFavorited): preferito vero, lo stesso del cuore
+     * del catalogo e delle card «più amate» di /preferiti (TogglesFavorites →
+     * FavoriteService::toggle). Da ospite apre il login, come ovunque.
+     *
+     * Difetto C6 (audit 28/09/2026): prima infilava e toglieva la chiave da un
+     * array del componente — il cuore diventava giallo, nessun preferito
+     * nasceva e ricaricando la pagina tornava bianco. Anche lo stato iniziale
+     * mentiva: partiva bianco pure sui prodotti già tra i preferiti. Ora il
+     * cuore si accende dai preferiti reali (isFavorite nella vista).
+     */
     public function toggleSuggestionFavorite(string $key): void
     {
-        if (in_array($key, $this->suggestFavorites, true)) {
-            $this->suggestFavorites = array_values(array_diff($this->suggestFavorites, [$key]));
-        } else {
-            $this->suggestFavorites[] = $key;
-        }
+        [$type, $id] = self::suggestionTarget($key);
+
+        $this->toggleFavorite($type, $id);
     }
 
-    /** Borsa sulle card suggerite dello stato vuoto: aggiunge/toglie dal carrello (solo visivo). */
+    /**
+     * Borsa sulle card suggerite dello stato vuoto: aggiunge davvero al
+     * carrello con le opzioni di default della famiglia, con le stesse regole
+     * della borsa di /preferiti (FavoriteService::addProductToCart) e sullo
+     * stampo di Favorites::toggleCart(): toast danger sulle violazioni,
+     * `cart-updated` per il badge, toast di conferma.
+     *
+     * Difetto C6 (audit 28/09/2026): prima era solo colore — il bottone
+     * diventava giallo e l'aria-label diceva «Rimuovi dal carrello» su un
+     * carrello vuoto, il contatore non si muoveva e ricaricando spariva tutto.
+     *
+     * Niente rimozione, come su /preferiti: le card suggerite esistono solo a
+     * carrello vuoto, e dopo l'aggiunta render() rilegge le righe — lo stato
+     * vuoto lascia il posto alla lista con la riga nuova e il totale, dove si
+     * modifica e si elimina. L'ospite può aggiungere: il suo carrello vive in
+     * sessione (CartManager), quindi non serve mandarlo al login.
+     */
     public function toggleSuggestionCart(string $key): void
     {
-        if (in_array($key, $this->suggestInCart, true)) {
-            $this->suggestInCart = array_values(array_diff($this->suggestInCart, [$key]));
-        } else {
-            $this->suggestInCart[] = $key;
+        [$type, $id] = self::suggestionTarget($key);
+
+        try {
+            $added = app(FavoriteService::class)->addProductToCart(auth()->user(), $type, $id);
+        } catch (CartValidationException $exception) {
+            Flux::toast(text: $exception->getMessage(), variant: 'danger');
+
+            return;
         }
+
+        // Prodotto non acquistabile (evento gratuito): nessuna riga, nessun feedback.
+        if (! $added) {
+            return;
+        }
+
+        $this->dispatch('cart-updated');
+        Flux::toast(text: __('cart.added'), variant: 'success');
+    }
+
+    /** La X dell'avviso «il tuo carrello è cambiato»: il cliente l'ha letto. */
+    public function dismissRemovedNotice(): void
+    {
+        $this->removedNotice = [];
     }
 
     /** Il bottone "Elimina" rimuove la riga dal carrello; totale e conteggio si aggiornano da soli. */
@@ -210,6 +270,17 @@ class Cart extends Component
     {
         $cartItems = $this->cart()->items($this->gift);
 
+        // Dopo la lettura delle righe, non prima: è la lettura stessa che toglie
+        // le righe fantasma e ne scrive l'avviso (difetto C9), e va detto adesso.
+        $removed = app(CartNotice::class)->pull();
+
+        if ($removed !== []) {
+            $this->removedNotice = array_values(array_unique([...$this->removedNotice, ...$removed]));
+
+            // Il badge dell'header conta le righe per conto suo: che non resti indietro.
+            $this->dispatch('cart-updated');
+        }
+
         // Un carrello = un partner (CartManager::guardSinglePartner): basta la
         // prima riga già caricata, senza rileggere il carrello. Nessuna riga
         // → null → Online (e la vista non stampa il riepilogo).
@@ -231,6 +302,19 @@ class Cart extends Component
             ? collect($items)->first(fn (array $item): bool => (string) $item['id'] === (string) $this->editingKey)
             : null;
 
+        // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
+        $suggestions = $items === [] ? app(FavoriteService::class)->topFavorited() : [];
+
+        // Nel flusso regalo la borsa delle card suggerite sparisce: aggiungerebbe
+        // una riga normale, che la vista regalo (mai mista) non mostra, e il
+        // bottone sembrerebbe morto. Il cuore resta: il preferito non dipende dal flusso.
+        if ($this->gift) {
+            $suggestions = array_map(
+                fn (array $suggestion): array => [...$suggestion, 'can_add_to_cart' => false],
+                $suggestions,
+            );
+        }
+
         return view('livewire.commerce.cart', [
             'items' => $items,
             'total' => $this->cart()->total($this->gift),
@@ -241,8 +325,7 @@ class Cart extends Component
             'guestsAtMax' => $this->guestsAtMax(),
             'animalsAtMax' => $this->animalsAtMax(),
             'bookingHours' => self::bookingHours(),
-            // Le 3 card "più amate" reali dello stato vuoto (query sui preferiti).
-            'suggestions' => $items === [] ? app(FavoriteService::class)->topFavorited() : [],
+            'suggestions' => $suggestions,
             'paysOnSite' => $paysOnSite,
             // Modalità non più disponibile: al posto delle CTA la spiegazione.
             'onSiteBlocked' => $onSiteBlocked,
@@ -297,6 +380,21 @@ class Cart extends Component
         return $this->cart()->items($this->gift)->first(
             fn (CartItemData $item): bool => (string) $item->key === (string) $key,
         );
+    }
+
+    /**
+     * Chiave di una card suggerita ('alias-id', vedi FavoriteService::topFavorited)
+     * → [alias morph, id prodotto]. Arriva dal payload del client: una chiave
+     * malformata è un 400; alias fuori whitelist e prodotto inesistente li
+     * respingono i service (400/404), come per il cuore del catalogo.
+     *
+     * @return array{0: string, 1: int}
+     */
+    private static function suggestionTarget(string $key): array
+    {
+        abort_unless(preg_match('/^([a-z_]+)-(\d+)$/', $key, $matches) === 1, 400);
+
+        return [$matches[1], (int) $matches[2]];
     }
 
     /**

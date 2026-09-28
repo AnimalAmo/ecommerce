@@ -264,12 +264,12 @@ class StructureCreate extends Component
         // ogni elenco regionale e ora StructurePublisher::regionIdFor() lo logga.
         $rules['location.province'][] = Rule::exists('provinces', 'short_name');
 
-        // Rafforzamento 3: le liste di slug del wizard non hanno whitelist.
-        // SEMPRE slugs(), mai options(): options() torna slug => etichetta, e
-        // Rule::in ne itera i VALORI — accetterebbe 'Hotel' e rifiuterebbe
-        // 'hotel'. I rafforzamenti stanno qui e non nei Form object perché
-        // quelli sono condivisi col wizard: una bozza vecchia con uno slug
-        // fuori elenco deve restare salvabile dal partner.
+        // Rafforzamento 3: whitelist degli slug. SEMPRE slugs(), mai options():
+        // options() torna slug => etichetta, e Rule::in ne itera i VALORI —
+        // accetterebbe 'Hotel' e rifiuterebbe 'hotel'. Dal 28/09/2026 (WP8) la
+        // stessa whitelist sta anche nei Form object condivisi col wizard, che
+        // alla rilettura scartano gli slug fuori elenco di una bozza vecchia:
+        // qui è ridondante e innocua (i messaggi uguali si fondono).
         $rules['services.services.*'][] = Rule::in(ServiceOptionLabels::slugs('services'));
         $rules['services.additional.*'][] = Rule::in(ServiceOptionLabels::slugs('additional'));
         $rules['services.structureRules.*'][] = Rule::in(ServiceOptionLabels::slugs('rules'));

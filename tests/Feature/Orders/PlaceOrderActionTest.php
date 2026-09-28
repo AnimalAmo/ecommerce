@@ -355,4 +355,82 @@ class PlaceOrderActionTest extends TestCase
         $this->assertDatabaseCount('order_payments', 0);
         $this->assertCount(1, $this->cart()->items());
     }
+
+    // ── Difetto C3: i posti si consumano e non si liberano mai ─────────────────
+    //
+    // `grep -rn booked_participants app database` dà una sola SCRITTURA:
+    // `$event->increment(...)` in ReserveAvailabilityPipe. `decrement` non compare
+    // da nessuna parte fuori dagli stepper UI. Oggi il buco non perde, perché
+    // nessun percorso scrive `OrderStatus::Cancelled` (l'enum esiste e l'unico
+    // riferimento in app/ è la LETTURA della dashboard partner) e perché ogni
+    // storno post-capture avviene dopo un rollback che annulla anche l'increment.
+    // Ma il carrello promette al cliente «Cancellazione gratuita — Non oltre 2
+    // settimane prima dell'evento», e il giorno in cui l'annullamento atterra ogni
+    // disdetta brucerebbe un posto per sempre.
+    //
+    // Avvertenza motori: `lockForUpdate` è un no-op su SQLite, quindi
+    // l'ordinamento dei lock sotto concorrenza non è dimostrabile da questa
+    // suite — solo su MySQL.
+
+    /**
+     * Il contratto che la correzione deve rispettare: chi annulla un ordine
+     * libera i posti nella stessa transazione. Se l'annullamento arriverà come
+     * azione dedicata invece che come effetto del cambio di stato, questo test va
+     * riscritto su quell'azione — non cancellato.
+     */
+    public function test_annullare_un_ordine_libera_i_posti_dellevento(): void
+    {
+        $this->markTestIncomplete('Decisione aperta (audit 27/09/2026, C3): oggi non esiste un percorso di annullamento ordini. Chi lo scriverà deve liberare i posti nella stessa transazione: questo test è il contratto.');
+
+        $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
+            'price_cents' => 2500,
+            'max_participants' => 10,
+            'starts_at' => '2026-08-10 18:00:00',
+            'ends_at' => '2026-08-10 20:00:00',
+        ]);
+        $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
+
+        $order = $this->placeOrder();
+
+        $this->assertSame(2, $event->refresh()->booked_participants);
+
+        $order->update(['status' => OrderStatus::Cancelled]);
+
+        $this->assertSame(
+            0,
+            (int) $event->refresh()->booked_participants,
+            'Un ordine annullato non tiene i posti: il carrello promette la cancellazione gratuita e '
+            .'nessun percorso restituisce la capienza.',
+        );
+    }
+
+    /**
+     * La conseguenza pratica: dopo l'annullamento il posto deve tornare
+     * acquistabile. Capienza 2, un ordine da 2 annullato, e un secondo cliente
+     * che deve poter entrare.
+     */
+    public function test_dopo_un_annullamento_il_posto_torna_acquistabile(): void
+    {
+        $this->markTestIncomplete('Decisione aperta (audit 27/09/2026, C3): oggi non esiste un percorso di annullamento ordini. Chi lo scriverà deve liberare i posti nella stessa transazione: questo test è il contratto.');
+
+        $event = Event::factory()->create([
+            'user_id' => $this->seller()->id,
+            'price_cents' => 2500,
+            'max_participants' => 2,
+            'starts_at' => '2026-08-10 18:00:00',
+            'ends_at' => '2026-08-10 20:00:00',
+        ]);
+        $this->cart()->addItem('event', $event->id, ['participants' => 2], false);
+
+        $order = $this->placeOrder();
+        $order->update(['status' => OrderStatus::Cancelled]);
+
+        // Secondo cliente: l'evento non è più pieno.
+        $this->cart()->addItem('event', $event->id, ['participants' => 1], false);
+
+        $this->placeOrder(gatewaySessionId: 'pi_test_2');
+
+        $this->assertSame(1, (int) $event->refresh()->booked_participants);
+    }
 }

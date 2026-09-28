@@ -13,6 +13,9 @@
                 <div class="relative overflow-hidden rounded-[10px] border border-gray-150 bg-white px-6 py-8">
                     <h1 class="text-[25px] font-bold text-[#0D171A]">{{ __('partner.dashboard.welcome', ['name' => $partnerName]) }}</h1>
                     <p class="mt-3 max-w-[640px] text-[15px] leading-relaxed text-[#1E2E33]">{{ __('partner.dashboard.intro') }}</p>
+                    {{-- Rotta senza `nuovo=1`, a differenza della nav: è «Crea il tuo
+                         PRIMO servizio», e chi ne ha uno a metà in sessione deve
+                         ritrovarlo, non ricominciare (difetto W2). --}}
                     <flux:button href="{{ route('partner.service.create') }}" class="!mt-8 !h-10 !rounded-full !border-0 !bg-[#232A2C] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#0D171A]">{{ __('partner.dashboard.cta') }}</flux:button>
 
                     {{-- Scia di zampe decorativa (XD: 5 zampe cyan in diagonale, angolo alto-destra) --}}

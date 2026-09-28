@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Livewire\Concerns\AddsEventToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\HasCatalogFilters;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
+use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -115,10 +117,23 @@ class Events extends Component
         // sarebbe una N+1 nascosta dentro una vista.
         $ownerModes = app(PartnerPaymentModeService::class)->forOwners($similar->pluck('user_id'));
 
+        // Posti esauriti (difetto C5): la griglia offriva il carrello anche a
+        // evento pieno, e il click rispondeva solo col toast di
+        // AvailabilityService. Stessa regola della scheda e delle card dei
+        // preferiti (FavoriteService::isSoldOut); i posti sono colonne delle
+        // righe già caricate, quindi nessuna query in più.
+        $favorites = app(FavoriteService::class);
+        $soldOutIds = $similar->filter(fn (Event $event): bool => $favorites->isSoldOut(
+            $event,
+            ($ownerModes[$event->user_id] ?? OrderPaymentMode::Online) === OrderPaymentMode::OnSite,
+        ))->modelKeys();
+
         return view('livewire.catalog.events', [
             'events' => $events,
             // Mappa id titolare => OrderPaymentMode per le card (assente = online).
             'ownerModes' => $ownerModes,
+            // Id delle card a posti esauriti: al posto della CTA, la ragione.
+            'soldOutIds' => $soldOutIds,
             'empty' => $empty,
             'catalogueEmpty' => $catalogueEmpty,
             'similar' => $similar,
@@ -146,15 +161,27 @@ class Events extends Component
         return max(self::PER_PAGE, min($this->pageSize, self::MAX_PER_PAGE));
     }
 
-    /** Filtro "Dove" (trim, case-insensitive): titolo OR location OR nome della venue. */
+    /**
+     * Filtro "Dove" (trim, case-insensitive): titolo OR zona in cui opera OR
+     * location OR nome della venue.
+     *
+     * Difetto W9 (28/09/2026), due metà. Il titolo è JSON tradotto e il suo
+     * LIKE distingueva il caso su MySQL e non su SQLite: ora passa da
+     * `whereTranslatedLike()` (HasCatalogFilters), che piega il caso su tutti e
+     * due i motori. E `operating_area` non entrava in nessun ramo: un
+     * professionista che dichiara «Milano e provincia» ma ha sede a Sesto San
+     * Giovanni non si trovava cercando «Milano», che è proprio come lo cerca un
+     * cliente. Sugli eventi la colonna è NULL, quindi il ramo non cambia niente.
+     */
     private function applyWhereFilter(Builder $query): Builder
     {
         $term = self::like(trim($this->where));
 
         return $query->where(function (Builder $sub) use ($term): void {
-            // title è JSON translatable: LIKE sul path del locale corrente.
-            $sub->whereLike('title->'.app()->getLocale(), $term)
-                ->orWhereLike('location', $term)
+            self::whereTranslatedLike($sub, 'title', $term);
+            self::whereTranslatedLike($sub, 'operating_area', $term, 'or');
+
+            $sub->orWhereLike('location', $term)
                 ->orWhereHas('venue', fn (Builder $venue) => $venue->whereLike('name', $term));
         });
     }

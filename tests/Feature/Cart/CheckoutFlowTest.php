@@ -10,10 +10,13 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
+use App\Services\Payment\PaymentGatewayService;
+use App\Services\Payment\StripeGateway;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Tests\Support\Payment\FakePaymentGateway;
 use Tests\TestCase;
 
 class CheckoutFlowTest extends TestCase
@@ -134,6 +137,7 @@ class CheckoutFlowTest extends TestCase
     public function test_recipient_email_is_not_required_in_the_normal_flow(): void
     {
         $this->actingAs($this->giulia);
+        $this->payableDemoSeller();
         $this->addHotelLine();
 
         Livewire::test(Checkout::class)
@@ -147,6 +151,7 @@ class CheckoutFlowTest extends TestCase
     public function test_recipient_email_is_persisted_to_the_gift_line_and_shown_at_step_three(): void
     {
         $this->actingAs($this->giulia);
+        $this->payableDemoSeller();
         $key = $this->addGiftSmartboxLine(['dedication' => 'Marco', 'message' => 'Tanti auguri!']);
 
         $component = Livewire::withQueryParams(['regalo' => 1])->test(Checkout::class)
@@ -196,6 +201,33 @@ class CheckoutFlowTest extends TestCase
         $this->assertFalse(method_exists(Checkout::class, 'dogsLabel'));
         $this->assertFalse(method_exists(Cart::class, 'guestsLabel'));
         $this->assertFalse(method_exists(Cart::class, 'dogsLabel'));
+    }
+
+    /**
+     * Rende pagabile il partner demo, proprietario di Hotel Brescia e della
+     * smartbox Relax in Lombardia, e mette il gateway fittizio al posto di Stripe.
+     *
+     * Tester 28/09/2026. Il seed lo lascia online ma senza Stripe, che è
+     * esattamente il venditore del difetto C10: da quando preparePaymentStep()
+     * non apre lo step 2 per lui, i test che qui chiedono lo step 2 si
+     * fermavano allo step 1. Prima ci arrivavano solo perché lo step 2 si
+     * apriva lo stesso, col riquadro «pagamento non disponibile» — cioè il
+     * vicolo cieco che C10 toglie. Questi test parlano dell'email del
+     * destinatario, non del pagamento: il venditore deve poter incassare, e
+     * nessuna chiamata deve uscire verso Stripe.
+     */
+    private function payableDemoSeller(): void
+    {
+        User::where('email', 'partner@animalamo.test')->firstOrFail()->partnerProfile->update([
+            'online_payment' => true,
+            'stripe_account_id' => 'acct_demoseller000001',
+            'stripe_charges_enabled' => true,
+            'stripe_payouts_enabled' => true,
+            'stripe_requirements_due' => [],
+        ]);
+
+        app(PaymentGatewayService::class)->clearCache();
+        $this->app->instance(StripeGateway::class, new FakePaymentGateway);
     }
 
     /** Facciata carrello (storage scelto dallo stato auth corrente). */

@@ -242,4 +242,71 @@ class PartnerActivityLocationTest extends TestCase
             ->assertSet('form.operatingArea.it', 'Lombardia')
             ->assertSet('form.operatingArea.en', 'Lombardy');
     }
+
+    // ── Giro del tester, 28/09/2026: W5 sul luogo ────────────────────────────
+    //
+    // Punto d'incontro e zona passano da `ActivityLocationForm::toDraft()`, che
+    // la lane nome ha portato su Translations::replacing(): nessuna prova lo
+    // guardava. Svuotato il tab EN, l'inglese sparisce e l'italiano resta.
+
+    public function test_svuotare_linglese_del_punto_dincontro_lo_toglie(): void
+    {
+        $draft = StructureDraft::create([
+            'status' => 'draft',
+            'current_step' => 3,
+            'type' => 'eventi',
+            'meeting_point' => ['it' => 'Piazza centrale', 'en' => 'Main square'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        $this->withAddress(Livewire::test(ActivityLocation::class))
+            ->assertSet('form.meetingPoint.en', 'Main square')
+            ->set('form.meetingPoint.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['it' => 'Piazza centrale'], $draft->fresh()->getTranslations('meeting_point'));
+    }
+
+    public function test_svuotare_linglese_della_zona_la_toglie(): void
+    {
+        $draft = StructureDraft::create([
+            'status' => 'draft',
+            'current_step' => 3,
+            'type' => 'attivita',
+            'operating_area' => ['it' => 'Lombardia', 'en' => 'Lombardy'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        $this->withAddress(Livewire::test(ActivityLocation::class))
+            ->assertSet('form.operatingArea.en', 'Lombardy')
+            ->set('form.operatingArea.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['it' => 'Lombardia'], $draft->fresh()->getTranslations('operating_area'));
+    }
+
+    /** La zona è facoltativa in tutte due le lingue: svuotata del tutto, la colonna non porta più niente. */
+    public function test_svuotare_la_zona_in_tutte_le_lingue_la_toglie(): void
+    {
+        $draft = StructureDraft::create([
+            'status' => 'draft',
+            'current_step' => 3,
+            'type' => 'attivita',
+            'operating_area' => ['it' => 'Lombardia', 'en' => 'Lombardy'],
+        ]);
+        session(['structure_draft_id' => $draft->id]);
+
+        $this->withAddress(Livewire::test(ActivityLocation::class))
+            ->set('form.operatingArea.it', '')
+            ->set('form.operatingArea.en', '')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $draft->refresh();
+
+        $this->assertSame([], $draft->getTranslations('operating_area'));
+        $this->assertTrue(blank($draft->operating_area));
+    }
 }

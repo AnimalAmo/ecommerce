@@ -49,9 +49,13 @@ class ActivityCreate extends Component
     public array $categories = [];
 
     /**
-     * Dettaglio di "Altro" delle tipologie, localizzato it/en. Come nel wizard
-     * resta salvato anche se "Altro" viene deselezionato: la colonna è `text`,
-     * quindi qui non serve il rafforzamento a 110 di nome e punto d'incontro.
+     * Dettaglio di "Altro" delle tipologie, localizzato it/en. Conta solo
+     * finché "Altro" è spuntato (`choosesOther()`): solo allora la vista lo
+     * disegna, le regole lo validano e il salvataggio lo scrive (difetto F6,
+     * 28/09/2026). La property invece resta com'è, come nello step Nome del
+     * wizard: rispuntando "Altro" prima di salvare l'admin ritrova il testo.
+     * La colonna è `text`, quindi qui non serve il rafforzamento a 110 di nome
+     * e punto d'incontro.
      *
      * @var array<string, string>
      */
@@ -129,10 +133,11 @@ class ActivityCreate extends Component
     }
 
     /**
-     * Regole del wizard più i tre rafforzamenti del contratto.
+     * Regole del wizard più i rafforzamenti del contratto.
      *
      * `max:110` SOLO su nome e punto d'incontro, che sono i campi il cui JSON
-     * it+en finisce in un `varchar(255)`. Descrizioni e "altro" restano ai 200
+     * it+en finisce in un `varchar(255)` — e il punto d'incontro solo sugli
+     * eventi, l'unico ramo che lo chiede. Descrizioni e "altro" restano ai 200
      * del wizard: un limite più stretto bloccherebbe il partner su un testo che
      * ha già salvato dal suo percorso e che non potrebbe più risalvare.
      *
@@ -142,9 +147,7 @@ class ActivityCreate extends Component
      * chiavi proprie, poi merge dei Form con `=`, poi rafforzamenti accodati.
      * Con `??=` (com'era scritto) il rafforzamento avrebbe SOSTITUITO la regola
      * del Form: `location.meetingPoint.it` sarebbe diventato `['max:110']` e il
-     * punto d'incontro avrebbe smesso di essere obbligatorio; `location.province`
-     * sarebbe diventato il solo `exists`, e una provincia vuota avrebbe detto
-     * «questa sigla non esiste» invece di «è obbligatoria». Un'attività creata
+     * punto d'incontro avrebbe smesso di essere obbligatorio. Un evento creato
      * così dal pannello non sarebbe più risalvabile dal partner col suo wizard.
      */
     public function rules(): array
@@ -163,8 +166,6 @@ class ActivityCreate extends Component
             // `text` non serve il rafforzamento a 110.
             'categories' => ['array'],
             'categories.*' => ['string', Rule::in(ServiceOptionLabels::slugs($this->categoryGroup()))],
-            'categoriesOther.it' => ['nullable', 'string', 'max:200'],
-            'categoriesOther.en' => ['nullable', 'string', 'max:200'],
             'description.it' => ['required', 'string', 'max:200'],
             'description.en' => ['nullable', 'string', 'max:200'],
             'animalServices' => ['array'],
@@ -181,6 +182,16 @@ class ActivityCreate extends Component
             'photos' => ['array'],
             'photos.*' => ['image', 'max:8192'],
         ];
+
+        // Il testo di "Altro" si valida solo se il campo è disegnato, cioè con
+        // "Altro" spuntato (come ActivityName, difetto F6 del 28/09/2026):
+        // senza la casella la vista non lo mostra, quindi un suo errore non
+        // avrebbe dove comparire e bloccherebbe il salvataggio in silenzio.
+        // Tanto, senza la casella, non si salva.
+        if ($this->choosesOther()) {
+            $rules['categoriesOther.it'] = ['nullable', 'string', 'max:200'];
+            $rules['categoriesOther.en'] = ['nullable', 'string', 'max:200'];
+        }
 
         // Come ActivityDescription: la descrizione dettagliata esiste solo per
         // le attività (sugli eventi non viene nemmeno pubblicata).
@@ -202,11 +213,30 @@ class ActivityCreate extends Component
 
         // 2. E SOLO ADESSO i rafforzamenti, ACCODATI: la chiave è la stessa che
         //    usa il Form, quindi l'errore compare sotto lo stesso campo, ma la
-        //    regola del Form resta (province obbligatoria, punto d'incontro
-        //    obbligatorio in italiano).
-        $rules['location.province'][] = Rule::exists('provinces', 'short_name');
-        $rules['location.meetingPoint.it'][] = 'max:110';
-        $rules['location.meetingPoint.en'][] = 'max:110';
+        //    regola del Form resta (punto d'incontro obbligatorio in italiano).
+        //
+        //    Il `max:110` del punto d'incontro vale SOLO sul ramo eventi, con lo
+        //    stesso `isEvent` con cui ActivityLocationForm dichiara la chiave
+        //    (difetto F9, audit del 27/09/2026, corretto il 28/09/2026). Accodato
+        //    senza condizione, sul ramo attività `[]=` CREAVA la chiave
+        //    `location.meetingPoint.it` con la sola `max:110`: una regola su un
+        //    campo che la vista non disegna. Innocua finché era un `max` su una
+        //    stringa vuota, ma un `required` o un `Rule::in` aggiunti domani lì
+        //    avrebbero bloccato il salvataggio di un'attività su un campo
+        //    invisibile.
+        //
+        //    Niente più `Rule::exists('provinces', 'short_name')` accodato a
+        //    `location.province` (stesso difetto F9): dal 27/09/2026 la regola
+        //    sta in ActivityLocationForm, quindi qui era un doppione — due query
+        //    identiche per la stessa sigla. Il messaggio del pannello non si
+        //    perde: `location.province.exists` di messages() aggancia la regola
+        //    del Form, che ha lo stesso nome. (StructureCreate lo tiene doppio di
+        //    proposito e lo dice; qui non c'era nessuna ragione per farlo.)
+        if ($this->location->isEvent) {
+            $rules['location.meetingPoint.it'][] = 'max:110';
+            $rules['location.meetingPoint.en'][] = 'max:110';
+        }
+
         $rules['included.services.*'][] = Rule::in(ServiceOptionLabels::slugs('services'));
         $rules['included.additional.*'][] = Rule::in(ServiceOptionLabels::slugs('additional'));
         $rules['included.structureRules.*'][] = Rule::in(ServiceOptionLabels::slugs('rules'));
@@ -255,6 +285,12 @@ class ActivityCreate extends Component
             'info' => $this->info,
             'included' => $this->included,
         ];
+    }
+
+    /** "Altro" è fra le tipologie selezionate? È la condizione con cui la vista disegna il suo testo libero. */
+    private function choosesOther(): bool
+    {
+        return in_array('altro', $this->categories, true);
     }
 
     /** Gruppo di ServiceOptionLabels delle tipologie del ramo corrente (come ActivityName::group()). */
@@ -436,7 +472,11 @@ class ActivityCreate extends Component
             // dell'altro ramo resta NULL, ed è anche quella che EventPublisher
             // scarta in base al tipo pubblicato.
             $this->categoriesColumn() => $this->categories,
-            $this->categoriesColumn().'_other' => $filled($this->categoriesOther),
+            // Difetto F6 (28/09/2026): il testo libero si scriveva anche senza
+            // "Altro" spuntato, e la scheda pubblicata lo stampava sotto la
+            // tipologia scelta al suo posto. Senza la casella la colonna resta
+            // vuota, come nello step Nome del wizard.
+            $this->categoriesColumn().'_other' => $this->choosesOther() ? $filled($this->categoriesOther) : [],
             ...$this->location->toDraft(),
             'description' => $filled($this->description),
             ...$this->info->toDraft(),

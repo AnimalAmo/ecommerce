@@ -4,23 +4,22 @@ namespace App\Livewire\Catalog;
 
 use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
-use App\Exceptions\CartValidationException;
+use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
 use App\Models\Partner\PartnerProfile;
-use App\Services\Cart\CartManager;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Partner\ServiceOptionLabels;
 use App\Services\Pricing\BookingPricingService;
 use App\Support\Format;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class ActivityDetail extends Component
 {
+    use AddsCatalogProductToCart;
     use HasBookingCalendar;
     use TogglesFavorites;
 
@@ -76,20 +75,16 @@ class ActivityDetail extends Component
             return;
         }
 
-        try {
-            // Date NON nelle options: derivano da starts_at/ends_at/duration_days del purchasable.
-            app(CartManager::class)->addItem('event', $activity->id, [
-                'guests' => $this->editGuests,
-                'animals' => $this->editAnimals,
-            ], false);
-        } catch (CartValidationException $exception) {
-            // Violazione disponibilità (es. capienza esaurita): toast danger, niente pop-up.
-            Flux::toast(text: $exception->getMessage(), variant: 'danger');
-
+        // Date NON nelle options: derivano da starts_at/ends_at/duration_days del
+        // purchasable. Titolare che incassa in struttura (difetto C7, 28/09/2026)
+        // o capienza esaurita: toast danger, niente pop-up.
+        if (! $this->addCatalogProductToCart($activity, [
+            'guests' => $this->editGuests,
+            'animals' => $this->editAnimals,
+        ])) {
             return;
         }
 
-        $this->dispatch('cart-updated');
         $this->cartPopupOpen = true;
     }
 
@@ -223,23 +218,97 @@ class ActivityDetail extends Component
     }
 
     /**
-     * Posti esauriti: la stessa aritmetica di
+     * Posti ancora liberi: null = capienza illimitata (`max_participants`
+     * nullo, lo stato di tutte le schede pubblicate prima del 27/09/2026),
+     * altrimenti mai negativo. Stessa aritmetica di
      * AvailabilityService::ensureEventAvailable (capienza massima meno posti già
-     * venduti), sulla persona minima. `max_participants` nullo = capienza
-     * illimitata, quindi non si esaurisce mai.
+     * venduti), che resta l'unico posto dove i posti si contano sotto lock: qui
+     * si decide solo cosa disegnare.
+     */
+    private static function seatsLeft(Event $activity): ?int
+    {
+        if ($activity->max_participants === null) {
+            return null;
+        }
+
+        return max(0, $activity->max_participants - ($activity->booked_participants ?? 0));
+    }
+
+    /**
+     * La riga «Posti disponibili» della scheda, sullo stampo di
+     * EventDetail::remainingSeats (audit 28/09/2026, difetto C2): senza, il
+     * cliente non ha modo di capire che scendendo di un ospite l'acquisto
+     * passerebbe. Null quando la capienza è illimitata (nessuna riga, non
+     * «illimitati») oppure già esaurita — in quel caso parla la dicitura al
+     * posto della CTA, e «Posti disponibili: 0» direbbe sì e no insieme.
+     */
+    private static function remainingSeats(Event $activity): ?int
+    {
+        $left = self::seatsLeft($activity);
+
+        return $left !== null && $left > 0 ? $left : null;
+    }
+
+    /**
+     * Posti esauriti: non c'è spazio nemmeno per una persona. È la soglia che
+     * toglie ENTRAMBE le CTA — anche «Partecipa», che gli ospiti non li conta —
+     * e il riepilogo prezzi: non c'è più niente da comprare.
      *
-     * Serve solo a decidere cosa disegnare: dal 27/09/2026 il partner può
-     * mettere un limite di posti, e un'attività piena farebbe fallire
-     * l'aggiunta al carrello con un toast. Un pulsante che risponde soltanto
-     * con un errore è peggio di un pulsante assente. La regola vera resta del
-     * carrello: `addToCart()` NON prende guardie nuove, così una chiamata wire
-     * manomessa continua a passare per AvailabilityService, che è l'unico posto
-     * dove il conteggio è sotto lock.
+     * Dal 27/09/2026 il partner può mettere un limite di posti, e un pulsante
+     * che risponde soltanto con un errore è peggio di un pulsante assente.
      */
     private static function isSoldOut(Event $activity): bool
     {
-        return $activity->max_participants !== null
-            && ($activity->booked_participants ?? 0) >= $activity->max_participants;
+        return self::seatsLeft($activity) === 0;
+    }
+
+    /**
+     * Il carrello accetterebbe gli ospiti scelti negli stepper? È la condizione
+     * ESATTA di AvailabilityService::ensureEventAvailable (rifiuta con
+     * `booked + persons > max`), con le persone contate da
+     * BookingPricingService::persons come fa lui.
+     *
+     * Difetto C2 (audit 28/09/2026): la CTA del carrello guardava soltanto
+     * isSoldOut(), cioè la soglia di UNA persona, mentre il widget nasce con
+     * due adulti. Con capienza 10 e nove posti venduti «Aggiungi al carrello»
+     * veniva disegnato, e il click rispondeva solo con un toast d'errore.
+     *
+     * `addToCart()` NON prende guardie nuove: una chiamata wire manomessa deve
+     * continuare a passare per AvailabilityService, che conta sotto lock.
+     */
+    private function hasSeatsForGuests(Event $activity): bool
+    {
+        $left = self::seatsLeft($activity);
+
+        return $left === null || BookingPricingService::persons(['guests' => $this->editGuests]) <= $left;
+    }
+
+    /**
+     * «+» degli ospiti spento anche al limite dei posti residui, non solo a
+     * MAX_GUESTS: override di HasBookingCalendar::guestsAtMax, il cui clamp
+     * fisso resta quello delle strutture. Lo stepper non deve portare il
+     * cliente in uno stato che il carrello rifiuta — con tre posti liberi si
+     * sale fino a tre ospiti e lì ci si ferma. Vale sia per il pulsante
+     * disabilitato in vista sia per incrementGuest() lato server, perché il
+     * trait passa da qui.
+     *
+     * I default di mount() restano due adulti anche con un solo posto libero:
+     * abbassarli di nascosto cambierebbe la richiesta del cliente senza
+     * dirglielo. In quel caso il «+» è già spento, la CTA lascia il posto alla
+     * dicitura con i posti rimasti, e il «−» porta a una richiesta che il
+     * carrello accetta.
+     */
+    public function guestsAtMax(): bool
+    {
+        return $this->guestsAtMaxFor($this->activity());
+    }
+
+    /** Il clamp di guestsAtMax() sulla riga già letta: render() non rilegge l'attività. */
+    private function guestsAtMaxFor(Event $activity): bool
+    {
+        $limit = min(self::MAX_GUESTS, self::seatsLeft($activity) ?? self::MAX_GUESTS);
+
+        return array_sum($this->editGuests) >= $limit;
     }
 
     /**
@@ -277,6 +346,7 @@ class ActivityDetail extends Component
         $quoteCents = $activity->hasJoinCta()
             ? null
             : app(BookingPricingService::class)->quote($activity, ['guests' => $this->editGuests, 'animals' => $this->editAnimals]);
+        $isSoldOut = self::isSoldOut($activity);
 
         return view('livewire.catalog.activity-detail', [
             'activity' => $activity,
@@ -303,7 +373,7 @@ class ActivityDetail extends Component
             'dates' => self::widgetDates($activity),
             'guestsLabel' => Format::guests($this->editGuests),
             'animalsLabel' => Format::animals($this->editAnimals),
-            'guestsAtMax' => $this->guestsAtMax(),
+            'guestsAtMax' => $this->guestsAtMaxFor($activity),
             'animalsAtMax' => $this->animalsAtMax(),
             // array_filter: amenityRows torna solo le voci offerte, quindi una
             // colonna può restare vuota — e la griglia a due colonne del blade
@@ -323,7 +393,14 @@ class ActivityDetail extends Component
             'openingHours' => self::openingHours($activity),
             'bookingRequirement' => ServiceOptionLabels::label('booking_requirement', $activity->booking_requirement),
             'showMeetingPoint' => self::showsMeetingPoint($activity),
-            'isSoldOut' => self::isSoldOut($activity),
+            'isSoldOut' => $isSoldOut,
+            // Difetto C2 (audit 28/09/2026): posti ci sono, ma non per gli ospiti
+            // scelti. Solo per le attività acquistabili — «Partecipa» non passa
+            // dal carrello e non conta gli ospiti — e mai insieme a isSoldOut,
+            // che ha già la sua dicitura. Il blade toglie il pulsante del
+            // carrello e al suo posto dice quanti posti restano.
+            'notEnoughSeats' => ! $activity->hasJoinCta() && ! $isSoldOut && ! $this->hasSeatsForGuests($activity),
+            'remainingSeats' => self::remainingSeats($activity),
             // Solo le attività acquistabili: quelle gratuite restano "Partecipa" e
             // non passano mai dal carrello, quindi non serve nemmeno la query.
             'paysOnSite' => ! $activity->hasJoinCta()

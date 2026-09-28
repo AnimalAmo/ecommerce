@@ -90,9 +90,12 @@
                         @endif
                     </div>
 
-                    {{-- Azioni: Indietro (a tipologia attività/eventi) + Avanti (pill scuro) --}}
+                    {{-- Azioni: Indietro + Avanti (pill scuro). Indietro NON va allo step
+                         del tipo: le card «Servizio professionale» ed «Evento» lo saltano
+                         (difetto W4, 28/09/2026). La destinazione la sceglie
+                         ActivityName::render() con serviceChoiceBackUrl(). --}}
                     <div class="mt-8 flex items-center justify-end gap-6">
-                        <flux:button href="{{ route('partner.activity.type') }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.activity_name.back') }}</flux:button>
+                        <flux:button href="{{ $backUrl }}" variant="ghost" class="!text-[15px] !font-bold !text-[#959595] hover:!text-ink">{{ __('partner.activity_name.back') }}</flux:button>
                         <flux:button type="submit" class="!h-10 !rounded-full !border-0 !bg-[#0D171A] !px-8 !text-[15px] !font-bold !text-white !shadow-none hover:!bg-[#232A2C]">{{ __('partner.activity_name.next') }}</flux:button>
                     </div>
                 </form>

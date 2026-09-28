@@ -3,6 +3,7 @@
 namespace App\Livewire\Partner\Activity;
 
 use App\Livewire\Concerns\InteractsWithStructureDraft;
+use App\Support\Translations;
 use Livewire\Component;
 
 class ActivityDescription extends Component
@@ -42,10 +43,12 @@ class ActivityDescription extends Component
             'detailedDescription.it.required' => __('partner.activity_description.error_required'),
         ]);
 
-        // Le traduzioni vuote non vengono salvate: su EN scatta il fallback IT.
-        $attributes = ['description' => array_filter($this->description, fn ($value) => filled($value))];
+        // Una lingua lasciata vuota va a null, non viene fatta cadere: su EN
+        // scatta il fallback IT anche se prima c'era una traduzione salvata
+        // (difetto W5, 28/09/2026 — vedi App\Support\Translations).
+        $attributes = ['description' => Translations::replacing($this->description)];
         if ($this->isActivity) {
-            $attributes['detailed_description'] = array_filter($this->detailedDescription, fn ($value) => filled($value));
+            $attributes['detailed_description'] = Translations::replacing($this->detailedDescription);
         }
 
         $this->saveStep($attributes, 4);

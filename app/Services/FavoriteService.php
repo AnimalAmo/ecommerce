@@ -61,27 +61,102 @@ class FavoriteService
         // Riga inesistente/di un altro utente o prodotto sparito dal catalogo: 404 (mai riga fantasma).
         abort_unless($favorite !== null && $favorite->favoritable !== null, 404);
 
+        return $this->addResolvedToCart($favorite->favoritable_type, $favorite->favoritable, $user);
+    }
+
+    /**
+     * Aggiunge al carrello un prodotto del catalogo dato per alias morph + id,
+     * senza passare da una riga favorites: serve alle card «Le attività più
+     * amate» dello stato vuoto del carrello, che mostrano prodotti che il
+     * cliente non ha necessariamente tra i preferiti.
+     *
+     * Difetto C6 (audit 28/09/2026): la borsa di quelle card era solo colore —
+     * portava il bottone a giallo e l'aria-label a «Rimuovi dal carrello» senza
+     * scrivere niente, mentre la borsa identica di /preferiti aggiungeva
+     * davvero. Ora le due passano dalle stesse regole (addResolvedToCart).
+     *
+     * Ospite ammesso: il suo carrello vive in sessione (CartManager), e senza
+     * animali registrati la specie di default è 'cane', come per chi è loggato.
+     * Stessi contratti di addToCart(): 400 alias fuori whitelist, 404 prodotto
+     * inesistente, false per i non acquistabili, CartValidationException per
+     * le violazioni.
+     */
+    public function addProductToCart(?User $user, string $type, int $id): bool
+    {
+        // Solo alias della morph map enforced (mai class-string), come toggle().
+        abort_unless(in_array($type, self::FAVORITABLE_TYPES, true), 400);
+
+        $product = Relation::getMorphedModel($type)::find($id);
+
+        abort_unless($product !== null, 404);
+
+        return $this->addResolvedToCart($type, $product, $user);
+    }
+
+    /**
+     * Evento/attività senza posti per ciò che la card impegnerebbe: capienza
+     * impostata dal partner (`max_participants`, nullo = illimitata) e posti
+     * residui meno delle persone dell'aggiunta rapida.
+     *
+     * Difetto C5 (audit 28/09/2026): le liste (griglia /eventi, pagina regione,
+     * card dei preferiti e dello stato vuoto del carrello) guardavano solo
+     * `hasJoinCta()` e la modalità di incasso del titolare, mai i posti. Lo
+     * stesso evento offriva la borsa in griglia e la negava aprendone la
+     * scheda, e il click rispondeva solo col toast di AvailabilityService.
+     *
+     * Nelle liste non c'è un numero di ospiti scelto: la soglia sono le
+     * persone che la CTA della card impegnerebbe davvero
+     * (Event::quickAddPersons(), due adulti per l'aggiunta rapida di
+     * un'attività). Con la persona minima un'attività con un posto libero
+     * offriva ancora la borsa, e il click la rifiutava. Qui si decide solo cosa
+     * disegnare — i posti si contano sotto lock in AvailabilityService, che
+     * resta l'autorità anche per una chiamata wire manomessa.
+     *
+     * Legge solo colonne della riga già caricata: nessuna query.
+     *
+     * $ownerOnSite: il titolare incassa in struttura, quindi la CTA della card
+     * è un rimando alla scheda e non un'aggiunta al carrello. Lì la soglia è
+     * la persona minima, come nella scheda (ActivityDetail::isSoldOut()):
+     * con i due adulti dell'aggiunta rapida la lista avrebbe detto «posti
+     * esauriti» dove la scheda offre i contatti per prenotare.
+     */
+    public function isSoldOut(Model $product, bool $ownerOnSite = false): bool
+    {
+        return $product instanceof Event
+            && ! $product->hasSeatsFor($ownerOnSite ? 1 : $product->quickAddPersons());
+    }
+
+    /**
+     * Regole comuni dell'aggiunta dalle card (preferiti e suggerimenti), sul
+     * prodotto già risolto: $type = alias morph su cui scrive il carrello.
+     */
+    private function addResolvedToCart(string $type, Model $product, ?User $user): bool
+    {
         // Evento gratuito / "Partecipa" (is_free o senza prezzo): non è acquistabile,
         // come nella griglia eventi — no-op (il bag non è nemmeno mostrato, vedi present()).
-        if ($favorite->favoritable instanceof Event && $favorite->favoritable->hasJoinCta()) {
+        if ($product instanceof Event && $product->hasJoinCta()) {
             return false;
         }
 
         // Titolare che incassa in struttura: si prenota contattando lui, non da
         // qui (richiesta della cliente, 27/09/2026). present() non disegna
-        // nemmeno la borsa, ma Favorites::toggleCart() arriva dal payload
-        // Livewire: senza questa riga il preferito entrerebbe in un carrello che
+        // nemmeno la borsa, ma Favorites::toggleCart() e
+        // Cart::toggleSuggestionCart() arrivano dal payload Livewire: senza
+        // questa riga il prodotto entrerebbe in un carrello che
         // al checkout si blocca. Eccezione e non false: false è il no-op
         // silenzioso dei prodotti non acquistabili, qui il cliente merita di
         // sapere perché (il componente la traduce in toast danger).
-        if (app(PartnerPaymentModeService::class)->forPurchasable($favorite->favoritable) === OrderPaymentMode::OnSite) {
+        if (app(PartnerPaymentModeService::class)->forPurchasable($product) === OrderPaymentMode::OnSite) {
             throw CartValidationException::notPurchasable();
         }
 
+        // Posti esauriti: nessuna guardia qui. La borsa non è disegnata
+        // (canAddToCart), ma la regola vera resta di AvailabilityService dentro
+        // CartManager, che rifiuta con cart.sold_out anche una chiamata forgiata.
         app(CartManager::class)->addItem(
-            $favorite->favoritable_type,
-            $favorite->favoritable_id,
-            $this->defaultCartOptions($favorite->favoritable, self::defaultSpecies($user)),
+            $type,
+            (int) $product->getKey(),
+            $this->defaultCartOptions($product, $user !== null ? self::defaultSpecies($user) : 'cane'),
             false,
         );
 
@@ -104,7 +179,7 @@ class FavoriteService
     /**
      * Preferiti dell'utente presentati nel contratto della card condivisa
      * (partials/favorite-card): {id = riga favorites, title, location, type,
-     * metaType, metaText, photo, price}.
+     * metaType, metaText, photo, price, can_add_to_cart, sold_out}.
      *
      * @return list<array<string, mixed>>
      */
@@ -181,6 +256,7 @@ class FavoriteService
                 // Stessa regola delle card dei preferiti: una borsa che non
                 // funziona è peggio di nessuna borsa.
                 'can_add_to_cart' => $this->canAddToCart($row['product'], $modes),
+                'sold_out' => $this->isSoldOut($row['product'], $this->ownerOnSite($row['product'], $modes)),
                 'photo' => $row['product']->imageUrl(),
             ])
             ->all();
@@ -204,6 +280,8 @@ class FavoriteService
             'favoritable_type' => $favorite->favoritable_type,
             'favoritable_id' => $favorite->favoritable_id,
             'can_add_to_cart' => $this->canAddToCart($product, $modes),
+            // Posti esauriti: la card lo dice al posto della borsa (vedi isSoldOut()).
+            'sold_out' => $this->isSoldOut($product, $this->ownerOnSite($product, $modes)),
             // Stessa foto della card listing del prodotto (URL risolto da HasCatalogImages).
             'photo' => $product->imageUrl(),
         ];
@@ -226,9 +304,11 @@ class FavoriteService
 
     /**
      * La borsa si mostra solo se premerla porta davvero a un acquisto: gli eventi
-     * gratuiti / "Partecipa" non sono acquistabili, e i prodotti di un titolare
-     * che incassa in struttura si prenotano contattandolo (richiesta della
-     * cliente, 27/09/2026). Una borsa che non funziona è peggio di nessuna borsa.
+     * gratuiti / "Partecipa" non sono acquistabili, quelli a posti esauriti
+     * rifiuterebbero l'aggiunta con un toast (difetto C5, vedi isSoldOut()), e i
+     * prodotti di un titolare che incassa in struttura si prenotano
+     * contattandolo (richiesta della cliente, 27/09/2026). Una borsa che non
+     * funziona è peggio di nessuna borsa.
      *
      * Senza titolare (catalogo mock) o senza profilo partner vale online, come
      * in PartnerPaymentModeService::forOwner().
@@ -241,10 +321,27 @@ class FavoriteService
             return false;
         }
 
+        if ($this->isSoldOut($product)) {
+            return false;
+        }
+
         $owner = $product->getAttribute('user_id');
 
         return $owner === null
             || ($modes[(int) $owner] ?? OrderPaymentMode::Online) === OrderPaymentMode::Online;
+    }
+
+    /**
+     * Il titolare del prodotto incassa in struttura? Senza titolare o senza
+     * profilo vale online, come in canAddToCart().
+     *
+     * @param  array<int, OrderPaymentMode>  $modes
+     */
+    private function ownerOnSite(Model $product, array $modes): bool
+    {
+        $owner = $product->getAttribute('user_id');
+
+        return $owner !== null && ($modes[(int) $owner] ?? OrderPaymentMode::Online) === OrderPaymentMode::OnSite;
     }
 
     /** Parte comune della card (titolo, riga pin, riga meta, prezzo), per famiglia di prodotto. */
@@ -305,13 +402,14 @@ class FavoriteService
                 'time_to' => '16:00',
             ],
             // Attività (riga Event): 2 adulti + 1 animale; le date derivano dalla riga evento.
+            // Adulti da Event::quickAddPersons(), la soglia di isSoldOut().
             ProductType::Activity => [
-                'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
+                'guests' => ['adulti' => $product->quickAddPersons(), 'ragazzi' => 0, 'bambini' => 0],
                 'animals' => [$species => 1],
             ],
             // Evento: sempre 1 partecipante (nessun contatore in scheda).
             ProductType::Event => [
-                'participants' => 1,
+                'participants' => $product->quickAddPersons(),
             ],
             // Hotel (riga Structure): soggiorno oggi+7 → oggi+12, 2 adulti, 1 animale.
             ProductType::Structure => [

@@ -20,6 +20,7 @@ class Home extends Component
             'today' => Str::ucfirst($overview->now()->locale(app()->getLocale())->isoFormat('dddd D MMMM')),
             'todo' => $overview->todo(),
             'catalog' => $overview->catalogCounts(),
+            'catalogWithheld' => $overview->catalogWithheld(),
             'subscribers' => $overview->subscribers(),
             'sales' => $overview->monthSales(),
             'onSite' => $overview->monthOnSiteBookings(),

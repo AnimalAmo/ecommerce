@@ -165,4 +165,98 @@ class CompleteDraftOutcomeTest extends TestCase
             ->assertOk()
             ->assertSee(__('partner.publish.awaiting_stripe'));
     }
+
+    // ── Difetto F2: la causa vera viene buttata da DraftCompleter ─────────────
+    //
+    // `DraftPublisher` distingue le due cause e lancia
+    // `PartnerNotPayableException::smartboxRequiresOnlinePayment()`.
+    // `DraftCompleter::complete()` la intercetta con un `catch` SENZA variabile e
+    // torna `DraftCompletion::AwaitingPayout`, enum a due soli casi: il messaggio
+    // si perde e `completeDraft()` flasha «lo pubblicheremo appena completi il
+    // collegamento del conto su Stripe». Chi incassa in struttura collega Stripe
+    // e la smartbox NON va in vetrina, perché `canPublishFamily('smartbox')` vuole
+    // `requiresOnlinePayment() && canBePaid()`. Il pannello admin lo gestisce bene.
+
+    /** Partner che si fa pagare direttamente: pubblica tutto tranne le smartbox. */
+    private function actingAsOfflineSmartboxPartner(): User
+    {
+        $partner = $this->actingAsActivePartner();
+        PartnerProfile::factory()->offline()->for($partner)->create();
+
+        return $partner;
+    }
+
+    public function test_la_smartbox_di_chi_incassa_in_struttura_non_chiede_di_collegare_stripe(): void
+    {
+        $partner = $this->actingAsOfflineSmartboxPartner();
+        $this->draftInSession($partner, [
+            'current_step' => 11,
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'name' => ['it' => 'Cofanetto relax'],
+        ]);
+
+        Livewire::test(SmartboxPrice::class)
+            ->set('price', '99')
+            ->call('save')
+            ->assertRedirect(route('partner.dashboard'));
+
+        $this->assertNotSame(
+            __('partner.publish.awaiting_stripe'),
+            session('partner.notice'),
+            'Chi non incassa online non deve leggere «completa il collegamento del conto su Stripe»: '
+            .'lo collegherebbe e la smartbox resterebbe ferma comunque, perché la causa è la modalità di incasso.',
+        );
+        // Tester 28/09/2026: l'assertNotSame da solo passava anche con un avviso
+        // nullo, cioè con un partner lasciato senza nessuna spiegazione. L'avviso
+        // c'è, ed è quello della modalità di incasso.
+        $this->assertSame(__('partner.publish.awaiting_payment_method'), session('partner.notice'));
+    }
+
+    public function test_lavviso_della_smartbox_ferma_nomina_il_sistema_di_pagamento(): void
+    {
+        $partner = $this->actingAsOfflineSmartboxPartner();
+        $this->draftInSession($partner, [
+            'current_step' => 11,
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'name' => ['it' => 'Cofanetto relax'],
+        ]);
+
+        Livewire::test(SmartboxPrice::class)
+            ->set('price', '99')
+            ->call('save');
+
+        $this->get(route('partner.dashboard'))
+            ->assertOk()
+            // La causa che il publisher conosce già e che il wizard perde.
+            ->assertSee(__('partner.publish.smartbox_payment_required'))
+            ->assertDontSee(__('partner.publish.awaiting_stripe'))
+            // Tester 28/09/2026: il testo qui sopra è identico al titolo del banner
+            // smartbox della dashboard (partner.dashboard.smartbox_payment_heading),
+            // che c'era anche prima della correzione: da solo non diceva niente
+            // dell'avviso di fine wizard. L'avviso è questo.
+            ->assertSee(__('partner.publish.awaiting_payment_method'));
+    }
+
+    /**
+     * Il negativo: chi è online e gli manca solo Stripe deve continuare a
+     * leggere l'avviso dello Stripe, che per lui è la diagnosi giusta.
+     */
+    public function test_la_smartbox_di_un_partner_online_senza_stripe_tiene_lavviso_dello_stripe(): void
+    {
+        $partner = $this->actingAsUnpayablePartner();
+        $this->draftInSession($partner, [
+            'current_step' => 11,
+            'service_category' => 'smartbox',
+            'type' => 'soggiorno',
+            'name' => ['it' => 'Cofanetto relax'],
+        ]);
+
+        Livewire::test(SmartboxPrice::class)
+            ->set('price', '99')
+            ->call('save');
+
+        $this->assertSame(__('partner.publish.awaiting_stripe'), session('partner.notice'));
+    }
 }

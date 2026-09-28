@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Cart;
 
+use App\Exceptions\CartValidationException;
 use App\Models\CartItem\CartItem;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
+use App\Services\Cart\CartNotice;
 use App\Services\Cart\SessionCartStorage;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -399,6 +401,142 @@ class CartStorageTest extends TestCase
 
         // La sessione guest viene svuotata comunque, righe scartate incluse.
         $this->assertNull(session()->get(SessionCartStorage::SESSION_KEY));
+    }
+
+    // ── Difetto C9: le righe che escono dal catalogo sparicono in silenzio ─────
+    //
+    // `CartItem::purchasable()` è un `morphTo()` nudo, quindi eredita il global
+    // scope: con `withheld_at` o `suspended_at` valorizzati torna null, e i due
+    // storage filtrano `purchasable !== null` senza una parola. La riga resta a
+    // database per sempre, perché ClearCartPipe rimuove solo le chiavi ordinate.
+    // Per confronto `OrderItem::purchasable()` toglie lo scope di proposito.
+
+    public function test_una_riga_ritirata_dal_catalogo_non_sparisce_senza_dirlo(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $box = $this->smartbox();
+        $this->manager()->addItem('smartbox_package', $box->id, ['animals' => ['cane' => 1]], false);
+
+        $this->assertCount(1, $this->manager()->items());
+
+        // La smartbox viene ritirata dalla vetrina (partner passato al pagamento diretto).
+        $box->forceFill(['withheld_at' => now()])->save();
+
+        // Il cliente riapre il carrello e trova un totale più basso: la riga non
+        // si vede più e nessuno gli ha detto niente.
+        $this->assertSame(
+            0,
+            CartItem::query()->count(),
+            'Una riga che non si può più mostrare va rimossa dal carrello (e il cliente avvisato), '
+            .'non lasciata a database come fantasma che sposta il totale in silenzio.',
+        );
+
+        // Tester 28/09/2026: il nome del test promette anche il «dirlo», che
+        // l'asserzione sopra non guardava. L'avviso nomina la smartbox e il motivo.
+        $this->assertSame(
+            [__('cart.notice.withheld', ['title' => $box->title])],
+            app(CartNotice::class)->pull(),
+        );
+    }
+
+    public function test_una_riga_sospesa_dallamministrazione_non_sparisce_senza_dirlo(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $structure = $this->structure();
+        $this->manager()->addItem('structure', $structure->id, $this->structureOptions(), false);
+
+        $structure->forceFill(['suspended_at' => now()])->save();
+
+        $this->assertSame(0, CartItem::query()->count());
+        // Tester 28/09/2026: come sopra, anche il «dirlo». Al cliente non si
+        // spiega che l'ha sospesa l'amministrazione: «non è più disponibile».
+        $this->assertSame(
+            [__('cart.notice.unavailable', ['title' => $structure->name])],
+            app(CartNotice::class)->pull(),
+        );
+    }
+
+    /**
+     * Lo stesso dal carrello guest, dove la riga vive come entry di sessione.
+     *
+     * Riscritto dal tester il 28/09/2026. La prima versione leggeva la sessione
+     * subito dopo il `save()` del prodotto, senza che nessuno riaprisse il
+     * carrello: nel test la sessione di chi ritira (admin, partner, comando) e
+     * quella dell'ospite sono lo stesso oggetto, in produzione no — la sessione
+     * dell'ospite in quella richiesta non esiste, e farlo passare avrebbe
+     * voluto dire ripulire la sessione di chi salva il prodotto. Il difetto vero
+     * è «a vita»: l'entry restava anche dopo che l'ospite aveva riaperto il
+     * carrello. Quindi l'ospite lo riapre, e dopo l'entry non c'è più e
+     * l'avviso sì.
+     */
+    public function test_una_riga_guest_ritirata_non_resta_in_sessione(): void
+    {
+        $box = $this->smartbox();
+        $this->manager()->addItem('smartbox_package', $box->id, ['animals' => ['cane' => 1]], false);
+
+        $box->forceFill(['withheld_at' => now()])->save();
+
+        // L'ospite torna: qualunque lettura del carrello (badge, pagina, checkout).
+        $this->assertCount(0, $this->manager()->items());
+
+        $this->assertSame(
+            [],
+            session()->get(SessionCartStorage::SESSION_KEY, []),
+            'La entry di sessione che non si può più mostrare non deve restare in sessione a vita.',
+        );
+        $this->assertSame(
+            [__('cart.notice.withheld', ['title' => $box->title])],
+            app(CartNotice::class)->pull(),
+        );
+    }
+
+    /**
+     * L'altra metà di C9: al login le righe del partner sbagliato vengono
+     * scartate da `guardSinglePartner` e finiscono in un `Log::info`. Il cliente
+     * vede un carrello più corto di quello che aveva, senza sapere perché.
+     */
+    public function test_le_righe_scartate_al_merge_vengono_dette_al_cliente(): void
+    {
+        $partnerA = User::factory()->stripeConnected()->create();
+        $partnerB = User::factory()->stripeConnected()->create();
+
+        $ofB = Structure::factory()->create(['user_id' => $partnerB->id, 'price_cents' => 10000]);
+        $ofA = Structure::factory()->create(['user_id' => $partnerA->id, 'price_cents' => 10000]);
+
+        // L'utente ha già una riga del partner B nel suo carrello a database.
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $this->manager()->addItem('structure', $ofB->id, $this->structureOptions(), false);
+
+        // Poi esce, e da ospite riempie il carrello col partner A.
+        Auth::logout();
+        session()->forget(SessionCartStorage::SESSION_KEY);
+        $this->manager()->addItem('structure', $ofA->id, $this->structureOptions(), false);
+
+        Auth::login($user);
+
+        // Oggi: la riga di A viene buttata con un Log::info e nessun avviso.
+        $this->assertNotNull(
+            session(CartNotice::SESSION_KEY),
+            'Le righe scartate al merge («un ordine, un venditore») devono essere dette: senza, il '
+            .'cliente deve indovinare che il carrello è cambiato accedendo.',
+        );
+
+        // Tester 28/09/2026: un avviso qualunque non basta. Deve nominare la riga
+        // scartata e dire perché, con il messaggio della regola violata; e la riga
+        // di B, quella che l'utente aveva già, resta.
+        $this->assertSame(
+            [trim(__('cart.notice.not_merged', [
+                'title' => $ofA->name,
+                'reason' => CartValidationException::singlePartner()->getMessage(),
+            ]))],
+            app(CartNotice::class)->pull(),
+        );
+        $this->assertSame([$ofB->id], CartItem::query()->pluck('purchasable_id')->all());
     }
 
     public function test_login_with_an_empty_session_cart_is_a_noop(): void
