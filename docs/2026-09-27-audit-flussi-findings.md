@@ -27,7 +27,13 @@ chiudono. Su `main` non ci sono, perché `main` resta verde.
 | C9 | righe che spariscono dal carrello in silenzio | ✅ **chiuso** 28/09 (`055790a`) |
 | C8, F4 | smartbox non ritirate, pannello cieco al ritiro | ✅ **chiusi** 28/09 (`f97c7d2`) |
 | C7, C10 | guardie server-side delle schede, checkout di un venditore non pagabile | ✅ **chiusi** 28/09 (`b92bc42`) |
-| gli altri 13 | F5–F9, W4–W9, C3 (cosmetici compresi) | ⏳ da fare |
+| W5, F6, W4 | traduzioni che non si tolgono, «Altro» che sopravvive, «Indietro» dello step Nome | ✅ **chiusi** 28/09 (`c348f08`) |
+| F5, W7 | cambio di ramo, coordinate bancarie solo sulla bozza | ✅ **chiusi** 28/09 (`448e040`) |
+| F7, F8 | dettaglio servizio cieco ai campi nuovi, gruppi di stuck-drafts | ✅ **chiusi** 28/09 (`fbdc82d`) |
+| W9, F9 | ricerca case-sensitive su MySQL, regole del pannello | ✅ **chiusi** 28/09 (`8f35da0`) |
+| W8 | nessun test sulla preselezione dall'iscrizione | ✅ coperto dai test dell'audit, verdi |
+| W6 | step «Smartbox» del percorso Struttura inerte | 🔸 **metà**: il partner la rilegge nel dettaglio; collegarla ai cofanetti o togliere lo step è da decidere con la cliente |
+| C3 | i posti non si liberano mai | 🔸 **decisione**: non esiste un percorso di annullamento ordini; chi lo scriverà deve liberare i posti nella stessa transazione, e la riga «Cancellazione gratuita» del carrello promette una cosa che oggi non si fa |
 
 ## Giro del 28/09/2026: i sei gravi
 
@@ -74,6 +80,25 @@ le smartbox ritirate dalla migrazione del 27/09 a partner online senza Stripe.
 diretto restano in carrello e lo legano a quel venditore; la metà di C10 sul catalogo (`canBePaid()` dove si decide
 la CTA); con `DemoUserSeeder` il partner demo è online senza Stripe, quindi su un ambiente col catalogo demo ogni
 checkout si ferma allo step 1.
+
+## Giro del 28/09/2026, fase 3: il wizard, il dettaglio, il pannello, la ricerca
+
+Quattro builder, un tester, una review a tre lenti con due verificatori. Suite VM: **6 rossi, 2430 verdi**, zero rossi
+nuovi. I 6 rimasti aspettano decisioni, non codice: C4 (tre test, la partecipazione vera agli eventi gratuiti è la
+tranche C), C3 (due test, non esiste l'annullamento), W6 (un test, adesione dichiarata verso il catalogo).
+
+Il tester ha trovato cinque difetti nelle correzioni, chiusi: W5 sistemato sulla bozza ma non a catalogo (il publisher
+ricopiava solo le lingue piene); lo stesso W5 in nove altri punti (step hotel e smartbox, servizi, servizi per animali,
+pannello); F5 lasciava online la riga della famiglia vecchia; il dettaglio mostrava l'IBAN vecchio della bozza; su
+MySQL `json_unquote` di un `{"it":null}` dà la stringa 'null' e la ricerca «nu» trovava quelle righe. La review ha
+aggiunto una cosa: una riga di un'altra famiglia con **prenotazioni future** non si cancella, si ritira dalla vetrina,
+o il partner perdeva di vista prenotazioni già pagate.
+
+La skill `b2b-wizard-flow` prescriveva `array_filter` per i campi tradotti, cioè il difetto W5: ora prescrive
+`Translations::replacing()`.
+
+**Il branch è pronto per `main`** a meno dei 6 test in attesa di decisione: o si chiudono, o si spostano fuori dal
+branch prima del merge (restano sul branch `audit/flussi-2026-09-27`).
 
 ## Come riprendere
 
