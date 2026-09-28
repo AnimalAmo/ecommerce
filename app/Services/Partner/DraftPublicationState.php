@@ -35,7 +35,14 @@ use Illuminate\Support\Collection;
  *  - `awaiting_stripe`    pronta, ma il partner non può ancora pubblicare;
  *  - `publishing`         pronta e il partner può pubblicare: la rete di
  *                         sicurezza schedulata la prende entro dieci minuti;
- *  - `draft`              a metà wizard, nessun badge.
+ *  - `draft`              né a catalogo né col segnale: di norma a metà
+ *                         wizard. Dal difetto W2 (28/09/2026) le bozze in
+ *                         corso compaiono in "I miei servizi", e la lista le
+ *                         mostra con «Bozza in corso» e «Riprendi» quando
+ *                         StructureDraft::isInProgress() lo conferma. Lo
+ *                         stesso stato copre un servizio completato rimasto
+ *                         senza riga a catalogo (caso storico): quello resta
+ *                         senza badge, come prima.
  */
 class DraftPublicationState
 {

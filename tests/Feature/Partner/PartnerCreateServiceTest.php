@@ -272,6 +272,147 @@ class PartnerCreateServiceTest extends TestCase
         Livewire::test(CreateService::class)->assertSet('service', 'attivita');
     }
 
+    /*
+     * La cura di W2 ha due porte: la rotta nuda riprende (l'«Indietro» del
+     * wizard), `?nuovo=1` apre un servizio nuovo (il link «Crea servizio»
+     * dell'header). Le prove qui sotto tengono ferme entrambe, più la regola
+     * della card diversa in next(). Si passa dalla rotta vera, non da
+     * Livewire::test(): `nuovo` è letto dalla query della richiesta.
+     */
+
+    /** «Crea servizio» dalla nav a metà di un wizard: bozza nuova, e la vecchia resta ritrovabile. */
+    public function test_nuovo_stacca_una_bozza_in_corso_che_resta_elencata(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $inProgress = $this->draftInProgress($partner->id);
+
+        $this->get(route('partner.service.create', ['nuovo' => 1]))->assertOk();
+
+        $this->assertNotSame($inProgress->id, session('structure_draft_id'));
+        $this->assertSame(2, StructureDraft::query()->where('user_id', $partner->id)->count());
+        // La vecchia non è stata toccata e "I miei servizi" la elenca.
+        $this->assertSame('Educazione cinofila Bau', $inProgress->fresh()->getTranslation('name', 'it'));
+        $this->assertSame(3, $inProgress->fresh()->current_step);
+        $this->assertTrue(StructureDraft::query()->listableFor($partner->id)->whereKey($inProgress->id)->exists());
+    }
+
+    /**
+     * Sotto la soglia (step 0 e 1: solo card e tipologia) la bozza si riusa
+     * anche con `?nuovo=1`: staccarla lascerebbe una riga vuota a ogni clic
+     * sulla nav, e non c'è lavoro da proteggere.
+     */
+    public function test_nuovo_riusa_una_bozza_appena_nata(): void
+    {
+        $partner = $this->actingAsActivePartner();
+
+        foreach ([0, 1] as $step) {
+            $fresh = StructureDraft::create([
+                'user_id' => $partner->id,
+                'status' => StructureDraft::STATUS_DRAFT,
+                'current_step' => $step,
+                'service_category' => 'attivita',
+            ]);
+            session(['structure_draft_id' => $fresh->id]);
+
+            $this->get(route('partner.service.create', ['nuovo' => 1]))->assertOk();
+
+            $this->assertSame($fresh->id, session('structure_draft_id'), "Una bozza allo step {$step} si riusa.");
+            $fresh->delete();
+        }
+
+        $this->assertSame(0, StructureDraft::query()->where('user_id', $partner->id)->count());
+    }
+
+    /** La rotta nuda (l'«Indietro» del wizard) riprende anche da HTTP, non solo da Livewire::test(). */
+    public function test_la_rotta_senza_nuovo_riprende_la_bozza_in_corso(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $inProgress = $this->draftInProgress($partner->id);
+
+        $this->get(route('partner.service.create'))->assertOk();
+
+        $this->assertSame($inProgress->id, session('structure_draft_id'));
+        $this->assertSame(1, StructureDraft::query()->where('user_id', $partner->id)->count());
+    }
+
+    /**
+     * Ripresa la bozza di un'attività, il partner sceglie «Struttura»: la
+     * stessa riga con un'altra famiglia terrebbe scritte le colonne del ramo
+     * attività. Si apre una bozza nuova, e la vecchia resta intera ed elencata.
+     */
+    public function test_una_card_di_famiglia_diversa_apre_una_bozza_nuova(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $inProgress = $this->draftInProgress($partner->id);
+
+        Livewire::test(CreateService::class)
+            ->assertSet('service', 'attivita')
+            ->set('service', 'struttura')
+            ->call('next')
+            ->assertRedirect(route('partner.structure.type'));
+
+        $current = StructureDraft::query()->findOrFail(session('structure_draft_id'));
+        $this->assertNotSame($inProgress->id, $current->id);
+        $this->assertSame('struttura', $current->service_category);
+
+        $old = $inProgress->fresh();
+        $this->assertSame('attivita', $old->service_category);
+        $this->assertSame(['educatore'], $old->activity_categories);
+        $this->assertTrue(StructureDraft::query()->listableFor($partner->id)->whereKey($old->id)->exists());
+    }
+
+    /**
+     * «Evento» fissa il tipo senza passare dallo step del tipo, che è il solo ad
+     * azzerare i campi del ramo abbandonato: su una bozza di tipo `attivita`
+     * lascerebbe addosso all'evento le categorie professionali.
+     */
+    public function test_una_card_che_fissa_un_tipo_diverso_apre_una_bozza_nuova(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $inProgress = $this->draftInProgress($partner->id, ['type' => 'attivita']);
+
+        Livewire::test(CreateService::class)
+            ->set('service', 'eventi')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.name'));
+
+        $current = StructureDraft::query()->findOrFail(session('structure_draft_id'));
+        $this->assertNotSame($inProgress->id, $current->id);
+        $this->assertSame('eventi', $current->type);
+        $this->assertNull($current->activity_categories);
+        $this->assertSame('attivita', $inProgress->fresh()->type);
+    }
+
+    /** La stessa card continua sulla bozza ripresa, senza perdere lo step raggiunto. */
+    public function test_la_stessa_card_continua_sulla_bozza_ripresa(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $inProgress = $this->draftInProgress($partner->id);
+
+        Livewire::test(CreateService::class)
+            ->set('service', 'attivita')
+            ->call('next')
+            ->assertRedirect(route('partner.activity.type'));
+
+        $this->assertSame($inProgress->id, session('structure_draft_id'));
+        $this->assertSame(1, StructureDraft::query()->where('user_id', $partner->id)->count());
+        $this->assertSame(3, $inProgress->fresh()->current_step);
+        $this->assertSame('Educazione cinofila Bau', $inProgress->fresh()->getTranslation('name', 'it'));
+    }
+
+    /**
+     * Le due porte nei link: la nav chiede un servizio NUOVO (`nuovo=1`), la
+     * CTA della dashboard no — chi ha un servizio a metà deve ritrovarlo.
+     */
+    public function test_il_link_della_nav_chiede_un_servizio_nuovo(): void
+    {
+        $this->actingAsActivePartner();
+
+        $this->get(route('partner.services'))
+            ->assertOk()
+            ->assertSee('href="'.route('partner.service.create', ['nuovo' => 1]).'"', false);
+    }
+
     // ── Difetto W8: la preselezione dall'iscrizione non ha un solo test ───────
     //
     // `registration_service` compare in cinque punti, tutti in app/, models e

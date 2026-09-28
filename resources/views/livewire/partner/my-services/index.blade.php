@@ -15,6 +15,13 @@
                         @php
                             $cover = $service->coverPhotoUrl();
                             $typeTag = __('partner.services.tag_'.$service->family());
+                            $state = $states[$service->id] ?? null;
+                            // Bozza a metà wizard (difetto W2): lo stato `draft`
+                            // del service, ristretto a ciò che è davvero in corso.
+                            // `draft` vale anche per un servizio completato senza
+                            // riga a catalogo (caso storico), che resta senza
+                            // badge com'era e non si "riprende".
+                            $inProgress = $state === \App\Services\Partner\DraftPublicationState::DRAFT && $service->isInProgress();
                         @endphp
                         <div class="flex flex-col gap-4 rounded-[10px] border border-gray-150 bg-white px-4 py-[14px] sm:flex-row">
                             {{-- Copertina + tag tipologia --}}
@@ -43,7 +50,14 @@
                                         {{-- Il badge dice la causa vera: prima ogni bozza ferma
                                              leggeva "in attesa di Stripe", anche quando Stripe
                                              era collegato (segnalazione del 29/09/2026). --}}
-                                        @include('partials.partner.service-state-badge', ['state' => $states[$service->id] ?? null])
+                                        @include('partials.partner.service-state-badge', ['state' => $state])
+                                        {{-- Il partial non disegna `draft`: era una bozza che
+                                             non compariva mai qui. Ora compare, e il badge dice
+                                             che non è online e che si riprende. --}}
+                                        @if ($inProgress)
+                                            <flux:badge size="sm" class="mt-1 !rounded-[3px] !bg-gray-150 !text-ink">{{ __('partner.my_services.draft') }}</flux:badge>
+                                            <p class="mt-1 text-[13px] text-gray-400">{{ __('partner.my_services.draft_hint') }}</p>
+                                        @endif
                                         <p class="mt-1 flex items-center gap-1 text-sm font-medium text-[#959595]">
                                             <flux:icon.pin class="h-4 w-4 shrink-0" />
                                             {{ $service->locationLabel() }}
@@ -59,7 +73,12 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-auto flex justify-end pt-4">
+                                <div class="mt-auto flex items-center justify-end gap-4 pt-4">
+                                    @if ($inProgress)
+                                        {{-- Riporta allo step dove il partner si era fermato,
+                                             non al primo (PartnerMyServices::resume). --}}
+                                        <flux:button size="sm" wire:click="resume({{ $service->id }})" class="!rounded-full !border-0 !bg-[#232A2C] !px-5 !font-bold !text-white hover:!bg-[#0D171A]">{{ __('partner.my_services.resume') }}</flux:button>
+                                    @endif
                                     <flux:link href="{{ route('partner.services.show', $service) }}" class="!inline-flex !items-center !gap-1 !text-[13px] !font-semibold !text-[#555555] !no-underline hover:!text-ink">
                                         {{ __('partner.services.view_details') }}
                                         <flux:icon.chevron-right class="h-4 w-4" />

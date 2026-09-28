@@ -23,21 +23,33 @@ class CreateService extends Component
     public string $service = '';
 
     /**
-     * Riprende solo una bozza appena iniziata: di chi è loggato (draft()),
-     * `draft`, non in attesa e ferma allo step 0, cioè toccata solo da questa
-     * pagina. Così un refresh o l'"Indietro" dallo step del tipo non creano
-     * una riga a ogni visita. Qualunque altra bozza in sessione (in attesa di
-     * Stripe, un servizio in modifica, un wizard già avanzato) si lascia: prima
-     * next() ne riscriveva la categoria, trasformandola nel servizio successivo.
-     * La modifica di un servizio esistente passa da "I miei servizi", e il suo
-     * "Indietro" riporta lì (serviceChoiceBackUrl), non qui.
+     * Riprende la bozza in corso della sessione, a qualunque step sia arrivata.
+     * È la pagina su cui atterra l'«Indietro» del primo step di ogni famiglia
+     * (serviceChoiceBackUrl), e il partner deve ritrovarci il suo lavoro.
+     *
+     * Difetto W2 (audit del 28/09/2026): qui si riprendeva solo una bozza allo
+     * step 0. Una più avanzata veniva scollegata dalla sessione e se ne apriva
+     * una nuova, mentre la vecchia restava a database con nome, categorie e
+     * indirizzo, invisibile a ogni schermata partner. Bastava UN «Indietro»
+     * dalle card «Servizio professionale» ed «Evento», che salvano subito lo
+     * step 1.
+     *
+     * Si scollega ancora dalla sessione, aprendo una bozza nuova:
+     *  - un servizio completato o in attesa di Stripe (un servizio in modifica
+     *    da "I miei servizi"): next() ne riscriverebbe la categoria,
+     *    trasformandolo nel servizio successivo. Il suo "Indietro" riporta
+     *    alla lista, non qui;
+     *  - con `?nuovo=1` (link «Crea servizio» dell'header), una bozza in corso:
+     *    il partner ha chiesto un servizio nuovo, e la vecchia non si perde
+     *    perché "I miei servizi" la elenca con «Riprendi». Una bozza sotto la
+     *    soglia di STARTED_STEP invece si riusa: porta solo card e tipologia,
+     *    e scollegarla lascerebbe una riga vuota a ogni clic.
+     *
      * draft() subito, non in next(): fissa `draftId` (Locked) sulla bozza,
      * anche se un'altra scheda nel frattempo riscrive la sessione.
      *
-     * La bozza ripresa vince sempre sulla preselezione dell'iscrizione: allo
-     * step 0 la sua `service_category` è esattamente la card cliccata
-     * (struttura, attivita o smartbox — "Servizi" ed "Evento" salvano step 1 e
-     * quindi non si riprendono), quindi il partner ritrova la propria scelta.
+     * La card della bozza ripresa vince sulla preselezione dell'iscrizione:
+     * è la scelta che il partner ha già fatto in questo funnel.
      */
     public function mount(): void
     {
@@ -45,13 +57,59 @@ class CreateService extends Component
 
         if ($draft->status !== StructureDraft::STATUS_DRAFT
             || $draft->isAwaitingPublication()
-            || $draft->current_step > 0) {
-            session()->forget('structure_draft_id');
-            $this->draftId = null;
-            $draft = $this->draft();
+            || (request()->boolean('nuovo') && $draft->isInProgress())) {
+            $draft = $this->detachDraft();
         }
 
-        $this->service = $draft->service_category ?? $this->registrationChoice();
+        $this->service = $this->cardOf($draft) ?: $this->registrationChoice();
+    }
+
+    /**
+     * La card che ha prodotto la bozza, ricostruita dai suoi dati. Le card
+     * «Attività» e «Servizio professionale» scrivono la stessa bozza
+     * (`attivita` di tipo `attivita`) e non si distinguono: vale «Attività».
+     * Una bozza di tipo `eventi` mostra «Evento», la card che la descrive,
+     * da qualunque delle due strade sia arrivata.
+     */
+    private function cardOf(StructureDraft $draft): string
+    {
+        return match ($draft->service_category) {
+            null => '',
+            'attivita' => $draft->type === 'eventi' ? 'eventi' : 'attivita',
+            'smartbox' => 'smartbox',
+            default => 'struttura',
+        };
+    }
+
+    /**
+     * Si continua sulla bozza ripresa? Sì se è appena nata (step 0: porta solo
+     * la card cliccata, che si riscrive). Oltre, solo se la card resta nella
+     * sua famiglia e non le cambia il tipo: cambiarle famiglia lascerebbe
+     * scritte le colonne dell'altro ramo, e le card «Servizio professionale» ed
+     * «Evento» fissano il tipo senza passare dallo step del tipo, che è il solo
+     * ad azzerare i campi del ramo abbandonato (ActivityType::clearedFields).
+     * La card «Attività» passa da lì, quindi può riprendere anche un evento.
+     */
+    private function fitsDraft(StructureDraft $draft, string $category, ?string $presetType): bool
+    {
+        if ($draft->current_step === 0) {
+            return true;
+        }
+
+        if (StructureDraft::familyOf($category) !== $draft->family()) {
+            return false;
+        }
+
+        return $presetType === null || $draft->type === null || $draft->type === $presetType;
+    }
+
+    /** Scollega la bozza dalla sessione e ne apre una nuova. */
+    private function detachDraft(): StructureDraft
+    {
+        session()->forget('structure_draft_id');
+        $this->draftId = null;
+
+        return $this->draft();
     }
 
     /**
@@ -68,6 +126,14 @@ class CreateService extends Component
      * niente. Così chi si è iscritto come Struttura e qui sceglie Evento non si
      * ritrova Struttura ripreselezionata tornando indietro: vince la scelta del
      * funnel, e nel profilo resta scritto ciò che ha scelto in iscrizione.
+     *
+     * La regola regge anche ora che le bozze in corso si riprendono (W2): la
+     * preselezione serve solo quando mount() ha una bozza senza card, cioè
+     * senza nulla da riprendere. Se il partner ha già una bozza con la card,
+     * in sessione vince quella (cardOf); fuori sessione — sessione scaduta,
+     * «Crea servizio» con `?nuovo=1` — sta in "I miei servizi", e la pagina
+     * sta aprendo un servizio NUOVO: riproporgli la card dell'iscrizione
+     * sarebbe di nuovo la scelta di ieri al posto di quella del funnel.
      *
      * La bozza creata da mount() qui sopra ha `service_category` nulla, quindi
      * non si conta da sé. Il valore si filtra sulle card di questa pagina: una
@@ -123,12 +189,22 @@ class CreateService extends Component
             'eventi' => 'eventi',
             default => null,
         };
+        $category = $presetType === null ? $this->service : 'attivita';
 
-        // Step 1 e non 0 per le due card che saltano lo step del tipo: allo
-        // step 0 la bozza resta "appena iniziata" e mount() la butterebbe al
-        // primo refresh, perdendo la scelta.
+        // Card diversa da quella della bozza ripresa: bozza nuova, non la
+        // stessa riga con un'altra famiglia (vedi fitsDraft()). La vecchia non
+        // si perde: se è in corso (ha passato il nome), "I miei servizi" la
+        // elenca con «Riprendi»; se porta solo card e tipologia, non c'era
+        // niente da perdere.
+        if (! $this->fitsDraft($this->draft(), $category, $presetType)) {
+            $this->detachDraft();
+        }
+
+        // Step 1 e non 0 per le due card che saltano lo step del tipo: è lo
+        // step che quel percorso ha davvero superato, e resumeRoute() riparte
+        // così dal nome, non dalla scelta Attività/Evento.
         $this->saveStep([
-            'service_category' => $presetType === null ? $this->service : 'attivita',
+            'service_category' => $category,
             ...($presetType === null ? [] : ['type' => $presetType]),
         ], $presetType === null ? 0 : 1);
 

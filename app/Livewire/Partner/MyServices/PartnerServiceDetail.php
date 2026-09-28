@@ -14,7 +14,8 @@ class PartnerServiceDetail extends Component
 
     public function mount(StructureDraft $draft): void
     {
-        // Solo i propri servizi elencabili (completati o in attesa di Stripe):
+        // Solo i propri servizi elencabili (completati, in attesa di Stripe o
+        // bozze in corso, vedi StructureDraft::scopeInProgress()):
         // stessa scope della lista, così dettaglio e lista non divergono.
         abort_unless(
             StructureDraft::listableFor(Auth::id())->whereKey($draft->id)->exists(),

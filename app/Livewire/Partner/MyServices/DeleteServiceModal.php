@@ -56,7 +56,11 @@ class DeleteServiceModal extends Component
             // a trovare la bozza sparita.
             //
             // Vincolato all'utente e a ciò che la lista mostra: nessuno elimina
-            // i servizi altrui, né una bozza a metà con un serviceId riscritto.
+            // i servizi altrui, né una bozza appena nata (sotto
+            // StructureDraft::STARTED_STEP) con un serviceId riscritto. Una
+            // bozza in corso invece sì: dal 28/09/2026 (difetto W2) la lista la
+            // elenca, e senza eliminazione i tentativi abbandonati resterebbero
+            // lì per sempre.
             DB::transaction(function (): void {
                 $draft = StructureDraft::listableFor(Auth::id())
                     ->lockForUpdate()

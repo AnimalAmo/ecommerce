@@ -82,6 +82,12 @@ trait InteractsWithStructureDraft
      * servizio di "I miei servizi" (completato o in attesa di Stripe) torna
      * alla lista: "Crea servizio" gli aprirebbe una bozza nuova e la modifica
      * si perderebbe in silenzio.
+     *
+     * Una bozza nuova, a qualunque step, torna alle card SENZA parametri: la
+     * rotta nuda riprende la bozza in corso della sessione (CreateService::mount).
+     * Fino al difetto W2 la stessa rotta la scollegava e ne apriva un'altra,
+     * così questo pulsante orfanava il lavoro fatto. `?nuovo=1` è solo del
+     * link «Crea servizio» dell'header, che chiede un servizio nuovo.
      */
     protected function serviceChoiceBackUrl(): string
     {
@@ -95,7 +101,8 @@ trait InteractsWithStructureDraft
     /**
      * Chiude la bozza all'ultimo step (default: lo step finale della sua
      * famiglia). Pubblicata o in attesa di Stripe, il wizard è finito: la
-     * sessione si libera, così "Crea servizio" non la riprende. Nel secondo
+     * sessione si libera, così "Crea servizio" non la riprende e il servizio
+     * successivo parte da una bozza nuova, anche dalla rotta senza parametri. Nel secondo
      * caso l'avviso va in un flash che la dashboard mostra, perché un toast
      * lanciato prima del redirect si perde. L'avviso distingue un servizio
      * nuovo dalla modifica di uno già completato, la cui versione precedente
