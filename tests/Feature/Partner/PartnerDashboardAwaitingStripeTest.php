@@ -89,15 +89,22 @@ class PartnerDashboardAwaitingStripeTest extends TestCase
         $this->assertFalse($partner->partnerProfile->canBePaid());
 
         $this->awaitingSmartboxOf($partner->id);
-        // Una struttura in attesa: è lei che giustifica il banner Stripe.
         $this->awaitingOf($partner->id);
 
+        // Corretto il 28/09/2026: il conteggio atteso era 1, cioè la sola
+        // struttura, ma la smartbox di un partner online aspetta Stripe come
+        // lei. Contarla fuori da tutti e due i banner lasciava senza nessun
+        // avviso chi in attesa aveva solo smartbox. L'intento del test resta:
+        // un banner solo, quello di Stripe, col conteggio di tutto ciò che aspetta.
         $this->get(route('partner.dashboard'))
             ->assertOk()
-            ->assertSee(trans_choice('partner.dashboard.awaiting_stripe_banner', 1, ['count' => 1]))
+            ->assertSee(trans_choice('partner.dashboard.awaiting_stripe_banner', 2, ['count' => 2]))
             ->assertDontSee(
                 trans_choice('partner.dashboard.smartbox_payment_banner', 1, ['count' => 1]),
-            );
+            )
+            // Tester 28/09/2026: anche il titolo del banner smartbox, non solo il
+            // testo al singolare — un banner con un conteggio diverso passava.
+            ->assertDontSee(__('partner.dashboard.smartbox_payment_heading'));
     }
 
     /**

@@ -19,6 +19,11 @@ return [
         'awaiting_stripe' => 'Your service is ready: we will publish it automatically as soon as you finish connecting your Stripe account.',
         // Edit of a service already completed: the previous version stays the published one.
         'awaiting_stripe_changes' => 'Changes saved: the version already published stays as it was, and we will publish your changes automatically as soon as you finish connecting your Stripe account.',
+        // Smartbox closed by a partner who is paid on site (defect F2, 28/09/2026):
+        // it used to get the notices above, connect Stripe, and the Smartbox
+        // stayed held, because it needs online payment.
+        'awaiting_payment_method' => 'Your Smartbox is ready: we will put it on sale automatically as soon as you choose to take payments online on AnimalAmo, with your Stripe account connected.',
+        'awaiting_payment_method_changes' => 'Changes saved: we will publish them automatically as soon as you choose to take payments online on AnimalAmo, with your Stripe account connected.',
         // Smartbox wizard and Smartbox card notice: it warns, it does not block
         // (client request, 27/09/2026). First line is the client's sentence,
         // second one says the wizard can be filled in anyway.

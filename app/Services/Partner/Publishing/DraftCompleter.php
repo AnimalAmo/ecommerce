@@ -16,11 +16,12 @@ use Illuminate\Support\Facades\DB;
  *
  * Esiti:
  * - pubblicata: `completed`, step finale, segnale azzerato;
- * - partner online non ancora pagabile: la transazione si annulla e, fuori di
- *   lì, si scrivono il segnale `publish_requested_at` e lo step finale. Lo
- *   stato resta quello che era: `draft` per una prima pubblicazione,
- *   `completed` per la modifica di un servizio già a catalogo (la riga resta
- *   quella di prima finché Stripe non è collegato);
+ * - partner che non può pubblicare questa famiglia (online non ancora
+ *   pagabile, o smartbox di chi incassa in struttura): la transazione si
+ *   annulla e, fuori di lì, si scrivono il segnale `publish_requested_at` e
+ *   lo step finale. Lo stato resta quello che era: `draft` per una prima
+ *   pubblicazione, `completed` per la modifica di un servizio già a catalogo
+ *   (la riga resta quella di prima finché il blocco non cade);
  * - bozza non pubblicabile: DraftNotPublishableException, nulla cambia.
  *
  * Il lavoro si fa su una copia letta con lockForUpdate, non sull'istanza del
@@ -62,6 +63,13 @@ class DraftCompleter
         } catch (PartnerNotPayableException) {
             // Fuori dalla transazione annullata, con una query diretta: lo
             // status non si tocca, il segnale sì.
+            //
+            // L'eccezione porta solo un testo tradotto, senza la causa in
+            // forma leggibile: chi parla al partner la ricava da
+            // PartnerProfile::needsOnlinePaymentFor(), con la stessa regola
+            // del publisher. Difetto F2 (28/09/2026): il wizard non lo
+            // faceva, e a una smartbox ferma per la modalità di incasso
+            // chiedeva di collegare Stripe (vedi DraftCompletion).
             StructureDraft::query()->whereKey($draft->getKey())->update([
                 'publish_requested_at' => now(),
                 'current_step' => $finalStep,

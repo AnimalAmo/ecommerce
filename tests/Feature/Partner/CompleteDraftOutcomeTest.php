@@ -207,6 +207,10 @@ class CompleteDraftOutcomeTest extends TestCase
             'Chi non incassa online non deve leggere «completa il collegamento del conto su Stripe»: '
             .'lo collegherebbe e la smartbox resterebbe ferma comunque, perché la causa è la modalità di incasso.',
         );
+        // Tester 28/09/2026: l'assertNotSame da solo passava anche con un avviso
+        // nullo, cioè con un partner lasciato senza nessuna spiegazione. L'avviso
+        // c'è, ed è quello della modalità di incasso.
+        $this->assertSame(__('partner.publish.awaiting_payment_method'), session('partner.notice'));
     }
 
     public function test_lavviso_della_smartbox_ferma_nomina_il_sistema_di_pagamento(): void
@@ -227,7 +231,12 @@ class CompleteDraftOutcomeTest extends TestCase
             ->assertOk()
             // La causa che il publisher conosce già e che il wizard perde.
             ->assertSee(__('partner.publish.smartbox_payment_required'))
-            ->assertDontSee(__('partner.publish.awaiting_stripe'));
+            ->assertDontSee(__('partner.publish.awaiting_stripe'))
+            // Tester 28/09/2026: il testo qui sopra è identico al titolo del banner
+            // smartbox della dashboard (partner.dashboard.smartbox_payment_heading),
+            // che c'era anche prima della correzione: da solo non diceva niente
+            // dell'avviso di fine wizard. L'avviso è questo.
+            ->assertSee(__('partner.publish.awaiting_payment_method'));
     }
 
     /**

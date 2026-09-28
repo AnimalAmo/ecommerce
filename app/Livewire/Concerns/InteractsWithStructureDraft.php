@@ -100,13 +100,14 @@ trait InteractsWithStructureDraft
 
     /**
      * Chiude la bozza all'ultimo step (default: lo step finale della sua
-     * famiglia). Pubblicata o in attesa di Stripe, il wizard è finito: la
+     * famiglia). Pubblicata o in attesa, il wizard è finito: la
      * sessione si libera, così "Crea servizio" non la riprende e il servizio
      * successivo parte da una bozza nuova, anche dalla rotta senza parametri. Nel secondo
      * caso l'avviso va in un flash che la dashboard mostra, perché un toast
-     * lanciato prima del redirect si perde. L'avviso distingue un servizio
-     * nuovo dalla modifica di uno già completato, la cui versione precedente
-     * resta quella pubblicata. Se invece mancano i dati minimi, il partner
+     * lanciato prima del redirect si perde. L'avviso dice la causa (Stripe da
+     * finire, o incasso online per una smartbox: awaitingNotice) e distingue
+     * un servizio nuovo dalla modifica di uno già completato, la cui versione
+     * precedente resta quella pubblicata. Se invece mancano i dati minimi, il partner
      * resta sullo step col toast e la sessione resta sulla bozza, per correggerla.
      *
      * @return bool true quando il chiamante deve andare in dashboard
@@ -127,12 +128,35 @@ trait InteractsWithStructureDraft
         session()->forget('structure_draft_id');
 
         if ($outcome === DraftCompletion::AwaitingPayout) {
-            session()->flash('partner.notice', $wasCompleted
-                ? __('partner.publish.awaiting_stripe_changes')
-                : __('partner.publish.awaiting_stripe'));
+            session()->flash('partner.notice', $this->awaitingNotice($draft, $wasCompleted));
         }
 
         return true;
+    }
+
+    /**
+     * L'avviso di una bozza chiusa ma ferma, scelto sulla causa del blocco.
+     *
+     * Difetto F2 dell'audit dei flussi (28/09/2026): DraftCompleter torna
+     * `AwaitingPayout` per due cause diverse, e qui si guardava solo
+     * `$wasCompleted`. Alla smartbox di chi incassa in struttura arrivava
+     * «completa il collegamento del conto su Stripe»: il partner lo collegava
+     * e la smartbox restava ferma, perché le serve l'incasso online. La causa
+     * si legge dal profilo con la stessa regola che DraftPublisher usa per
+     * scegliere l'eccezione, nella stessa richiesta e subito dopo: le due
+     * letture divergono solo se il profilo cambia in mezzo, e allora l'avviso
+     * segue il profilo più recente, che è quello che il partner vedrà.
+     */
+    private function awaitingNotice(StructureDraft $draft, bool $wasCompleted): string
+    {
+        $needsOnlinePayment = $draft->user?->partnerProfile?->needsOnlinePaymentFor($draft->family()) === true;
+
+        return match (true) {
+            $needsOnlinePayment && $wasCompleted => __('partner.publish.awaiting_payment_method_changes'),
+            $needsOnlinePayment => __('partner.publish.awaiting_payment_method'),
+            $wasCompleted => __('partner.publish.awaiting_stripe_changes'),
+            default => __('partner.publish.awaiting_stripe'),
+        };
     }
 
     /**

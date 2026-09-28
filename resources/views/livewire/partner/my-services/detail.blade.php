@@ -26,8 +26,9 @@
                             // smartbox di chi non incassa online il collegamento Stripe
                             // non è la cosa da fare (27/09/2026), e scriverlo comunque
                             // è la diagnosi falsa della segnalazione del 29/09/2026.
-                            $paymentBlocked = $draft->family() === 'smartbox'
-                                && auth()->user()?->partnerProfile?->canPublishFamily('smartbox') !== true;
+                            // La causa, non il gate (difetto F3, 28/09/2026): a chi è
+                            // online e deve solo finire Stripe va detto proprio Stripe.
+                            $paymentBlocked = auth()->user()?->partnerProfile?->needsOnlinePaymentFor($draft->family()) === true;
                         @endphp
                         <flux:badge class="!rounded-[3px] !bg-brand-yellow !text-ink">{{ __($paymentBlocked ? 'partner.my_services.awaiting_payment_method' : 'partner.my_services.awaiting_stripe') }}</flux:badge>
                     @endif

@@ -11,7 +11,7 @@ use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -21,12 +21,12 @@ class Dashboard extends Component
     private const OWNED_TYPES = [Structure::class, Event::class, SmartboxPackage::class];
 
     /**
-     * Bozze in attesa per famiglia, memorizzate per il render. Privata, quindi
-     * fuori dal payload Livewire: si ricalcola a ogni richiesta.
+     * Bozze in attesa, memorizzate per il render. Privata, quindi fuori dal
+     * payload Livewire: si ricalcola a ogni richiesta.
      *
-     * @var array<string, int>|null
+     * @var EloquentCollection<int, StructureDraft>|null
      */
-    private ?array $awaitingCache = null;
+    private ?EloquentCollection $awaitingCache = null;
 
     /**
      * Il nome del saluto e le statistiche si leggono a ogni render da chi è
@@ -53,21 +53,33 @@ class Dashboard extends Component
      * può già pubblicare: le sue bozze in attesa sono bozze non pubblicabili,
      * e "Collega Stripe" gli chiederebbe qualcosa che ha già fatto.
      *
-     * Le smartbox restano fuori da questo conteggio: hanno un avviso loro, e
-     * per un partner che incassa fuori dalla piattaforma "Collega Stripe" non
-     * sarebbe nemmeno la cosa da fare (27/09/2026).
+     * Le smartbox di chi incassa fuori dalla piattaforma restano fuori da
+     * questo conteggio: hanno un avviso loro, e "Collega Stripe" non sarebbe
+     * nemmeno la cosa da fare (27/09/2026). Quelle di chi è online aspettano
+     * Stripe come il resto, e si contano qui. Difetto F3 (28/09/2026): prima
+     * prendevano l'avviso smartbox, e il partner leggeva due banner per lo
+     * stesso fatto; la prima correzione le aveva tolte da entrambi, e chi in
+     * attesa aveva solo smartbox non vedeva più nessun banner.
      */
     private function awaitingCount(): int
     {
-        if (Auth::user()->partnerProfile?->canPublish() === true) {
+        $profile = Auth::user()->partnerProfile;
+
+        if ($profile?->canPublish() === true) {
             return 0;
         }
 
-        return array_sum(Arr::except($this->awaitingByFamily(), 'smartbox'));
+        $byFamily = $this->awaitingByFamily();
+
+        if ($profile?->needsOnlinePaymentFor('smartbox') === true) {
+            unset($byFamily['smartbox']);
+        }
+
+        return array_sum($byFamily);
     }
 
     /**
-     * Smartbox ferme perché il partner non può pubblicarne (richiesta della
+     * Smartbox ferme perché il partner incassa in struttura (richiesta della
      * cliente del 27/09/2026): sono le bozze in attesa più quelle già ritirate
      * dalla vetrina, che il ritiro rimette in attesa.
      *
@@ -75,14 +87,35 @@ class Dashboard extends Component
      * `canPublish()` ammette, e un partner che incassa in struttura lo è — con
      * una smartbox pronta oggi non vedrebbe niente, che è il difetto da
      * correggere.
+     *
+     * La condizione è la causa, non il gate. Difetto F3 (28/09/2026): con
+     * `! canPublishFamily('smartbox')` contava anche le smartbox di chi è
+     * online e deve solo finire Stripe, e quel partner vedeva insieme questo
+     * avviso e quello di Stripe per lo stesso fatto. DraftPublisher, il
+     * pannello admin e ora il badge di "I miei servizi" separano le due cause
+     * allo stesso modo.
      */
     private function smartboxAwaitingCount(): int
     {
-        if (Auth::user()->partnerProfile?->canPublishFamily('smartbox') === true) {
+        if (Auth::user()->partnerProfile?->needsOnlinePaymentFor('smartbox') !== true) {
             return 0;
         }
 
-        return $this->awaitingByFamily()['smartbox'] ?? 0;
+        $awaiting = $this->awaitingDrafts()->filter(fn (StructureDraft $draft): bool => $draft->family() === 'smartbox');
+
+        // Più le smartbox ritirate dalla vetrina che non hanno una bozza in
+        // attesa: dal 28/09/2026 il ritiro non segna più la bozza (review
+        // della fase 2), quindi senza questa riga il partner passato al
+        // pagamento diretto vedrebbe sparire il cofanetto senza una parola.
+        $withheld = SmartboxPackage::withHidden()
+            ->where('user_id', Auth::id())
+            ->whereNotNull('withheld_at')
+            ->where(fn ($query) => $query
+                ->whereNull('structure_draft_id')
+                ->orWhereNotIn('structure_draft_id', $awaiting->modelKeys()))
+            ->count();
+
+        return $awaiting->count() + $withheld;
     }
 
     /**
@@ -98,12 +131,18 @@ class Dashboard extends Component
      */
     private function awaitingByFamily(): array
     {
+        return $this->awaitingDrafts()
+            ->countBy(fn (StructureDraft $draft): string => $draft->family())
+            ->all();
+    }
+
+    /** Le bozze in attesa del partner, lette una volta per richiesta. */
+    private function awaitingDrafts(): EloquentCollection
+    {
         return $this->awaitingCache ??= StructureDraft::query()
             ->where('user_id', Auth::id())
             ->awaitingPublication()
-            ->get(['id', 'service_category'])
-            ->countBy(fn (StructureDraft $draft): string => $draft->family())
-            ->all();
+            ->get(['id', 'service_category']);
     }
 
     /**

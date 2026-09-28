@@ -19,6 +19,11 @@ return [
         'awaiting_stripe' => 'Il tuo servizio è pronto: lo pubblicheremo in automatico appena completi il collegamento del conto su Stripe.',
         // Modifica di un servizio già completato: la versione precedente resta quella pubblicata.
         'awaiting_stripe_changes' => "Modifiche salvate: la versione già pubblicata resta com'era e pubblicheremo le modifiche in automatico appena completi il collegamento del conto su Stripe.",
+        // Smartbox chiusa da chi incassa in struttura (difetto F2, 28/09/2026):
+        // prima leggeva gli avvisi qui sopra, collegava Stripe e la smartbox
+        // restava ferma, perché le serve l'incasso online.
+        'awaiting_payment_method' => 'La tua Smartbox è pronta: la metteremo in vetrina in automatico appena scegli di ricevere i pagamenti online su AnimalAmo, con il conto Stripe collegato.',
+        'awaiting_payment_method_changes' => 'Modifiche salvate: le pubblicheremo in automatico appena scegli di ricevere i pagamenti online su AnimalAmo, con il conto Stripe collegato.',
         // Avviso del wizard smartbox e della card Smartbox: avvisa, non blocca
         // (richiesta della cliente del 27/09/2026). La prima riga è la frase
         // della cliente, la seconda dice che si può compilare comunque.
