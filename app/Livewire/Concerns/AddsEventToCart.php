@@ -43,9 +43,11 @@ trait AddsEventToCart
             return;
         }
 
+        // Persone da Event::quickAddPersons(): la stessa regola con cui la
+        // griglia decide se la borsa si mostra, così click e soglia non divergono.
         $options = $event->type === ProductType::Activity
-            ? ['guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0], 'animals' => [self::defaultSpecies() => 1]]
-            : ['participants' => 1];
+            ? ['guests' => ['adulti' => $event->quickAddPersons(), 'ragazzi' => 0, 'bambini' => 0], 'animals' => [self::defaultSpecies() => 1]]
+            : ['participants' => $event->quickAddPersons()];
 
         try {
             app(CartManager::class)->addItem('event', $event->id, $options, false);

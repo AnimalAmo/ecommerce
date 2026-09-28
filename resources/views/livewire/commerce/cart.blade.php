@@ -60,9 +60,10 @@
                             {{-- Scorre fino al bordo schermo: -mr-4 annulla il padding del container --}}
                             <div class="-mr-4 mt-[17px] flex snap-x gap-4 overflow-x-auto pb-1">
                                 @foreach ($suggestions as $item)
+                                    {{-- Cuore reale (difetto C6): acceso dai preferiti dell'utente, il click salva/toglie davvero --}}
                                     @include('partials.most-loved-card-mobile', [
                                         'item' => $item,
-                                        'heartActive' => in_array($item['id'], $suggestFavorites, true),
+                                        'heartActive' => $this->isFavorite($item['favoritable_type'], $item['favoritable_id']),
                                         'heartAction' => "toggleSuggestionFavorite('" . $item['id'] . "')",
                                     ])
                                 @endforeach
@@ -86,13 +87,17 @@
                             {{-- Fino a 3 card = top preferiti reali (stesso passo 490/card 468 di /preferiti, ma appoggiate direttamente sulla pagina) --}}
                             <div class="grid grid-cols-1 gap-x-[22px] gap-y-4 md:grid-cols-2 min-[87.5rem]:mx-6 min-[87.5rem]:grid-cols-3">
                                 @foreach ($suggestions as $item)
-                                    {{-- Cuore bianco che diventa giallo al click (stato locale, TODO backend reale) --}}
+                                    {{-- Cuore e borsa reali (difetto C6, audit 28/09/2026): prima erano solo colore, uno
+                                         stato locale che dichiarava «Rimuovi dal carrello» su un carrello vuoto.
+                                         Il cuore si accende dai preferiti veri. La borsa non è mai "attiva": queste card
+                                         esistono solo a carrello vuoto, e dopo un'aggiunta riuscita lo stato vuoto lascia
+                                         il posto alla lista con la riga nuova. --}}
                                     @include('partials.favorite-card', [
                                         'item' => $item,
                                         'wireKey' => 'suggestion-' . $item['id'],
-                                        'heartActive' => in_array($item['id'], $suggestFavorites, true),
+                                        'heartActive' => $this->isFavorite($item['favoritable_type'], $item['favoritable_id']),
                                         'heartAction' => "toggleSuggestionFavorite('" . $item['id'] . "')",
-                                        'bagActive' => in_array($item['id'], $suggestInCart, true),
+                                        'bagActive' => false,
                                         'bagAction' => "toggleSuggestionCart('" . $item['id'] . "')",
                                     ])
                                 @endforeach

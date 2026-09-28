@@ -1,5 +1,6 @@
 {{-- Card "Box preferiti" 468x170 condivisa (XD symbol a7e925b1) — usata da /preferiti e dallo stato vuoto del carrello.
-     Contratto: $item (array card), $wireKey, $heartActive/$bagActive (bool stato bottoni),
+     Contratto: $item (array card FavoriteService, con can_add_to_cart e sold_out), $wireKey,
+     $heartActive/$bagActive (bool stato bottoni: devono dire il vero, mai stato solo visivo),
      $heartAction/$bagAction (stringhe wire:click, es. "removeFavorite(1)"). --}}
 <article wire:key="{{ $wireKey }}" class="relative flex h-[170px] w-full rounded-[3px] border border-[#E9E9E9] bg-white p-[6px]">
     {{-- $item['photo'] è un URL già risolto (HasCatalogImages: stem XD o upload partner) --}}
@@ -28,13 +29,26 @@
             </div>
         @endif
 
+        {{-- Posti esauriti (difetto C5, audit 28/09/2026): la borsa sparisce (can_add_to_cart) e la card
+             dice perché, con la frase della scheda evento e della validazione del carrello (cart.sold_out):
+             una regola, una frase. Non è un bottone, non c'è niente da cliccare. Fino a due righe:
+             nelle due colonne md il testo non sta su una. --}}
+        @php $soldOut = $item['sold_out'] ?? false; @endphp
+        @if ($soldOut)
+            <p class="mt-auto flex items-start gap-[6px] pr-[9px] text-[11px] font-semibold leading-[12px] text-[#627277]">
+                <flux:icon.exclamation-circle class="h-[11px] w-[11px] shrink-0" />
+                <span class="line-clamp-2">{{ __('cart.sold_out') }}</span>
+            </p>
+        @endif
+
         {{-- Cluster prezzo + borsa + cuore in basso a destra.
              I due gialli sono VOLUTAMENTE diversi da XD: cuore attivo sempre brand-yellow #EDFF00,
              borsa attiva ("in carrello") #FFE13E; gli stati inattivi sono grigio #F4F4F4 (borsa)
              e bianco bordato #E9E9E9 con cuore nero outline (cuore). --}}
-        <div class="mt-auto flex items-center justify-end gap-[5px]">
+        <div class="{{ $soldOut ? 'mt-1' : 'mt-auto' }} flex items-center justify-end gap-[5px]">
             <span class="mr-[7px] text-[11px] font-semibold leading-none text-[#0D171A]">{{ __('nav.card.starting_from', ['price' => $item['price']]) }}</span>
-            {{-- Borsa nascosta per i prodotti non acquistabili (eventi gratuiti/"Partecipa"). --}}
+            {{-- Borsa nascosta per i prodotti non acquistabili: eventi gratuiti/"Partecipa", posti esauriti,
+                 titolari che incassano in struttura (FavoriteService::canAddToCart). --}}
             @if ($item['can_add_to_cart'] ?? true)
                 <flux:button wire:click="{{ $bagAction }}" square aria-label="{{ $bagActive ? __('nav.card.remove_from_cart') : __('nav.card.add_to_cart') }}" class="!h-[30px] !w-[30px] !min-w-0 !rounded-full !border-0 !shadow-none [&>span]:flex [&>span]:items-center [&>span]:justify-center {{ $bagActive ? '!bg-[#FFE13E] hover:!bg-[#FFE13E]' : '!bg-gray-100 hover:!bg-gray-100' }}">
                     <flux:icon.shopping-bag class="!h-[14px] !w-[14px] text-black" />

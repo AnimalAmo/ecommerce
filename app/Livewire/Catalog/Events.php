@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Livewire\Concerns\AddsEventToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\HasCatalogFilters;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
+use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -115,10 +117,23 @@ class Events extends Component
         // sarebbe una N+1 nascosta dentro una vista.
         $ownerModes = app(PartnerPaymentModeService::class)->forOwners($similar->pluck('user_id'));
 
+        // Posti esauriti (difetto C5): la griglia offriva il carrello anche a
+        // evento pieno, e il click rispondeva solo col toast di
+        // AvailabilityService. Stessa regola della scheda e delle card dei
+        // preferiti (FavoriteService::isSoldOut); i posti sono colonne delle
+        // righe già caricate, quindi nessuna query in più.
+        $favorites = app(FavoriteService::class);
+        $soldOutIds = $similar->filter(fn (Event $event): bool => $favorites->isSoldOut(
+            $event,
+            ($ownerModes[$event->user_id] ?? OrderPaymentMode::Online) === OrderPaymentMode::OnSite,
+        ))->modelKeys();
+
         return view('livewire.catalog.events', [
             'events' => $events,
             // Mappa id titolare => OrderPaymentMode per le card (assente = online).
             'ownerModes' => $ownerModes,
+            // Id delle card a posti esauriti: al posto della CTA, la ragione.
+            'soldOutIds' => $soldOutIds,
             'empty' => $empty,
             'catalogueEmpty' => $catalogueEmpty,
             'similar' => $similar,

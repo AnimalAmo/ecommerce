@@ -108,4 +108,34 @@ class Event extends Model
     {
         return $this->is_free || $this->price_cents === null;
     }
+
+    /**
+     * Quante persone impegna la CTA di una lista (griglia /eventi, pagina
+     * regione, card dei preferiti e del carrello vuoto), che non ha un
+     * contatore di ospiti: l'aggiunta rapida di un'attività mette due adulti
+     * (AddsEventToCart, FavoriteService::defaultCartOptions), quella di un
+     * evento un partecipante. «Partecipa» non passa dal carrello e impegna
+     * una persona sola.
+     *
+     * Serve alla soglia di «esaurito» delle liste: con la persona minima,
+     * un'attività con un posto libero mostrava la borsa e il click veniva
+     * rifiutato da AvailabilityService con un toast (il difetto C2 della
+     * scheda, trasferito nelle liste).
+     */
+    public function quickAddPersons(): int
+    {
+        return $this->type === ProductType::Activity && ! $this->hasJoinCta() ? 2 : 1;
+    }
+
+    /**
+     * Restano posti per $persons? Stessa aritmetica di
+     * AvailabilityService::ensureEventAvailable() (`booked + persons > max`
+     * rifiuta), che resta l'autorità sotto lock: qui si decide solo cosa
+     * disegnare. Senza capienza, sempre sì.
+     */
+    public function hasSeatsFor(int $persons): bool
+    {
+        return $this->max_participants === null
+            || ($this->booked_participants ?? 0) + $persons <= $this->max_participants;
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Catalog;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Livewire\Concerns\AddsEventToCart;
 use App\Livewire\Concerns\HasCatalogFilters;
@@ -10,6 +11,7 @@ use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Livewire\Attributes\Title;
@@ -144,11 +146,22 @@ class AnimalHolidayRegion extends Component
         // lettura per card sarebbe una N+1 nascosta dentro una vista.
         $ownerModes = app(PartnerPaymentModeService::class)->forOwners($events->pluck('user_id'));
 
+        // Posti esauriti (difetto C5): come in /eventi, la card offriva
+        // «Acquista» anche a evento pieno. Stessa regola della scheda
+        // (FavoriteService::isSoldOut), sulle righe già caricate: zero query.
+        $favorites = app(FavoriteService::class);
+        $soldOutIds = $events->filter(fn (Event $event): bool => $favorites->isSoldOut(
+            $event,
+            ($ownerModes[$event->user_id] ?? OrderPaymentMode::Online) === OrderPaymentMode::OnSite,
+        ))->modelKeys();
+
         return view('livewire.catalog.animal-holiday-region', [
             'results' => $results,
             'events' => $events,
             // Mappa id titolare => OrderPaymentMode per le card evento (assente = online).
             'ownerModes' => $ownerModes,
+            // Id delle card evento a posti esauriti: al posto della CTA, la ragione.
+            'soldOutIds' => $soldOutIds,
             'boxes' => $boxes,
             'empty' => $empty,
             // Griglia vuota per due motivi opposti: filtri troppo stretti oppure catalogo
