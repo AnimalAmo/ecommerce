@@ -61,6 +61,19 @@ return [
         'title' => 'Contatta la struttura',
         'intro' => 'Questa struttura non prende prenotazioni online: contattala direttamente per disponibilità e prezzi.',
         'business_name' => 'Gestita da',
-        'address' => 'Dove si trova',
+        // Del partner e non della scheda (public_address, uno per partner): chi ha
+        // due strutture ne ha uno solo, e «Dove si trova» lo darebbe per il luogo
+        // della scheda che si sta guardando.
+        'address' => 'Indirizzo del partner',
+        'opening_hours' => 'Orari di apertura',
+        // Recapiti pubblici del partner (risposta della cliente, 26/09/2026,
+        // punto 6): a video c'è l'icona, l'etichetta la legge lo screen reader.
+        'phone' => 'Telefono',
+        'whatsapp' => 'WhatsApp',
+        'email' => 'Email',
+        'website' => 'Sito web',
+        // Riquadro sotto il box prenotazione di chi incassa online: solo
+        // indirizzo pubblico e orari, i recapiti diretti no.
+        'info_title' => 'Informazioni utili',
     ],
 ];

@@ -8,7 +8,6 @@ use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Event\Event;
-use App\Models\Partner\PartnerProfile;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Partner\ServiceOptionLabels;
@@ -134,54 +133,6 @@ class ActivityDetail extends Component
         $labels = array_filter(ServiceOptionLabels::labels('activity_category', $activity->activity_categories));
 
         return $labels === [] ? null : implode(', ', $labels);
-    }
-
-    /**
-     * Orari del titolare della scheda (richiesta della cliente, 27/09/2026:
-     * stanno sul partner, non sul servizio, perché un professionista ha un
-     * orario solo per tutte le sue schede).
-     *
-     * Questo è l'UNICO punto in cui la pagina legge il profilo, e non costa una
-     * query in più: PartnerPaymentModeService è registrato `scoped` e si
-     * ricorda i profili già letti, quindi qui torna lo stesso profilo che
-     * `paysOnSite` e `contacts` hanno già chiesto in questa render(). La
-     * lettura sta nel componente e non nel blade: in una vista una relazione
-     * diventa una N+1 il giorno che la riga finisce dentro un ciclo.
-     */
-    private static function openingHours(Event $activity): ?string
-    {
-        $profile = app(PartnerPaymentModeService::class)
-            ->profileFor($activity->user_id === null ? null : (int) $activity->user_id);
-
-        return $profile === null ? null : self::hoursLine($profile);
-    }
-
-    /**
-     * `partner_profiles.opening_hours` è testo libero tradotto con spatie, che
-     * serializza le lingue in JSON dentro la colonna.
-     *
-     * Il ramo sulla mappa delle lingue è una cintura, non un dubbio: la colonna
-     * è nuova e il model PartnerProfile — che appartiene alla lane del profilo
-     * partner, non a questa — potrebbe non dichiararla ancora fra i
-     * `$translatable`. In quel caso l'attributo torna il JSON grezzo, e su una
-     * scheda pubblica `{"it":"Lun-Ven 9-18"}` è peggio di una riga assente.
-     * Quando il model la dichiara (o la casta), il ramo non scatta più.
-     */
-    private static function hoursLine(PartnerProfile $profile): ?string
-    {
-        $hours = $profile->opening_hours;
-
-        if (is_string($hours) && str_starts_with(ltrim($hours), '{')) {
-            $hours = json_decode($hours, true) ?? $hours;
-        }
-
-        if (is_array($hours)) {
-            $hours = $hours[app()->getLocale()] ?? (reset($hours) ?: '');
-        }
-
-        $hours = trim((string) $hours);
-
-        return $hours !== '' ? $hours : null;
     }
 
     /**
@@ -348,6 +299,12 @@ class ActivityDetail extends Component
             : app(BookingPricingService::class)->quote($activity, ['guests' => $this->editGuests, 'animals' => $this->editAnimals]);
         $isSoldOut = self::isSoldOut($activity);
 
+        // Una lettura sola del profilo per gli orari e per le card: PartnerContacts
+        // passa da PartnerPaymentModeService, `scoped`, e il `paysOnSite` qui sotto
+        // riusa lo stesso profilo. Nel componente e non nel blade: in una vista una
+        // relazione diventa una N+1 il giorno che la riga finisce dentro un ciclo.
+        $contacts = app(PartnerContacts::class)->forPurchasable($activity);
+
         return view('livewire.catalog.activity-detail', [
             'activity' => $activity,
             // Le attività sono righe Event: alias morph 'event'.
@@ -390,7 +347,10 @@ class ActivityDetail extends Component
             // il partner non l'ha compilata, e il blade salta la riga: mai
             // un'etichetta senza valore.
             'categoryLabels' => self::categoryLabels($activity),
-            'openingHours' => self::openingHours($activity),
+            // Orari del titolare (richiesta della cliente, 27/09/2026: stanno sul
+            // partner, non sul servizio, perché un professionista ha un orario
+            // solo per tutte le sue schede).
+            'openingHours' => $contacts['opening_hours'] ?? null,
             'bookingRequirement' => ServiceOptionLabels::label('booking_requirement', $activity->booking_requirement),
             'showMeetingPoint' => self::showsMeetingPoint($activity),
             'isSoldOut' => $isSoldOut,
@@ -405,7 +365,7 @@ class ActivityDetail extends Component
             // non passano mai dal carrello, quindi non serve nemmeno la query.
             'paysOnSite' => ! $activity->hasJoinCta()
                 && app(PartnerPaymentModeService::class)->forPurchasable($activity) === OrderPaymentMode::OnSite,
-            'contacts' => app(PartnerContacts::class)->forPurchasable($activity),
+            'contacts' => $contacts,
         ])->title('AnimalAmo — '.$activity->title);
     }
 }

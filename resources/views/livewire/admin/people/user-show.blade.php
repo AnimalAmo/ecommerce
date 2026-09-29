@@ -3,6 +3,8 @@
     use App\Enums\OrderStatus;
     use App\Services\Admin\Catalog\AdminServiceCreator;
     use App\Services\Admin\People\UserDirectory;
+    use App\Support\Phone;
+    use App\Support\SafeUrl;
     use Illuminate\Support\Carbon;
 
     $th = '!text-[13.5px] !font-semibold !text-gray-400';
@@ -28,6 +30,16 @@
 
         return $until !== null && $until !== $from ? $from.' – '.$until : $from;
     };
+    // Recapiti pubblici del partner (risposta della cliente, 26/09/2026, punto 6),
+    // nell'ordine del form del profilo; solo le voci compilate. Il profilo può mancare.
+    $publicProfile = $isPartner ? $user->partnerProfile : null;
+    $publicContacts = collect([
+        'phone' => Phone::format($publicProfile?->public_phone),
+        'whatsapp' => Phone::format($publicProfile?->public_whatsapp),
+        'email' => $publicProfile?->public_email,
+        'website' => $publicProfile?->public_website,
+        'address' => $publicProfile?->public_address,
+    ])->filter(fn (?string $contact): bool => filled($contact));
 @endphp
 
 <div class="flex flex-col gap-[18px]">
@@ -148,6 +160,32 @@
                     <span class="{{ $label }}">{{ __('admin-people.users.stripe_label') }}</span>
                     <span class="{{ $value }}">
                         <x-admin.badge :tone="['payable' => 'success', 'incomplete' => 'warning', 'none' => 'muted'][$partner['stripe_status']]">{{ __('admin-people.users.stripe_status.'.$partner['stripe_status']) }}</x-admin.badge>
+                    </span>
+                </div>
+                {{-- Sola lettura: li scrive il partner dal suo profilo. Senza consenso restano
+                     salvati ma le schede non li mostrano, e il badge lo dice. --}}
+                <div class="{{ $row }}">
+                    <span class="{{ $label }}">{{ __('admin-people.users.public_contacts_label') }}</span>
+                    <span class="{{ $value }}">
+                        @if ($publicProfile?->publishesContacts())
+                            <x-admin.badge tone="success">{{ __('admin-people.users.public_contacts_consent', ['date' => $date($publicProfile->public_contacts_consent_at)]) }}</x-admin.badge>
+                        @else
+                            <x-admin.badge tone="muted">{{ __('admin-people.users.public_contacts_no_consent') }}</x-admin.badge>
+                        @endif
+                        @forelse ($publicContacts as $kind => $contact)
+                            <span wire:key="public-contact-{{ $kind }}" class="mt-1 block">
+                                <span class="font-normal text-gray-400">{{ __('admin-people.users.public_contacts.'.$kind) }}:</span>
+                                {{-- Il form lo valida http/https, ma una scrittura che salta il form
+                                     (seeder, tinker) no: in un href passa solo da SafeUrl. --}}
+                                @if ($kind === 'website' && ($href = SafeUrl::http($contact)) !== null)
+                                    <a href="{{ $href }}" target="_blank" rel="noopener noreferrer" class="break-all text-admin-teal hover:underline">{{ $contact }}</a>
+                                @else
+                                    {{ $contact }}
+                                @endif
+                            </span>
+                        @empty
+                            <span class="mt-1 block">—</span>
+                        @endforelse
                     </span>
                 </div>
             </div>

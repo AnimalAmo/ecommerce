@@ -187,6 +187,18 @@ return [
         // possono contraddirsi sono peggio di uno.
         'opening_hours' => 'Orari di apertura o disponibilità',
         'opening_hours_hint' => 'Facoltativi. Compaiono sulle tue schede, per esempio «Lun-Ven 9-18».',
+        // Recapiti pubblici (risposta della cliente, 26/09/2026, punto 6): voci
+        // nuove, mai quelle di registrazione. Telefono, WhatsApp, email e sito
+        // scavalcherebbero la piattaforma, quindi con l'incasso online restano
+        // nascosti; l'intro lo dice prima che il partner li scriva.
+        'public_contacts_heading' => 'Recapiti pubblici',
+        'public_contacts_intro' => 'Facoltativi: sono i contatti che vuoi mostrare ai clienti, non quelli con cui ti sei registrato. Compaiono sulle tue schede solo se dai il consenso qui sotto. Se incassi online su AnimalAmo, telefono, WhatsApp, email e sito restano nascosti: si vedono l’indirizzo e gli orari.',
+        'public_phone' => 'Telefono',
+        'public_whatsapp' => 'WhatsApp',
+        'public_email' => 'Email di contatto',
+        'public_website' => 'Sito web',
+        'public_address' => 'Indirizzo per i clienti',
+        'public_contacts_consent' => 'Acconsento a pubblicare questi recapiti sulle mie schede AnimalAmo.',
         'email' => 'Email',
         'address' => 'Indirizzo',
         'province' => 'Provincia',

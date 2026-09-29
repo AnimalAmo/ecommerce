@@ -386,4 +386,131 @@ class UserShowTest extends TestCase
             ->assertOk()
             ->assertDontSee(__('admin-people.users.resend_welcome'));
     }
+
+    // ── Recapiti pubblici (risposta della cliente, 26/09/2026, punto 6) ─────
+    //
+    // Sola lettura: li scrive il partner dal suo profilo. L'admin vede cosa ha
+    // salvato e se ha dato il consenso, perché senza consenso le schede non li
+    // mostrano e da qui si deve poter capire il perché.
+
+    private const PUBLIC_CONTACTS = [
+        'public_phone' => '+393331234567',
+        'public_whatsapp' => '+393471234567',
+        'public_email' => 'info@rifugiodellealpi.it',
+        'public_website' => 'https://www.rifugiodellealpi.it',
+        'public_address' => 'Piazza Garibaldi 3, Boario Terme',
+    ];
+
+    private function partnerWithProfile(array $profile): User
+    {
+        Role::findOrCreate('partner', 'web');
+
+        $partner = User::factory()->create();
+        $partner->assignRole('partner');
+        PartnerProfile::factory()->for($partner)->create($profile);
+
+        return $partner;
+    }
+
+    public function test_the_partner_box_shows_the_public_contacts_and_the_consent_date(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->partnerWithProfile([
+            ...self::PUBLIC_CONTACTS,
+            'public_contacts_consent_at' => '2026-09-15 10:30:00',
+        ]);
+
+        $this->get(route('admin.users.show', $partner))
+            ->assertOk()
+            // Dopo la riga Stripe, nell'ordine del form del profilo, telefoni leggibili.
+            ->assertSeeInOrder([
+                __('admin-people.users.stripe_label'),
+                __('admin-people.users.public_contacts_label'),
+                __('admin-people.users.public_contacts_consent', ['date' => '15 set 2026']),
+                __('admin-people.users.public_contacts.phone').':',
+                '+39 333 123 4567',
+                __('admin-people.users.public_contacts.whatsapp').':',
+                '+39 347 123 4567',
+                __('admin-people.users.public_contacts.email').':',
+                'info@rifugiodellealpi.it',
+                __('admin-people.users.public_contacts.website').':',
+                'https://www.rifugiodellealpi.it',
+                __('admin-people.users.public_contacts.address').':',
+                'Piazza Garibaldi 3, Boario Terme',
+            ])
+            ->assertSee('href="https://www.rifugiodellealpi.it" target="_blank" rel="noopener noreferrer"', escape: false)
+            ->assertDontSee(__('admin-people.users.public_contacts_no_consent'));
+    }
+
+    /**
+     * Senza consenso l'admin vede comunque cosa il partner ha salvato: è il
+     * dato che spiega perché la scheda non mostra i recapiti.
+     */
+    public function test_without_consent_the_saved_contacts_are_listed_under_a_no_consent_badge(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->partnerWithProfile([...self::PUBLIC_CONTACTS, 'public_contacts_consent_at' => null]);
+
+        $this->get(route('admin.users.show', $partner))
+            ->assertOk()
+            ->assertSeeInOrder([
+                __('admin-people.users.public_contacts_label'),
+                __('admin-people.users.public_contacts_no_consent'),
+                '+39 333 123 4567',
+                'Piazza Garibaldi 3, Boario Terme',
+            ])
+            ->assertDontSee(__('admin-people.users.public_contacts_consent', ['date' => '']));
+    }
+
+    /** Solo le voci compilate; nessuna voce = un trattino, non cinque etichette vuote. */
+    public function test_only_the_filled_contacts_are_listed(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->partnerWithProfile(['public_email' => 'info@rifugiodellealpi.it']);
+
+        $this->get(route('admin.users.show', $partner))
+            ->assertOk()
+            ->assertSee('info@rifugiodellealpi.it')
+            ->assertDontSee(__('admin-people.users.public_contacts.phone').':')
+            ->assertDontSee(__('admin-people.users.public_contacts.website').':')
+            ->assertDontSeeHtml('<span class="mt-1 block">—</span>');
+
+        $empty = $this->partnerWithProfile([]);
+
+        $this->get(route('admin.users.show', $empty))
+            ->assertOk()
+            ->assertSeeInOrder([__('admin-people.users.public_contacts_label'), __('admin-people.users.public_contacts_no_consent')])
+            ->assertSeeHtml('<span class="mt-1 block">—</span>');
+    }
+
+    /**
+     * Il form valida il sito http/https, ma una scrittura che lo salta no:
+     * l'admin legge il valore com'è, e in un href non ci arriva mai.
+     */
+    public function test_a_website_that_is_not_http_is_shown_but_never_linked(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->partnerWithProfile(['public_website' => 'javascript:alert(1)']);
+
+        $this->get(route('admin.users.show', $partner))
+            ->assertOk()
+            ->assertSee('javascript:alert(1)')
+            ->assertDontSee('href="javascript:', escape: false);
+    }
+
+    /** Il box partner non c'è per un cliente, nemmeno con un profilo rimasto da prima. */
+    public function test_a_customer_with_an_orphan_profile_shows_no_public_contacts(): void
+    {
+        $this->actingAsSuperadmin();
+        Role::findOrCreate('client', 'web');
+
+        $client = User::factory()->create();
+        $client->assignRole('client');
+        PartnerProfile::factory()->withPublicContacts()->for($client)->create();
+
+        $this->get(route('admin.users.show', $client))
+            ->assertOk()
+            ->assertDontSee(__('admin-people.users.public_contacts_label'))
+            ->assertDontSee('+39 333 123 4567');
+    }
 }

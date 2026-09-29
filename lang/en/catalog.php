@@ -61,6 +61,19 @@ return [
         'title' => 'Contact the property',
         'intro' => 'This property does not take online bookings: contact it directly for availability and prices.',
         'business_name' => 'Run by',
-        'address' => 'Where it is',
+        // The partner's, not the listing's (public_address, one per partner): a
+        // partner with two properties has only one, and «Where it is» would pass
+        // it off as the location of the listing being viewed.
+        'address' => "Partner's address",
+        'opening_hours' => 'Opening hours',
+        // Partner's public contacts (client answer, 26/09/2026, point 6): the
+        // screen shows an icon, the screen reader reads the label.
+        'phone' => 'Phone',
+        'whatsapp' => 'WhatsApp',
+        'email' => 'Email',
+        'website' => 'Website',
+        // Box under the booking box of partners paid online: only the public
+        // address and the opening hours, no direct contacts.
+        'info_title' => 'Useful information',
     ],
 ];

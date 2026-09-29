@@ -143,6 +143,18 @@ return [
             'incomplete' => 'Collegamento incompleto',
             'none' => 'Non collegato',
         ],
+        // Recapiti pubblici del partner (risposta della cliente, 26/09/2026, punto 6):
+        // in sola lettura, li scrive il partner dal suo profilo.
+        'public_contacts_label' => 'Recapiti pubblici',
+        'public_contacts_consent' => 'Consenso alla pubblicazione dato il :date',
+        'public_contacts_no_consent' => 'Nessun consenso: non si pubblicano',
+        'public_contacts' => [
+            'phone' => 'Telefono',
+            'whatsapp' => 'WhatsApp',
+            'email' => 'Email',
+            'website' => 'Sito',
+            'address' => 'Indirizzo',
+        ],
         'resend_welcome' => 'Invia di nuovo il link',
         'welcome_sent' => 'Link per scegliere la password inviato a :email.',
         'pets' => 'Animali',

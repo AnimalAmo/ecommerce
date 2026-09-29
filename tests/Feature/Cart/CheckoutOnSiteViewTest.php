@@ -4,6 +4,7 @@ namespace Tests\Feature\Cart;
 
 use App\Events\OnSiteOrderConfirmed;
 use App\Livewire\Commerce\Checkout;
+use App\Models\Partner\PartnerProfile;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\User;
@@ -198,9 +199,10 @@ class CheckoutOnSiteViewTest extends TestCase
 
     /**
      * Kill-switch spento (il default di produzione): al posto dei campi dello
-     * step 1 il pannello di spiegazione, con i recapiti del partner presi da
-     * PartnerContacts — ragione sociale, indirizzo e link «dove pagare o
-     * prenotare», i soli recapiti che esistono a database.
+     * step 1 il pannello di spiegazione, con la card contatti presa da
+     * PartnerContacts — ragione sociale e link «dove pagare o prenotare»; i
+     * recapiti pubblici, quando il partner li ha dati col consenso, li provano
+     * i due test sotto.
      */
     public function test_col_percorso_spento_il_checkout_mostra_il_pannello_coi_contatti(): void
     {
@@ -242,6 +244,67 @@ class CheckoutOnSiteViewTest extends TestCase
         Livewire::test(Checkout::class)
             ->assertSee(__('checkout.on_site.unavailable.title'))
             ->assertDontSeeHtml('javascript:');
+    }
+
+    /**
+     * Recapiti pubblici del venditore (risposta della cliente, 26/09/2026,
+     * punto 6): il cliente fermato al checkout è proprio quello che deve poter
+     * chiamare o scrivere al partner che incassa in struttura. Stessa card
+     * delle schede, quindi stessi link. La sede legale non esce.
+     */
+    public function test_col_percorso_spento_la_card_mostra_i_recapiti_pubblici_del_venditore(): void
+    {
+        config(['commerce.on_site_booking' => false]);
+
+        $this->actingAs(User::factory()->create());
+        $structure = $this->offlineStructure('https://example.com/paga');
+        PartnerProfile::query()->where('user_id', $structure->user_id)->firstOrFail()->update([
+            'address' => 'Viale della Sede Legale 10',
+            'public_phone' => '+393331234567',
+            'public_whatsapp' => '+393471234567',
+            'public_email' => 'info@ilfaro.example',
+            'public_website' => 'https://www.ilfaro.example',
+            'public_address' => 'Strada del Faro 7, Sirmione',
+            'public_contacts_consent_at' => now(),
+        ]);
+        $this->addStructureLine($structure);
+
+        Livewire::test(Checkout::class)
+            ->assertSee(__('checkout.on_site.unavailable.title'))
+            ->assertSee('Agriturismo Il Faro')
+            ->assertSeeHtml('href="tel:+393331234567"')
+            ->assertSeeHtml('href="https://wa.me/393471234567"')
+            ->assertSeeHtml('href="mailto:info@ilfaro.example"')
+            ->assertSeeHtml('href="https://www.ilfaro.example"')
+            ->assertSee('+39 333 123 4567')
+            ->assertSee('Strada del Faro 7, Sirmione')
+            ->assertSee('https://example.com/paga')
+            ->assertDontSee('Viale della Sede Legale 10');
+    }
+
+    /** Senza consenso la card del checkout resta a ragione sociale e link di prenotazione. */
+    public function test_col_percorso_spento_senza_consenso_la_card_non_mostra_i_recapiti(): void
+    {
+        config(['commerce.on_site_booking' => false]);
+
+        $this->actingAs(User::factory()->create());
+        $structure = $this->offlineStructure('https://example.com/paga');
+        PartnerProfile::query()->where('user_id', $structure->user_id)->firstOrFail()->update([
+            'public_phone' => '+393331234567',
+            'public_email' => 'info@ilfaro.example',
+            'public_address' => 'Strada del Faro 7, Sirmione',
+            'public_contacts_consent_at' => null,
+        ]);
+        $this->addStructureLine($structure);
+
+        Livewire::test(Checkout::class)
+            ->assertSee(__('catalog.contacts.title'))
+            ->assertSee('Agriturismo Il Faro')
+            ->assertSee('https://example.com/paga')
+            ->assertDontSeeHtml('href="tel:')
+            ->assertDontSeeHtml('href="mailto:')
+            ->assertDontSee('info@ilfaro.example')
+            ->assertDontSee('Strada del Faro 7');
     }
 
     private function offlineStructure(?string $paymentUrl): Structure
