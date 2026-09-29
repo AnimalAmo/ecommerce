@@ -307,8 +307,8 @@ class ActivityDetail extends Component
 
         return view('livewire.catalog.activity-detail', [
             'activity' => $activity,
-            // «Vedere tutte le foto»: copertina + galleria pubblicata; il pulsante compare da due foto in su.
-            'galleryPhotos' => $activity->galleryImageUrls(),
+            // «Vedere tutte le foto»: vuoto con una foto sola, e allora niente pulsante né modale.
+            'galleryPhotos' => $activity->galleryPhotos(),
             // Le attività sono righe Event: alias morph 'event'.
             'isFav' => $this->isFavorite('event', $activity->id),
             // L'XD non definisce un design per le attività gratuite: allineato al linguaggio

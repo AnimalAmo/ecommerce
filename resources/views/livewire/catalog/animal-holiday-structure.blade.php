@@ -15,6 +15,13 @@
                 <flux:icon.arrow-back class="h-3 w-3" />
             </flux:button>
             @include('partials.favorite-heart', ['type' => 'structure', 'id' => $structure->id, 'active' => $isFav, 'classes' => '!absolute !right-4 !top-4'])
+            {{-- CTA galleria anche da telefono (l'XD app non la prevede): l'hero desktop qui sotto è nascosto sotto lg,
+                 e senza questa le altre foto non si potevano vedere. Stesso modale, incluso in fondo alla pagina. --}}
+            @include('partials.catalog.photo-gallery-trigger', [
+                'photos' => $galleryPhotos,
+                'label' => __('holiday.view_all_photos'),
+                'class' => '!absolute bottom-4 right-4',
+            ])
         </section>
 
         <div class="{{ $px }} lg:hidden">

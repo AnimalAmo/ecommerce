@@ -124,8 +124,8 @@ class AnimalHolidayStructure extends Component
 
         return view('livewire.catalog.animal-holiday-structure', [
             'structure' => $structure,
-            // «Vedere tutte le foto»: copertina + galleria pubblicata; il pulsante compare da due foto in su.
-            'galleryPhotos' => $structure->galleryImageUrls(),
+            // «Vedere tutte le foto»: vuoto con una foto sola, e allora niente pulsante né modale.
+            'galleryPhotos' => $structure->galleryPhotos(),
             'isFav' => $this->isFavorite('structure', $structure->id),
             'hotelServices' => $structure->amenityRows('hotel'),
             'animalServices' => $structure->amenityRows('animal'),

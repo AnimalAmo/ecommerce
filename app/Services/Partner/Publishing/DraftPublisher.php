@@ -9,6 +9,7 @@ use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Services\Admin\Catalog\CatalogAdmin;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Entry point della pipeline di pubblicazione: smista il draft completato al
@@ -118,9 +119,22 @@ class DraftPublisher
                 continue;
             }
 
+            // Le foto che la riga mostrava: dopo il commit si cancellano quelle
+            // che più niente punta (bozza, altre righe, ordini). Senza, una foto
+            // tolta con la X dopo la pubblicazione, che solo la galleria teneva
+            // viva, restava su disco per sempre quando il servizio si elimina.
+            $photos = array_filter(
+                [$row->img, $row->hero_img, ...($row->gallery ?? [])],
+                fn (?string $path): bool => filled($path) && str_contains($path, '/'),
+            );
+
             // Il pivot amenityables non ha cascade sul lato morph: pulizia esplicita.
             $row->amenities()->detach();
             $row->delete();
+
+            foreach (array_unique($photos) as $path) {
+                DB::afterCommit(fn () => FamilyPublisher::deletePhotoIfUnreferenced($path));
+            }
         }
     }
 

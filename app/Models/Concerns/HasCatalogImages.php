@@ -48,6 +48,20 @@ trait HasCatalogImages
         return array_values(array_map($this->resolveImage(...), $paths));
     }
 
+    /**
+     * Le foto che il pulsante e il modale della galleria ricevono: vuoto
+     * quando c'è una foto sola. È l'unico posto della soglia, così pulsante e
+     * modale non possono divergere (un pulsante senza modale tornerebbe morto).
+     *
+     * @return list<string>
+     */
+    public function galleryPhotos(): array
+    {
+        $urls = $this->galleryImageUrls();
+
+        return count($urls) > 1 ? $urls : [];
+    }
+
     private function resolveImage(?string $value): ?string
     {
         if (blank($value)) {

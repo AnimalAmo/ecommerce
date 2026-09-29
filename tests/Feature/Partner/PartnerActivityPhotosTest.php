@@ -15,6 +15,7 @@ use App\Services\Partner\Publishing\StructurePublisher;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use RuntimeException;
@@ -383,6 +384,36 @@ class PartnerActivityPhotosTest extends TestCase
         $this->assertNotContains('structure-photos/ccc.jpg', $gallery);
         $this->assertSame('structure-photos/aaa.jpg', $gallery[0], 'La copertina non è cambiata.');
         Storage::disk('public')->assertMissing('structure-photos/ccc.jpg');
+        Storage::disk('public')->assertExists('structure-photos/aaa.jpg');
+    }
+
+    /**
+     * La foto tolta con la X la teneva viva solo la galleria: eliminato il
+     * servizio (come fa DeleteServiceModal: unpublish e bozza cancellata nella
+     * stessa transazione), sparisce dal disco insieme alle altre della scheda.
+     * Quella che un ordine mostra ancora resta.
+     */
+    public function test_eliminare_il_servizio_pota_le_foto_che_solo_la_scheda_teneva(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        [$draft, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
+
+        OrderItem::factory()->forEvent()->create([
+            'purchasable_id' => $activity->id,
+            'photo_url' => Storage::disk('public')->url('structure-photos/aaa.jpg'),
+        ]);
+
+        Livewire::test(ActivityPhotos::class)->call('removeSaved', 2);
+        Storage::disk('public')->assertExists('structure-photos/ccc.jpg');
+
+        DB::transaction(function () use ($draft): void {
+            app(DraftPublisher::class)->unpublish($draft->fresh());
+            $draft->delete();
+        });
+
+        $this->assertNull(Event::withHidden()->find($activity->id));
+        Storage::disk('public')->assertMissing('structure-photos/ccc.jpg');
+        Storage::disk('public')->assertMissing('structure-photos/bbb.jpg');
         Storage::disk('public')->assertExists('structure-photos/aaa.jpg');
     }
 

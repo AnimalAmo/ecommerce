@@ -5,10 +5,10 @@
      desktop è `max-lg:hidden`, e un <dialog> aperto dentro un antenato nascosto
      blocca tutta la pagina senza mostrarsi (vedi CLAUDE.md, Flux gotchas).
 
-     Parametri: $photos (URL, HasCatalogImages::galleryImageUrls()), $title (nome
-     della scheda, per titolo e testi alternativi). Stessa soglia del pulsante in
-     partials.catalog.photo-gallery-trigger. --}}
-@if (count($photos) > 1)
+     Parametri: $photos (URL, HasCatalogImages::galleryPhotos(): vuoto con una foto
+     sola, la soglia sta lì per pulsante e modale insieme), $title (nome della
+     scheda, per titolo e testi alternativi). --}}
+@if ($photos !== [])
     {{-- backdrop:!bg-black/30: lo stesso velo dei pop-up delle schede e del modale di login. --}}
     <flux:modal name="photo-gallery" class="w-full max-w-5xl backdrop:!bg-black/30">
         <flux:heading size="lg" class="pe-10 !font-bold !text-black">{{ $title }}</flux:heading>
