@@ -118,6 +118,8 @@ class AnimalHolidayService extends Component
 
         return view('livewire.catalog.animal-holiday-service', [
             'service' => $service,
+            // «Vedere tutte le foto»: copertina + galleria pubblicata; il pulsante compare da due foto in su.
+            'galleryPhotos' => $service->galleryImageUrls(),
             // I servizi sono righe Structure: alias morph 'structure'.
             'isFav' => $this->isFavorite('structure', $service->id),
             'animalServices' => $service->amenityRows('animal'),

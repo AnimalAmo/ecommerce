@@ -98,6 +98,9 @@ class StructurePublisherTest extends TestCase
         $this->assertStringContainsString('storage/structure-photos/cover.jpg', $structure->imageUrl());
         $this->assertNull($structure->mapImageUrl());
         $this->assertNull($structure->features);
+
+        // Galleria: tutte le foto della bozza, nel suo ordine (la prima è la copertina).
+        $this->assertSame(['structure-photos/cover.jpg', 'structure-photos/extra.jpg'], $structure->gallery);
     }
 
     public function test_publish_synthesizes_general_info_rows(): void

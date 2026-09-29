@@ -76,4 +76,14 @@ return [
         // address and the opening hours, no direct contacts.
         'info_title' => 'Useful information',
     ],
+
+    // «See all photos» gallery on the detail pages (29/09/2026: the button
+    // opened nothing). The button text stays in each page's file
+    // (events/holiday/smartbox.view_all_photos).
+    'gallery' => [
+        'label' => 'Photos of :title',
+        'photo_alt' => ':title, photo :number of :total',
+        'previous' => 'Previous photo',
+        'next' => 'Next photo',
+    ],
 ];

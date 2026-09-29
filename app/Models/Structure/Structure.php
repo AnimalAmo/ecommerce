@@ -37,6 +37,8 @@ class Structure extends Model
         'animal_supplement_cents',
         'img',
         'hero_img',
+        // Foto della scheda nell'ordine della bozza, fotografate dal publisher («Vedere tutte le foto»).
+        'gallery',
         'map_img',
         'description',
         'general_info',
@@ -49,6 +51,7 @@ class Structure extends Model
     {
         return [
             'type' => ProductType::class,
+            'gallery' => 'array',
             'rating' => 'float',
             'cancellation_policy_days' => 'integer',
             // Cast espliciti sui cents: il pricing (step 3) fa aritmetica, non solo display.

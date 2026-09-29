@@ -31,11 +31,12 @@
                     @include('partials.favorite-heart', ['type' => 'event', 'id' => $activity->id, 'active' => $isFav])
                 </div>
 
-                {{-- CTA galleria (TODO: galleria foto attività) --}}
-                <flux:button class="!absolute bottom-[22px] right-4 h-10 !gap-2.5 !rounded-full !border-0 !bg-brand-cyan !px-7 !text-[15px] !font-bold !text-white !shadow-none lg:right-8">
-                    <flux:icon.eye class="h-[19px] w-[19px] shrink-0" />
-                    {{ __('events.view_all_photos') }}
-                </flux:button>
+                {{-- CTA galleria: solo con più foto, apre partials.catalog.photo-gallery in fondo alla pagina --}}
+                @include('partials.catalog.photo-gallery-trigger', [
+                    'photos' => $galleryPhotos,
+                    'label' => __('events.view_all_photos'),
+                    'class' => '!absolute bottom-[22px] right-4 lg:right-8',
+                ])
 
                 {{-- Tile durata: fascia viola + giorni (XD "Rettangolo 644/645" + "3 gg" #8E53E6) --}}
                 <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
@@ -400,6 +401,9 @@
     </main>
 
     @include('partials.site-footer')
+
+    {{-- Galleria «Vedere tutte le foto»: fuori dall'hero, vedi il partial --}}
+    @include('partials.catalog.photo-gallery', ['photos' => $galleryPhotos, 'title' => $activity->title])
 
     {{-- Pop-up "Aggiunto agli eventi" (XD: "Pop-up evento partecipa") — duplicato dal dettaglio evento come i pop-up fratelli tra le pagine;
          dati della pagina: foto hero attività e data check-in. Solo attività con pill Partecipa (doppia cintura oltre alla guardia in joinEvent). --}}

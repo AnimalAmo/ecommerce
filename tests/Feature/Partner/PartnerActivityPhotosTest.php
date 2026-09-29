@@ -215,7 +215,7 @@ class PartnerActivityPhotosTest extends TestCase
 
     /*
      * Il resto del ciclo F1: la copertina tolta con la X sparisce dal disco
-     * quando la versione nuova è a catalogo (FamilyPublisher::pruneReplacedCovers,
+     * quando la versione nuova è a catalogo (FamilyPublisher::pruneReplacedPhotos,
      * con DB::afterCommit dentro la transazione di DraftCompleter), e mai prima.
      */
 
@@ -345,17 +345,77 @@ class PartnerActivityPhotosTest extends TestCase
         Storage::disk('public')->assertExists('structure-photos/p1.jpg');
     }
 
-    /** Una foto non-copertina di una scheda pubblicata non la mostra nessuna pagina: si cancella subito. */
-    public function test_la_x_su_una_foto_non_copertina_di_una_scheda_pubblicata_cancella_subito(): void
+    /**
+     * Una foto non-copertina di una scheda pubblicata la mostra la galleria
+     * («Vedere tutte le foto», 29/09/2026): la X la toglie dalla bozza ma il
+     * file resta finché la versione nuova non è a catalogo, come la copertina.
+     * Fino a quel giorno le non-copertina non le mostrava nessuna pagina e si
+     * cancellavano subito.
+     */
+    public function test_la_x_su_una_foto_della_galleria_pubblicata_non_cancella_il_file(): void
     {
         $partner = $this->actingAsPayablePartner();
-        [, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
+        [$draft, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
 
         Livewire::test(ActivityPhotos::class)->call('removeSaved', 2);
 
+        $this->assertNotContains('structure-photos/ccc.jpg', $draft->fresh()->photos);
+        $this->assertContains('structure-photos/ccc.jpg', $activity->fresh()->gallery, 'Senza ripubblicazione la scheda online non cambia.');
+        Storage::disk('public')->assertExists('structure-photos/ccc.jpg');
+    }
+
+    /** Il resto del ciclo: ripubblicata la scheda, la foto tolta esce dalla galleria e dal disco. */
+    public function test_la_ripubblicazione_pota_la_foto_tolta_dalla_galleria(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        [$draft, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
+
+        Livewire::test(ActivityPhotos::class)
+            ->call('removeSaved', 2)
+            ->set('photos', [UploadedFile::fake()->image('nuova.jpg')])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        app(DraftCompleter::class)->complete($draft->fresh(), 11);
+
+        $gallery = $activity->fresh()->gallery;
+        $this->assertCount(4, $gallery);
+        $this->assertNotContains('structure-photos/ccc.jpg', $gallery);
+        $this->assertSame('structure-photos/aaa.jpg', $gallery[0], 'La copertina non è cambiata.');
         Storage::disk('public')->assertMissing('structure-photos/ccc.jpg');
         Storage::disk('public')->assertExists('structure-photos/aaa.jpg');
-        $this->assertSame('structure-photos/aaa.jpg', $activity->fresh()->img);
+    }
+
+    /** Pubblicazione fallita a metà: la galleria resta la vecchia, e i suoi file con lei. */
+    public function test_una_pubblicazione_fallita_non_pota_una_foto_ancora_in_galleria(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+        [$draft, $activity] = $this->publishedActivityWithFourPhotos($partner->id);
+
+        Livewire::test(ActivityPhotos::class)
+            ->call('removeSaved', 2)
+            ->set('photos', [UploadedFile::fake()->image('nuova.jpg')])
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->app->bind(DraftPublisher::class, fn ($app): DraftPublisher => new class($app->make(StructurePublisher::class), $app->make(EventPublisher::class), $app->make(SmartboxPublisher::class)) extends DraftPublisher
+        {
+            public function publish(StructureDraft $draft): ?Model
+            {
+                parent::publish($draft);
+
+                throw new RuntimeException('Pubblicazione interrotta dopo la scrittura della riga.');
+            }
+        });
+
+        try {
+            app(DraftCompleter::class)->complete($draft->fresh(), 11);
+            $this->fail('La fixture doveva far fallire la pubblicazione.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertContains('structure-photos/ccc.jpg', $activity->fresh()->gallery);
+        Storage::disk('public')->assertExists('structure-photos/ccc.jpg');
     }
 
     /** Foto di un altro partner, in una bozza mai pubblicata: nessuna riga a catalogo la protegge. */
@@ -423,8 +483,8 @@ class PartnerActivityPhotosTest extends TestCase
     /**
      * Seconda guardia, indipendente dalla prima: un file che un'altra bozza
      * contiene ancora non si cancella, anche se la X arriva da una bozza che lo
-     * possiede davvero. Le foto non-copertina vivono solo nelle bozze, quindi
-     * nessuna riga a catalogo le proteggerebbe.
+     * possiede davvero. Le foto di una bozza mai pubblicata vivono solo lì,
+     * quindi nessuna riga a catalogo le proteggerebbe.
      */
     public function test_un_file_che_unaltra_bozza_contiene_non_si_cancella(): void
     {

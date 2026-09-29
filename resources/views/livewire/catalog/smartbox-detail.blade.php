@@ -36,11 +36,12 @@
                     @include('partials.favorite-heart', ['type' => 'smartbox_package', 'id' => $box->id, 'active' => $isFav])
                 </div>
 
-                {{-- CTA galleria (TODO: galleria foto cofanetto) --}}
-                <flux:button class="!absolute bottom-[88px] right-4 h-10 !gap-2.5 !rounded-full !border-0 !bg-brand-cyan !px-7 !text-[15px] !font-bold !text-white !shadow-none lg:right-8">
-                    <flux:icon.eye class="h-[19px] w-[19px] shrink-0" />
-                    {{ __('smartbox.view_all_photos') }}
-                </flux:button>
+                {{-- CTA galleria: solo con più foto, apre partials.catalog.photo-gallery in fondo alla pagina --}}
+                @include('partials.catalog.photo-gallery-trigger', [
+                    'photos' => $galleryPhotos,
+                    'label' => __('smartbox.view_all_photos'),
+                    'class' => '!absolute bottom-[88px] right-4 lg:right-8',
+                ])
             </div>
         </section>
 
@@ -202,6 +203,9 @@
     </main>
 
     @include('partials.site-footer')
+
+    {{-- Galleria «Vedere tutte le foto»: fuori dall'hero, vedi il partial --}}
+    @include('partials.catalog.photo-gallery', ['photos' => $galleryPhotos, 'title' => $box->title])
 
     {{-- Pop-up "Aggiunto al carrello": layout riusato dal dettaglio struttura (estrapolazione ratificata, l'XD non ne definisce uno per le smartbox) --}}
     @if ($cartPopupOpen)

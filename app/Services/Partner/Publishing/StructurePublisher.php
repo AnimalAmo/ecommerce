@@ -34,6 +34,7 @@ class StructurePublisher extends FamilyPublisher
             'animal_supplement_cents' => 0,
             'img' => $this->coverPhoto($draft),
             'hero_img' => $this->coverPhoto($draft),
+            'gallery' => $this->gallery($draft),
             // Nessuna fonte partner per la mappa (v2: embed dall'indirizzo); blank ⇒ sezione nascosta.
             'map_img' => '',
             'description' => $this->translations($draft, 'description'),

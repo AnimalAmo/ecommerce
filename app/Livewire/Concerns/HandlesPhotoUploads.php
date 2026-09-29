@@ -56,11 +56,13 @@ trait HandlesPhotoUploads
      * sotto il minimo), la scheda restava online così e il file era perso.
      *
      * Ora decide FamilyPublisher::deletePhotoIfUnreferenced(): una foto che
-     * nessuna pagina mostra (tutte quelle di una bozza mai pubblicata, e le
-     * non-copertina di una pubblicata) si cancella subito; una che il catalogo
-     * o uno storico ordini punta ancora resta su disco. Se è la copertina, la
-     * pota il publisher quando la versione nuova è a catalogo; se il partner
-     * abbandona, resta dov'è e la scheda online resta integra.
+     * nessuna pagina mostra (tutte quelle di una bozza mai pubblicata) si
+     * cancella subito; una che il catalogo o uno storico ordini punta ancora
+     * resta su disco. Dal 29/09/2026 il catalogo punta ogni foto di una scheda
+     * pubblicata, non solo la copertina: la galleria («Vedere tutte le foto»)
+     * le mostra tutte. Le pota il publisher quando la versione nuova è a
+     * catalogo; se il partner abbandona, restano dove sono e la scheda online
+     * resta integra.
      *
      * La fonte di verità è la bozza, non `saved`: `saved` è una proprietà
      * pubblica che il client può riscrivere. Prima si salvava `saved` nella
