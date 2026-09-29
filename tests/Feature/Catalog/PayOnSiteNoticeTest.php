@@ -18,6 +18,8 @@ use App\Models\User;
 use App\Services\Cart\CartManager;
 use App\Services\FavoriteService;
 use Closure;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Features\SupportTesting\Testable;
@@ -140,6 +142,60 @@ class PayOnSiteNoticeTest extends TestCase
             ->assertDontSee('25047')
             ->assertSee('https://rifugiodellealpi.it/prenota')
             ->assertSee(__('checkout.on_site.pay_on_website'));
+    }
+
+    /**
+     * «Vai al sito del partner per pagare o prenotare» non sta su una riga in
+     * una card larga 375px, e flux:button tiene il testo su una riga
+     * (whitespace-nowrap) con l'altezza fissa di 39px: usciva dalla pillola.
+     * Il pulsante deve poter andare a capo e crescere in altezza.
+     *
+     * Token esatti e non sottostringhe: «sm:!whitespace-normal» o
+     * «lg:!h-auto» contengono la stringa giusta ma a 375px non valgono, e il
+     * bug tornerebbe identico (misurato nella review del 29/09/2026). Il sito
+     * pubblico uguale al link di prenotazione mette nella card anche un link di
+     * testo con lo stesso href: il test deve prendere il pulsante, non quello.
+     */
+    public function test_il_pulsante_del_sito_del_partner_va_a_capo_su_mobile(): void
+    {
+        $url = 'https://rifugiodellealpi.it/prenota';
+        $owner = $this->offlineOwner();
+        $owner->partnerProfile->update([
+            'payment_url' => $url,
+            'public_website' => $url,
+            'public_contacts_consent_at' => now(),
+        ]);
+        Structure::factory()->create(['user_id' => $owner->id, 'slug' => 'rifugio-pulsante']);
+
+        $html = Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'rifugio-pulsante'])
+            ->assertOk()
+            ->html(true);
+
+        $dom = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xpath = new DOMXPath($dom);
+
+        $buttons = $xpath->query('//a[@data-flux-button][@href="'.$url.'"]');
+        $this->assertSame(1, $buttons->length, 'Atteso un solo pulsante verso il sito del partner.');
+        $this->assertSame(1, $xpath->query('//a[not(@data-flux-button)][@href="'.$url.'"]')->length, 'Manca il link di testo con lo stesso href: la prova sul pulsante sbagliato non scatterebbe.');
+
+        $classes = preg_split('/\s+/', trim($buttons->item(0)->getAttribute('class')));
+
+        // Tailwind 4 accetta il «!» davanti o in fondo: vanno bene tutte e due.
+        $this->assertNotEmpty(array_intersect(['!whitespace-normal', 'whitespace-normal!'], $classes), 'Il pulsante non va a capo.');
+        $this->assertNotEmpty(array_intersect(['!h-auto', 'h-auto!'], $classes), "L'altezza del pulsante è ancora fissa.");
+        $this->assertContains('min-h-[39px]', $classes);
+        $this->assertNotContains('!h-[39px]', $classes);
+
+        // L'unico nowrap ammesso è quello di base di Flux, che !whitespace-normal
+        // annulla. Un nowrap o un truncate in più, sul pulsante o dentro, rimette
+        // il testo su una riga.
+        $wrapping = array_filter($classes, fn (string $class): bool => str_contains($class, 'nowrap') || str_contains($class, 'truncate'));
+        $this->assertSame([], array_values(array_diff($wrapping, ['whitespace-nowrap'])));
+        $this->assertSame(0, $xpath->query('.//*[contains(@class, "nowrap") or contains(@class, "truncate")]', $buttons->item(0))->length);
     }
 
     public function test_la_card_contatti_non_stampa_un_link_con_schema_pericoloso(): void

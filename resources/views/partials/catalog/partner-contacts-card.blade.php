@@ -69,8 +69,11 @@
             </ul>
         @endif
 
+        {{-- Il testo è lungo («Vai al sito del partner per pagare o prenotare») e flux:button
+             lo tiene su una riga (whitespace-nowrap): a 375px usciva dalla pillola. Qui va a capo,
+             con un'altezza minima al posto di quella fissa; su desktop resta una riga da 39px. --}}
         @if (! empty($contacts['booking_url']))
-            <flux:button href="{{ $contacts['booking_url'] }}" target="_blank" rel="noopener noreferrer" class="mt-6 !flex !h-[39px] w-full items-center justify-center !rounded-full !border-0 !bg-brand-yellow !px-0 text-sm !font-bold !text-[#0D171A] !shadow-none">
+            <flux:button href="{{ $contacts['booking_url'] }}" target="_blank" rel="noopener noreferrer" class="mt-6 !flex !h-auto min-h-[39px] w-full items-center justify-center !whitespace-normal !rounded-full !border-0 !bg-brand-yellow !px-5 py-2 text-center text-sm leading-[18px] !font-bold !text-[#0D171A] !shadow-none">
                 {{ __('checkout.on_site.pay_on_website') }}
             </flux:button>
         @endif
