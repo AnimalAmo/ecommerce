@@ -51,6 +51,24 @@ class PartnerProfileFactory extends Factory
         ]);
     }
 
+    /**
+     * Recapiti pubblici compilati e consenso dato (risposta della cliente,
+     * 26/09/2026, punto 6). Fuori dalla definition(): un partner nasce senza,
+     * e nessuna scheda deve mostrare contatti che nessuno ha scelto di dare.
+     * Telefoni già in E.164, come li salva il form.
+     */
+    public function withPublicContacts(): static
+    {
+        return $this->state(fn (): array => [
+            'public_phone' => '+393331234567',
+            'public_whatsapp' => '+393471234567',
+            'public_email' => 'info@'.fake()->domainName(),
+            'public_website' => 'https://'.fake()->domainName(),
+            'public_address' => fake()->streetAddress().', '.fake()->city(),
+            'public_contacts_consent_at' => now(),
+        ]);
+    }
+
     /** Si fa pagare direttamente (in struttura o sul suo sito): nessun conto Stripe. */
     public function offline(): static
     {

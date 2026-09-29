@@ -6,6 +6,7 @@ use App\Livewire\Admin\People\UserIndex;
 use App\Models\Cart\Cart;
 use App\Models\Community\CommunityPost;
 use App\Models\Favorite\Favorite;
+use App\Models\Partner\PartnerProfile;
 use App\Models\Review\Review;
 use App\Models\Structure\Structure;
 use App\Models\User;
@@ -55,6 +56,40 @@ class AnonymizeUserTest extends TestCase
         $this->assertDatabaseMissing('carts', ['id' => $cart->id]);
         $this->assertDatabaseHas('community_posts', ['id' => $post->id, 'author_name' => 'Utente anonimizzato']);
         $this->assertDatabaseHas('reviews', ['id' => $review->id, 'author_name' => 'Utente anonimizzato']);
+    }
+
+    /**
+     * Trovato dal tester il 28/09/2026 (WP3b); il builder della lane profilo
+     * lo aveva segnalato fuori dal suo perimetro. I recapiti pubblici del
+     * partner (risposta della cliente, 26/09/2026, punto 6) sono contatti che
+     * la persona ha scelto di pubblicare, spesso il cellulare e l'email suoi,
+     * non documenti fiscali: la conservazione che tiene gli ordini e i dati
+     * fiscali del profilo non li copre. AnonymizeUser non toccava
+     * partner_profiles, quindi dopo «Cancella su richiesta» telefono, WhatsApp
+     * ed email restavano a database, e con loro il consenso a pubblicarli.
+     *
+     * Se ne vanno anche sito e indirizzo pubblico: esistono solo per essere
+     * pubblicati, e l'indirizzo di un professionista che lavora da casa è il
+     * suo indirizzo personale (scelta del main thread, 28/09/2026).
+     */
+    public function test_anonymising_a_partner_removes_the_personal_public_contacts_and_the_consent(): void
+    {
+        Role::findOrCreate('partner', 'web');
+        $partner = User::factory()->create(['first_name' => 'Marta']);
+        $partner->assignRole('partner');
+        $profile = PartnerProfile::factory()->withPublicContacts()->for($partner)->create(['vat' => '12345678901']);
+
+        app(AnonymizeUser::class)->handle($partner);
+
+        $profile->refresh();
+        $this->assertNull($profile->public_phone, 'Il telefono pubblico resta dopo l\'anonimizzazione.');
+        $this->assertNull($profile->public_whatsapp, 'Il WhatsApp pubblico resta dopo l\'anonimizzazione.');
+        $this->assertNull($profile->public_email, 'L\'email pubblica resta dopo l\'anonimizzazione.');
+        $this->assertNull($profile->public_website, 'Il sito pubblico resta dopo l\'anonimizzazione.');
+        $this->assertNull($profile->public_address, 'L\'indirizzo pubblico resta dopo l\'anonimizzazione.');
+        $this->assertFalse($profile->publishesContacts(), 'Il consenso a pubblicare resta dopo l\'anonimizzazione.');
+        // I dati fiscali restano: la conservazione dei documenti prevale (docblock di AnonymizeUser).
+        $this->assertSame('12345678901', $profile->vat);
     }
 
     public function test_a_superadmin_cannot_be_anonymised(): void

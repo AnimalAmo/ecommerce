@@ -57,7 +57,12 @@ return [
         'online' => 'Online on AnimalAmo',
         'on_site' => 'Directly to me, on site or on my website',
         'url_label' => 'Website for payment or booking (optional)',
-        'url_help' => 'We show it to the customer in the booking confirmation.',
+        // Where customers really see it: the contacts card on paid listings, only
+        // when the partner takes payment directly (PartnerContacts). The old text
+        // named the booking confirmation, which on-site partners do not get
+        // today: the listing has no cart and commerce.on_site_booking is off.
+        // Free activities and events («Join») have no contacts card.
+        'url_help' => 'If you take payment directly, customers see it on your paid listings, in the contacts box.',
         'save' => 'Save payment option',
         'saved' => 'Payment option updated',
         'online_needs_stripe' => 'To choose online payment, first connect your Stripe account in the box below.',
@@ -178,6 +183,14 @@ return [
         'business_name' => 'Business name',
         'opening_hours' => 'Opening hours or availability',
         'opening_hours_hint' => 'Optional. Shown on your listings, for example "Mon-Fri 9-18".',
+        'public_contacts_heading' => 'Public contacts',
+        'public_contacts_intro' => 'Optional: these are the contacts you want to show customers, not the ones you registered with. They appear on your listings only if you give your consent below. If you get paid online through AnimalAmo, phone, WhatsApp, email and website stay hidden: the address and opening hours are still shown.',
+        'public_phone' => 'Phone',
+        'public_whatsapp' => 'WhatsApp',
+        'public_email' => 'Contact email',
+        'public_website' => 'Website',
+        'public_address' => 'Address for customers',
+        'public_contacts_consent' => 'I agree to publish these contacts on my AnimalAmo listings.',
         'email' => 'Email',
         'address' => 'Address',
         'province' => 'Province',

@@ -190,6 +190,12 @@
                             @endif
                         </div>
                     </div>
+
+                    {{-- Chi incassa online: indirizzo e orari sotto la card (risposta della cliente,
+                         26/09/2026). In struttura li mostra già la card contatti qui sopra. --}}
+                    @unless ($paysOnSite)
+                        @include('partials.catalog.partner-public-info', ['infoClass' => 'mt-6'])
+                    @endunless
                 </aside>
             </div>
         </div>

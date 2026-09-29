@@ -17,8 +17,12 @@ use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
 use App\Services\FavoriteService;
+use Closure;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -90,25 +94,108 @@ class PayOnSiteNoticeTest extends TestCase
             ->assertDontSee(__('catalog.contacts.title'));
     }
 
-    public function test_la_card_contatti_mostra_ragione_sociale_indirizzo_e_sito(): void
+    /**
+     * Riscritta il 28/09/2026 (recapiti pubblici, WP3b). Fino a ieri la card
+     * pubblicava la sede legale del profilo (`partner_profiles.address`), cioè
+     * un dato fiscale che il partner non aveva scelto di mostrare. Ora
+     * l'indirizzo della card è `public_address`, che il partner compila apposta,
+     * e compare solo col suo consenso (risposta della cliente, 26/09/2026, punto
+     * 6). La sede legale non compare in nessuno dei due casi; ragione sociale e
+     * link «dove pagare o prenotare» restano come prima.
+     */
+    public function test_la_card_contatti_mostra_ragione_sociale_indirizzo_pubblico_e_sito(): void
     {
-        $owner = $this->offlineOwner();
-        $owner->partnerProfile->update([
+        $profile = [
             'business_name' => 'Rifugio delle Alpi srl',
             'address' => 'Via Roma 10',
             'zip' => '25047',
             'city' => 'Darfo',
             'province' => 'BS',
             'payment_url' => 'https://rifugiodellealpi.it/prenota',
-        ]);
-        Structure::factory()->create(['user_id' => $owner->id, 'slug' => 'rifugio-alpi']);
+            'public_address' => 'Piazza Garibaldi 3, Boario Terme',
+        ];
 
-        Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'rifugio-alpi'])
+        // Senza consenso: l'indirizzo pubblico è salvato ma non si pubblica.
+        $withoutConsent = $this->offlineOwner();
+        $withoutConsent->partnerProfile->update($profile);
+        Structure::factory()->create(['user_id' => $withoutConsent->id, 'slug' => 'rifugio-senza-consenso']);
+
+        Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'rifugio-senza-consenso'])
             ->assertOk()
             ->assertSee('Rifugio delle Alpi srl')
-            ->assertSee('Via Roma 10, 25047 Darfo (BS)')
+            ->assertDontSee('Piazza Garibaldi 3')
+            ->assertDontSee('Via Roma 10')
+            ->assertDontSee('25047')
             ->assertSee('https://rifugiodellealpi.it/prenota')
             ->assertSee(__('checkout.on_site.pay_on_website'));
+
+        // Col consenso: l'indirizzo pubblico sì, la sede legale ancora no.
+        $withConsent = $this->offlineOwner();
+        $withConsent->partnerProfile->update([...$profile, 'public_contacts_consent_at' => now()]);
+        Structure::factory()->create(['user_id' => $withConsent->id, 'slug' => 'rifugio-con-consenso']);
+
+        Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'rifugio-con-consenso'])
+            ->assertOk()
+            ->assertSee('Rifugio delle Alpi srl')
+            ->assertSee('Piazza Garibaldi 3, Boario Terme')
+            ->assertDontSee('Via Roma 10')
+            ->assertDontSee('25047')
+            ->assertSee('https://rifugiodellealpi.it/prenota')
+            ->assertSee(__('checkout.on_site.pay_on_website'));
+    }
+
+    /**
+     * «Vai al sito del partner per pagare o prenotare» non sta su una riga in
+     * una card larga 375px, e flux:button tiene il testo su una riga
+     * (whitespace-nowrap) con l'altezza fissa di 39px: usciva dalla pillola.
+     * Il pulsante deve poter andare a capo e crescere in altezza.
+     *
+     * Token esatti e non sottostringhe: «sm:!whitespace-normal» o
+     * «lg:!h-auto» contengono la stringa giusta ma a 375px non valgono, e il
+     * bug tornerebbe identico (misurato nella review del 29/09/2026). Il sito
+     * pubblico uguale al link di prenotazione mette nella card anche un link di
+     * testo con lo stesso href: il test deve prendere il pulsante, non quello.
+     */
+    public function test_il_pulsante_del_sito_del_partner_va_a_capo_su_mobile(): void
+    {
+        $url = 'https://rifugiodellealpi.it/prenota';
+        $owner = $this->offlineOwner();
+        $owner->partnerProfile->update([
+            'payment_url' => $url,
+            'public_website' => $url,
+            'public_contacts_consent_at' => now(),
+        ]);
+        Structure::factory()->create(['user_id' => $owner->id, 'slug' => 'rifugio-pulsante']);
+
+        $html = Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'rifugio-pulsante'])
+            ->assertOk()
+            ->html(true);
+
+        $dom = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xpath = new DOMXPath($dom);
+
+        $buttons = $xpath->query('//a[@data-flux-button][@href="'.$url.'"]');
+        $this->assertSame(1, $buttons->length, 'Atteso un solo pulsante verso il sito del partner.');
+        $this->assertSame(1, $xpath->query('//a[not(@data-flux-button)][@href="'.$url.'"]')->length, 'Manca il link di testo con lo stesso href: la prova sul pulsante sbagliato non scatterebbe.');
+
+        $classes = preg_split('/\s+/', trim($buttons->item(0)->getAttribute('class')));
+
+        // Tailwind 4 accetta il «!» davanti o in fondo: vanno bene tutte e due.
+        $this->assertNotEmpty(array_intersect(['!whitespace-normal', 'whitespace-normal!'], $classes), 'Il pulsante non va a capo.');
+        $this->assertNotEmpty(array_intersect(['!h-auto', 'h-auto!'], $classes), "L'altezza del pulsante è ancora fissa.");
+        $this->assertContains('min-h-[39px]', $classes);
+        $this->assertNotContains('!h-[39px]', $classes);
+
+        // L'unico nowrap ammesso è quello di base di Flux, che !whitespace-normal
+        // annulla. Un nowrap o un truncate in più, sul pulsante o dentro, rimette
+        // il testo su una riga.
+        $wrapping = array_filter($classes, fn (string $class): bool => str_contains($class, 'nowrap') || str_contains($class, 'truncate'));
+        $this->assertSame([], array_values(array_diff($wrapping, ['whitespace-nowrap'])));
+        $this->assertSame(0, $xpath->query('.//*[contains(@class, "nowrap") or contains(@class, "truncate")]', $buttons->item(0))->length);
     }
 
     public function test_la_card_contatti_non_stampa_un_link_con_schema_pericoloso(): void
@@ -658,5 +745,271 @@ class PayOnSiteNoticeTest extends TestCase
         $this->actingAs($user)->get(route('preferiti'))
             ->assertOk()
             ->assertSee(__('nav.card.add_to_cart'));
+    }
+
+    // ── Recapiti pubblici sulle cinque schede (WP3b, 28/09/2026) ────────────
+    //
+    // Risposta della cliente del 26/09/2026, punto 6. La matrice consenso ×
+    // modalità la prova PartnerContactsTest sul valore di ritorno; qui si prova
+    // che ognuna delle cinque schede la rende, perché ognuna include le card a
+    // modo suo (box che sparisce, colonna che si apre, card dentro il box).
+    // Telefono, WhatsApp, email e sito solo per chi incassa in struttura;
+    // indirizzo pubblico e orari per tutti; la sede legale mai.
+
+    /** Profilo completo, con valori noti: gli href si confrontano per intero. */
+    private const PUBLIC_PROFILE = [
+        'business_name' => 'Rifugio delle Alpi srl',
+        // Sede legale: dato fiscale, non deve comparire su nessuna scheda.
+        'address' => 'Viale della Sede Legale 10',
+        'zip' => '25047',
+        'city' => 'Sedelegalopoli',
+        'province' => 'BS',
+        'payment_url' => 'https://booking.example.com/rifugio',
+        'opening_hours' => ['it' => 'Lun-Dom 8-20'],
+        'public_phone' => '+393331234567',
+        'public_whatsapp' => '+393471234567',
+        'public_email' => 'info@rifugiodellealpi.it',
+        'public_website' => 'https://www.rifugiodellealpi.it',
+        'public_address' => 'Piazza Garibaldi 3, Boario Terme',
+    ];
+
+    /** I quattro recapiti diretti come finiscono nell'href. */
+    private const DIRECT_HREFS = [
+        'href="tel:+393331234567"',
+        'href="https://wa.me/393471234567"',
+        'href="mailto:info@rifugiodellealpi.it"',
+        'href="https://www.rifugiodellealpi.it"',
+    ];
+
+    private function ownerWithPublicContacts(bool $online, bool $consent = true): User
+    {
+        $owner = $online ? $this->onlineOwner() : $this->offlineOwner();
+        $owner->partnerProfile->update([
+            ...self::PUBLIC_PROFILE,
+            'public_contacts_consent_at' => $consent ? now() : null,
+        ]);
+
+        return $owner;
+    }
+
+    /**
+     * Le cinque schede del titolare, una per tipo, da disegnare quando serve.
+     *
+     * @return array<string, Closure(): Testable>
+     */
+    private function sheetsOf(User $owner): array
+    {
+        $id = $owner->id;
+        Structure::factory()->create(['user_id' => $id, 'slug' => "hotel-{$id}"]);
+        Structure::factory()->service()->create(['user_id' => $id, 'slug' => "servizio-{$id}"]);
+        Event::factory()->activity(3)->create(['user_id' => $id, 'slug' => "attivita-{$id}"]);
+        Event::factory()->create(['user_id' => $id, 'slug' => "evento-{$id}"]);
+        SmartboxPackage::factory()->create(['user_id' => $id, 'slug' => "smartbox-{$id}"]);
+
+        return [
+            'struttura' => fn (): Testable => Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => "hotel-{$id}"]),
+            'servizio' => fn (): Testable => Livewire::test(AnimalHolidayService::class, ['region' => 'lombardia', 'service' => "servizio-{$id}"]),
+            'attività' => fn (): Testable => Livewire::test(ActivityDetail::class, ['activity' => "attivita-{$id}"]),
+            'evento' => fn (): Testable => Livewire::test(EventDetail::class, ['event' => "evento-{$id}"]),
+            'smartbox' => fn (): Testable => Livewire::test(SmartboxDetail::class, ['box' => "smartbox-{$id}"]),
+        ];
+    }
+
+    /** L'HTML della scheda senza lo snapshot del componente, come lo legge assertSee. */
+    private function sheetHtml(Closure $sheet): string
+    {
+        return $sheet()->assertOk()->html(true);
+    }
+
+    private function assertNoLegalAddress(string $html, string $sheet): void
+    {
+        foreach (['Viale della Sede Legale', 'Sedelegalopoli', '25047'] as $legal) {
+            $this->assertStringNotContainsString($legal, $html, "Scheda {$sheet}: la sede legale «{$legal}» non si pubblica.");
+        }
+    }
+
+    /**
+     * Gli orari una volta sola: sulle attività stanno fra le informazioni della
+     * scheda, e né la card contatti né «Informazioni utili» li devono ripetere.
+     */
+    private function assertHoursOnce(string $html, string $sheet): void
+    {
+        $this->assertSame(1, substr_count($html, 'Lun-Dom 8-20'), "Scheda {$sheet}: gli orari devono comparire una volta sola.");
+    }
+
+    public function test_in_struttura_col_consenso_ogni_scheda_mostra_i_recapiti_diretti(): void
+    {
+        foreach ($this->sheetsOf($this->ownerWithPublicContacts(online: false)) as $name => $sheet) {
+            $html = $this->sheetHtml($sheet);
+
+            $this->assertStringContainsString(e(__('catalog.contacts.title')), $html, "Scheda {$name}: manca la card contatti.");
+
+            foreach (self::DIRECT_HREFS as $href) {
+                $this->assertStringContainsString($href, $html, "Scheda {$name}: manca il link {$href}.");
+            }
+
+            // Le etichette leggibili, non gli href: telefoni formattati, sito senza schema.
+            $this->assertStringContainsString('+39 333 123 4567', $html, "Scheda {$name}: telefono.");
+            $this->assertStringContainsString('+39 347 123 4567', $html, "Scheda {$name}: WhatsApp.");
+            $this->assertStringContainsString('>www.rifugiodellealpi.it<', $html, "Scheda {$name}: etichetta del sito.");
+            $this->assertStringContainsString('Piazza Garibaldi 3, Boario Terme', $html, "Scheda {$name}: indirizzo pubblico.");
+            $this->assertStringContainsString('https://booking.example.com/rifugio', $html, "Scheda {$name}: link di prenotazione.");
+            $this->assertHoursOnce($html, $name);
+            $this->assertNoLegalAddress($html, $name);
+        }
+    }
+
+    /**
+     * Chi incassa su AnimalAmo si prenota dalla scheda: nessun recapito che
+     * permetta di scavalcarla, in nessuna forma (href, etichetta, numero
+     * grezzo). Indirizzo pubblico e orari sì, nel riquadro «Informazioni utili»
+     * sotto il box prenotazione, che resta.
+     */
+    public function test_online_col_consenso_nessuna_scheda_mostra_telefono_whatsapp_email_o_sito(): void
+    {
+        $owner = $this->ownerWithPublicContacts(online: true);
+        $carts = [
+            'struttura' => __('holiday.add_to_cart'),
+            'servizio' => __('holiday.add_to_cart'),
+            'attività' => __('events.add_to_cart'),
+            'evento' => __('events.add_to_cart'),
+            'smartbox' => __('smartbox.add_to_cart'),
+        ];
+
+        foreach ($this->sheetsOf($owner) as $name => $sheet) {
+            $html = $this->sheetHtml($sheet);
+
+            foreach ([...self::DIRECT_HREFS, '+393331234567', '+39 333 123 4567', '+39 347 123 4567', 'wa.me', 'info@rifugiodellealpi.it', 'www.rifugiodellealpi.it', 'booking.example.com'] as $direct) {
+                $this->assertStringNotContainsString($direct, $html, "Scheda {$name}: «{$direct}» non si mostra a chi incassa online.");
+            }
+
+            $this->assertStringContainsString(e($carts[$name]), $html, "Scheda {$name}: il box prenotazione deve restare.");
+            $this->assertStringNotContainsString(e(__('catalog.contacts.title')), $html, "Scheda {$name}: niente card contatti.");
+            $this->assertStringContainsString(e(__('catalog.contacts.info_title')), $html, "Scheda {$name}: manca «Informazioni utili».");
+            $this->assertStringContainsString('Piazza Garibaldi 3, Boario Terme', $html, "Scheda {$name}: indirizzo pubblico.");
+            $this->assertHoursOnce($html, $name);
+            $this->assertNoLegalAddress($html, $name);
+        }
+    }
+
+    /**
+     * Senza consenso i recapiti restano salvati ma non escono: né i link né
+     * l'indirizzo pubblico. Gli orari sì, non dipendono dal consenso.
+     */
+    public function test_in_struttura_senza_consenso_le_schede_non_pubblicano_indirizzo_ne_link(): void
+    {
+        foreach ($this->sheetsOf($this->ownerWithPublicContacts(online: false, consent: false)) as $name => $sheet) {
+            $html = $this->sheetHtml($sheet);
+
+            $this->assertStringContainsString(e(__('catalog.contacts.title')), $html, "Scheda {$name}: manca la card contatti.");
+
+            foreach ([...self::DIRECT_HREFS, '+39 333 123 4567', 'info@rifugiodellealpi.it', 'Piazza Garibaldi 3'] as $unpublished) {
+                $this->assertStringNotContainsString($unpublished, $html, "Scheda {$name}: «{$unpublished}» senza consenso non si pubblica.");
+            }
+
+            $this->assertStringContainsString('Rifugio delle Alpi srl', $html, "Scheda {$name}: ragione sociale.");
+            $this->assertHoursOnce($html, $name);
+            $this->assertNoLegalAddress($html, $name);
+        }
+    }
+
+    /** Online e senza consenso: niente indirizzo pubblico, gli orari sì (e bastano ad aprire il riquadro). */
+    public function test_online_senza_consenso_le_schede_mostrano_solo_gli_orari(): void
+    {
+        foreach ($this->sheetsOf($this->ownerWithPublicContacts(online: true, consent: false)) as $name => $sheet) {
+            $html = $this->sheetHtml($sheet);
+
+            $this->assertStringNotContainsString('Piazza Garibaldi 3', $html, "Scheda {$name}: senza consenso niente indirizzo pubblico.");
+            $this->assertHoursOnce($html, $name);
+            $this->assertNoLegalAddress($html, $name);
+        }
+    }
+
+    /**
+     * WhatsApp e sito portano fuori dal sito: scheda nuova, e senza `opener`
+     * né referrer verso una pagina di terzi. Telefono ed email aprono
+     * un'app, non una pagina: nessun target.
+     */
+    public function test_whatsapp_e_sito_si_aprono_in_una_scheda_nuova(): void
+    {
+        $owner = $this->ownerWithPublicContacts(online: false);
+        $html = $this->sheetHtml($this->sheetsOf($owner)['struttura']);
+
+        $newTab = '\s+target="_blank" rel="noopener noreferrer"';
+        $this->assertMatchesRegularExpression('#href="https://wa\.me/393471234567"'.$newTab.'#', $html);
+        $this->assertMatchesRegularExpression('#href="https://www\.rifugiodellealpi\.it"'.$newTab.'#', $html);
+        $this->assertDoesNotMatchRegularExpression('#href="tel:\+393331234567"\s+target=#', $html);
+        $this->assertDoesNotMatchRegularExpression('#href="mailto:info@rifugiodellealpi\.it"\s+target=#', $html);
+
+        // A video c'è l'icona: l'etichetta la legge lo screen reader.
+        $this->assertStringContainsString('aria-label="'.e(__('catalog.contacts.phone')).': +39 333 123 4567"', $html);
+    }
+
+    /**
+     * La struttura su mobile: il box prenotazione non c'è (si prenota dalla
+     * barra in basso), e fino a ieri si nascondeva tutta la colonna. Ora
+     * «Informazioni utili» su mobile serve, quindi si nasconde il solo box e la
+     * colonna resta; senza niente da mostrare si nasconde come prima.
+     */
+    public function test_sulla_struttura_online_informazioni_utili_resta_visibile_su_mobile(): void
+    {
+        $aside = function (string $html): string {
+            $this->assertSame(1, preg_match('#<aside class="([^"]*max-w-\[453px\][^"]*)"#', $html, $match));
+
+            return $match[1];
+        };
+
+        $withInfo = $this->sheetHtml($this->sheetsOf($this->ownerWithPublicContacts(online: true))['struttura']);
+        $this->assertStringNotContainsString('max-lg:hidden', $aside($withInfo));
+        $this->assertStringContainsString(e(__('catalog.contacts.info_title')), $withInfo);
+        // Il box prenotazione sì, da solo: su mobile resta la barra CTA.
+        $this->assertMatchesRegularExpression('#<div class="[^"]*max-lg:hidden[^"]*">\s*<p class="text-\[28px\]#', $withInfo);
+
+        // Il caso più comune: niente consenso, quindi niente indirizzo, ma gli
+        // orari sì (non dipendono dal consenso). Bastano da soli a tenere la
+        // colonna su mobile: una condizione che guardasse il solo indirizzo li
+        // nasconderebbe.
+        $hoursOnly = $this->sheetHtml($this->sheetsOf($this->ownerWithPublicContacts(online: true, consent: false))['struttura']);
+        $this->assertStringNotContainsString('max-lg:hidden', $aside($hoursOnly));
+        $this->assertStringContainsString(e(__('catalog.contacts.info_title')), $hoursOnly);
+        $this->assertStringContainsString('Lun-Dom 8-20', $hoursOnly);
+        $this->assertStringNotContainsString('Piazza Garibaldi 3', $hoursOnly);
+
+        // Profilo appena collegato: niente orari né indirizzo pubblico.
+        $withoutInfo = $this->sheetHtml($this->sheetsOf($this->onlineOwner())['struttura']);
+        $this->assertStringContainsString('max-lg:hidden', $aside($withoutInfo));
+        $this->assertStringNotContainsString(e(__('catalog.contacts.info_title')), $withoutInfo);
+    }
+
+    /**
+     * Il costo dei recapiti: la scheda legge il profilo del titolare UNA volta,
+     * per la modalità di incasso, per gli orari e per le card. Tiene fermo il
+     * `scoped` di PartnerPaymentModeService, da cui PartnerContacts legge: senza,
+     * ogni riquadro rileggerebbe lo stesso profilo.
+     *
+     * Come per la griglia qui sopra, si contano solo le query su
+     * `partner_profiles`. Prima di ogni scheda si dimenticano le istanze
+     * `scoped`, come all'inizio di una richiesta vera: le cinque schede sono
+     * dello stesso titolare, e in un test solo il profilo resterebbe in
+     * memoria dalla prima.
+     */
+    public function test_ogni_scheda_legge_il_profilo_del_titolare_una_volta_sola(): void
+    {
+        foreach (['in struttura' => false, 'online' => true] as $mode => $online) {
+            foreach ($this->sheetsOf($this->ownerWithPublicContacts($online)) as $name => $sheet) {
+                $this->app->forgetScopedInstances();
+                DB::flushQueryLog();
+                DB::enableQueryLog();
+
+                $sheet()->assertOk();
+
+                $reads = collect(DB::getQueryLog())
+                    ->filter(fn (array $entry): bool => str_contains($entry['query'], 'partner_profiles'))
+                    ->count();
+                DB::disableQueryLog();
+
+                $this->assertSame(1, $reads, "Scheda {$name} ({$mode}): {$reads} letture di partner_profiles, ne basta una.");
+            }
+        }
     }
 }

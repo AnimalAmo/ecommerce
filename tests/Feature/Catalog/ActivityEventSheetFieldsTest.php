@@ -694,4 +694,106 @@ class ActivityEventSheetFieldsTest extends TestCase
             ->assertDontSee(__('partner.activity_location.operating_area'))
             ->assertDontSee('Milano e provincia');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orari e recapiti pubblici del titolare (WP3b, 28/09/2026)
+    |--------------------------------------------------------------------------
+    | Sulla scheda attività gli orari stanno fra le informazioni (richiesta del
+    | 27/09/2026). Dal 28/09 il titolare ha anche i recapiti pubblici (risposta
+    | della cliente del 26/09/2026, punto 6), e le due card che li portano —
+    | «Contatta la struttura» in struttura, «Informazioni utili» online — sanno
+    | mostrare anche gli orari. Sull'attività non li devono ripetere; sull'evento,
+    | che non ha una riga orari sua, li portano loro.
+    */
+
+    /**
+     * Recapiti pubblici col consenso sul profilo del titolare. Col query
+     * builder, come gli orari qui sopra. `$online` false = incassa in
+     * struttura: la scheda mostra la card contatti al posto del box.
+     */
+    private function givePublicContacts(Event $event, bool $online): void
+    {
+        PartnerProfile::query()
+            ->where('user_id', $event->user_id)
+            ->update([
+                'online_payment' => $online,
+                'public_phone' => '+393331234567',
+                'public_address' => 'Piazza Garibaldi 3, Boario Terme',
+                'public_contacts_consent_at' => now(),
+            ]);
+    }
+
+    public function test_sulla_scheda_attivita_di_chi_incassa_online_gli_orari_compaiono_una_volta(): void
+    {
+        $activity = $this->publishActivity();
+        $this->giveOpeningHours($activity, ['it' => 'Lun-Ven 9-18']);
+        $this->givePublicContacts($activity, online: true);
+
+        $html = $this->activityPage($activity)
+            ->assertSeeText(__('partner.profile.opening_hours').': Lun-Ven 9-18')
+            // «Informazioni utili» c'è per l'indirizzo, ma senza la sua riga orari.
+            ->assertSee(__('catalog.contacts.info_title'))
+            ->assertSee('Piazza Garibaldi 3, Boario Terme')
+            ->assertDontSeeHtml('>'.__('catalog.contacts.opening_hours').'</dt>')
+            ->assertDontSeeHtml('href="tel:+393331234567"')
+            ->assertSee(__('events.add_to_cart'))
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, 'Lun-Ven 9-18'), 'Gli orari del titolare compaiono una volta sola.');
+    }
+
+    public function test_sulla_scheda_attivita_di_chi_incassa_in_struttura_gli_orari_compaiono_una_volta(): void
+    {
+        $activity = $this->publishActivity();
+        $this->giveOpeningHours($activity, ['it' => 'Lun-Ven 9-18']);
+        $this->givePublicContacts($activity, online: false);
+
+        $html = $this->activityPage($activity)
+            ->assertSeeText(__('partner.profile.opening_hours').': Lun-Ven 9-18')
+            // La card contatti c'è, coi recapiti, ma senza la sua riga orari.
+            ->assertSee(__('catalog.contacts.title'))
+            ->assertSeeHtml('href="tel:+393331234567"')
+            ->assertSee('Piazza Garibaldi 3, Boario Terme')
+            ->assertDontSeeHtml('>'.__('catalog.contacts.opening_hours').'</dt>')
+            // Le due card sono alternative: in struttura niente «Informazioni utili».
+            ->assertDontSee(__('catalog.contacts.info_title'))
+            ->assertDontSee(__('events.add_to_cart'))
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, 'Lun-Ven 9-18'), 'Gli orari del titolare compaiono una volta sola.');
+        $this->assertSame(1, substr_count($html, 'Piazza Garibaldi 3, Boario Terme'), 'L\'indirizzo pubblico compare una volta sola.');
+    }
+
+    /**
+     * Solo gli orari, senza indirizzo pubblico né consenso: sull'attività non
+     * bastano ad aprire «Informazioni utili», che mostrerebbe un titolo sopra
+     * niente.
+     */
+    public function test_sulla_scheda_attivita_gli_orari_da_soli_non_aprono_informazioni_utili(): void
+    {
+        $activity = $this->publishActivity();
+        $this->giveOpeningHours($activity, ['it' => 'Lun-Ven 9-18']);
+
+        $this->activityPage($activity)
+            ->assertSeeText(__('partner.profile.opening_hours').': Lun-Ven 9-18')
+            ->assertDontSee(__('catalog.contacts.info_title'));
+    }
+
+    /** L'evento non ha una riga orari sua: li porta «Informazioni utili», una volta. */
+    public function test_sulla_scheda_evento_gli_orari_li_porta_informazioni_utili(): void
+    {
+        $event = $this->publish();
+        $this->giveOpeningHours($event, ['it' => 'Lun-Ven 9-18']);
+        $this->givePublicContacts($event, online: true);
+
+        $html = $this->eventPage($event)
+            ->assertSee(__('catalog.contacts.info_title'))
+            ->assertSeeHtml('>'.__('catalog.contacts.opening_hours').'</dt>')
+            ->assertSee('Piazza Garibaldi 3, Boario Terme')
+            ->assertDontSeeHtml('href="tel:+393331234567"')
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, 'Lun-Ven 9-18'));
+    }
 }

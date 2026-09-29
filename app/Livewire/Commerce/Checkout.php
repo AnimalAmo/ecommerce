@@ -621,9 +621,8 @@ class Checkout extends Component
             // Difetto C10: venditore online non pagabile, detto allo step 1 e non
             // dopo i dati personali (preparePaymentStep ferma comunque il passaggio).
             'sellerNotPayable' => $this->step === 1 && $this->sellerOnlineButNotPayable(),
-            // Contatti del venditore per il pannello: ragione sociale, indirizzo e
-            // link «dove pagare o prenotare», gli unici recapiti che esistono a db
-            // (telefono, email pubblica e orari arrivano in un pacchetto successivo).
+            // Contatti del venditore per il pannello: gli stessi della card sulle
+            // schede, con le regole di consenso e di modalità di PartnerContacts.
             'sellerContacts' => $onSiteBlocked
                 ? app(PartnerContacts::class)->forOwner($this->sellerUserId())
                 : null,

@@ -51,6 +51,15 @@ class PartnerProfile extends Model
         'online_payment',
         'payment_url',
         'opening_hours',
+        // Recapiti pubblici (risposta della cliente, 26/09/2026, punto 6):
+        // voci nuove, mai quelle di registrazione o fatturazione. Si mostrano
+        // solo col consenso, vedi publishesContacts().
+        'public_phone',
+        'public_whatsapp',
+        'public_email',
+        'public_website',
+        'public_address',
+        'public_contacts_consent_at',
         // Tipologia scelta nello step 2 dell'iscrizione, conservata per
         // preselezionare la card giusta al primo "Crea servizio" (richiesta
         // della cliente, 27/09/2026). Stringa nullable: nessun cast serve.
@@ -66,7 +75,19 @@ class PartnerProfile extends Model
             'stripe_requirements_due' => 'array',
             'commission_rate_bp' => 'integer',
             'commission_min_cents' => 'integer',
+            'public_contacts_consent_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Il partner ha acconsentito a pubblicare i suoi recapiti pubblici
+     * (risposta della cliente, 26/09/2026, punto 6). Senza consenso restano
+     * salvati ma non compaiono sulle schede. Gli orari non passano da qui: il
+     * partner li scrive già sapendo che si vedono.
+     */
+    public function publishesContacts(): bool
+    {
+        return $this->public_contacts_consent_at !== null;
     }
 
     /** Può incassare: l'onboarding Stripe è arrivato a charges_enabled. */

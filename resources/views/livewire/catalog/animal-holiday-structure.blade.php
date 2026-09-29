@@ -247,16 +247,24 @@
 
                 {{-- 2c. Card prenotazione (sticky su desktop).
                        Su mobile l'XD app non la prevede: la scheda si prenota dalla barra CTA in basso,
-                       con le date/ospiti/animali di default della ricerca.
-                       La card contatti invece su mobile SERVE: lì non c'è la barra,
-                       quindi in quel caso l'aside resta visibile. --}}
-                <aside class="w-full max-w-[453px] shrink-0 {{ $paysOnSite ? 'mt-8 lg:mt-0' : 'max-lg:hidden' }} lg:sticky lg:top-24 lg:w-[453px]">
+                       con le date/ospiti/animali di default della ricerca, quindi si nasconde il solo box.
+                       La card contatti invece su mobile SERVE: lì non c'è la barra. E servono anche
+                       indirizzo e orari di chi incassa online (risposta della cliente, 26/09/2026):
+                       in quei due casi l'aside resta visibile. --}}
+                @php
+                    $hasPublicInfo = ! $paysOnSite && \App\Services\Partner\PartnerContacts::hasPublicInfo($contacts);
+                @endphp
+                {{-- Box + «Informazioni utili» possono superare l'altezza dello schermo (misurato: ~700px
+                     contro i 657 utili di un 1366x768), e un sticky più alto del viewport ne mostra il
+                     fondo solo a fine pagina. Da lg l'aside non supera lo schermo e scorre da sé; dentro
+                     non ci sono popover da tagliare (calendario e stepper sono accordion). --}}
+                <aside class="w-full max-w-[453px] shrink-0 {{ $paysOnSite || $hasPublicInfo ? 'mt-8 lg:mt-0' : 'max-lg:hidden' }} lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:w-[453px] lg:overflow-y-auto">
                     {{-- Partner senza pagamento online: la scheda si consulta e lo si
                          contatta, niente carrello e niente checkout (29/09/2026). --}}
                     @if ($paysOnSite)
                         @include('partials.catalog.partner-contacts-card')
                     @else
-                        <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-[22px]">
+                        <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-[22px] max-lg:hidden">
                             <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($structure->price_cents)]) }}</p>
 
                             <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
@@ -338,6 +346,9 @@
                                 <span>{{ \App\Support\Format::money($totalCents) }}</span>
                             </div>
                         </div>
+
+                        {{-- Su mobile il box sopra è nascosto: il margine vale solo da lg. --}}
+                        @include('partials.catalog.partner-public-info', ['infoClass' => 'lg:mt-6'])
                     @endif
                 </aside>
             </div>

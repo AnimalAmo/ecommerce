@@ -143,6 +143,18 @@ return [
             'incomplete' => 'Collegamento incompleto',
             'none' => 'Non collegato',
         ],
+        // Recapiti pubblici del partner (risposta della cliente, 26/09/2026, punto 6):
+        // in sola lettura, li scrive il partner dal suo profilo.
+        'public_contacts_label' => 'Recapiti pubblici',
+        'public_contacts_consent' => 'Consenso alla pubblicazione dato il :date',
+        'public_contacts_no_consent' => 'Nessun consenso: non si pubblicano',
+        'public_contacts' => [
+            'phone' => 'Telefono',
+            'whatsapp' => 'WhatsApp',
+            'email' => 'Email',
+            'website' => 'Sito',
+            'address' => 'Indirizzo',
+        ],
         'resend_welcome' => 'Invia di nuovo il link',
         'welcome_sent' => 'Link per scegliere la password inviato a :email.',
         'pets' => 'Animali',
@@ -185,7 +197,8 @@ return [
         'payment' => [
             'online' => 'Con carta sul sito: per pubblicare serve il collegamento del conto',
             'on_site' => 'Il cliente paga in struttura o sul sito del partner',
-            'url_help' => 'Lo vede il cliente nella conferma della prenotazione. Solo indirizzi http o https.',
+            // Come partner.payment_mode.url_help (vedi lì il perché).
+            'url_help' => 'Se il partner si fa pagare direttamente, i clienti lo vedono sulle sue schede a pagamento, nel riquadro dei contatti. Solo indirizzi http o https.',
         ],
         'submit' => 'Crea il partner',
         'created' => 'Partner creato: gli abbiamo inviato la mail per scegliere la password.',

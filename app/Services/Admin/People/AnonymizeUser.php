@@ -78,6 +78,19 @@ class AnonymizeUser
                 'author_initials' => 'UA',
             ]);
 
+            // Recapiti pubblici del partner (WP3b, 28/09/2026): esistono solo per
+            // essere pubblicati e spesso sono il cellulare e l'email della
+            // persona, non documenti fiscali. Il profilo resta per i dati fiscali
+            // degli ordini; recapiti e consenso se ne vanno.
+            DB::table('partner_profiles')->where('user_id', $user->id)->update([
+                'public_phone' => null,
+                'public_whatsapp' => null,
+                'public_email' => null,
+                'public_website' => null,
+                'public_address' => null,
+                'public_contacts_consent_at' => null,
+            ]);
+
             $user->forceFill([
                 'first_name' => self::DISPLAY_NAME,
                 'last_name' => '',

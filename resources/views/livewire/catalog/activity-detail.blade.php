@@ -141,7 +141,7 @@
                                     </div>
                                 </li>
                             @endif
-                            {{-- Orari del titolare (profilo partner, letti una volta sola in ActivityDetail::openingHours) --}}
+                            {{-- Orari del titolare (profilo partner, da PartnerContacts: stanno qui e non nelle card sotto il box) --}}
                             @if (filled($openingHours))
                                 <li class="flex items-start gap-4">
                                     <flux:icon.time class="mt-0.5 h-[15px] w-[15px] shrink-0 text-[#0D171A]" />
@@ -314,7 +314,7 @@
                         @elseif ($paysOnSite)
                             {{-- Partner senza pagamento online: si contatta, non si prenota qui (29/09/2026). --}}
                             <div class="mt-[26px]">
-                                @include('partials.catalog.partner-contacts-card')
+                                @include('partials.catalog.partner-contacts-card', ['showHours' => false])
                             </div>
                         @elseif (! $isSoldOut)
                             @if ($notEnoughSeats)
@@ -347,6 +347,12 @@
                             </div>
                         @endif
                     </div>
+
+                    {{-- Chi incassa online (o un'attività gratuita): l'indirizzo pubblico sotto il box
+                         (risposta della cliente, 26/09/2026). Gli orari no: sono già fra le informazioni. --}}
+                    @unless ($paysOnSite)
+                        @include('partials.catalog.partner-public-info', ['showHours' => false, 'infoClass' => 'mt-6'])
+                    @endunless
                 </aside>
             </div>
 

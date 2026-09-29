@@ -189,8 +189,10 @@
                     </section>
                 </div>
 
-                {{-- 2c. Card prenotazione (sticky su desktop) --}}
-                <aside class="w-full max-w-[453px] shrink-0 lg:sticky lg:top-24 lg:w-[453px]">
+                {{-- 2c. Card prenotazione (sticky su desktop). Con «Informazioni utili» sotto può superare
+                     l'altezza dello schermo: da lg l'aside non la supera e scorre da sé, come sulla
+                     scheda struttura. --}}
+                <aside class="w-full max-w-[453px] shrink-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:w-[453px] lg:overflow-y-auto">
                     {{-- Partner senza pagamento online: card contatti al posto del box
                          prenotazione, niente carrello e niente checkout (29/09/2026). --}}
                     @if ($paysOnSite)
@@ -298,6 +300,9 @@
                                 <span>{{ \App\Support\Format::money($totalCents) }}</span>
                             </div>
                         </div>
+
+                        {{-- Chi incassa online: indirizzo e orari sotto il box (risposta della cliente, 26/09/2026). --}}
+                        @include('partials.catalog.partner-public-info', ['infoClass' => 'mt-6'])
                     @endif
                 </aside>
             </div>

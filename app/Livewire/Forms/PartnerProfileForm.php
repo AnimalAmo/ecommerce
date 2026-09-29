@@ -3,15 +3,18 @@
 namespace App\Livewire\Forms;
 
 use App\Models\User;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Support\Phone;
 use App\Support\Translations;
+use DateTimeInterface;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 /**
  * Profilo partner — "Informazioni personali". Dati personali (su users) +
  * anagrafica fiscale (su partner_profiles), come da mock XD, più gli orari di
- * apertura o disponibilità chiesti dalla cliente il 27/09/2026.
+ * apertura o disponibilità chiesti dalla cliente il 27/09/2026 e i recapiti
+ * pubblici chiesti il 26/09/2026 (punto 6).
  */
 class PartnerProfileForm extends Form
 {
@@ -51,6 +54,24 @@ class PartnerProfileForm extends Form
      */
     public array $openingHours = ['it' => '', 'en' => ''];
 
+    /*
+     * Recapiti pubblici (risposta della cliente, 26/09/2026, punto 6): voci
+     * nuove, tutte facoltative, mai il telefono o l'email qui sopra né la sede
+     * legale. Sul profilo e non sulla struttura (decisione di Matteo,
+     * 27/09/2026). Compaiono sulle schede solo con la spunta di consenso.
+     */
+    public string $publicPhone = '';
+
+    public string $publicWhatsapp = '';
+
+    public string $publicEmail = '';
+
+    public string $publicWebsite = '';
+
+    public string $publicAddress = '';
+
+    public bool $publicContactsConsent = false;
+
     public function rules(): array
     {
         return [
@@ -73,6 +94,20 @@ class PartnerProfileForm extends Form
             // sociale, indirizzo), non per una riga di orari con più fasce.
             'openingHours.it' => ['nullable', 'string', 'max:200'],
             'openingHours.en' => ['nullable', 'string', 'max:200'],
+            // Tutti facoltativi: la cliente li vuole a scelta del partner. Sito
+            // con le regole del link di pagamento (stesso tipo di dato, stesso
+            // href su una pagina pubblica); indirizzo col tetto dei testi
+            // liberi del partner, come gli orari.
+            'publicPhone' => ['nullable', ...Phone::rules()],
+            'publicWhatsapp' => ['nullable', ...Phone::rules()],
+            // `email:filter` e non `email` (RFC): è lo stesso FILTER_VALIDATE_EMAIL
+            // con cui PartnerContacts ripulisce l'indirizzo prima di pubblicarlo.
+            // Con la regola RFC il form salvava «info@caffè.it» e la card lo
+            // scartava: il partner leggeva «Salvato» e l'email non usciva mai.
+            'publicEmail' => ['nullable', 'email:filter', 'max:128'],
+            'publicWebsite' => PartnerPaymentModeService::PAYMENT_URL_RULES,
+            'publicAddress' => ['nullable', 'string', 'max:200'],
+            'publicContactsConsent' => ['boolean'],
         ];
     }
 
@@ -100,6 +135,13 @@ class PartnerProfileForm extends Form
             ['it' => '', 'en' => ''],
             $profile?->getTranslations('opening_hours') ?? [],
         );
+
+        $this->publicPhone = $profile?->public_phone ?? '';
+        $this->publicWhatsapp = $profile?->public_whatsapp ?? '';
+        $this->publicEmail = $profile?->public_email ?? '';
+        $this->publicWebsite = $profile?->public_website ?? '';
+        $this->publicAddress = $profile?->public_address ?? '';
+        $this->publicContactsConsent = $profile?->publishesContacts() ?? false;
     }
 
     /** Campi personali per l'update di users. */
@@ -113,8 +155,14 @@ class PartnerProfileForm extends Form
         ];
     }
 
-    /** Campi fiscali per l'update di partner_profiles. */
-    public function toProfile(): array
+    /**
+     * Campi fiscali, orari e recapiti pubblici per l'update di partner_profiles.
+     *
+     * `$consentedAt` è la data del consenso già salvata sul profilo: con la
+     * spunta ancora data resta quella, perché la data dice quando il partner
+     * ha acconsentito la prima volta, non quando ha salvato l'ultima.
+     */
+    public function toProfile(?DateTimeInterface $consentedAt = null): array
     {
         return [
             'business_name' => $this->businessName,
@@ -130,7 +178,26 @@ class PartnerProfileForm extends Form
             // sulla scheda /en (difetto W5, 28/09/2026 — vedi
             // App\Support\Translations). Su EN scatta il fallback IT.
             'opening_hours' => Translations::replacing($this->openingHours),
+            // Un campo svuotato va a null, non a '': «voce non data» si scrive
+            // in un modo solo, e updateOrCreate() cancella la copia vecchia.
+            // Telefoni in E.164 come quello personale: è la forma che serve ai
+            // link tel: e wa.me delle schede.
+            'public_phone' => Phone::toE164($this->publicPhone),
+            'public_whatsapp' => Phone::toE164($this->publicWhatsapp),
+            'public_email' => $this->nullIfBlank($this->publicEmail),
+            'public_website' => $this->nullIfBlank($this->publicWebsite),
+            'public_address' => $this->nullIfBlank($this->publicAddress),
+            // Spunta tolta → null: i recapiti restano salvati ma spariscono
+            // dalle schede, e un nuovo consenso riparte con la sua data.
+            'public_contacts_consent_at' => $this->publicContactsConsent ? ($consentedAt ?? now()) : null,
         ];
+    }
+
+    private function nullIfBlank(string $value): ?string
+    {
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 
     private function userId(): ?int

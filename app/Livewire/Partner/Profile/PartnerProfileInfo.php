@@ -23,7 +23,11 @@ class PartnerProfileInfo extends Component
 
         $user = Auth::user();
         $user->update($this->form->toUser());
-        $user->partnerProfile()->updateOrCreate([], $this->form->toProfile());
+        // La data del primo consenso ai recapiti pubblici: se la spunta resta
+        // data, un nuovo salvataggio non la sposta.
+        $user->partnerProfile()->updateOrCreate([], $this->form->toProfile(
+            $user->partnerProfile?->public_contacts_consent_at,
+        ));
 
         Flux::toast(text: __('partner.profile.saved'), variant: 'success');
     }

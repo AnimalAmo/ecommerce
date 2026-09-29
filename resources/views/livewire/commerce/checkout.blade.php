@@ -42,8 +42,9 @@
                                 <p class="text-[15px] leading-6 text-[#555555]">{{ __('checkout.on_site.unavailable.body') }}</p>
 
                                 {{-- Stessa card contatti delle schede di un partner senza pagamento online:
-                                     ragione sociale, indirizzo e link «dove pagare o prenotare». Null (partner
-                                     senza profilo) = resta la sola dicitura, il partial se ne occupa. --}}
+                                     ragione sociale, i recapiti pubblici che ha acconsentito a mostrare, orari
+                                     e link «dove pagare o prenotare». Null (partner senza profilo) = resta la
+                                     sola dicitura, il partial se ne occupa. --}}
                                 <div class="mt-5">
                                     @include('partials.catalog.partner-contacts-card', ['contacts' => $sellerContacts])
                                 </div>
