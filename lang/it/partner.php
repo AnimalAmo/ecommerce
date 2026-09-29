@@ -63,7 +63,13 @@ return [
         'online' => 'Online su AnimalAmo',
         'on_site' => 'Direttamente a me, in struttura o sul mio sito',
         'url_label' => 'Sito dove pagare o prenotare (facoltativo)',
-        'url_help' => 'Lo mostriamo al cliente nella conferma della prenotazione.',
+        // Dove lo vedono davvero i clienti: la card contatti delle schede a
+        // pagamento, solo quando il partner si fa pagare direttamente
+        // (PartnerContacts). Il testo di prima citava la conferma della
+        // prenotazione, che per chi si fa pagare in struttura oggi non nasce:
+        // la scheda non ha il carrello e commerce.on_site_booking è spento.
+        // Sulle attività e sugli eventi gratuiti («Partecipa») la card non c'è.
+        'url_help' => 'Se ti fai pagare direttamente, i clienti lo vedono sulle tue schede a pagamento, nel riquadro dei contatti.',
         'save' => 'Salva la modalità',
         'saved' => 'Modalità di pagamento aggiornata',
         'online_needs_stripe' => 'Per scegliere il pagamento online collega prima il tuo conto Stripe dal riquadro qui sotto.',

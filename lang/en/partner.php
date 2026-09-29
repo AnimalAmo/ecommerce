@@ -57,7 +57,12 @@ return [
         'online' => 'Online on AnimalAmo',
         'on_site' => 'Directly to me, on site or on my website',
         'url_label' => 'Website for payment or booking (optional)',
-        'url_help' => 'We show it to the customer in the booking confirmation.',
+        // Where customers really see it: the contacts card on paid listings, only
+        // when the partner takes payment directly (PartnerContacts). The old text
+        // named the booking confirmation, which on-site partners do not get
+        // today: the listing has no cart and commerce.on_site_booking is off.
+        // Free activities and events («Join») have no contacts card.
+        'url_help' => 'If you take payment directly, customers see it on your paid listings, in the contacts box.',
         'save' => 'Save payment option',
         'saved' => 'Payment option updated',
         'online_needs_stripe' => 'To choose online payment, first connect your Stripe account in the box below.',

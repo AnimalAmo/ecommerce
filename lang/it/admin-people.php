@@ -197,7 +197,8 @@ return [
         'payment' => [
             'online' => 'Con carta sul sito: per pubblicare serve il collegamento del conto',
             'on_site' => 'Il cliente paga in struttura o sul sito del partner',
-            'url_help' => 'Lo vede il cliente nella conferma della prenotazione. Solo indirizzi http o https.',
+            // Come partner.payment_mode.url_help (vedi lì il perché).
+            'url_help' => 'Se il partner si fa pagare direttamente, i clienti lo vedono sulle sue schede a pagamento, nel riquadro dei contatti. Solo indirizzi http o https.',
         ],
         'submit' => 'Crea il partner',
         'created' => 'Partner creato: gli abbiamo inviato la mail per scegliere la password.',
