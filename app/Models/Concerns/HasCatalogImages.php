@@ -27,6 +27,27 @@ trait HasCatalogImages
         return $this->resolveImage($this->map_img ?? null);
     }
 
+    /**
+     * Le foto di «Vedere tutte le foto»: la copertina in testa, perché è la
+     * foto che il cliente ha già davanti nell'hero, poi la galleria che il
+     * publisher fotografa dalla bozza, senza ripetizioni. Il pulsante compare
+     * solo con almeno due foto: le schede del catalogo demo hanno la sola
+     * copertina del template e non lo mostrano.
+     *
+     * La copertina si legge da `hero_img` e non si dà per scontato che apra la
+     * galleria: una scheda ha una modifica aperta quando il travaso della
+     * migrazione copia la bozza, e se in quella modifica il partner ha tolto
+     * la copertina, l'hero la mostra ancora ma la bozza no.
+     *
+     * @return list<string>
+     */
+    public function galleryImageUrls(): array
+    {
+        $paths = array_unique(array_filter([$this->hero_img, ...($this->gallery ?? [])], filled(...)));
+
+        return array_values(array_map($this->resolveImage(...), $paths));
+    }
+
     private function resolveImage(?string $value): ?string
     {
         if (blank($value)) {

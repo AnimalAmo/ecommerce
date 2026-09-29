@@ -76,4 +76,14 @@ return [
         // indirizzo pubblico e orari, i recapiti diretti no.
         'info_title' => 'Informazioni utili',
     ],
+
+    // Galleria «Vedere tutte le foto» delle schede di dettaglio (segnalazione
+    // del 29/09/2026: il pulsante non apriva niente). Il testo del pulsante
+    // resta nel file di ogni scheda (events/holiday/smartbox.view_all_photos).
+    'gallery' => [
+        'label' => 'Foto di :title',
+        'photo_alt' => ':title, foto :number di :total',
+        'previous' => 'Foto precedente',
+        'next' => 'Foto successiva',
+    ],
 ];

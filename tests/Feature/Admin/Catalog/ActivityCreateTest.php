@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin\Catalog;
 
 use App\Livewire\Admin\Catalog\ActivityCreate;
+use App\Livewire\Catalog\EventDetail;
 use App\Livewire\Partner\Activity\ActivityAnimalServices;
 use App\Livewire\Partner\Activity\ActivityCancellation;
 use App\Livewire\Partner\Activity\ActivityCost;
@@ -173,6 +174,37 @@ class ActivityCreateTest extends TestCase
         $event = Event::withHidden()->where('user_id', $adminPartner->id)->sole();
 
         $this->assertSame($this->comparable($reference), $this->comparable($event));
+    }
+
+    /**
+     * «Vedere tutte le foto» (29/09/2026) anche sulle schede create dal
+     * pannello: la galleria la scrive il publisher dentro DraftCompleter, e
+     * il pannello passa di lì. Le quattro foto caricate dall'admin finiscono
+     * sulla riga, nell'ordine della bozza, e la scheda mostra il pulsante.
+     */
+    public function test_the_panel_row_carries_the_uploaded_photos_as_its_gallery(): void
+    {
+        $partner = $this->actingAsPayablePartner();
+
+        $this->actingAsSuperadmin();
+        $this->fill($this->componentFor($partner))->call('save')->assertHasNoErrors();
+
+        $event = Event::withHidden()->where('user_id', $partner->id)->sole();
+        $draft = StructureDraft::findOrFail($event->structure_draft_id);
+
+        $this->assertCount(4, $event->gallery);
+        $this->assertSame($draft->photos, $event->gallery);
+        $this->assertSame($event->gallery[0], $event->hero_img, 'La copertina apre la galleria.');
+        foreach ($event->gallery as $path) {
+            Storage::disk('public')->assertExists($path);
+        }
+
+        $page = Livewire::test(EventDetail::class, ['event' => $event->slug])
+            ->assertOk()
+            ->assertSee(__('events.view_all_photos'))
+            ->assertSeeHtml('data-modal="photo-gallery"');
+
+        $this->assertSame(4, substr_count($page->html(), 'data-flux-carousel-slide'));
     }
 
     // ── Buco di copertura 4: il percorso del wizard, dalla card al catalogo ─────

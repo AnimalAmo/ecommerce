@@ -105,6 +105,8 @@ class SmartboxDetail extends Component
 
         return view('livewire.catalog.smartbox-detail', [
             'box' => $box,
+            // «Vedere tutte le foto»: copertina + galleria pubblicata; il pulsante compare da due foto in su.
+            'galleryPhotos' => $box->galleryImageUrls(),
             'isFav' => $this->isFavorite('smartbox_package', $box->id),
             'hotelServices' => $box->amenityRows('hotel'),
             'animalServices' => $box->amenityRows('animal'),

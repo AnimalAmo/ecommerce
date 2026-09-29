@@ -54,6 +54,17 @@ class EventPublisherTest extends TestCase
         ], $attributes));
     }
 
+    /** «Vedere tutte le foto»: la scheda mostra le foto della versione pubblicata, non della bozza. */
+    public function test_publish_snapshots_the_draft_photos_as_the_gallery(): void
+    {
+        $photos = ['structure-photos/evento.jpg', 'structure-photos/palco.jpg', 'structure-photos/pubblico.jpg'];
+
+        $event = app(DraftPublisher::class)->publish($this->activityDraft(['photos' => $photos]));
+
+        $this->assertSame($photos, $event->gallery);
+        $this->assertSame('structure-photos/evento.jpg', $event->hero_img);
+    }
+
     public function test_publish_carries_the_professional_categories_of_an_activity(): void
     {
         // Otto categorie a scelta multipla (cliente, 26/09/2026). Senza la

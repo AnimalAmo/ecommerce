@@ -69,6 +69,7 @@ class EventPublisher extends FamilyPublisher
             'is_free' => $isFree,
             'img' => $this->coverPhoto($draft),
             'hero_img' => $this->coverPhoto($draft),
+            'gallery' => $this->gallery($draft),
             'description' => $this->translations($draft, 'description'),
             // Descrizione dettagliata (audit 28/09/2026, difetto W1):
             // ActivityDescription la rende obbligatoria per le attività, ma

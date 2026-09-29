@@ -35,6 +35,8 @@ class SmartboxPackage extends Model
         'validity_months',
         'img',
         'hero_img',
+        // Foto della scheda nell'ordine della bozza, fotografate dal publisher («Vedere tutte le foto»).
+        'gallery',
         'description',
         'extended_description',
         'general_info',
@@ -47,6 +49,7 @@ class SmartboxPackage extends Model
     {
         return [
             'type' => ProductType::class,
+            'gallery' => 'array',
             // Cast espliciti sui cents: il pricing (step 3) fa aritmetica, non solo display.
             'price_cents' => 'integer',
             'price_from_cents' => 'integer',

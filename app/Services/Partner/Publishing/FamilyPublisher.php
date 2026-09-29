@@ -80,6 +80,10 @@ abstract class FamilyPublisher
      * colonne immagine di ciascuna. Tutte e tre le famiglie, non solo quella
      * della bozza: un cambio di ramo (F5) può lasciare a catalogo la riga
      * della famiglia precedente, che punta ancora alla sua copertina.
+     *
+     * Qui solo le colonne a path singolo. Tutte e tre hanno anche `gallery`,
+     * la lista JSON delle foto della scheda: si confronta a parte, con
+     * whereJsonContains.
      */
     private const CATALOG_IMAGE_COLUMNS = [
         Structure::class => ['img', 'hero_img', 'map_img'],
@@ -113,8 +117,13 @@ abstract class FamilyPublisher
      * del cliente e il dettaglio prenotazione del partner. E le foto di ogni
      * bozza: chi chiama ha già tolto il path dalla propria, quindi se un'altra
      * bozza lo contiene ancora il file è suo, e cancellarlo le toglierebbe una
-     * foto che nessuna riga a catalogo protegge (le non-copertina vivono solo
-     * lì).
+     * foto che nessuna riga a catalogo protegge (quelle di una bozza mai
+     * pubblicata vivono solo lì).
+     *
+     * Dal 29/09/2026 la riga a catalogo punta anche le non-copertina, con
+     * `gallery` («Vedere tutte le foto»): la X su una di queste non la cancella
+     * più subito, ci pensa la potatura dopo la ripubblicazione, come per la
+     * copertina.
      *
      * Nel dubbio il file resta: meglio un orfano su disco che una scheda rotta.
      *
@@ -144,6 +153,8 @@ abstract class FamilyPublisher
                     foreach ($columns as $column) {
                         $query->orWhere($column, $path);
                     }
+
+                    $query->orWhereJsonContains('gallery', $path);
                 })
                 ->exists();
 
@@ -215,23 +226,37 @@ abstract class FamilyPublisher
      * la risolve in Storage URL). '' per soddisfare le colonne img NOT NULL:
      * blank ⇒ gli accessor tornano null e i blade nascondono/degradano.
      *
-     * È anche il punto in cui la vecchia copertina esce dal catalogo: vedi
-     * pruneReplacedCovers().
+     * È anche il punto in cui le foto tolte escono dal catalogo: vedi
+     * pruneReplacedPhotos().
      */
     protected function coverPhoto(StructureDraft $draft): string
     {
-        $this->pruneReplacedCovers($draft);
+        $this->pruneReplacedPhotos($draft);
 
         return $draft->photos[0] ?? '';
     }
 
     /**
+     * Tutte le foto della bozza, nel suo ordine, per «Vedere tutte le foto»:
+     * la scheda mostra quelle della versione pubblicata, non quelle di una
+     * modifica ancora aperta. Null senza foto, come le schede del catalogo
+     * demo: resta la sola copertina.
+     *
+     * @return list<string>|null
+     */
+    protected function gallery(StructureDraft $draft): ?array
+    {
+        return array_values($draft->photos ?? []) ?: null;
+    }
+
+    /**
      * Difetto F1: la X dello step foto non cancella più un file che la scheda
      * pubblicata punta ancora (deletePhotoIfUnreferenced()); quel file va
-     * cancellato qui, quando la nuova versione della scheda è a catalogo.
+     * cancellato qui, quando la nuova versione della scheda è a catalogo. Vale
+     * per la copertina e, dal 29/09/2026, per le foto della galleria.
      *
      * Chiamata da coverPhoto(), cioè mentre il publisher compone l'updateOrCreate:
-     * la riga a catalogo ha ancora la copertina vecchia, ed è da lì che si
+     * la riga a catalogo ha ancora le foto vecchie, ed è da lì che si
      * legge quale file sta per essere sostituito. Se non è più tra le foto
      * della bozza, la cancellazione si prenota con DB::afterCommit(): parte solo
      * quando la transazione di DraftCompleter ha scritto la riga nuova, e
@@ -251,7 +276,7 @@ abstract class FamilyPublisher
      * coverPhoto() è chiamata due volte per pubblicazione (img e hero_img): la
      * seconda prenotazione trova il file già cancellato, ed è innocua.
      */
-    private function pruneReplacedCovers(StructureDraft $draft): void
+    private function pruneReplacedPhotos(StructureDraft $draft): void
     {
         if ($draft->getKey() === null) {
             return;
@@ -262,8 +287,8 @@ abstract class FamilyPublisher
         $replaced = collect(array_keys(self::CATALOG_IMAGE_COLUMNS))
             ->flatMap(fn (string $model) => $model::withHidden()
                 ->where('structure_draft_id', $draft->getKey())
-                ->get(['img', 'hero_img'])
-                ->flatMap(fn (Model $row) => [$row->img, $row->hero_img]))
+                ->get(['img', 'hero_img', 'gallery'])
+                ->flatMap(fn (Model $row) => [$row->img, $row->hero_img, ...($row->gallery ?? [])]))
             // Solo upload sul disco public: gli stem del template XD (senza '/')
             // sono asset versionati, non file del partner.
             ->filter(fn (?string $path) => filled($path) && str_contains($path, '/'))

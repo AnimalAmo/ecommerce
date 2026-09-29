@@ -74,11 +74,12 @@
                     @include('partials.favorite-heart', ['type' => 'structure', 'id' => $structure->id, 'active' => $isFav])
                 </div>
 
-                {{-- CTA galleria (TODO: galleria foto struttura) --}}
-                <flux:button class="!absolute bottom-[22px] right-4 h-10 !gap-2.5 !rounded-full !border-0 !bg-brand-cyan !px-7 !text-[15px] !font-bold !text-white !shadow-none lg:right-8">
-                    <flux:icon.eye class="h-[19px] w-[19px] shrink-0" />
-                    {{ __('holiday.view_all_photos') }}
-                </flux:button>
+                {{-- CTA galleria: solo con più foto, apre partials.catalog.photo-gallery in fondo alla pagina --}}
+                @include('partials.catalog.photo-gallery-trigger', [
+                    'photos' => $galleryPhotos,
+                    'label' => __('holiday.view_all_photos'),
+                    'class' => '!absolute bottom-[22px] right-4 lg:right-8',
+                ])
             </div>
         </section>
 
@@ -356,6 +357,9 @@
     </main>
 
     @include('partials.site-footer', ['hideMobileTabbar' => true])
+
+    {{-- Galleria «Vedere tutte le foto»: fuori dall'hero, vedi il partial --}}
+    @include('partials.catalog.photo-gallery', ['photos' => $galleryPhotos, 'title' => $structure->name])
 
     {{-- Barra fissa mobile (XD app "Dettaglio struttura"): sulla scheda la tabbar lascia il posto alla CTA carrello.
          Senza pagamento online non c'è niente da mettere nel carrello: la barra sparisce

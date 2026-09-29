@@ -56,6 +56,8 @@ class Event extends Model
         'is_free',
         'img',
         'hero_img',
+        // Foto della scheda nell'ordine della bozza, fotografate dal publisher («Vedere tutte le foto»).
+        'gallery',
         'description',
         // Gemella di `structure_drafts.detailed_description` (audit 28/09/2026,
         // difetto W1): il wizard la pretende per le attività, e senza colonna
@@ -72,6 +74,7 @@ class Event extends Model
     {
         return [
             'type' => ProductType::class,
+            'gallery' => 'array',
             'activity_categories' => 'array',
             'event_categories' => 'array',
             'starts_at' => 'datetime',

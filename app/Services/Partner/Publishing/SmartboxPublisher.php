@@ -35,6 +35,7 @@ class SmartboxPublisher extends FamilyPublisher
             'validity_months' => 12,
             'img' => $this->coverPhoto($draft),
             'hero_img' => $this->coverPhoto($draft),
+            'gallery' => $this->gallery($draft),
             'description' => $this->translations($draft, 'description'),
             'extended_description' => $this->translations($draft, 'detailed_description'),
             'general_info' => $this->generalInfo($draft),

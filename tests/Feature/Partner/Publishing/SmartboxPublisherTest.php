@@ -68,6 +68,7 @@ class SmartboxPublisherTest extends TestCase
         // Colonna NOT NULL senza fonte wizard: vuota ⇒ sezione nascosta.
         $this->assertSame([], $package->features);
         $this->assertSame('smartbox-photos/zen.jpg', $package->img);
+        $this->assertSame(['smartbox-photos/zen.jpg'], $package->gallery);
 
         $icons = array_column($package->general_info, 'icon');
         $this->assertSame(['calendar-return', 'home', 'coffee', 'lunch'], $icons);
