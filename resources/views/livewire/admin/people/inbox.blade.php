@@ -26,7 +26,7 @@
         <x-admin.card class="overflow-hidden">
             <header class="flex items-center justify-between gap-3 border-b border-gray-150 px-5 py-4">
                 <h2 class="m-0 text-base font-bold text-admin-rail">{{ $listTitle }}</h2>
-                <flux:select wire:model.live="filter" size="sm" :aria-label="__('admin-people.inbox.show')" class="!w-auto !appearance-auto">
+                <flux:select wire:model.live="filter" size="sm" :aria-label="__('admin-people.inbox.show')" class="!w-auto">
                     <flux:select.option value="open">{{ __('admin-people.inbox.filter_open') }}</flux:select.option>
                     <flux:select.option value="all">{{ __('admin-people.inbox.filter_all') }}</flux:select.option>
                     <flux:select.option value="archived">{{ __('admin-people.inbox.filter_archived') }}</flux:select.option>

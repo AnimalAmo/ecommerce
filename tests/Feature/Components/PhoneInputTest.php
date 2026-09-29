@@ -6,6 +6,8 @@ use App\Livewire\Partner\Registration\WorkWithUs;
 use App\Livewire\Profile\Profile;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -42,6 +44,46 @@ class PhoneInputTest extends TestCase
         $view->assertSee('333 123 4567', false);
         // La lista resta completa, non solo i mercati principali.
         $view->assertSee('HR +385', false);
+    }
+
+    /**
+     * Il prefisso mostrava due frecce (segnalazione del 29/09/2026, form
+     * «Lavora con noi»): quella che Flux disegna come background-image e quella
+     * nativa, riaccesa da !appearance-auto. Resta solo quella di Flux, e il
+     * padding destro deve lasciarle spazio (è larga 1,5em a 0,5rem dal bordo).
+     */
+    public function test_the_prefix_select_shows_only_the_flux_chevron(): void
+    {
+        $html = (string) $this->blade('<x-phone-input model="form.phone" />');
+
+        $dom = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $selects = (new DOMXPath($dom))->query('//select[@data-flux-select-native]');
+        $this->assertSame(1, $selects->length);
+        $classes = preg_split('/\s+/', trim($selects->item(0)->getAttribute('class')));
+
+        $native = array_filter($classes, fn (string $class): bool => str_contains($class, 'appearance-auto'));
+        $this->assertSame([], array_values($native), 'La freccia nativa torna accesa accanto a quella di Flux.');
+
+        // Ogni padding destro !important deve lasciare spazio alla freccia: sotto
+        // pe-8 il testo del prefisso le finisce sotto. Contano anche le varianti
+        // (max-lg:!pe-1 vince sotto lg), pr-/px-/p- (in Tailwind 4 pr- viene dopo
+        // pe- nel foglio e vince) e il «!» in fondo di Tailwind 4. Fra due token
+        // non vince l'ultimo scritto ma l'ordine del foglio: si guardano tutti.
+        // Nessun token = resta il pe-10 di Flux, che basta.
+        foreach ($classes as $class) {
+            if (! preg_match('/^(?:[^:]+:)*(?:!p[erx]?-(\S+)|p[erx]?-(\S+)!)$/', $class, $m)) {
+                continue;
+            }
+
+            $value = ($m[1] ?? '') !== '' ? $m[1] : ($m[2] ?? '');
+            $this->assertMatchesRegularExpression('/^\d+$/', $value, "{$class}: padding non confrontabile con la freccia di Flux (serve almeno pe-8).");
+            $this->assertGreaterThanOrEqual(8, (int) $value, "{$class}: il testo del prefisso finisce sotto la freccia di Flux.");
+        }
     }
 
     public function test_hydrates_the_default_country_when_there_is_no_number(): void

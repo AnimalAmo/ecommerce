@@ -38,7 +38,7 @@
     <x-admin.page-header :heading="__('admin-money.title')" :sub="__('admin-money.subtitle')">
         <x-slot:actions>
             <div class="min-w-[170px]">
-                <flux:select wire:model.live="period" aria-label="{{ __('admin-money.period_label') }}" class="!appearance-auto">
+                <flux:select wire:model.live="period" aria-label="{{ __('admin-money.period_label') }}">
                     @foreach ($options as $key => $label)
                         <flux:select.option value="{{ $key }}">{{ $label }}</flux:select.option>
                     @endforeach

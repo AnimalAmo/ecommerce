@@ -52,9 +52,12 @@
     x-effect="sync()"
     class="flex items-start gap-2"
 >
-    {{-- appearance-auto: fuori da flux:with-field il select default perde la freccia
-         (Flux la disegna nel wrapper del field), quindi si riprende quella nativa. --}}
-    <flux:select x-model="country" class="!w-auto shrink-0 !appearance-auto !ps-2 !pe-1 {{ $selectClass }}">
+    {{-- La freccia la disegna Flux come background-image del select (flux.css,
+         select[data-flux-select-native]), dentro o fuori da un field. Niente
+         !appearance-auto: riaccendeva quella nativa e il prefisso ne mostrava due
+         (segnalazione di Matteo, 29/09/2026, form «Lavora con noi»). !pe-8 lascia
+         lo spazio alla freccia di Flux (a 0,5rem dal bordo, larga 1,5em). --}}
+    <flux:select x-model="country" class="!w-auto shrink-0 !ps-2 !pe-8 {{ $selectClass }}">
         @foreach (\App\Support\Phone::countries() as $country)
             <flux:select.option value="{{ $country['code'] }}" title="{{ $country['name'] }}">{{ $country['flag'] }} {{ $country['code'] }} +{{ $country['dial'] }}</flux:select.option>
         @endforeach
