@@ -99,6 +99,30 @@ class PhotoGalleryTest extends TestCase
         $this->assertSame([], $activity->galleryImageUrls());
     }
 
+    /** La soglia vive in galleryPhotos(): pulsante e modale ricevono la stessa lista, vuota con una foto. */
+    public function test_la_galleria_per_pulsante_e_modale_e_vuota_con_una_foto_sola(): void
+    {
+        $single = Event::factory()->activity()->create(['hero_img' => self::PHOTOS[0], 'gallery' => [self::PHOTOS[0]]]);
+        $two = Event::factory()->activity()->create(['hero_img' => self::PHOTOS[0], 'gallery' => array_slice(self::PHOTOS, 0, 2)]);
+
+        $this->assertSame([], $single->galleryPhotos());
+        $this->assertSame([self::url(self::PHOTOS[0]), self::url(self::PHOTOS[1])], $two->galleryPhotos());
+    }
+
+    /**
+     * Sulla scheda struttura l'hero desktop è nascosto sotto lg: l'hero mobile
+     * ha il suo pulsante, e i due aprono lo stesso modale (uno solo in pagina).
+     */
+    public function test_la_struttura_ha_il_pulsante_anche_nell_hero_mobile(): void
+    {
+        Structure::factory()->create(['slug' => 'hotel', 'img' => self::PHOTOS[0], 'hero_img' => self::PHOTOS[0], 'gallery' => self::PHOTOS]);
+
+        $html = Livewire::test(AnimalHolidayStructure::class, ['region' => 'lombardia', 'structure' => 'hotel'])->html();
+
+        $this->assertSame(2, substr_count($html, "name: 'photo-gallery'"), 'Un pulsante nell\'hero mobile e uno in quello desktop.');
+        $this->assertSame(1, substr_count($html, 'data-modal="photo-gallery"'));
+    }
+
     /**
      * Le cinque schede col pulsante, ognuna col suo file di traduzioni. La
      * closure riceve le colonne immagine e rende la pagina.

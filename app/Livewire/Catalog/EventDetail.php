@@ -155,8 +155,8 @@ class EventDetail extends Component
 
         return view('livewire.catalog.event-detail', [
             'event' => $event,
-            // «Vedere tutte le foto»: copertina + galleria pubblicata; il pulsante compare da due foto in su.
-            'galleryPhotos' => $event->galleryImageUrls(),
+            // «Vedere tutte le foto»: vuoto con una foto sola, e allora niente pulsante né modale.
+            'galleryPhotos' => $event->galleryPhotos(),
             'isFav' => $this->isFavorite('event', $event->id),
             'isFree' => $event->is_free,
             'canJoin' => $event->hasJoinCta(),
