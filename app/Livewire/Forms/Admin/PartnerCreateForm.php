@@ -24,6 +24,16 @@ class PartnerCreateForm extends PartnerRegistrationForm
 
     public string $paymentUrl = '';
 
+    /**
+     * Facoltativa (richiesta della cliente, 05/10/2026): l'admin la sceglie e
+     * la comunica al partner, che entra senza passare dalla mail. Vuota = il
+     * flusso di prima, col link "scegli la password". Ignorata per un cliente
+     * promosso, che ha già la sua.
+     */
+    public string $password = '';
+
+    public string $passwordConfirmation = '';
+
     public function rules(): array
     {
         $rules = parent::rules();
@@ -39,6 +49,9 @@ class PartnerCreateForm extends PartnerRegistrationForm
             ...$rules,
             'paymentMode' => ['required', Rule::enum(OrderPaymentMode::class)],
             'paymentUrl' => PartnerPaymentModeService::PAYMENT_URL_RULES,
+            // Come la registrazione B2C (RegisterForm): almeno 8 caratteri, ripetuta.
+            'password' => ['nullable', 'string', 'min:8'],
+            'passwordConfirmation' => ['required_with:password', 'same:password'],
         ];
     }
 

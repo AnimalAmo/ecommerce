@@ -48,6 +48,13 @@ class PartnerRegisterStep1 extends Component
     public bool $accountInactive = false;
 
     /**
+     * Il link firmato è di una candidatura già diventata account (lo ha creato
+     * l'admin dal pannello): si dice di accedere, invece di far compilare due
+     * step per finire su "email già usata".
+     */
+    public bool $accountReady = false;
+
+    /**
      * Tre modi di arrivare qui, in ordine di precedenza:
      *   1. ritorno dallo step 2 → si ripristina quanto già inserito (sessione);
      *   2. link firmato dell'email di invito → prefill dalla candidatura;
@@ -170,6 +177,13 @@ class PartnerRegisterStep1 extends Component
     {
         if ($request->query('application') && $request->hasValidSignature()) {
             $application = PartnerApplication::find($request->query('application'));
+
+            if ($application?->status === PartnerApplication::STATUS_REGISTERED && $user === null) {
+                $this->accountReady = true;
+                $this->form->email = (string) $application->email;
+
+                return null;
+            }
 
             if ($application !== null && ($application->user_id === null || $application->user_id === $user?->id)) {
                 // `user_id === null` è il caso di OGNI candidatura inviata da

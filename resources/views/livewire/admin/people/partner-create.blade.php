@@ -14,6 +14,15 @@
 
     <x-admin.page-header :heading="__('admin-people.partner_create.title')" :sub="__('admin-people.partner_create.sub')" />
 
+    @if ($this->application !== null)
+        <x-admin.notice tone="info">
+            {{ __('admin-people.partner_create.from_application', [
+                'name' => trim($this->application->first_name.' '.$this->application->last_name),
+                'date' => $this->application->created_at?->locale('it')->isoFormat('D MMM YYYY'),
+            ]) }}
+        </x-admin.notice>
+    @endif
+
     <form wire:submit="save" class="flex flex-col gap-3.5">
         <div class="grid items-start gap-3.5 lg:grid-cols-2">
             <x-admin.card :heading="__('admin-people.partner_create.sections.person')">
@@ -43,7 +52,7 @@
                     <flux:input wire:model="form.vat" :label="$f('vat')" :description="__('admin-people.partner_create.fiscal_help')" />
                     <flux:input wire:model="form.taxCode" :label="$f('taxCode')" :description="__('admin-people.partner_create.fiscal_help')" />
                     <div class="sm:col-span-2">
-                        <flux:input wire:model="form.address" :label="$f('address')" />
+                        <flux:input wire:model="form.address" :label="$f('address')" :description="filled($this->application?->city) ? __('admin-people.partner_create.application_city', ['city' => $this->application->city]) : null" />
                     </div>
                     <flux:select variant="listbox" searchable wire:model="form.province" :label="$f('province')" :placeholder="__('admin-people.partner_create.province_placeholder')">
                         @foreach ($this->provinces as $province)
@@ -62,6 +71,14 @@
                     <flux:radio value="on_site" :label="__('admin-people.partner_create.payment.on_site')" />
                 </flux:radio.group>
                 <flux:input wire:model="form.paymentUrl" type="url" :label="$f('paymentUrl')" :description="__('admin-people.partner_create.payment.url_help')" />
+            </div>
+        </x-admin.card>
+
+        <x-admin.card :heading="__('admin-people.partner_create.access_section')">
+            <div class="grid items-start gap-4 p-5 sm:grid-cols-2">
+                <p class="m-0 text-[13.5px] leading-normal text-gray-600 sm:col-span-2">{{ __('admin-people.partner_create.password_help') }}</p>
+                <flux:input wire:model="form.password" type="password" viewable autocomplete="new-password" :label="$f('password')" />
+                <flux:input wire:model="form.passwordConfirmation" type="password" viewable autocomplete="new-password" :label="$f('passwordConfirmation')" />
             </div>
         </x-admin.card>
 

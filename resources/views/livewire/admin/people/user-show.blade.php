@@ -1,6 +1,7 @@
 @php
     use App\Enums\OrderPaymentMode;
     use App\Enums\OrderStatus;
+    use App\Models\Partner\PartnerApplication;
     use App\Services\Admin\Catalog\AdminServiceCreator;
     use App\Services\Admin\People\UserDirectory;
     use App\Support\Phone;
@@ -272,6 +273,9 @@
                             <span class="{{ $label }}">{{ $date($application->created_at) }}</span>
                             <span class="{{ $value }}">{{ $application->business_name }} <span class="font-normal text-gray-600">· {{ $application->offer_type }}</span></span>
                             <x-admin.badge :tone="$appTones[$application->status] ?? 'warning'">{{ __('admin-people.application_status.'.($application->status ?? 'pending')) }}</x-admin.badge>
+                            @if (! $isPartner && $anonymizedAt === null && $user->is_active && $application->status !== PartnerApplication::STATUS_REGISTERED)
+                                <x-admin.button tone="ghost" icon="user-plus" href="{{ route('admin.users.create', ['application' => $application->id]) }}" wire:navigate>{{ __('admin-people.users.make_partner') }}</x-admin.button>
+                            @endif
                         </div>
                     @endforeach
                 </div>

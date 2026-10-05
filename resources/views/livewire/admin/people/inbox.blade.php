@@ -137,6 +137,7 @@
                     <div class="mt-6 flex flex-wrap gap-2.5">
                         <x-admin.button tone="primary" icon="envelope" href="mailto:{{ $current->email }}?subject={{ rawurlencode($subject) }}">{{ __('admin-people.inbox.reply') }}</x-admin.button>
                         @if ($isApplications && $current->status !== PartnerApplication::STATUS_REGISTERED)
+                            <x-admin.button tone="primary" icon="user-plus" href="{{ route('admin.users.create', ['application' => $current->id]) }}" wire:navigate>{{ __('admin-people.inbox.create_partner') }}</x-admin.button>
                             <x-admin.button tone="outline" icon="paper-airplane" wire:click="invite">
                                 {{ __($current->status === PartnerApplication::STATUS_INVITED ? 'admin-people.inbox.invite_again' : 'admin-people.inbox.invite') }}
                             </x-admin.button>

@@ -10,7 +10,7 @@
 
 {{ __('partner.welcome_mail.expires', ['days' => $expiresInDays]) }}
 @else
-{{ __('partner.welcome_mail.promoted_intro', ['business' => $businessName]) }}
+{{ __($passwordGiven ? 'partner.welcome_mail.password_given_intro' : 'partner.welcome_mail.promoted_intro', ['business' => $businessName]) }}
 
 <x-mail::button :url="$loginUrl">
 {{ __('partner.welcome_mail.login_cta') }}

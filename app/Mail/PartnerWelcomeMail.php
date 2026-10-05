@@ -18,7 +18,9 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
  *    giorni): senza, l'account resterebbe con la password casuale di
  *    RegisterPartnerAccount;
  *  - cliente promosso → nessun link password, ha già la sua: solo "il tuo
- *    account ora è anche partner" e il pulsante per l'area partner.
+ *    account ora è anche partner" e il pulsante per l'area partner;
+ *  - password scelta dall'admin → nessun link: "accedi con la password che ti
+ *    abbiamo comunicato". La password non viaggia mai nella mail.
  *
  * NON in coda, come ResetPasswordMail e per lo stesso motivo: senza un
  * queue:work garantito in produzione un benvenuto che non parte lascia il
@@ -35,6 +37,7 @@ class PartnerWelcomeMail extends Mailable
     public function __construct(
         public User $partner,
         public ?string $setPasswordUrl,
+        public bool $passwordGiven = false,
     ) {
         $this->locale(LaravelLocalization::getDefaultLocale());
     }
