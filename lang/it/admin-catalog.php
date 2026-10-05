@@ -117,6 +117,21 @@ return [
         'delete_note' => 'Nessuna prenotazione futura: puoi eliminare la scheda definitivamente. Se vuoi solo toglierla dal sito, sospendila.',
         'delete' => 'Elimina scheda',
         'saved' => 'Modifiche salvate. Sono già sul sito.',
+        'photos' => [
+            'heading' => 'Foto',
+            'count' => '{1} :count foto (minimo :min)|[0,*] :count foto (minimo :min)',
+            'add' => 'Aggiungi foto',
+            'new' => 'Nuova',
+            'move_before' => 'Sposta prima',
+            'move_after' => 'Sposta dopo',
+            'make_cover' => 'Usa come copertina',
+            'remove' => 'Togli',
+            'save' => 'Salva foto',
+            'cancel' => 'Annulla',
+            'unsaved' => 'Modifiche alle foto non ancora salvate.',
+            'saved' => 'Foto salvate. Sono già sul sito.',
+            'partner_changes' => 'Il partner ha cambiato le foto nel suo pannello e non ha ancora ripubblicato la scheda. Se salvi qui, vale la tua versione: le foto che ha aggiunto e non sono qui sotto verranno tolte.',
+        ],
     ],
 
     'validation' => [

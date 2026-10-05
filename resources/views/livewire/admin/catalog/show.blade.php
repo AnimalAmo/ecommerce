@@ -114,5 +114,7 @@
         </div>
     </div>
 
+    <livewire:admin.catalog.catalog-photos :type="$type" :item-id="$itemId" :key="'photos-'.$type.'-'.$itemId" />
+
     @include('livewire.admin.catalog.partials.confirm-modal')
 </div>
