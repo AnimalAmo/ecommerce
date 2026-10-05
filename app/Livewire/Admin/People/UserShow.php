@@ -29,6 +29,11 @@ class UserShow extends Component
 
     public string $paymentUrl = '';
 
+    /** Modale "Dati fiscali": facoltativi alla creazione dal pannello, si completano qui. */
+    public string $vat = '';
+
+    public string $taxCode = '';
+
     public function mount(User $user): void
     {
         // I superadmin non sono iscritti: la loro scheda non esiste qui.
@@ -110,6 +115,40 @@ class UserShow extends Component
         Flux::toast(text: __('admin-people.users.payment_mode_saved', [], 'it'), variant: 'success');
     }
 
+    public function editFiscalData(): void
+    {
+        $profile = $this->partnerProfile();
+
+        if ($profile === null) {
+            return;
+        }
+
+        $this->vat = (string) $profile->vat;
+        $this->taxCode = (string) $profile->tax_code;
+        $this->resetErrorBag();
+
+        Flux::modal('fiscal-data')->show();
+    }
+
+    /** Stesse lunghezze del modulo d'iscrizione, ma facoltativi come in "Nuovo partner". */
+    public function saveFiscalData(PartnerAccountService $accounts): void
+    {
+        if ($this->partnerProfile() === null) {
+            return;
+        }
+
+        $this->validate([
+            'vat' => ['nullable', 'string', 'max:13'],
+            'taxCode' => ['nullable', 'string', 'max:16'],
+        ]);
+
+        $accounts->updateFiscalData($this->user, $this->vat, $this->taxCode);
+        $this->user->unsetRelation('partnerProfile');
+
+        Flux::modal('fiscal-data')->close();
+        Flux::toast(text: __('admin-people.users.fiscal_saved', [], 'it'), variant: 'success');
+    }
+
     /** Ruolo e stato li verifica il service: qui solo l'esito a schermo. */
     public function resendWelcome(PartnerAccountService $accounts): void
     {
@@ -130,6 +169,8 @@ class UserShow extends Component
         return [
             'paymentMode' => __('admin-people.partner_create.fields.paymentMode', [], 'it'),
             'paymentUrl' => __('admin-people.partner_create.fields.paymentUrl', [], 'it'),
+            'vat' => __('admin-people.partner_create.fields.vat', [], 'it'),
+            'taxCode' => __('admin-people.partner_create.fields.taxCode', [], 'it'),
         ];
     }
 

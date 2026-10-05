@@ -127,6 +127,19 @@
             <div class="px-5 py-3">
                 <div class="{{ $row }}"><span class="{{ $label }}">{{ __('admin-people.users.business_name') }}</span><span class="{{ $value }}">{{ $partner['business_name'] ?: '—' }}</span></div>
                 <div class="{{ $row }} items-center">
+                    <span class="{{ $label }}">{{ __('admin-people.users.fiscal_label') }}</span>
+                    <span class="{{ $value }}">
+                        <span class="block"><span class="font-normal text-gray-400">{{ __('admin-people.partner_create.fields.vat') }}:</span> {{ $partner['vat'] ?: '—' }}</span>
+                        <span class="block"><span class="font-normal text-gray-400">{{ __('admin-people.partner_create.fields.taxCode') }}:</span> {{ $partner['tax_code'] ?: '—' }}</span>
+                        @if (blank($partner['vat']) || blank($partner['tax_code']))
+                            <x-admin.badge tone="warning" class="mt-1">{{ __('admin-people.users.fiscal_missing') }}</x-admin.badge>
+                        @endif
+                    </span>
+                    @if ($user->partnerProfile !== null && $anonymizedAt === null)
+                        <x-admin.button tone="ghost" icon="pencil-square" wire:click="editFiscalData">{{ __('admin-people.users.fiscal_edit') }}</x-admin.button>
+                    @endif
+                </div>
+                <div class="{{ $row }} items-center">
                     <span class="{{ $label }}">{{ __('admin-people.users.listings') }}</span>
                     <span class="{{ $value }}">
                         {{ collect([
@@ -270,5 +283,6 @@
 
     @if ($partner !== null)
         @include('livewire.admin.people.partials.payment-mode-modal')
+        @include('livewire.admin.people.partials.fiscal-data-modal')
     @endif
 </div>

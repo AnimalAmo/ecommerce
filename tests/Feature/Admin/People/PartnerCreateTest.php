@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin\People;
 
 use App\Livewire\Admin\People\PartnerCreate;
 use App\Mail\PartnerWelcomeMail;
+use App\Models\Partner\PartnerProfile;
 use App\Models\Region\Province;
 use App\Models\User;
 use App\Services\Partner\PartnerPaymentModeService;
@@ -224,9 +225,38 @@ class PartnerCreateTest extends TestCase
     {
         $this->actingAsSuperadmin();
 
-        $this->filled(['firstName' => '', 'vat' => '', 'zip' => '123'])
+        $this->filled(['firstName' => '', 'address' => '', 'zip' => '123'])
             ->call('save')
-            ->assertHasErrors(['form.firstName' => 'required', 'form.vat' => 'required', 'form.zip' => 'digits']);
+            ->assertHasErrors(['form.firstName' => 'required', 'form.address' => 'required', 'form.zip' => 'digits']);
+    }
+
+    public function test_vat_and_tax_code_can_be_left_empty_and_are_stored_as_null(): void
+    {
+        $this->actingAsSuperadmin();
+
+        $this->filled(['vat' => '', 'taxCode' => '  '])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $profile = User::query()->where('email', 'marco@example.com')->sole()->partnerProfile;
+        $this->assertNull($profile->vat);
+        $this->assertNull($profile->tax_code);
+    }
+
+    public function test_a_promoted_customer_keeps_the_fiscal_data_of_its_old_profile_when_left_empty(): void
+    {
+        $this->actingAsSuperadmin();
+        $client = User::factory()->create(['email' => 'giulia@example.com']);
+        $client->assignRole('client');
+        PartnerProfile::factory()->for($client)->create(['vat' => '09876543210', 'tax_code' => 'RSSGLI85B41F205Z']);
+
+        $this->filled(['email' => 'giulia@example.com', 'vat' => '', 'taxCode' => ''])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $profile = $client->fresh()->partnerProfile;
+        $this->assertSame('09876543210', $profile->vat);
+        $this->assertSame('RSSGLI85B41F205Z', $profile->tax_code);
     }
 
     public function test_only_a_superadmin_opens_the_form(): void

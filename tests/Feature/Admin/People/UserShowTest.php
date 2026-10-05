@@ -272,6 +272,65 @@ class UserShowTest extends TestCase
         }
     }
 
+    public function test_a_partner_without_fiscal_data_is_flagged_and_the_admin_completes_it(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->onlinePartner();
+        $partner->partnerProfile->update(['vat' => null, 'tax_code' => null]);
+
+        Livewire::test(UserShow::class, ['user' => $partner])
+            ->assertSee(__('admin-people.users.fiscal_missing'))
+            ->call('editFiscalData')
+            ->assertSet('vat', '')
+            ->set('vat', ' 01234567890 ')
+            ->set('taxCode', 'GLLMRC80A01B157X')
+            ->call('saveFiscalData')
+            ->assertHasNoErrors()
+            ->assertDispatched('toast-show', $this->toast(__('admin-people.users.fiscal_saved')))
+            ->assertSee('01234567890')
+            ->assertDontSee(__('admin-people.users.fiscal_missing'));
+
+        $profile = $partner->partnerProfile->fresh();
+        $this->assertSame('01234567890', $profile->vat);
+        $this->assertSame('GLLMRC80A01B157X', $profile->tax_code);
+    }
+
+    public function test_emptied_fiscal_data_is_cleared_and_too_long_values_are_refused(): void
+    {
+        $this->actingAsSuperadmin();
+        $partner = $this->onlinePartner();
+        $partner->partnerProfile->update(['vat' => '01234567890', 'tax_code' => 'GLLMRC80A01B157X']);
+
+        Livewire::test(UserShow::class, ['user' => $partner])
+            ->call('editFiscalData')
+            ->assertSet('vat', '01234567890')
+            ->set('taxCode', str_repeat('X', 17))
+            ->call('saveFiscalData')
+            ->assertHasErrors(['taxCode' => 'max'])
+            ->set('vat', '')
+            ->set('taxCode', '')
+            ->call('saveFiscalData')
+            ->assertHasNoErrors();
+
+        $profile = $partner->partnerProfile->fresh();
+        $this->assertNull($profile->vat);
+        $this->assertNull($profile->tax_code);
+    }
+
+    public function test_a_customer_with_an_orphan_profile_cannot_have_its_fiscal_data_changed(): void
+    {
+        $this->actingAsSuperadmin();
+        $client = User::factory()->create();
+        PartnerProfile::factory()->for($client)->create(['vat' => '01234567890']);
+
+        Livewire::test(UserShow::class, ['user' => $client])
+            ->assertDontSee(__('admin-people.users.fiscal_label'))
+            ->set('vat', '')
+            ->call('saveFiscalData');
+
+        $this->assertSame('01234567890', $client->partnerProfile->fresh()->vat);
+    }
+
     public function test_an_offline_partner_without_stripe_cannot_go_back_online(): void
     {
         $this->actingAsSuperadmin();
