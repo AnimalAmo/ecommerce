@@ -37,16 +37,17 @@ two phpunit runs on the same mirror corrupt each other).
 
 ```bash
 # <name> = mirror suffix inside the VM (~/aa-<name>), <path> = "." for the main repo
-ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main .'
-ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main . --filter=SomeTest'
-ssh vagrant@192.168.56.56 'cd ~/Code/algomera/animal_amo/ecommerce && vendor/bin/pint --dirty'
+ssh vagrant@192.168.56.56 'bash ~/Code/animal_amo/aa-vm-test.sh main .'
+ssh vagrant@192.168.56.56 'bash ~/Code/animal_amo/aa-vm-test.sh main . --filter=SomeTest'
+ssh vagrant@192.168.56.56 'cd ~/Code/animal_amo/ecommerce && vendor/bin/pint --dirty'
 ```
 
 A long run needs `setsid`, not `nohup`: when the ssh session closes it takes the process with it. And
 `pgrep phpunit` finds nothing — the process is called `php`.
 
-**Baseline on Linux (the Homestead VM): `2094 passed, 1 skipped, 0 failed` (~345s) at 27/09/2026 — any
-red is yours.** In Docker on Windows the baseline is `20 failed, 1998 passed` (5m42s); `20 failed,
+**Baseline on Linux (the Homestead VM): `2648 passed, 6 incomplete, 1 skipped, 0 failed` (~505s) at
+05/10/2026 — any red is yours.** The 6 incomplete are `markTestIncomplete` with their reason (C3, C4, W6:
+they wait for the client's answers). In Docker on Windows the baseline is `20 failed, 1998 passed` (5m42s); `20 failed,
 1 skipped, 1997 passed` with `--native`. The 20 are pre-existing and live in three classes
 (`PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest`): the `email:rfc,dns` rule on
 partner applications needs DNS, which the sandbox has not, so the application is never stored and the
@@ -65,7 +66,7 @@ and everything goes through WSL + Docker, as described below. **On Linux**
 `animalamo.test` resolves and the box lives in `~/Homestead`. Its four cores are shared with every other
 project's session — a load of 90 means queued, not broken.
 
-The working copy is on Windows (`D:\Code\algomera\animal_amo\ecommerce`) and that is where you edit and
+The working copy is on Windows (`D:\Code\animal_amo\ecommerce`) and that is where you edit and
 commit. A mirror lives on the WSL ext4 filesystem at `~/aa`, kept in sync by `~/t.sh`; Docker bind-mounts
 **that** copy. Never bind-mount `/mnt/d` into a container — crossing the Windows filesystem makes the
 suite unusably slow.
