@@ -18,7 +18,7 @@ Su **nessuno dei due host** gira PHP: Windows ha la 7.4, Linux la 8.2 senza `pdo
 # Windows
 wsl -d Ubuntu -e bash -lc '~/t.sh --pint --dirty'
 # Linux
-ssh vagrant@192.168.56.56 'cd ~/Code/algomera/animal_amo/ecommerce && vendor/bin/pint --dirty'
+ssh vagrant@192.168.56.56 'cd ~/Code/animal_amo/ecommerce && vendor/bin/pint --dirty'
 ```
 
 ## 2. Test
@@ -27,8 +27,8 @@ ssh vagrant@192.168.56.56 'cd ~/Code/algomera/animal_amo/ecommerce && vendor/bin
 # Windows
 wsl -d Ubuntu -e bash -lc '~/t.sh'
 # Linux (l'ultimo argomento e i successivi vanno ad artisan test)
-ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main .'
-ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main . --filter=NomeTest'
+ssh vagrant@192.168.56.56 'bash ~/Code/animal_amo/aa-vm-test.sh main .'
+ssh vagrant@192.168.56.56 'bash ~/Code/animal_amo/aa-vm-test.sh main . --filter=NomeTest'
 ```
 
 **Atteso: su Linux zero rossi.** Al 27/09/2026 la suite è a `2094 passed, 1 skipped, 0 failed` (~345s): qualunque rosso è tuo. In Docker su Windows restano **20 rossi ambientali** in tre classi (`PhoneInputTest`, `BecomePartnerFromAccountTest`, `WorkWithUsFlowTest`), tutti per la regola `email:rfc,dns` sulle candidature partner, che senza DNS raggiungibile rifiuta l'email: la VM Linux risolve il DNS, quindi lì quei test girano davvero.
@@ -36,7 +36,7 @@ ssh vagrant@192.168.56.56 'bash ~/Code/algomera/animal_amo/aa-vm-test.sh main . 
 **Prima della suite, il lint sintattico dei file toccati.** Costa secondi e intercetta quello che i test non vedono: un `*/` in mezzo a un docblock (per esempio scrivendo `lang/*/validation.php` in un commento) chiude il commento in anticipo e il file non si parsa più.
 
 ```bash
-ssh vagrant@192.168.56.56 'cd ~/Code/algomera/animal_amo/ecommerce && php -l app/Percorso/File.php'
+ssh vagrant@192.168.56.56 'cd ~/Code/animal_amo/ecommerce && php -l app/Percorso/File.php'
 ```
 
 ## 3. Asset — NON buildare in locale
