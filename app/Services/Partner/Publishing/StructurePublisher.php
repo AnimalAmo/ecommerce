@@ -3,10 +3,8 @@
 namespace App\Services\Partner\Publishing;
 
 use App\Enums\ProductType;
-use App\Models\Region\Province;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Famiglia struttura (hotel|bb|agriturismo) → tabella structures.
@@ -26,7 +24,8 @@ class StructurePublisher extends FamilyPublisher
             'slug' => $this->slug($draft, 'struttura'),
             'location' => $draft->locationLabel(),
             // Regione derivata dalla provincia scelta nel wizard (provinces.region_id, mappa ISTAT).
-            'region_id' => $this->regionIdFor($draft),
+            // Senza una provincia valida resta quella che c'era, magari corretta dal pannello.
+            'region_id' => $this->regionIdFor($draft) ?? $current?->region_id,
             // "A partire da": la stanza più economica, per notte.
             'price_cents' => $priceCents,
             'price_from_cents' => $priceCents,
@@ -53,41 +52,6 @@ class StructurePublisher extends FamilyPublisher
         ]);
 
         return $structure;
-    }
-
-    /**
-     * Regione della scheda, dedotta dalla sigla di provincia della bozza
-     * (`provinces.region_id`, mappa ISTAT).
-     *
-     * Il null non blocca la pubblicazione — la scheda resta valida e
-     * prenotabile — ma la fa sparire da ogni elenco regionale, e finora
-     * succedeva in silenzio: nessuno collegava «il mio hotel non si trova» a
-     * una colonna vuota. Da qui il warning.
-     *
-     * Scatta in due casi diversi, sigla fuori elenco e provincia vuota (bozza
-     * vecchia, step "Luogo" mai completato), quindi il messaggio non accusa
-     * nessuno di aver sbagliato a scrivere: dice la conseguenza e lascia la
-     * sigla — o la stringa vuota — nel contesto.
-     */
-    private function regionIdFor(StructureDraft $draft): ?int
-    {
-        $province = (string) ($draft->province ?? '');
-
-        $regionId = $province === ''
-            ? null
-            : Province::query()->where('short_name', $province)->value('region_id');
-
-        if ($regionId === null) {
-            Log::warning('Regione non ricavata dalla provincia: la scheda non comparirà su nessuna pagina regione', [
-                'structure_draft_id' => $draft->id,
-                'partner_user_id' => $draft->user_id,
-                'province' => $province,
-            ]);
-
-            return null;
-        }
-
-        return (int) $regionId;
     }
 
     /** rooms[].price (stringhe numeric per notte) → min in cents; 0 senza stanze. */

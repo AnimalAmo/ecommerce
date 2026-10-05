@@ -35,11 +35,12 @@ class ActivityLocationForm extends Form
 
     /**
      * `province.exists`: la sigla deve esistere in `provinces`, lo stesso
-     * controllo che il pannello admin fa già (ActivityCreate). Un'attività non
-     * ha una regione — EventPublisher scrive un Venue, non `region_id` — ma la
-     * sigla finisce testuale nell'etichetta del luogo e nell'indirizzo del
-     * Venue: una sigla inventata diventa un «Garda (ZZ)» a catalogo, sotto gli
-     * occhi del cliente e non più modificabile dal partner a scheda pubblicata.
+     * controllo che il pannello admin fa già (ActivityCreate). Dal 05/10/2026
+     * la sigla decide anche la regione della scheda (EventPublisher scrive
+     * `region_id`, come le strutture), e finisce testuale nell'etichetta del
+     * luogo e nell'indirizzo del Venue: una sigla inventata diventa un «Garda
+     * (ZZ)» a catalogo, fuori da ogni regione e non più modificabile dal
+     * partner a scheda pubblicata.
      *
      * Due code separate e non un `required_if`: il campo del ramo abbandonato
      * non viene nemmeno disegnato, quindi non deve nemmeno essere validato —

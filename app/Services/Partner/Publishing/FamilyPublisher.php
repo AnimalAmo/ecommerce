@@ -5,6 +5,7 @@ namespace App\Services\Partner\Publishing;
 use App\Models\Amenity\Amenity;
 use App\Models\Event\Event;
 use App\Models\OrderItem\OrderItem;
+use App\Models\Region\Province;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
@@ -13,6 +14,7 @@ use Database\Seeders\AmenitySeeder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -298,6 +300,41 @@ abstract class FamilyPublisher
         foreach ($replaced as $path) {
             DB::afterCommit(fn () => self::deletePhotoIfUnreferenced($path));
         }
+    }
+
+    /**
+     * Regione della scheda, dedotta dalla sigla di provincia della bozza
+     * (`provinces.region_id`, mappa ISTAT).
+     *
+     * Il null non blocca la pubblicazione — la scheda resta valida e
+     * prenotabile — ma la fa sparire da ogni elenco regionale, e finora
+     * succedeva in silenzio: nessuno collegava «il mio hotel non si trova» a
+     * una colonna vuota. Da qui il warning.
+     *
+     * Scatta in due casi diversi, sigla fuori elenco e provincia vuota (bozza
+     * vecchia, step "Luogo" mai completato), quindi il messaggio non accusa
+     * nessuno di aver sbagliato a scrivere: dice la conseguenza e lascia la
+     * sigla — o la stringa vuota — nel contesto.
+     */
+    protected function regionIdFor(StructureDraft $draft): ?int
+    {
+        $province = (string) ($draft->province ?? '');
+
+        $regionId = $province === ''
+            ? null
+            : Province::query()->where('short_name', $province)->value('region_id');
+
+        if ($regionId === null) {
+            Log::warning('Regione non ricavata dalla provincia: la scheda non comparirà su nessuna pagina regione', [
+                'structure_draft_id' => $draft->id,
+                'partner_user_id' => $draft->user_id,
+                'province' => $province,
+            ]);
+
+            return null;
+        }
+
+        return (int) $regionId;
     }
 
     /** cancellation_when del wizard ('30'|'15'|'7'|'1') → giorni interi. */

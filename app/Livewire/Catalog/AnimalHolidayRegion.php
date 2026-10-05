@@ -110,6 +110,9 @@ class AnimalHolidayRegion extends Component
             ? Event::query()->whereRaw('1 = 0')->get()
             : Event::query()
                 ->whereIn('type', $eventTypes)
+                // Fino al 05/10/2026 qui non c'era: con la chip «Attività» accesa,
+                // /animal-holiday/lombardia mostrava le attività di tutta Italia.
+                ->where(fn ($query) => $this->inRegion($query, $regionId))
                 ->when(! $showAll, function ($query) use ($term): void {
                     $like = self::like($term);
                     // Stessa ricerca di Events::applyWhereFilter() (difetto W9,
@@ -196,13 +199,22 @@ class AnimalHolidayRegion extends Component
     private function regionStructures(int $regionId): Builder
     {
         // reviews_count: la card mostra il voto solo se qualcuno l'ha davvero dato.
-        return Structure::query()->withCount('reviews')->where(function (Builder $query) use ($regionId): void {
-            $query->where('region_id', $regionId);
+        return Structure::query()->withCount('reviews')->where(fn (Builder $query) => $this->inRegion($query, $regionId));
+    }
 
-            if (config('app.seed_demo_data')) {
-                $query->orWhereNull('region_id');
-            }
-        });
+    /**
+     * Le schede della regione. Le righe del catalogo demo non hanno regione:
+     * restano visibili dove il catalogo finto è seminato (locale e test), mai su
+     * animalamo.it dove il flag è spento. Vale per strutture e, dal 05/10/2026,
+     * per attività ed eventi (EventPublisher scrive la regione come StructurePublisher).
+     */
+    private function inRegion(Builder $query, int $regionId): void
+    {
+        $query->where('region_id', $regionId);
+
+        if (config('app.seed_demo_data')) {
+            $query->orWhereNull('region_id');
+        }
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
 use App\Models\Concerns\HasCatalogModeration;
 use App\Models\Concerns\HasFaqs;
+use App\Models\Region\Region;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Models\Venue\Venue;
@@ -47,6 +48,7 @@ class Event extends Model
         'title',
         'slug',
         'location',
+        'region_id',
         'starts_at',
         'ends_at',
         'duration_days',
@@ -87,6 +89,12 @@ class Event extends Model
             'price_cents' => 'integer',
             'is_free' => 'boolean',
         ];
+    }
+
+    /** Dalla provincia della bozza (EventPublisher), come le strutture. */
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
     }
 
     public function venue(): BelongsTo

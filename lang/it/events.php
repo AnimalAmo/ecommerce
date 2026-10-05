@@ -15,6 +15,8 @@ return [
     'filter_your_search' => 'Filtra la tua ricerca:',
     'filter_type' => 'Tipologia',
     'filter_price' => 'Fascia di prezzo',
+    'regions_label' => 'Regione',
+    'regions_all' => 'Tutte',
     'add_to_cart' => 'Aggiungi al carrello',
     'join' => 'Partecipa',
 
