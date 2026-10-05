@@ -29,6 +29,12 @@ class PartnerCreateForm extends PartnerRegistrationForm
         $rules = parent::rules();
         $rules['province'][] = 'exists:provinces,short_name';
 
+        // Facoltativi solo qui (richiesta della cliente, 05/10/2026): chi crea
+        // il partner da una telefonata o da una candidatura spesso non li ha.
+        // Si completano dopo dalla scheda del partner, o li scrive lui dal profilo.
+        $rules['vat'] = ['nullable', 'string', 'max:13'];
+        $rules['taxCode'] = ['nullable', 'string', 'max:16'];
+
         return [
             ...$rules,
             'paymentMode' => ['required', Rule::enum(OrderPaymentMode::class)],

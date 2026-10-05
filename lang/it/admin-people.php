@@ -137,6 +137,12 @@ return [
         'payment_mode_save' => 'Salva',
         'payment_mode_cancel' => 'Annulla',
         'payment_mode_saved' => 'Modalità di pagamento aggiornata.',
+        'fiscal_label' => 'Dati fiscali',
+        'fiscal_missing' => 'Da completare',
+        'fiscal_edit' => 'Modifica',
+        'fiscal_title' => 'Dati fiscali',
+        'fiscal_hint' => 'Puoi lasciarli vuoti e completarli quando li hai. Il partner li può inserire anche dal suo profilo.',
+        'fiscal_saved' => 'Dati fiscali aggiornati.',
         'stripe_label' => 'Stripe',
         'stripe_status' => [
             'payable' => 'Collegato e pagabile',
@@ -192,6 +198,7 @@ return [
             'paymentUrl' => 'Sito dove pagare o prenotare (facoltativo)',
         ],
         'province_placeholder' => 'Scegli la provincia',
+        'fiscal_help' => 'Facoltativo: puoi completarlo dopo dalla scheda del partner.',
         // Diverse di proposito dai badge users.payment_mode.*: la modale sta nella
         // stessa pagina dei badge, e testi uguali renderebbero ciechi i test.
         'payment' => [

@@ -94,8 +94,8 @@ class PartnerAccountService
             'province' => (string) $data['province'],
             'zip' => (string) $data['zip'],
             'phone' => (string) $data['phone'],
-            'vat' => (string) $data['vat'],
-            'taxCode' => (string) $data['taxCode'],
+            'vat' => self::blankToNull($data['vat'] ?? null),
+            'taxCode' => self::blankToNull($data['taxCode'] ?? null),
             'onlinePayment' => $online,
         ]);
 
@@ -174,6 +174,33 @@ class PartnerAccountService
         RateLimiter::hit($key, self::RESEND_DECAY_SECONDS);
 
         $this->sendWelcome($partner);
+    }
+
+    /**
+     * Partita IVA e codice fiscale dalla scheda del partner: il pannello li
+     * crea facoltativi, e qui l'admin li completa quando li ha. Un campo
+     * lasciato vuoto cancella il valore: è l'admin a correggerlo, non un
+     * modulo che non lo conosce.
+     *
+     * @throws PartnerAccountException notPartner()
+     */
+    public function updateFiscalData(User $partner, ?string $vat, ?string $taxCode): void
+    {
+        if (! $partner->hasRole('partner') || $partner->partnerProfile === null) {
+            throw PartnerAccountException::notPartner();
+        }
+
+        $partner->partnerProfile->update([
+            'vat' => self::blankToNull($vat),
+            'tax_code' => self::blankToNull($taxCode),
+        ]);
+    }
+
+    private static function blankToNull(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     /**

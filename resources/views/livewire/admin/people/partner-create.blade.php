@@ -40,8 +40,8 @@
                     <div class="sm:col-span-2">
                         <flux:input wire:model="form.businessName" :label="$f('businessName')" />
                     </div>
-                    <flux:input wire:model="form.vat" :label="$f('vat')" />
-                    <flux:input wire:model="form.taxCode" :label="$f('taxCode')" />
+                    <flux:input wire:model="form.vat" :label="$f('vat')" :description="__('admin-people.partner_create.fiscal_help')" />
+                    <flux:input wire:model="form.taxCode" :label="$f('taxCode')" :description="__('admin-people.partner_create.fiscal_help')" />
                     <div class="sm:col-span-2">
                         <flux:input wire:model="form.address" :label="$f('address')" />
                     </div>

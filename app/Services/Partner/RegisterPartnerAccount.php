@@ -36,14 +36,22 @@ class RegisterPartnerAccount
 
             // updateOrCreate: un utente promosso potrebbe già avere il profilo
             // (seconda attività, oppure ritorno sullo step 2).
-            $profile = $user->partnerProfile()->updateOrCreate([], [
+            // P.IVA e CF vuoti arrivano solo dal pannello, dove sono facoltativi:
+            // su un profilo che esisteva già non devono cancellare quelli salvati.
+            $attributes = [
                 'business_name' => $step1['businessName'],
-                'vat' => $step1['vat'],
-                'tax_code' => $step1['taxCode'],
                 'address' => $step1['address'],
                 'province' => $step1['province'],
                 'zip' => $step1['zip'],
-            ]);
+            ];
+
+            foreach (['vat' => 'vat', 'taxCode' => 'tax_code'] as $field => $column) {
+                if (($step1[$field] ?? null) !== null) {
+                    $attributes[$column] = $step1[$field];
+                }
+            }
+
+            $profile = $user->partnerProfile()->updateOrCreate([], $attributes);
 
             // La modalità di pagamento si sceglie una volta, quando il profilo
             // nasce. Rifare l'iscrizione su un profilo esistente non deve

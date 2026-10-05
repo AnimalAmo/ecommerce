@@ -201,6 +201,8 @@ class UserDirectory
 
         return [
             'business_name' => $user->partnerProfile?->business_name,
+            'vat' => $user->partnerProfile?->vat,
+            'tax_code' => $user->partnerProfile?->tax_code,
             'listings' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->count()),
             'suspended' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->whereNotNull('suspended_at')->count()),
             'withheld' => $listings->sum(fn (QueryBuilder $q): int => (clone $q)->whereNotNull('withheld_at')->count()),
