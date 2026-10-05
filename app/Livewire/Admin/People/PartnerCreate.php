@@ -5,9 +5,11 @@ namespace App\Livewire\Admin\People;
 use App\Exceptions\PartnerAccountException;
 use App\Exceptions\PaymentModeException;
 use App\Livewire\Forms\Admin\PartnerCreateForm;
+use App\Models\Partner\PartnerApplication;
 use App\Models\Region\Province;
 use App\Services\Admin\People\PartnerAccountService;
 use Flux\Flux;
+use Illuminate\Http\Request;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -25,6 +27,41 @@ class PartnerCreate extends Component
     #[Locked]
     public ?int $existingUserId = null;
 
+    /** Candidatura di partenza (`?application=`), solo se ancora aperta. */
+    #[Locked]
+    public ?int $applicationId = null;
+
+    /**
+     * Da "Crea partner" su una candidatura: si precompila quello che la
+     * candidatura ha. P.IVA, CF e indirizzo non li chiede, quindi restano da
+     * scrivere (P.IVA e CF sono facoltativi qui). Una candidatura già chiusa o
+     * inesistente apre il modulo vuoto.
+     */
+    public function mount(Request $request): void
+    {
+        $application = PartnerApplication::query()->open()->find($request->integer('application') ?: null);
+
+        if ($application === null) {
+            return;
+        }
+
+        $this->applicationId = $application->id;
+        $this->form->fill([
+            'firstName' => (string) $application->first_name,
+            'lastName' => (string) $application->last_name,
+            // Candidatura di un cliente: l'email del suo account, così viene promosso lui.
+            'email' => (string) ($application->user?->email ?? $application->email),
+            'phone' => (string) $application->phone,
+            'businessName' => (string) $application->business_name,
+        ]);
+    }
+
+    #[Computed]
+    public function application(): ?PartnerApplication
+    {
+        return $this->applicationId !== null ? PartnerApplication::find($this->applicationId) : null;
+    }
+
     public function save(PartnerAccountService $accounts): void
     {
         $this->existingUserId = null;
@@ -32,7 +69,8 @@ class PartnerCreate extends Component
         $data = $this->form->validate();
 
         try {
-            $created = $accounts->create($data);
+            // Rilettura: nel frattempo un altro admin, o il candidato, può averla chiusa.
+            $created = $accounts->create($data, PartnerApplication::query()->open()->find($this->applicationId));
         } catch (PartnerAccountException $e) {
             $this->existingUserId = $e->user?->id;
             $this->addError('form.email', $e->getMessage());
@@ -53,7 +91,13 @@ class PartnerCreate extends Component
         ]));
 
         if ($warnings === []) {
-            Flux::toast(text: __('admin-people.partner_create.'.($created->promoted ? 'promoted' : 'created'), [], 'it'), variant: 'success');
+            $outcome = match (true) {
+                $created->promoted => 'promoted',
+                filled($data['password'] ?? null) => 'created_with_password',
+                default => 'created',
+            };
+
+            Flux::toast(text: __('admin-people.partner_create.'.$outcome, [], 'it'), variant: 'success');
         } else {
             Flux::toast(
                 text: collect($warnings)->map(fn (string $key): string => __('admin-people.partner_create.'.$key, [], 'it'))->implode(' '),

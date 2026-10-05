@@ -6,6 +6,7 @@ use App\Enums\OrderPaymentMode;
 use App\Exceptions\PartnerAccountException;
 use App\Exceptions\PaymentModeException;
 use App\Mail\PartnerWelcomeMail;
+use App\Models\Partner\PartnerApplication;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
 use App\Services\Partner\PartnerPaymentModeService;
@@ -60,13 +61,21 @@ class PartnerAccountService
      * registrazione: set() fa partire un job afterCommit (P4), che dentro una
      * transazione esterna girerebbe al commit, fuori dal try/catch di set().
      *
+     * Da una candidatura (`$application`, solo se ancora aperta): l'account
+     * nasce collegato a lei, e tutte le candidature aperte con la stessa email
+     * diventano "registrate" e lavorate, o il contatore resterebbe alto.
+     *
+     * `password` (facoltativa, solo per un account nuovo): l'admin la sceglie e
+     * la comunica lui, e il partner entra senza passare dalla mail. La mail di
+     * benvenuto parte lo stesso, senza link e senza la password.
+     *
      * @param  array<string, mixed>  $data  chiavi di PartnerCreateForm (camelCase) + paymentMode, paymentUrl
      *
      * @throws PartnerAccountException
      * @throws PaymentModeException cliente con profilo offline che chiede online senza Stripe
      * @throws ValidationException link non http/https, sotto la chiave `paymentUrl`
      */
-    public function create(array $data): CreatedPartner
+    public function create(array $data, ?PartnerApplication $application = null): CreatedPartner
     {
         $email = Str::lower(trim((string) $data['email']));
         $online = ($data['paymentMode'] ?? OrderPaymentMode::Online->value) === OrderPaymentMode::Online->value;
@@ -97,7 +106,11 @@ class PartnerAccountService
             'vat' => self::blankToNull($data['vat'] ?? null),
             'taxCode' => self::blankToNull($data['taxCode'] ?? null),
             'onlinePayment' => $online,
+            // Mai trim su una password; a un cliente promosso non si cambia quella che ha.
+            'password' => $existing === null && filled($data['password'] ?? null) ? (string) $data['password'] : null,
         ]);
+
+        $this->closeApplications($user, $application);
 
         // Rilettura: per un cliente promosso la relazione era già caricata
         // (vuota) dal controllo qui sopra.
@@ -118,7 +131,7 @@ class PartnerAccountService
         // Registrazione già committata: token e mail non possono anticiparla.
         // L'account esiste comunque: se la mail non parte, l'admin la rimanda dalla scheda.
         try {
-            $this->sendWelcome($user, $promoted);
+            $this->sendWelcome($user, $promoted, passwordGiven: ! $promoted && filled($data['password'] ?? null));
             $welcomeSent = true;
         } catch (Throwable $e) {
             report($e);
@@ -135,14 +148,15 @@ class PartnerAccountService
      * della stessa email (anche di "password dimenticata") viene sostituito.
      *
      * @param  bool  $promoted  cliente promosso: ha già una password, riceve solo l'avviso
+     * @param  bool  $passwordGiven  password scelta dall'admin: niente link, l'avviso di accedere
      */
-    public function sendWelcome(User $partner, bool $promoted = false): void
+    public function sendWelcome(User $partner, bool $promoted = false, bool $passwordGiven = false): void
     {
-        $url = $promoted
+        $url = $promoted || $passwordGiven
             ? null
             : $this->setPasswordUrl($partner, Password::broker(PasswordResetService::WELCOME_BROKER)->createToken($partner));
 
-        Mail::to($partner->email)->send(new PartnerWelcomeMail($partner, $url));
+        Mail::to($partner->email)->send(new PartnerWelcomeMail($partner, $url, $passwordGiven));
     }
 
     /**
@@ -194,6 +208,27 @@ class PartnerAccountService
             'vat' => self::blankToNull($vat),
             'tax_code' => self::blankToNull($taxCode),
         ]);
+    }
+
+    /**
+     * La candidatura di partenza (anche se l'admin ha corretto l'email) e
+     * tutte quelle aperte con l'email del partner, comprese quelle da
+     * visitatore (user_id null): ora l'account esiste, e restare "da
+     * lavorare" le terrebbe nel contatore e col pulsante "Crea partner".
+     */
+    private function closeApplications(User $partner, ?PartnerApplication $source): void
+    {
+        PartnerApplication::query()
+            ->open()
+            ->where(fn ($query) => $query
+                ->whereRaw('lower(email) = ?', [Str::lower($partner->email)])
+                ->when($source !== null, fn ($query) => $query->orWhere('id', $source->id)))
+            ->update([
+                'user_id' => $partner->id,
+                'status' => PartnerApplication::STATUS_REGISTERED,
+                'registered_at' => now(),
+                'handled_at' => now(),
+            ]);
     }
 
     private static function blankToNull(mixed $value): ?string

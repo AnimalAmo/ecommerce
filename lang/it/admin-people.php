@@ -167,6 +167,7 @@ return [
         'pets_empty' => 'Nessun animale registrato.',
         'applications' => 'Candidature partner',
         'applications_empty' => 'Nessuna candidatura.',
+        'make_partner' => 'Rendi partner',
 
         'errors' => [
             'anonymized' => 'Un account anonimizzato non si può riattivare.',
@@ -196,9 +197,15 @@ return [
             'zip' => 'CAP',
             'paymentMode' => 'Come pagano i clienti',
             'paymentUrl' => 'Sito dove pagare o prenotare (facoltativo)',
+            'password' => 'Password (facoltativa)',
+            'passwordConfirmation' => 'Ripeti la password',
         ],
         'province_placeholder' => 'Scegli la provincia',
         'fiscal_help' => 'Facoltativo: puoi completarlo dopo dalla scheda del partner.',
+        'access_section' => 'Accesso',
+        'password_help' => 'Se la scegli tu, comunicala al partner: entra subito, senza la mail per scegliere la password. Se la lasci vuota, gli mandiamo il link per sceglierla. Per un cliente che diventa partner resta la sua.',
+        'from_application' => 'Dati presi dalla candidatura di :name del :date. Completa i campi mancanti: la candidatura verrà chiusa.',
+        'application_city' => 'Città indicata nella candidatura: :city',
         // Diverse di proposito dai badge users.payment_mode.*: la modale sta nella
         // stessa pagina dei badge, e testi uguali renderebbero ciechi i test.
         'payment' => [
@@ -209,6 +216,7 @@ return [
         ],
         'submit' => 'Crea il partner',
         'created' => 'Partner creato: gli abbiamo inviato la mail per scegliere la password.',
+        'created_with_password' => 'Partner creato con la password che hai scelto: comunicagliela. Gli abbiamo mandato una mail di benvenuto.',
         'promoted' => 'Il cliente ora è anche partner: gli abbiamo inviato una mail per avvisarlo.',
         // Non "la modalità": quella, per un profilo nuovo, la scrive già la
         // registrazione. A restare indietro è il link, e su un profilo che
@@ -319,6 +327,7 @@ return [
         'reply' => 'Rispondi',
         'reply_subject_message' => 'Re: :reason',
         'reply_subject_application' => 'La tua candidatura su AnimalAmo',
+        'create_partner' => 'Crea partner',
         'invite' => 'Invia invito',
         'invite_again' => 'Invia di nuovo l\'invito',
         'invited' => 'Invito inviato a :email.',

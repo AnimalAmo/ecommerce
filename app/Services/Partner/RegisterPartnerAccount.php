@@ -76,6 +76,7 @@ class RegisterPartnerAccount
     /**
      * Password casuale: il mockup non prevede il campo — l'accesso post-logout
      * arriverà col flusso "imposta password" (TODO, non ancora disegnato).
+     * Dal pannello l'admin può sceglierla lui (`password` nello step 1).
      *
      * @param  array<string, string>  $step1
      */
@@ -86,7 +87,7 @@ class RegisterPartnerAccount
             'last_name' => $step1['lastName'],
             'email' => $step1['email'],
             'phone' => $step1['phone'],
-            'password' => Str::password(32),
+            'password' => ($step1['password'] ?? null) ?: Str::password(32),
             'is_active' => true,
         ]);
 
