@@ -182,9 +182,10 @@ class CatalogAdmin
         return (string) ($item->location ?? '') ?: '—';
     }
 
+    /** Strutture, attività ed eventi hanno una regione (eventi dal 05/10/2026); le smartbox no. */
     public function regionName(Model $item): ?string
     {
-        return $item instanceof Structure ? $item->region?->name : null;
+        return $item instanceof Structure || $item instanceof Event ? $item->region?->name : null;
     }
 
     /**
@@ -317,6 +318,9 @@ class CatalogAdmin
                 $item->animal_supplement_cents = $data['supplement_cents'] ?? 0;
                 $item->region_id = $data['region_id'] ?? null;
             } elseif ($item instanceof Event) {
+                // Una ripubblicazione la ricalcola dalla provincia; se la provincia
+                // della bozza non è valida, resta questa (EventPublisher).
+                $item->region_id = $data['region_id'] ?? null;
                 $item->price_cents = $data['price_cents'];
                 $item->is_free = ($data['price_cents'] ?? 0) === 0;
             } else {
@@ -402,8 +406,8 @@ class CatalogAdmin
     {
         $parts = collect(self::FAMILIES)
             ->filter(fn (array $family, string $alias) => blank($filters['family'] ?? null) || $filters['family'] === $alias)
-            // La regione esiste solo sulle strutture: filtrarla esclude le altre famiglie.
-            ->filter(fn (array $family, string $alias) => blank($filters['region'] ?? null) || $alias === 'structure')
+            // Le smartbox non hanno regione: filtrarla le esclude.
+            ->filter(fn (array $family, string $alias) => blank($filters['region'] ?? null) || $alias !== 'smartbox_package')
             ->map(fn (array $family, string $alias) => $this->part($alias, $family[1], $family[2], $filters))
             ->values();
 
@@ -472,7 +476,7 @@ class CatalogAdmin
         $loaded = $rows->groupBy('family')->map(function (Collection $group, string $alias) {
             $with = ['user.partnerProfile'];
 
-            if ($alias === 'structure') {
+            if ($alias !== 'smartbox_package') {
                 $with[] = 'region';
             }
 

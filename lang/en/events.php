@@ -15,6 +15,8 @@ return [
     'filter_your_search' => 'Filter your search:',
     'filter_type' => 'Type',
     'filter_price' => 'Price range',
+    'regions_label' => 'Region',
+    'regions_all' => 'All',
     'add_to_cart' => 'Add to cart',
     'join' => 'Join',
 

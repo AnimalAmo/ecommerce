@@ -73,6 +73,8 @@
                     />
                     @if ($isStructure)
                         <flux:input wire:model="supplement" :label="__('admin-catalog.show.supplement')" inputmode="decimal" />
+                    @endif
+                    @if ($hasRegion)
                         <flux:select wire:model="regionId" :label="__('admin-catalog.show.region')">
                             <flux:select.option value="">{{ __('admin-catalog.show.region_none') }}</flux:select.option>
                             @foreach ($regions as $id => $name)

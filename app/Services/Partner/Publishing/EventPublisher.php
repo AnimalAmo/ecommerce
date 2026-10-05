@@ -50,6 +50,9 @@ class EventPublisher extends FamilyPublisher
             'title' => $this->translations($draft, 'name'),
             'slug' => $this->slug($draft, $isEvent ? 'evento' : 'attivita'),
             'location' => $draft->locationLabel(),
+            // Come le strutture (cliente, 01/10/2026): dalla provincia dello step
+            // «Luogo». Senza una provincia valida resta quella che c'era.
+            'region_id' => $this->regionIdFor($draft) ?? $current?->region_id,
             // Il wizard salva data e orario separati (orari solo per gli eventi).
             'starts_at' => $this->composeDateTime($draft->date_start, $draft->time_start, '00:00'),
             'ends_at' => $this->composeDateTime($draft->date_end ?? $draft->date_start, $draft->time_end, '23:59'),

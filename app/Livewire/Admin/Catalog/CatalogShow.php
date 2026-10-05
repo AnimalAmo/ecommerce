@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Catalog;
 
 use App\Livewire\Admin\Concerns\ConfirmsCatalogActions;
+use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\Structure\Structure;
 use App\Services\Admin\Catalog\CatalogAdmin;
@@ -53,6 +54,7 @@ class CatalogShow extends Component
     {
         $item = $this->item($catalog);
         $isStructure = $item instanceof Structure;
+        $hasRegion = $isStructure || $item instanceof Event;
 
         $this->validate([
             'name.it' => ['required', 'string', 'max:160'],
@@ -61,7 +63,7 @@ class CatalogShow extends Component
             'description.en' => ['nullable', 'string', 'max:10000'],
             'price' => ['nullable', 'regex:/^\d{1,6}([.,]\d{1,2})?$/'],
             'supplement' => [$isStructure ? 'nullable' : 'exclude', 'regex:/^\d{1,5}([.,]\d{1,2})?$/'],
-            'regionId' => [$isStructure ? 'nullable' : 'exclude', 'exists:regions,id'],
+            'regionId' => [$hasRegion ? 'nullable' : 'exclude', 'exists:regions,id'],
             'cancellationDays' => ['nullable', 'integer', 'min:0', 'max:365'],
         ], [
             'name.it.required' => __('admin-catalog.validation.name_required'),
@@ -100,6 +102,7 @@ class CatalogShow extends Component
             'item' => $item,
             'isStructure' => $item instanceof Structure,
             'isEvent' => $item->getMorphClass() === 'event',
+            'hasRegion' => $item instanceof Structure || $item instanceof Event,
             'publicUrl' => $item->isVisibleInCatalog() ? $presenter->publicUrl($item) : null,
             'publishedOn' => ($item->approved_at ?? $item->created_at)?->locale('it')->isoFormat('D MMMM YYYY'),
             'stats' => [
@@ -131,7 +134,7 @@ class CatalogShow extends Component
 
         $this->price = $this->euros($item->price_cents);
         $this->supplement = $item instanceof Structure ? $this->euros($item->animal_supplement_cents) : '';
-        $this->regionId = $item instanceof Structure ? (string) ($item->region_id ?? '') : '';
+        $this->regionId = $item instanceof Structure || $item instanceof Event ? (string) ($item->region_id ?? '') : '';
         $this->cancellationDays = (string) ($item->cancellation_policy_days ?? '');
     }
 
