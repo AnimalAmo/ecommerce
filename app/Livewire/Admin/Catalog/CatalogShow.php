@@ -11,6 +11,7 @@ use App\Support\Format;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class CatalogShow extends Component
@@ -81,6 +82,10 @@ class CatalogShow extends Component
 
         Flux::toast(text: __('admin-catalog.show.saved'), variant: 'success');
     }
+
+    /** La miniatura dell'intestazione segue la copertina appena salvata da CatalogPhotos. */
+    #[On('catalog-photos-saved')]
+    public function refreshAfterPhotos(): void {}
 
     protected function afterCatalogAction(bool $deleted): void
     {
