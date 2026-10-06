@@ -7,6 +7,7 @@ use App\Mail\Newsletter\NewsletterConfirmationMail;
 use App\Models\Newsletter\NewsletterCampaign;
 use App\Models\Newsletter\NewsletterSubscriber;
 use App\Models\User;
+use App\Services\Newsletter\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -148,6 +149,51 @@ class NewsletterIndexTest extends TestCase
         $this->assertSame(NewsletterSubscriber::STATUS_UNSUBSCRIBED, $subscriber->fresh()->status);
         $this->assertFalse($user->fresh()->newsletter);
         $this->assertTrue($user->fresh()->exists);
+    }
+
+    /**
+     * Cliente, 06/10/2026: un iscritto in attesa «non riesce a confermare».
+     * Il pannello non conferma al suo posto (GDPR), ma gli rimanda la mail; il
+     * link vale di nuovo anche se quello vecchio era scaduto.
+     */
+    public function test_the_admin_can_resend_the_confirmation_to_a_pending_subscriber(): void
+    {
+        Mail::fake();
+        $this->actingAsSuperadmin();
+        $pending = NewsletterSubscriber::factory()->create([
+            'email' => 'renato@example.com',
+            'confirmation_sent_at' => now()->subDays(45),
+        ]);
+        $proof = $pending->consent_text;
+
+        $this->assertNull(app(SubscriptionService::class)->findByConfirmationToken($pending->token), 'Il link vecchio è scaduto.');
+
+        Livewire::test(NewsletterIndex::class)
+            ->assertSee(__('admin-newsletter.subscribers.resend'))
+            ->call('resendConfirmation', $pending->id)
+            ->assertDispatched('toast-show');
+
+        Mail::assertQueued(NewsletterConfirmationMail::class, fn (NewsletterConfirmationMail $mail) => $mail->hasTo('renato@example.com'));
+
+        $pending->refresh();
+        $this->assertSame(NewsletterSubscriber::STATUS_PENDING, $pending->status, 'La conferma resta a lui.');
+        $this->assertSame($proof, $pending->consent_text);
+        $this->assertTrue($pending->confirmation_sent_at->isToday());
+        $this->assertNotNull(app(SubscriptionService::class)->findByConfirmationToken($pending->token), 'Il link vale di nuovo.');
+    }
+
+    public function test_the_resend_is_refused_for_confirmed_addresses_and_right_after_another_mail(): void
+    {
+        Mail::fake();
+        $this->actingAsSuperadmin();
+        $confirmed = NewsletterSubscriber::factory()->confirmed()->create();
+        $justSent = NewsletterSubscriber::factory()->create(['confirmation_sent_at' => now()->subMinutes(2)]);
+
+        Livewire::test(NewsletterIndex::class)
+            ->call('resendConfirmation', $confirmed->id)
+            ->call('resendConfirmation', $justSent->id);
+
+        Mail::assertNothingQueued();
     }
 
     public function test_legacy_contacts_get_the_courtesy_confirmation_from_the_notice(): void

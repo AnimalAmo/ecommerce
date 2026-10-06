@@ -276,6 +276,31 @@ class SubscriptionService
         return $sent;
     }
 
+    /**
+     * «Reinvia conferma» dal pannello (cliente, 06/10/2026: un iscritto in
+     * attesa non riusciva a confermare). Rimanda la stessa mail con lo stesso
+     * token, e il link riprende validità da adesso. La prova del consenso non
+     * cambia: resta quella della richiesta originale, perché la conferma la dà
+     * comunque l'iscritto con il suo clic.
+     *
+     * false (e nessuna mail) se non è in attesa o se una conferma è partita da
+     * meno di RESEND_COOLDOWN_MINUTES: due clic di fila non mandano due mail.
+     */
+    public function resendConfirmation(NewsletterSubscriber $subscriber): bool
+    {
+        $recentlySent = $subscriber->confirmation_sent_at?->gt(now()->subMinutes(self::RESEND_COOLDOWN_MINUTES));
+
+        if ($subscriber->status !== NewsletterSubscriber::STATUS_PENDING || $recentlySent) {
+            return false;
+        }
+
+        $subscriber->forceFill(['confirmation_sent_at' => now()])->save();
+
+        $this->mailer->send($subscriber->email, new NewsletterConfirmationMail($subscriber, courtesy: (bool) $subscriber->legacy));
+
+        return true;
+    }
+
     private function confirmationExpired(NewsletterSubscriber $subscriber): bool
     {
         $days = (int) config('newsletter.confirmation_ttl_days');
