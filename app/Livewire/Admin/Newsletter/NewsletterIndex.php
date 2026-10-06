@@ -90,6 +90,18 @@ class NewsletterIndex extends Component
         Flux::modal('newsletter-unsubscribe')->close();
     }
 
+    public function resendConfirmation(int $id, SubscriptionService $subscriptions): void
+    {
+        $subscriber = NewsletterSubscriber::findOrFail($id);
+
+        $sent = $subscriptions->resendConfirmation($subscriber);
+
+        Flux::toast(
+            text: __($sent ? 'admin-newsletter.subscribers.resend_done' : 'admin-newsletter.subscribers.resend_refused', ['email' => $subscriber->email]),
+            variant: $sent ? 'success' : 'warning',
+        );
+    }
+
     public function sendLegacyConfirmations(SubscriptionService $subscriptions): void
     {
         $subscriptions->importLegacyFlags();

@@ -115,6 +115,10 @@
                                     <flux:table.cell class="!pr-5">
                                         <div class="flex items-center justify-end gap-2">
                                             <x-admin.icon-action tone="view" icon="eye" :label="__('admin-newsletter.subscribers.view_proof')" wire:click="showProof({{ $subscriber->id }})" />
+                                            {{-- La conferma la dà l'iscritto con il clic (GDPR): qui si può solo rimandargli la mail. --}}
+                                            @if ($subscriber->status === 'pending')
+                                                <x-admin.icon-action tone="neutral" icon="paper-airplane" :label="__('admin-newsletter.subscribers.resend')" wire:click="resendConfirmation({{ $subscriber->id }})" />
+                                            @endif
                                             @if (in_array($subscriber->status, ['confirmed', 'pending'], true))
                                                 <x-admin.icon-action tone="delete" icon="trash" :label="__('admin-newsletter.subscribers.unsubscribe')" wire:click="askUnsubscribe({{ $subscriber->id }})" />
                                             @endif
