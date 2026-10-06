@@ -6,6 +6,7 @@ return [
     'holiday.service' => 'animal-holiday/{region}/servizi/{service}',
     'holiday.structure' => 'animal-holiday/{region}/{structure}',
     'eventi' => 'eventi',
+    'eventi.region' => 'eventi/regione/{region}',
     'eventi.activity' => 'eventi/attivita/{activity}',
     'eventi.detail' => 'eventi/{event}',
     'smartbox' => 'smartbox',

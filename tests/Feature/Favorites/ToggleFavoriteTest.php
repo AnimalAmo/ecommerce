@@ -81,14 +81,14 @@ class ToggleFavoriteTest extends TestCase
     public function test_listing_hearts_hydrate_from_persisted_favorites(): void
     {
         // Ospite: tutti i cuori inattivi.
-        $this->get('/eventi')
+        $this->get('/eventi/regione/lombardia')
             ->assertOk()
             ->assertDontSee('{ fav: true }', false);
 
         // Giulia ha 3 preferiti evento seedati: cuori attivi già al primo render.
         $giulia = User::where('email', 'giulia.rossi@gmail.com')->firstOrFail();
 
-        $this->actingAs($giulia)->get('/eventi')
+        $this->actingAs($giulia)->get('/eventi/regione/lombardia')
             ->assertOk()
             ->assertSee('{ fav: true }', false);
     }

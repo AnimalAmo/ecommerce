@@ -13,6 +13,7 @@ use App\Models\Region\Region;
 use App\Services\FavoriteService;
 use App\Services\Partner\PartnerPaymentModeService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -41,12 +42,21 @@ class Events extends Component
     public string $where = '';
 
     /**
-     * Regione (cliente, 01/10/2026): slug della barra in cima alla pagina,
-     * condivisibile (?regione=lombardia). Vuoto = tutte. Arriva dal client:
-     * si rilegge dal database (selectedRegionId()), uno slug sconosciuto vale «tutte».
+     * Regione della pagina (/eventi/regione/{region}, cliente 06/10/2026): la
+     * lista mostra solo le sue schede. Null = tutte, solo dove non c'è una
+     * regione nella rotta (test e componente montato a mano).
      */
-    #[Url(as: 'regione')]
-    public string $region = '';
+    #[Locked]
+    public ?int $regionId = null;
+
+    #[Locked]
+    public string $regionName = '';
+
+    public function mount(?Region $region = null): void
+    {
+        $this->regionId = $region?->id;
+        $this->regionName = (string) $region?->name;
+    }
 
     public string $guests = '';
 
@@ -67,11 +77,6 @@ class Events extends Component
         $this->resetPage();
     }
 
-    public function updatedRegion(): void
-    {
-        $this->resetPage();
-    }
-
     /** "Carica altro" (XD app): allunga la prima pagina di un blocco invece di impaginare. */
     public function loadMore(): void
     {
@@ -87,20 +92,16 @@ class Events extends Component
             in_array('eventi', $this->activeTypes, true) ? ProductType::Event : null,
         ]));
 
-        // Tutti i filtri tranne la regione: è la base dei conteggi della barra,
-        // che dicono quante schede si vedrebbero cliccando ciascuna regione.
         $filtered = fn (): Builder => ($eventTypes === []
             ? Event::query()->whereRaw('1 = 0')
             : Event::query()->whereIn('type', $eventTypes))
-            ->tap(fn (Builder $query) => $this->upcoming($query))
+            ->upcoming()
             ->when(trim($this->where) !== '', fn (Builder $query) => $this->applyWhereFilter($query))
             // Fascia di prezzo: attiva solo se l'utente si è mosso dai default XD
             // (i seed hanno anche prezzi a 0 che ai default resterebbero esclusi).
             ->when($this->priceFiltered(), fn (Builder $query) => $query->whereBetween('price_cents', $this->priceRangeCents()));
 
-        $regionId = $this->selectedRegionId();
-
-        $events = $this->ordered($filtered()->when($regionId !== null, fn (Builder $query) => $query->where('region_id', $regionId)))
+        $events = $this->ordered($filtered()->tap(fn (Builder $query) => $this->inRegion($query)))
             ->paginate($this->pageSize());
 
         $empty = $events->isEmpty();
@@ -113,14 +114,15 @@ class Events extends Component
         // Solo eventi già finiti = per il visitatore il catalogo è vuoto.
         $catalogueEmpty = $empty && Event::query()
             ->whereIn('type', [ProductType::Activity, ProductType::Event])
-            ->tap(fn (Builder $query) => $this->upcoming($query))
+            ->upcoming()
             ->doesntExist();
 
         // "Nessun risultato trovato": l'XD app non lascia la pagina vuota ma propone card
         // simili, cioè lo stesso catalogo senza i filtri (tipologia e prezzo) che l'hanno svuotato.
         $similar = $empty
             ? $this->ordered(Event::query()
-                ->tap(fn (Builder $query) => $this->upcoming($query))
+                ->upcoming()
+                ->tap(fn (Builder $query) => $this->inRegion($query))
                 ->when(trim($this->where) !== '', fn (Builder $query) => $this->applyWhereFilter($query)))
                 ->limit(self::SIMILAR_LIMIT)
                 ->get()
@@ -152,13 +154,11 @@ class Events extends Component
             'soldOutIds' => $soldOutIds,
             'empty' => $empty,
             'catalogueEmpty' => $catalogueEmpty,
-            'regions' => $this->regionCounts($filtered(), $regionId),
-            'selectedRegionId' => $regionId,
             'similar' => $similar,
             // Datepicker "Quando": calendario range condiviso (giorni passati disabilitati).
             'calendar' => $this->buildCalendar(),
             'calendarLabel' => $this->calendarLabel(),
-        ])->title(__('events.meta_title'));
+        ])->title($this->regionName !== '' ? __('events.region_meta_title', ['region' => $this->regionName]) : __('events.meta_title'));
     }
 
     /** Solo attività ed eventi: le altre card tipologia restano nel modal per fedeltà XD ma non filtrano qui. */
@@ -174,22 +174,6 @@ class Events extends Component
     }
 
     /**
-     * Gli eventi già finiti non si propongono più (cliente, 05/10/2026: «nascosti»,
-     * non cancellati: ordini e prenotazioni continuano a puntarli). Finito = la
-     * fine, o l'inizio se la fine manca, è nel passato. Le attività senza date
-     * restano, come in home e in AvailabilityService.
-     */
-    private function upcoming(Builder $query): void
-    {
-        $now = now();
-
-        $query->where(fn (Builder $sub) => $sub
-            ->whereNull('starts_at')
-            ->orWhere('ends_at', '>=', $now)
-            ->orWhere(fn (Builder $open) => $open->whereNull('ends_at')->where('starts_at', '>=', $now)));
-    }
-
-    /**
      * Pagina 1 = le 12 card della griglia XD (position); a seguire, paginati,
      * gli eventi finora solo in home (position null, ordinati per home_position).
      */
@@ -201,45 +185,24 @@ class Events extends Component
             ->orderBy('home_position');
     }
 
-    private function selectedRegionId(): ?int
-    {
-        return $this->region === '' ? null : Region::query()->where('slug', $this->region)->value('id');
-    }
-
     /**
-     * La barra: solo le regioni che hanno schede con i filtri di adesso, in
-     * ordine alfabetico, con il conteggio. Una query sola, raggruppata, e su
-     * Eloquent: lo scope di visibilità del catalogo tiene fuori dai numeri le
-     * schede sospese, ritirate o in attesa, come dalla griglia. La regione
-     * scelta resta nella barra anche a zero (altri filtri l'hanno svuotata):
-     * sparendo, nessun pulsante risulterebbe acceso e il filtro sarebbe invisibile.
-     *
-     * @return list<array{slug: string, name: string, count: int}>
+     * Le schede della regione della pagina. Le righe del catalogo demo non
+     * hanno regione: restano visibili dove il catalogo finto è seminato
+     * (locale e test), mai su animalamo.it, come in Animal Holiday.
      */
-    private function regionCounts(Builder $filtered, ?int $selected): array
+    private function inRegion(Builder $query): void
     {
-        $counts = $filtered
-            ->whereNotNull('region_id')
-            ->selectRaw('region_id, count(*) as aggregate')
-            ->groupBy('region_id')
-            ->pluck('aggregate', 'region_id');
-
-        $ids = $counts->keys()->when($selected !== null, fn ($ids) => $ids->push($selected))->unique();
-
-        if ($ids->isEmpty()) {
-            return [];
+        if ($this->regionId === null) {
+            return;
         }
 
-        return Region::query()
-            ->whereIn('id', $ids)
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug'])
-            ->map(fn (Region $region): array => [
-                'slug' => (string) $region->slug,
-                'name' => (string) $region->name,
-                'count' => (int) ($counts[$region->id] ?? 0),
-            ])
-            ->all();
+        $query->where(function (Builder $sub): void {
+            $sub->where('region_id', $this->regionId);
+
+            if (config('app.seed_demo_data')) {
+                $sub->orWhereNull('region_id');
+            }
+        });
     }
 
     /** Dimensione pagina bonificata: il payload client è arbitrario, la teniamo tra un blocco e il tetto. */

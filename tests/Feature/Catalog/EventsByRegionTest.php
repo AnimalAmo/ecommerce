@@ -5,6 +5,7 @@ namespace Tests\Feature\Catalog;
 use App\Livewire\Admin\Catalog\CatalogShow;
 use App\Livewire\Catalog\AnimalHolidayRegion;
 use App\Livewire\Catalog\Events;
+use App\Livewire\Catalog\EventsRegions;
 use App\Models\Event\Event;
 use App\Models\Region\Region;
 use App\Models\Structure\StructureDraft;
@@ -109,49 +110,56 @@ class EventsByRegionTest extends TestCase
 
     // ── /eventi ───────────────────────────────────────────────────────────────
 
-    public function test_the_bar_lists_only_regions_with_listings_and_their_counts(): void
+    public function test_the_landing_page_lists_every_region_with_its_count(): void
     {
         Event::factory()->count(2)->create(['region_id' => $this->region('lombardia')->id]);
         Event::factory()->create(['region_id' => $this->region('toscana')->id]);
         Event::factory()->create(['region_id' => $this->region('toscana')->id, 'suspended_at' => now()]);
+        Event::factory()->create(['region_id' => $this->region('toscana')->id, 'starts_at' => now()->subWeek(), 'ends_at' => now()->subWeek()]);
 
-        Livewire::test(Events::class)
-            ->assertSeeInOrder([__('events.regions_all'), 'Lombardia (2)', 'Toscana (1)'])
-            ->assertDontSee('Sicilia (')
-            // Lo slug arriva al JavaScript del clic come stringa JSON, mai incollato a mano.
-            ->assertSeeHtml("\$set('region', 'lombardia')");
-    }
-
-    public function test_a_region_filters_the_grid_and_is_shareable(): void
-    {
-        $milan = Event::factory()->create(['title' => 'Aperitivo milanese', 'region_id' => $this->region('lombardia')->id]);
-        Event::factory()->create(['title' => 'Trekking toscano', 'region_id' => $this->region('toscana')->id]);
-
-        Livewire::test(Events::class)
-            ->call('$set', 'region', 'lombardia')
-            ->assertSee('Aperitivo milanese')
-            ->assertDontSee('Trekking toscano');
-
-        $this->get(route('eventi', ['regione' => 'lombardia']))
+        $this->get(route('eventi'))
             ->assertOk()
-            ->assertSee($milan->title)
-            ->assertDontSee('Trekking toscano');
-
-        Livewire::withQueryParams(['regione' => 'inesistente'])
-            ->test(Events::class)
-            ->assertSee('Aperitivo milanese')
-            ->assertSee('Trekking toscano');
+            ->assertSee('Lombardia')
+            ->assertSee('Sicilia', false)
+            ->assertSee('2 attività ed eventi')
+            ->assertSee('1 attività o evento')
+            ->assertSee(route('eventi.region', ['region' => 'lombardia']), false)
+            // Nessuna lista di schede qui: si sceglie prima la regione.
+            ->assertDontSee(__('events.filter_your_search'));
     }
 
-    public function test_a_selected_region_stays_in_the_bar_when_other_filters_empty_it(): void
+    public function test_the_landing_page_searches_regions_by_name(): void
     {
-        Event::factory()->create(['region_id' => $this->region('lombardia')->id]);
-        Event::factory()->activity()->create(['region_id' => $this->region('toscana')->id]);
+        Livewire::test(EventsRegions::class)
+            ->set('where', 'tosc')
+            ->call('search')
+            ->assertSee('Toscana')
+            ->assertDontSee('Lombardia');
+    }
 
-        Livewire::test(Events::class)
-            ->set('region', 'toscana')
-            ->set('activeTypes', ['eventi'])
-            ->assertSee('Toscana (0)');
+    public function test_a_region_page_lists_only_its_listings(): void
+    {
+        config(['app.seed_demo_data' => false]);
+        Event::factory()->create(['title' => 'Aperitivo milanese', 'region_id' => $this->region('lombardia')->id]);
+        Event::factory()->create(['title' => 'Trekking toscano', 'region_id' => $this->region('toscana')->id]);
+        Event::factory()->create(['title' => 'Senza regione', 'region_id' => null]);
+
+        $this->get(route('eventi.region', ['region' => 'lombardia']))
+            ->assertOk()
+            ->assertSee('Attività ed eventi in Lombardia')
+            ->assertSee(__('events.all_regions'))
+            ->assertSee('Aperitivo milanese')
+            ->assertDontSee('Trekking toscano')
+            ->assertDontSee('Senza regione');
+
+        $this->get(route('eventi.region', ['region' => 'inesistente']))->assertNotFound();
+    }
+
+    public function test_the_region_pages_are_in_the_sitemap(): void
+    {
+        $this->get('/sitemap.xml')
+            ->assertOk()
+            ->assertSee(route('eventi.region', ['region' => 'lombardia']), false);
     }
 
     public function test_finished_events_are_hidden_but_ongoing_ones_and_undated_activities_stay(): void
@@ -161,6 +169,8 @@ class EventsByRegionTest extends TestCase
         Event::factory()->create(['title' => 'Senza fine passato', 'starts_at' => now()->subDay(), 'ends_at' => null]);
         Event::factory()->activity()->create(['title' => 'Dog sitter sempre']);
         Event::factory()->create(['title' => 'Concerto futuro']);
+
+        $this->get(route('eventi'))->assertOk();
 
         Livewire::test(Events::class)
             ->assertDontSee('Festa finita')

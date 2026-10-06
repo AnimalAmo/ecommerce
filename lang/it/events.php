@@ -5,6 +5,12 @@ return [
     'meta_title' => 'AnimalAmo — Attività ed Eventi',
 
     // Listing
+    'region_meta_title' => 'AnimalAmo — Attività ed eventi in :region',
+    'region_title' => 'Attività ed eventi in :region',
+    'all_regions' => 'Tutte le regioni',
+    'regions_search' => 'Cerca una regione',
+    'events_count' => '{1} :count attività o evento|[2,*] :count attività ed eventi',
+    'no_region' => 'Nessuna regione trovata.',
     'title' => 'Attività ed Eventi',
     'subtitle' => 'Scopri eventi ed esperienze da vivere con il tuo animale',
     'search_where' => 'Dove',
@@ -15,8 +21,6 @@ return [
     'filter_your_search' => 'Filtra la tua ricerca:',
     'filter_type' => 'Tipologia',
     'filter_price' => 'Fascia di prezzo',
-    'regions_label' => 'Regione',
-    'regions_all' => 'Tutte',
     'add_to_cart' => 'Aggiungi al carrello',
     'join' => 'Partecipa',
 

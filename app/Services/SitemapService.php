@@ -152,7 +152,11 @@ class SitemapService
         return Region::query()
             ->orderBy('position')
             ->pluck('slug')
-            ->map(fn (string $slug) => $this->entry('holiday.region', ['region' => $slug]))
+            ->flatMap(fn (string $slug) => [
+                $this->entry('holiday.region', ['region' => $slug]),
+                // Attività ed eventi della regione (06/10/2026), stessa ragione.
+                $this->entry('eventi.region', ['region' => $slug]),
+            ])
             ->all();
     }
 
