@@ -24,7 +24,7 @@ class EventPagesTest extends TestCase
 
     public function test_events_grid_shows_the_twelve_cards_with_derived_labels(): void
     {
-        $this->get('/eventi')
+        $this->get('/eventi/regione/lombardia')
             ->assertOk()
             ->assertSee('Brunch Pet Friendly')
             // Il brunch "di oggi" del mock è seminato a +7 giorni: la label è derivata dinamicamente.
@@ -74,13 +74,13 @@ class EventPagesTest extends TestCase
     public function test_events_grid_paginates_home_events_on_page_two(): void
     {
         // 17 eventi seminati: 12 con position (griglia XD, pagina 1) + 5 solo-home.
-        $this->get('/eventi')
+        $this->get('/eventi/regione/lombardia')
             ->assertOk()
             ->assertSee('Brunch Pet Friendly')
             ->assertDontSee('Passeggiata a cavallo')
             ->assertSee('Pagina successiva');
 
-        $this->get('/eventi?page=2')
+        $this->get('/eventi/regione/lombardia?page=2')
             ->assertOk()
             ->assertSee('Passeggiata a cavallo')
             ->assertSee('Trekking al lago')

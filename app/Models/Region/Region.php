@@ -2,6 +2,7 @@
 
 namespace App\Models\Region;
 
+use App\Models\Event\Event;
 use App\Models\Structure\Structure;
 use Database\Factories\Region\RegionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,17 @@ class Region extends Model
     public function structures(): HasMany
     {
         return $this->hasMany(Structure::class);
+    }
+
+    /**
+     * Attività ed eventi della regione (EventPublisher la ricava dalla
+     * provincia, dal 05/10/2026). Serve al conteggio della griglia /eventi.
+     *
+     * @return HasMany<Event, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class);
     }
 
     public function getRouteKeyName(): string

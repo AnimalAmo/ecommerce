@@ -12,6 +12,7 @@ use App\Livewire\Catalog\AnimalHolidayService;
 use App\Livewire\Catalog\AnimalHolidayStructure;
 use App\Livewire\Catalog\EventDetail;
 use App\Livewire\Catalog\Events;
+use App\Livewire\Catalog\EventsRegions;
 use App\Livewire\Catalog\HomePage;
 use App\Livewire\Catalog\Smartbox;
 use App\Livewire\Catalog\SmartboxDetail;
@@ -98,7 +99,10 @@ Route::group([
     Route::get(LaravelLocalization::transRoute('routes.holiday.region'), AnimalHolidayRegion::class)->name('holiday.region');
     Route::get(LaravelLocalization::transRoute('routes.holiday.service'), AnimalHolidayService::class)->name('holiday.service');
     Route::get(LaravelLocalization::transRoute('routes.holiday.structure'), AnimalHolidayStructure::class)->name('holiday.structure');
-    Route::get(LaravelLocalization::transRoute('routes.eventi'), Events::class)->name('eventi');
+    // Attività ed eventi per regione (cliente, 06/10/2026): prima la griglia delle
+    // regioni, come Animal Holiday, poi la lista della regione scelta.
+    Route::get(LaravelLocalization::transRoute('routes.eventi'), EventsRegions::class)->name('eventi');
+    Route::get(LaravelLocalization::transRoute('routes.eventi.region'), Events::class)->name('eventi.region');
     Route::get(LaravelLocalization::transRoute('routes.eventi.activity'), ActivityDetail::class)->name('eventi.activity');
     Route::get(LaravelLocalization::transRoute('routes.eventi.detail'), EventDetail::class)->name('eventi.detail');
     Route::get(LaravelLocalization::transRoute('routes.smartbox'), Smartbox::class)->name('smartbox');

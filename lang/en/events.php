@@ -5,6 +5,12 @@ return [
     'meta_title' => 'AnimalAmo — Activities and Events',
 
     // Listing
+    'region_meta_title' => 'AnimalAmo — Activities and events in :region',
+    'region_title' => 'Activities and events in :region',
+    'all_regions' => 'All regions',
+    'regions_search' => 'Search a region',
+    'events_count' => '{1} :count activity or event|[2,*] :count activities and events',
+    'no_region' => 'No region found.',
     'title' => 'Activities and Events',
     'subtitle' => 'Discover events and experiences to enjoy with your pet',
     'search_where' => 'Where',
@@ -15,8 +21,6 @@ return [
     'filter_your_search' => 'Filter your search:',
     'filter_type' => 'Type',
     'filter_price' => 'Price range',
-    'regions_label' => 'Region',
-    'regions_all' => 'All',
     'add_to_cart' => 'Add to cart',
     'join' => 'Join',
 

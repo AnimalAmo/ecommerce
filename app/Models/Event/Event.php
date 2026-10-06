@@ -12,6 +12,7 @@ use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Models\Venue\Venue;
 use Database\Factories\Event\EventFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -89,6 +90,22 @@ class Event extends Model
             'price_cents' => 'integer',
             'is_free' => 'boolean',
         ];
+    }
+
+    /**
+     * Ancora da proporre: gli eventi già finiti non si mostrano più (cliente,
+     * 05/10/2026: «nascosti», non cancellati: ordini e prenotazioni continuano
+     * a puntarli). Finito = la fine, o l'inizio se la fine manca, è passato. Le
+     * attività senza date restano, come in home e in AvailabilityService.
+     */
+    public function scopeUpcoming(Builder $query): void
+    {
+        $now = now();
+
+        $query->where(fn (Builder $sub) => $sub
+            ->whereNull('starts_at')
+            ->orWhere('ends_at', '>=', $now)
+            ->orWhere(fn (Builder $open) => $open->whereNull('ends_at')->where('starts_at', '>=', $now)));
     }
 
     /** Dalla provincia della bozza (EventPublisher), come le strutture. */

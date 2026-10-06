@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Catalog\Events;
 use App\Livewire\Catalog\Smartbox;
 use App\Models\Event\Event;
+use App\Models\Region\Region;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,7 +36,14 @@ class ListingEmptyCatalogueTest extends TestCase
 
     public function test_events_with_an_empty_catalogue_is_honest_and_offers_a_way_out(): void
     {
+        // La griglia delle regioni lo dice già in testa (06/10/2026)…
         $this->get('/eventi')
+            ->assertOk()
+            ->assertSee(__('events.empty_catalogue_title'))
+            ->assertSee(__('events.empty_catalogue_partner_cta'));
+
+        // …e la lista di una regione resta onesta come prima.
+        $this->get('/eventi/regione/lombardia')
             ->assertOk()
             ->assertSee(__('events.empty_catalogue_title'))
             ->assertSee(__('events.empty_catalogue_body'))
@@ -73,9 +81,12 @@ class ListingEmptyCatalogueTest extends TestCase
             'slug' => 'camminata-nel-bosco',
             'position' => 1,
             'price_cents' => 30000,
+            'region_id' => Region::where('slug', 'lombardia')->value('id'),
         ]);
 
-        $this->get('/eventi')
+        $this->get('/eventi')->assertOk()->assertDontSee(__('events.empty_catalogue_title'));
+
+        $this->get('/eventi/regione/lombardia')
             ->assertOk()
             ->assertSee('Camminata nel bosco')
             ->assertDontSee(__('events.empty_catalogue_title'))

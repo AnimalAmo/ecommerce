@@ -12,7 +12,14 @@
             <div class="mx-auto w-full max-w-[1498px]">
                 {{-- Titolo resta quello desktop anche su mobile (l'artboard app
                      "Cerca - risultati" è la pagina dei risultati di ricerca, non questa index) --}}
-                <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ __('events.title') }}</h1>
+                {{-- Pagina di una regione (06/10/2026): si arriva dalla griglia di /eventi e ci si torna. --}}
+                @if ($regionName !== '')
+                    <a href="{{ route('eventi') }}" wire:navigate class="mb-3 inline-flex items-center gap-1.5 text-[13px] text-[#555555] hover:text-ink">
+                        <flux:icon.arrow-back class="h-3.5 w-3.5" />
+                        {{ __('events.all_regions') }}
+                    </a>
+                @endif
+                <h1 class="text-lg font-bold text-[#0D171A] lg:text-4xl lg:text-black">{{ $regionName !== '' ? __('events.region_title', ['region' => $regionName]) : __('events.title') }}</h1>
                 <p class="mt-2 text-[15px] text-[#555555] lg:mt-3 lg:text-[18px]">{{ __('events.subtitle') }}</p>
 
                 {{-- Barra ricerca mobile (XD app, simbolo "Box ricerca"): pill 287x56, raggio 28,
@@ -121,26 +128,6 @@
                         </flux:popover>
                     </flux:dropdown>
                 </div>
-
-                {{-- Regioni (cliente, 01/10/2026; forma A del piano): solo quelle con schede
-                     visibili ai filtri di adesso, con il conteggio. «Tutte» toglie il filtro.
-                     Una riga che scorre in orizzontale su mobile, invece di andare a capo. --}}
-                @if ($regions !== [])
-                    @php
-                        $regionPill = '!h-[30px] !shrink-0 !rounded-full !border !px-3.5 !text-sm !font-normal !shadow-none';
-                        $regionOff = '!border-[#C8C8C8] !bg-white !text-[#555555]';
-                        $regionOn = '!border-brand-cyan !bg-brand-cyan !text-white';
-                    @endphp
-                    <nav aria-label="{{ __('events.regions_label') }}" class="mt-6 max-lg:mt-4">
-                        <p class="text-sm font-semibold text-black max-lg:sr-only">{{ __('events.regions_label') }}</p>
-                        <div class="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
-                            <flux:button wire:click="$set('region', '')" :aria-pressed="$selectedRegionId === null ? 'true' : 'false'" class="{{ $regionPill }} {{ $selectedRegionId === null ? $regionOn : $regionOff }}">{{ __('events.regions_all') }}</flux:button>
-                            @foreach ($regions as $item)
-                                <flux:button wire:key="region-{{ $item['slug'] }}" wire:click="$set('region', {{ \Illuminate\Support\Js::from($item['slug']) }})" :aria-pressed="$region === $item['slug'] ? 'true' : 'false'" class="{{ $regionPill }} {{ $region === $item['slug'] ? $regionOn : $regionOff }}">{{ $item['name'] }} ({{ $item['count'] }})</flux:button>
-                            @endforeach
-                        </div>
-                    </nav>
-                @endif
 
                 {{-- Griglia vuota, due copy diversi.
                      1) Catalogo ancora vuoto (nessun partner ha pubblicato attività o eventi):
