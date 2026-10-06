@@ -13,6 +13,9 @@ return [
     */
 
     'saved' => 'Changes saved.',
+    'complete_welcome' => 'Welcome to AnimalAmo, :name! Your profile is ready.',
+    'complete_title' => 'Complete your profile',
+    'complete_body' => 'Whenever you like, add below: :fields. We use them for bookings, but you don’t need them to use the site.',
 
     'email_in_use' => 'This email is already in use.',
     'current_password_for_email' => 'Enter your current password to change your email.',

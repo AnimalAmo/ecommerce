@@ -12,49 +12,54 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
+/**
+ * Registrazione rapida in un solo passo (cliente, 06/10/2026): nessuna mail
+ * da confermare, si entra subito e si atterra nel profilo, dove il resto si
+ * completa quando si vuole. Chi si registra dal carrello o dal checkout torna
+ * lì: il profilo lo interromperebbe a metà acquisto.
+ */
 class RegisterModal extends Component
 {
     use RedirectsAfterAuth;
 
     public RegisterForm $form;
 
-    public int $step = 1;
-
-    public function next(): void
+    public function register(): void
     {
-        if ($this->step < 4) {
-            // Solo lo step 1 rivela l'esistenza di un'email (unique:users):
-            // throttle per IP per impedire l'enumerazione massiva degli utenti.
-            if ($this->step === 1) {
-                $this->ensureIsNotRateLimited();
-                RateLimiter::hit($this->throttleKey());
-            }
+        // Il modulo rivela l'esistenza di un'email (unique:users): throttle per
+        // IP per impedire l'enumerazione massiva degli utenti.
+        $this->ensureIsNotRateLimited();
+        RateLimiter::hit($this->throttleKey());
 
-            $this->form->validateStep($this->step);
-
-            $this->step++;
-
-            return;
-        }
-
-        // Ultimo step: riconvalida tutto (es. email occupata nel frattempo) e
-        // riporta il wizard allo step del primo errore.
-        try {
-            $this->form->validate();
-        } catch (ValidationException $e) {
-            $this->step = $this->form->firstInvalidStep(array_keys($e->errors()));
-
-            throw $e;
-        }
+        $this->form->validate();
 
         $user = $this->form->register();
 
         Auth::login($user);
 
-        $this->finishAuthentication('register');
+        session()->regenerate();
+        // Letto (e tolto) dal profilo al primo arrivo: il saluto una volta sola.
+        session()->put('profile_welcome', true);
+
+        Flux::modal('register')->close();
+
+        $this->redirect($this->afterRegistrationUrl());
     }
 
-    /** Blocca l'enumerazione: massimo 10 tentativi di step 1 al minuto per IP. */
+    private function afterRegistrationUrl(): string
+    {
+        $previous = $this->authRedirectUrl();
+
+        foreach (['carrello', 'checkout'] as $route) {
+            if (str_starts_with($previous, route($route))) {
+                return $previous;
+            }
+        }
+
+        return route('profilo.anagrafica');
+    }
+
+    /** Blocca l'enumerazione: massimo 10 tentativi al minuto per IP. */
     protected function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 10)) {
@@ -80,12 +85,6 @@ class RegisterModal extends Component
 
     public function back(): void
     {
-        if ($this->step > 1) {
-            $this->step--;
-
-            return;
-        }
-
         Flux::modal('register')->close();
         Flux::modal('login')->show();
     }

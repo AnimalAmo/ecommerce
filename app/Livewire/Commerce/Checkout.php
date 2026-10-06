@@ -184,7 +184,8 @@ class Checkout extends Component
         // Step 1 precompilato dall'utente autenticato (guest: campi vuoti).
         if (($user = Auth::user()) !== null) {
             $this->firstName = $user->first_name;
-            $this->lastName = $user->last_name;
+            // Facoltativo dalla registrazione rapida (06/10/2026): lo chiede qui.
+            $this->lastName = $user->last_name ?? '';
             $this->email = $user->email;
             $this->phone = $user->phone ?? '';
             $this->useSavedCard = $user->hasSavedCard();

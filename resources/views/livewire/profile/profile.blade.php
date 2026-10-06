@@ -35,6 +35,15 @@
     <main class="flex-1 bg-[linear-gradient(to_top_left,#FF3EA51A,#68CDEB1A)]">
         {{-- App: il menu parte dal titolo a y141, la scheda anagrafica dalla freccia a y123 --}}
         <div class="{{ $px }} pb-[140px] pt-[60px] max-lg:pb-8 {{ $isPersonalData ? 'max-lg:pt-4' : 'max-lg:pt-[54px]' }}">
+            {{-- Registrazione rapida (06/10/2026): si entra con nome, email e password, e
+                 qui si ricorda cosa manca finché manca qualcosa. Il saluto solo al primo arrivo. --}}
+            @if ($missingFields !== [])
+                <div class="mb-8 rounded-[3px] border border-brand-cyan/40 bg-white px-5 py-4 shadow-[0px_1px_10px_#0000001A] max-lg:mb-6">
+                    <p class="text-[15px] font-semibold text-[#0D171A]">{{ $welcome ? __('profile.complete_welcome', ['name' => auth()->user()->first_name]) : __('profile.complete_title') }}</p>
+                    <p class="mt-1 text-sm text-[#555555]">{{ __('profile.complete_body', ['fields' => implode(', ', $missingFields)]) }}</p>
+                </div>
+            @endif
+
             <div class="flex flex-col gap-10 lg:flex-row lg:gap-[61px] max-lg:gap-8">
                 @include('partials.profile-sidebar', ['active' => 'profilo'])
 

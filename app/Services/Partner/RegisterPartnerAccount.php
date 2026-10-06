@@ -36,17 +36,13 @@ class RegisterPartnerAccount
 
             // updateOrCreate: un utente promosso potrebbe già avere il profilo
             // (seconda attività, oppure ritorno sullo step 2).
-            // P.IVA e CF vuoti arrivano solo dal pannello, dove sono facoltativi:
-            // su un profilo che esisteva già non devono cancellare quelli salvati.
-            $attributes = [
-                'business_name' => $step1['businessName'],
-                'address' => $step1['address'],
-                'province' => $step1['province'],
-                'zip' => $step1['zip'],
-            ];
+            // Vuoti arrivano dal pannello (P.IVA e CF facoltativi) e dall'iscrizione
+            // diretta di «Lavora con noi» (06/10/2026: anche indirizzo, provincia e
+            // CAP). Su un profilo che esisteva già non devono cancellare quelli salvati.
+            $attributes = ['business_name' => $step1['businessName']];
 
-            foreach (['vat' => 'vat', 'taxCode' => 'tax_code'] as $field => $column) {
-                if (($step1[$field] ?? null) !== null) {
+            foreach (['vat' => 'vat', 'taxCode' => 'tax_code', 'address' => 'address', 'province' => 'province', 'zip' => 'zip'] as $field => $column) {
+                if (filled($step1[$field] ?? null)) {
                     $attributes[$column] = $step1[$field];
                 }
             }

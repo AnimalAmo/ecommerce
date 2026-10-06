@@ -6,6 +6,7 @@ use App\Livewire\Partner\Registration\WorkWithUs;
 use App\Livewire\Profile\Profile;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -136,6 +137,8 @@ class PhoneInputTest extends TestCase
     /** Anche i form partner passano dallo stesso componente e dalle stesse regole. */
     public function test_partner_application_stores_the_number_in_e164(): void
     {
+        $this->seed(RoleSeeder::class);
+
         Livewire::test(WorkWithUs::class)
             ->set('form.firstName', 'Susanna')
             ->set('form.lastName', 'Rossi')
@@ -146,6 +149,8 @@ class PhoneInputTest extends TestCase
             ->set('form.role', 'Titolare')
             ->set('form.offerType', 'Struttura ricettiva')
             ->set('form.description', 'Hotel pet friendly in centro a Milano.')
+            ->set('form.password', 'password123')
+            ->set('form.passwordConfirmation', 'password123')
             ->call('submit')
             ->assertHasNoErrors();
 

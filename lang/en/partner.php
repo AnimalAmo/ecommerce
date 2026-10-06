@@ -104,6 +104,9 @@ return [
     'description_placeholder' => 'Describe the service you would like to offer, the location and a few details',
     'select_placeholder' => 'Select a type',
     'email_account_hint' => 'This is your AnimalAmo account email: the request stays linked to this profile.',
+    'password' => 'Password',
+    'password_confirmation' => 'Repeat password',
+    'password_hint' => 'With this password you go straight into your partner area. You can add VAT number, tax code and address later from your profile.',
 
     // Roles
     'role_owner' => 'Owner',
@@ -119,7 +122,7 @@ return [
     'offer_other' => 'Other',
 
     // CTA
-    'submit' => 'Send',
+    'submit' => 'Sign up',
 
     // Thank-you page
     'thanks_heading' => 'Thank you!',
@@ -1085,6 +1088,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'dashboard' => [
+        'joined' => 'Welcome to AnimalAmo! Your partner account is active: create your first service. You can add VAT number, tax code and address from your profile whenever you like.',
+        'complete_profile' => 'Complete your profile: :fields still missing.',
+        'complete_profile_cta' => 'Go to profile',
         'title' => 'AnimalAmo — Partner dashboard',
         'welcome' => 'Welcome :name',
         'intro' => 'Create your first product and share unforgettable experiences with millions of travellers.',
