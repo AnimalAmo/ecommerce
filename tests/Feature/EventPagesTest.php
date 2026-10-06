@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Catalog\Events;
 use App\Models\Event\Event;
+use App\Models\Structure\StructureDraft;
 use App\Support\Format;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -141,7 +142,8 @@ class EventPagesTest extends TestCase
     {
         $this->get('/eventi/attivita/weekend-escursioni')
             ->assertOk()
-            ->assertSee('3 gg')
+            // Niente tile «3 gg» nell'hero (cliente, 06/10/2026): quel riquadro è degli eventi.
+            ->assertDontSee('3 gg')
             ->assertSee('Durata di 3 giorni, due notti')
             ->assertSee('Ritrovo: Hotel Miramare, Viareggio, Italia')
             ->assertSee('Via Roma 63, 30057, Viareggio, Italia')
@@ -154,8 +156,25 @@ class EventPagesTest extends TestCase
     {
         $this->get('/eventi/attivita/vacanza-montagna')
             ->assertOk()
-            ->assertSee('5 gg')
+            ->assertDontSee('5 gg')
             ->assertSee('Durata di 5 giorni, 4 notti');
+    }
+
+    /** La segnalazione: un'attività di un partner, senza date, mostrava «3 gg» nell'hero. */
+    public function test_a_partner_activity_without_dates_shows_no_duration(): void
+    {
+        $activity = Event::factory()->activity()->create([
+            'title' => 'Fuorirotta Beach Club',
+            'slug' => 'fuorirotta-beach-club',
+            'duration_days' => null,
+            'structure_draft_id' => StructureDraft::create(['status' => StructureDraft::STATUS_COMPLETED, 'current_step' => 11, 'service_category' => 'attivita'])->id,
+        ]);
+
+        $this->get('/eventi/attivita/'.$activity->slug)
+            ->assertOk()
+            ->assertSee('Fuorirotta Beach Club')
+            ->assertDontSee('3 gg')
+            ->assertDontSee('Durata di');
     }
 
     public function test_event_detail_404_for_unknown_slug(): void

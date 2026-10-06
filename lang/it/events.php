@@ -40,7 +40,6 @@ return [
     'back' => 'Indietro',
     'share' => 'Condividi',
     'view_all_photos' => 'Vedere tutte le foto',
-    'duration_short' => ':days gg',
     'map_alt' => 'Mappa della zona — :name',
 
     // Intestazione di sezione e azioni.

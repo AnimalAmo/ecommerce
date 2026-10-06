@@ -315,7 +315,6 @@ class ActivityDetail extends Component
             // della variante evento gratuito ("Gratis" corsivo + pill Partecipa, niente riepilogo prezzi).
             'isFree' => $activity->is_free,
             'canJoin' => $activity->hasJoinCta(),
-            'durationDays' => $days,
             // Testo XD "Durata di 3 giorni, due notti"; per le altre durate la forma numerica.
             'durationLabel' => $days === 3
                 ? __('format.duration_label_weekend')

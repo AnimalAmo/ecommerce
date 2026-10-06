@@ -38,11 +38,9 @@
                     'class' => '!absolute bottom-[22px] right-4 lg:right-8',
                 ])
 
-                {{-- Tile durata: fascia viola + giorni (XD "Rettangolo 644/645" + "3 gg" #8E53E6) --}}
-                <div class="absolute bottom-[14px] left-4 h-[89px] w-[95px] overflow-hidden rounded-[4px] bg-white lg:left-8">
-                    <div class="h-6 w-full bg-[#8E53E6]" aria-hidden="true"></div>
-                    <p class="flex h-[65px] items-center justify-center text-[25px] font-semibold text-[#8E53E6]">{{ __('events.duration_short', ['days' => $durationDays]) }}</p>
-                </div>
+                {{-- Niente tile «N gg» (cliente, 06/10/2026): il riquadro in basso a sinistra
+                     dell'hero è degli eventi, dove porta la data. Su un'attività senza date
+                     stampava il «3 gg» di ripiego del mockup, una durata che non esiste. --}}
             </div>
         </section>
 
