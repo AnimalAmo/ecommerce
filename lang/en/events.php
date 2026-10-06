@@ -40,7 +40,6 @@ return [
     'back' => 'Back',
     'share' => 'Share',
     'view_all_photos' => 'See all photos',
-    'duration_short' => ':days d',
     'map_alt' => 'Area map — :name',
 
     // Section heading and actions.
