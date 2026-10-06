@@ -41,9 +41,27 @@ class Dashboard extends Component
             'stats' => $this->stats(),
             // Avviso lasciato da completeDraft: un toast prima del redirect si perdeva.
             'notice' => session('partner.notice'),
+            'missingProfile' => $this->missingProfile(),
             'awaitingCount' => $this->awaitingCount(),
             'smartboxAwaitingCount' => $this->smartboxAwaitingCount(),
         ])->title(__('partner.dashboard.title'));
+    }
+
+    /**
+     * Dati che l'iscrizione diretta (06/10/2026) non chiede e che servono a
+     * fatturare: si ricordano qui finché mancano, senza bloccare niente.
+     *
+     * @return list<string>
+     */
+    private function missingProfile(): array
+    {
+        $profile = Auth::user()->partnerProfile;
+
+        return array_keys(array_filter([
+            __('partner.profile.vat') => blank($profile?->vat),
+            __('partner.profile.tax_code') => blank($profile?->tax_code),
+            __('partner.profile.address') => blank($profile?->address),
+        ]));
     }
 
     /**

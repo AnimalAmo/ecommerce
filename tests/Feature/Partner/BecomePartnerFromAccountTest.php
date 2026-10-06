@@ -5,11 +5,11 @@ namespace Tests\Feature\Partner;
 use App\Livewire\Partner\Registration\PartnerRegisterStep1;
 use App\Livewire\Partner\Registration\PartnerRegisterStep2;
 use App\Livewire\Partner\Registration\WorkWithUs;
-use App\Mail\PartnerInvitationMail;
 use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -52,6 +52,24 @@ class BecomePartnerFromAccountTest extends TestCase
             ->set('form.description', 'B&B pet friendly sui colli.');
     }
 
+    /** Richiesta aperta di un cliente, come quelle nate prima dell'iscrizione diretta. */
+    private function openRequest(User $user, array $attributes = []): PartnerApplication
+    {
+        return PartnerApplication::create(array_merge([
+            'user_id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'city' => 'Padova',
+            'business_name' => 'B&B Le Palme',
+            'role' => 'Titolare',
+            'offer_type' => 'Struttura ricettiva',
+            'description' => 'B&B pet friendly sui colli.',
+            'status' => PartnerApplication::STATUS_INVITED,
+        ], $attributes));
+    }
+
     private function step1Data(User $user): array
     {
         return [
@@ -80,22 +98,75 @@ class BecomePartnerFromAccountTest extends TestCase
             ->assertSet('form.city', 'Padova');
     }
 
-    public function test_the_request_stays_linked_to_the_account(): void
+    /**
+     * Iscrizione diretta (cliente, 06/10/2026): il cliente loggato diventa
+     * partner subito, con il suo account e la sua password. Niente mail.
+     */
+    public function test_a_logged_in_client_becomes_partner_straight_away(): void
     {
         Mail::fake();
-        $user = $this->client();
+        $user = $this->client(['password' => 'la-sua-password']);
 
         $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))
             ->call('submit')
             ->assertHasNoErrors()
-            ->assertRedirect(route('work-with-us.thanks'));
+            ->assertRedirect(route('partner.dashboard'));
 
-        $application = PartnerApplication::firstOrFail();
+        $this->assertSame(1, User::count());
+
+        $user->refresh();
+        $this->assertTrue($user->hasRole('partner'));
+        $this->assertTrue($user->hasRole('client'), 'Resta cliente: carrello, ordini e preferiti sono ancora suoi.');
+        $this->assertTrue(Hash::check('la-sua-password', $user->password));
+        $this->assertSame('B&B Le Palme', $user->partnerProfile->business_name);
+
+        $application = PartnerApplication::sole();
         $this->assertSame($user->id, $application->user_id);
-        $this->assertSame($user->email, $application->email);
-        $this->assertSame(PartnerApplication::STATUS_INVITED, $application->status);
+        $this->assertSame(PartnerApplication::STATUS_REGISTERED, $application->status);
 
-        Mail::assertQueued(PartnerInvitationMail::class);
+        Mail::assertNothingOutgoing();
+    }
+
+    /** Un profilo rimasto da prima tiene i dati che l'iscrizione diretta non chiede. */
+    public function test_the_signup_keeps_the_address_of_an_existing_profile(): void
+    {
+        $user = $this->client();
+        $user->partnerProfile()->create(['address' => 'Via Roma 1', 'province' => 'PD', 'zip' => '35100', 'vat' => '86334519757']);
+
+        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))->call('submit')->assertHasNoErrors();
+
+        $profile = $user->fresh()->partnerProfile;
+        $this->assertSame('Via Roma 1', $profile->address);
+        $this->assertSame('PD', $profile->province);
+        $this->assertSame('35100', $profile->zip);
+        $this->assertSame('86334519757', $profile->vat);
+    }
+
+    public function test_an_old_open_request_is_closed_by_the_new_signup(): void
+    {
+        $user = $this->client();
+        $this->openRequest($user);
+
+        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))
+            ->set('form.businessName', 'Agriturismo Le Palme')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $application = PartnerApplication::sole();
+        $this->assertSame('Agriturismo Le Palme', $application->business_name);
+        $this->assertSame(PartnerApplication::STATUS_REGISTERED, $application->status);
+    }
+
+    public function test_a_disabled_account_cannot_become_partner(): void
+    {
+        $user = $this->client(['is_active' => false]);
+
+        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))
+            ->call('submit')
+            ->assertHasErrors('form.email');
+
+        $this->assertFalse($user->fresh()->hasRole('partner'));
+        $this->assertSame(0, PartnerApplication::count());
     }
 
     public function test_the_email_cannot_be_moved_off_the_account(): void
@@ -155,27 +226,11 @@ class BecomePartnerFromAccountTest extends TestCase
         $this->assertSame('Matteo', PartnerApplication::firstOrFail()->first_name);
     }
 
-    public function test_sending_the_request_twice_updates_the_open_one(): void
-    {
-        Mail::fake();
-        $user = $this->client();
-
-        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))->call('submit');
-
-        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))
-            ->set('form.businessName', 'Agriturismo Le Palme')
-            ->call('submit')
-            ->assertHasNoErrors();
-
-        $this->assertSame(1, PartnerApplication::count());
-        $this->assertSame('Agriturismo Le Palme', PartnerApplication::firstOrFail()->business_name);
-    }
-
     public function test_step_1_prefills_from_the_open_request_without_a_signed_link(): void
     {
         Mail::fake();
         $user = $this->client();
-        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))->call('submit');
+        $this->openRequest($user);
 
         Livewire::actingAs($user)
             ->test(PartnerRegisterStep1::class)
@@ -188,9 +243,7 @@ class BecomePartnerFromAccountTest extends TestCase
     {
         Mail::fake();
         $other = $this->client(['email' => 'mario@example.com']);
-        $this->fillApplication(Livewire::actingAs($other)->test(WorkWithUs::class))
-            ->set('form.businessName', 'Hotel Rosovino')
-            ->call('submit');
+        $this->openRequest($other, ['business_name' => 'Hotel Rosovino']);
 
         $user = $this->client();
         $link = URL::signedRoute('partner.register', ['application' => PartnerApplication::firstOrFail()->id]);
@@ -205,7 +258,7 @@ class BecomePartnerFromAccountTest extends TestCase
     {
         Mail::fake();
         $user = $this->client();
-        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))->call('submit');
+        $this->openRequest($user);
 
         Livewire::actingAs($user)->test(PartnerRegisterStep1::class)
             ->set('form.address', 'Via Roma 1')
@@ -284,7 +337,7 @@ class BecomePartnerFromAccountTest extends TestCase
     {
         Mail::fake();
         $user = $this->client();
-        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))->call('submit');
+        $this->openRequest($user);
 
         $this->actingAs($user)
             ->get(route('profilo'))
@@ -309,7 +362,7 @@ class BecomePartnerFromAccountTest extends TestCase
     {
         Mail::fake();
         $user = $this->client();
-        $this->fillApplication(Livewire::actingAs($user)->test(WorkWithUs::class))->call('submit');
+        $this->openRequest($user);
 
         $this->actingAs($user)
             ->get(route('work-with-us.thanks'))

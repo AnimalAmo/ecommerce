@@ -33,6 +33,14 @@
                     <flux:callout variant="success" icon="check-circle" class="mt-3.5" :heading="$notice" />
                 @endif
 
+                @if ($missingProfile !== [])
+                    <flux:callout variant="warning" icon="exclamation-circle" class="mt-3.5" :heading="__('partner.dashboard.complete_profile', ['fields' => mb_strtolower(implode(', ', $missingProfile))])">
+                        <x-slot name="actions">
+                            <flux:button size="sm" :href="route('partner.profile')">{{ __('partner.dashboard.complete_profile_cta') }}</flux:button>
+                        </x-slot>
+                    </flux:callout>
+                @endif
+
                 @if ($awaitingCount > 0)
                     <flux:callout variant="warning" icon="clock" class="mt-3.5" :heading="trans_choice('partner.dashboard.awaiting_stripe_banner', $awaitingCount, ['count' => $awaitingCount])">
                         <x-slot name="actions">

@@ -104,6 +104,12 @@ return [
         'privacy_consent' => 'Acconsento all’uso dei miei dati personali per ricevere promozioni esclusive.',
         'continue' => 'Prosegui',
         'create_profile' => 'Crea profilo',
+        'title' => 'Crea il tuo profilo',
+        'subtitle' => 'Ti bastano nome, email e password: il resto lo completi quando vuoi dal tuo profilo.',
+        'terms' => 'Accetto i :terms e ho letto l’:privacy.',
+        'terms_link' => 'Termini e condizioni',
+        'privacy_link' => 'Informativa privacy',
+        'terms_required' => 'Per creare il profilo devi accettare i Termini e condizioni.',
     ],
 
 ];

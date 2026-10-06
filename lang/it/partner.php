@@ -111,6 +111,9 @@ return [
     'description_placeholder' => 'Descrivi il servizio che vorresti offrire, il luogo e alcune caratteristiche',
     'select_placeholder' => 'Seleziona tipologia',
     'email_account_hint' => 'È l’email del tuo account AnimalAmo: la richiesta resta collegata a questo profilo.',
+    'password' => 'Password',
+    'password_confirmation' => 'Ripeti la password',
+    'password_hint' => 'Con questa password entri subito nella tua area partner. Partita IVA, codice fiscale e indirizzo li aggiungi dopo, dal tuo profilo.',
 
     // Ruoli
     'role_owner' => 'Proprietario',
@@ -126,7 +129,7 @@ return [
     'offer_other' => 'Altro',
 
     // CTA
-    'submit' => 'Invia',
+    'submit' => 'Iscriviti',
 
     // Pagina ringraziamento
     'thanks_heading' => 'Grazie!',
@@ -1136,6 +1139,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'dashboard' => [
+        'joined' => 'Benvenuto su AnimalAmo! Il tuo account partner è attivo: crea il tuo primo servizio. Partita IVA, codice fiscale e indirizzo puoi aggiungerli quando vuoi dal profilo.',
+        'complete_profile' => 'Completa il profilo: mancano :fields.',
+        'complete_profile_cta' => 'Vai al profilo',
         'title' => 'AnimalAmo — Dashboard partner',
         // Neutro: su `users` non c'è il genere, e il "Benvenuta" del mockup
         // salutava al femminile anche i partner uomini.

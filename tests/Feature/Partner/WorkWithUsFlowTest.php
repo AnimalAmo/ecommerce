@@ -10,6 +10,7 @@ use App\Models\Partner\PartnerApplication;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -19,9 +20,18 @@ class WorkWithUsFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RoleSeeder::class);
+    }
+
     private function fillApplication($component)
     {
         return $component
+            ->set('form.password', 'password123')
+            ->set('form.passwordConfirmation', 'password123')
             ->set('form.firstName', 'Susanna')
             ->set('form.lastName', 'Rossi')
             ->set('form.email', 'susanna@example.com')
@@ -31,6 +41,19 @@ class WorkWithUsFlowTest extends TestCase
             ->set('form.role', 'Titolare')
             ->set('form.offerType', 'Struttura ricettiva')
             ->set('form.description', 'Hotel pet friendly in centro a Milano.');
+    }
+
+    /** Candidatura aperta come quelle che il pannello invita (InboxService::invite). */
+    private function invitedApplication(): PartnerApplication
+    {
+        return PartnerApplication::create([
+            'first_name' => 'Susanna', 'last_name' => 'Rossi',
+            'email' => 'susanna@example.com', 'phone' => '3498798828',
+            'city' => 'Milano', 'business_name' => 'Hotel Rosovino',
+            'role' => 'Titolare', 'offer_type' => 'Struttura ricettiva',
+            'description' => 'Hotel pet friendly in centro a Milano.',
+            'status' => PartnerApplication::STATUS_INVITED,
+        ]);
     }
 
     private function step1Data(): array
@@ -49,46 +72,69 @@ class WorkWithUsFlowTest extends TestCase
         ];
     }
 
-    public function test_submitting_the_application_persists_it_and_sends_the_invitation(): void
+    /**
+     * Iscrizione diretta (cliente, 06/10/2026): niente mail d'invito, l'account
+     * partner nasce subito e si entra nella propria area. La candidatura resta,
+     * registrata e da lavorare, per la cliente.
+     */
+    public function test_signing_up_creates_the_partner_and_logs_in_without_any_mail(): void
     {
         Mail::fake();
 
         $this->fillApplication(Livewire::test(WorkWithUs::class))
+            // Il valore vero del select: preseleziona «Struttura» in «Crea servizio».
+            ->set('form.offerType', __('partner.offer_accommodation'))
             ->call('submit')
             ->assertHasNoErrors()
-            ->assertRedirect(route('work-with-us.thanks'));
+            ->assertRedirect(route('partner.dashboard'));
 
-        $application = PartnerApplication::firstOrFail();
-        $this->assertSame('susanna@example.com', $application->email);
-        $this->assertSame(PartnerApplication::STATUS_INVITED, $application->status);
-        $this->assertNotNull($application->invited_at);
+        $user = User::where('email', 'susanna@example.com')->firstOrFail();
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue($user->hasRole('partner'));
+        $this->assertTrue(Hash::check('password123', $user->password));
+        $this->assertSame('Hotel Rosovino', $user->partnerProfile->business_name);
+        $this->assertNull($user->partnerProfile->vat);
+        $this->assertSame('struttura', $user->partnerProfile->registration_service);
 
-        // assertQueued, non assertSent: il mailable è ShouldQueue, quindi
-        // Mail::to()->send() lo accoda invece di consegnarlo in-process.
-        Mail::assertQueued(PartnerInvitationMail::class, function (PartnerInvitationMail $mail) use ($application): bool {
-            return $mail->hasTo('susanna@example.com')
-                && $mail->application->is($application)
-                && str_contains($mail->link, 'application='.$application->id)
-                && str_contains($mail->link, 'signature=');
-        });
+        $application = PartnerApplication::sole();
+        $this->assertSame(PartnerApplication::STATUS_REGISTERED, $application->status);
+        $this->assertSame($user->id, $application->user_id);
+        $this->assertNull($application->handled_at, 'La cliente la ritrova fra le candidature da lavorare.');
+
+        Mail::assertNothingOutgoing();
     }
 
-    public function test_on_mobile_the_application_is_confirmed_by_the_modal_instead_of_the_thanks_page(): void
+    public function test_the_dashboard_welcomes_the_new_partner_and_asks_for_the_missing_data(): void
     {
-        Mail::fake();
+        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
 
-        $component = $this->fillApplication(Livewire::test(WorkWithUs::class))
-            ->set('confirmInPlace', true)
+        $this->get(route('partner.dashboard'))
+            ->assertOk()
+            ->assertSee('Il tuo account partner è attivo')
+            ->assertSee('Completa il profilo: mancano partita iva, codice fiscale, indirizzo.');
+    }
+
+    public function test_an_email_already_registered_is_refused_for_a_visitor(): void
+    {
+        User::factory()->create(['email' => 'susanna@example.com']);
+
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
             ->call('submit')
-            ->assertHasNoErrors()
-            ->assertNoRedirect()
-            ->assertSet('showConfirmation', true);
+            ->assertHasErrors(['form.email' => 'unique']);
 
-        $this->assertSame('susanna@example.com', PartnerApplication::firstOrFail()->email);
+        $this->assertGuest();
+        $this->assertSame(0, PartnerApplication::count());
+    }
 
-        $component->call('closeConfirmation')
-            ->assertSet('showConfirmation', false)
-            ->assertSet('form.email', '');
+    public function test_the_password_must_be_long_enough_and_repeated(): void
+    {
+        $this->fillApplication(Livewire::test(WorkWithUs::class))
+            ->set('form.password', 'corta')
+            ->set('form.passwordConfirmation', 'altra')
+            ->call('submit')
+            ->assertHasErrors(['form.password' => 'min', 'form.passwordConfirmation' => 'same']);
+
+        $this->assertGuest();
     }
 
     /**
@@ -122,10 +168,8 @@ class WorkWithUsFlowTest extends TestCase
     }
 
     /**
-     * Ogni invio manda una mail da mg.animalamo.it a un indirizzo scelto da chi
-     * compila, con dentro il nome che sceglie lui: senza tetto è il modo più
-     * diretto per bruciare la reputazione del dominio, che è la stessa che fa
-     * arrivare gli inviti veri. Stesso rimedio già usato in RegisterModal.
+     * Ogni invio crea un account partner: senza tetto un bot riempirebbe il
+     * pannello di account finti. Stesso rimedio già usato in RegisterModal.
      */
     public function test_the_application_is_rate_limited_per_ip(): void
     {
@@ -136,6 +180,8 @@ class WorkWithUsFlowTest extends TestCase
                 ->set('form.email', "hotel{$i}@example.com")
                 ->call('submit')
                 ->assertHasNoErrors();
+
+            auth()->logout();
         }
 
         $this->fillApplication(Livewire::test(WorkWithUs::class))
@@ -144,10 +190,10 @@ class WorkWithUsFlowTest extends TestCase
             ->assertHasErrors('form.email');
 
         $this->assertSame(5, PartnerApplication::count());
-        Mail::assertQueued(PartnerInvitationMail::class, 5);
+        $this->assertSame(5, User::role('partner')->count());
     }
 
-    /** Un modulo compilato male non consuma il budget: solo le mail davvero partite. */
+    /** Un modulo compilato male non consuma il budget: solo le iscrizioni davvero fatte. */
     public function test_a_rejected_submit_does_not_burn_the_rate_limit(): void
     {
         Mail::fake();
@@ -167,7 +213,7 @@ class WorkWithUsFlowTest extends TestCase
 
         Livewire::test(WorkWithUs::class)
             ->call('submit')
-            ->assertHasErrors(['form.firstName', 'form.email', 'form.description']);
+            ->assertHasErrors(['form.firstName', 'form.email', 'form.description', 'form.password']);
 
         $this->assertSame(0, PartnerApplication::count());
         Mail::assertNothingSent();
@@ -193,9 +239,7 @@ class WorkWithUsFlowTest extends TestCase
 
     public function test_the_signed_invitation_link_prefills_step_1(): void
     {
-        Mail::fake();
-        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
-        $application = PartnerApplication::firstOrFail();
+        $application = $this->invitedApplication();
 
         $link = URL::signedRoute('partner.register', ['application' => $application->id]);
 
@@ -214,9 +258,7 @@ class WorkWithUsFlowTest extends TestCase
      */
     public function test_an_invitation_opened_from_another_account_is_blocked(): void
     {
-        Mail::fake();
-        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
-        $application = PartnerApplication::firstOrFail();
+        $application = $this->invitedApplication();
 
         $other = User::factory()->create(['email' => 'mario.personale@example.com']);
         $link = URL::signedRoute('partner.register', ['application' => $application->id]);
@@ -240,9 +282,7 @@ class WorkWithUsFlowTest extends TestCase
     /** Uscire e rientrare dall'indirizzo invitato è la via d'uscita promessa dal messaggio. */
     public function test_the_block_falls_away_once_the_invited_address_signs_in(): void
     {
-        Mail::fake();
-        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
-        $application = PartnerApplication::firstOrFail();
+        $application = $this->invitedApplication();
 
         $other = User::factory()->create(['email' => 'mario.personale@example.com']);
         $this->actingAs($other)->get(URL::signedRoute('partner.register', ['application' => $application->id]));
@@ -258,9 +298,7 @@ class WorkWithUsFlowTest extends TestCase
     /** Stesso account dell'invito: nessun blocco, prefill normale. */
     public function test_an_invitation_opened_from_its_own_account_still_prefills(): void
     {
-        Mail::fake();
-        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
-        $application = PartnerApplication::firstOrFail();
+        $application = $this->invitedApplication();
 
         $owner = User::factory()->create(['email' => 'susanna@example.com']);
 
@@ -272,9 +310,7 @@ class WorkWithUsFlowTest extends TestCase
 
     public function test_an_unsigned_application_param_does_not_prefill(): void
     {
-        Mail::fake();
-        $this->fillApplication(Livewire::test(WorkWithUs::class))->call('submit');
-        $application = PartnerApplication::firstOrFail();
+        $application = $this->invitedApplication();
 
         $this->get(route('partner.register', ['application' => $application->id]))
             ->assertOk()

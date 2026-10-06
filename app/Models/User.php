@@ -32,6 +32,7 @@ use Spatie\Permission\Traits\HasRoles;
     'postal_code',
     'newsletter',
     'marketing_consent',
+    'terms_accepted_at',
     'is_active',
 ])]
 #[Hidden(['password', 'remember_token'])]
@@ -53,6 +54,7 @@ class User extends Authenticatable
             'birth_date' => 'date',
             'newsletter' => 'boolean',
             'marketing_consent' => 'boolean',
+            'terms_accepted_at' => 'datetime',
             'is_active' => 'boolean',
         ];
     }

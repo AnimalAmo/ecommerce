@@ -27,6 +27,18 @@ class PartnerApplicationForm extends Form
 
     public string $description = '';
 
+    /**
+     * Iscrizione diretta (cliente, 06/10/2026): il visitatore sceglie qui la
+     * password ed entra subito nella sua area, senza la mail d'invito. Chi è
+     * già loggato non la vede: diventa partner il suo account.
+     */
+    public string $password = '';
+
+    public string $passwordConfirmation = '';
+
+    /** Vero per il visitatore: password obbligatoria ed email non ancora usata. */
+    public bool $creatingAccount = true;
+
     public function rules(): array
     {
         return [
@@ -46,6 +58,11 @@ class PartnerApplicationForm extends Form
             'role' => ['required', 'string', 'max:64'],
             'offerType' => ['required', 'string', 'max:64'],
             'description' => ['required', 'string', 'max:1000'],
+            ...($this->creatingAccount ? [
+                'email' => ['required', 'email:rfc,dns', 'max:128', 'unique:users,email'],
+                'password' => ['required', 'string', 'min:8'],
+                'passwordConfirmation' => ['required', 'same:password'],
+            ] : []),
         ];
     }
 
