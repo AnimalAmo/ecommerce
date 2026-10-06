@@ -177,7 +177,7 @@ return [
 
     'partner_create' => [
         'title' => 'Nuovo partner',
-        'sub' => 'Crea l\'account di un partner: gli arriverà una mail per scegliere la password. Se l\'email è di un cliente, il suo account diventa anche partner.',
+        'sub' => 'Crea l\'account di un partner. Se non scegli tu la password, gli arriverà una mail per sceglierla. Se l\'email è di un cliente, il suo account diventa anche partner.',
         'new_button' => 'Nuovo partner',
         'sections' => [
             'person' => 'Referente',
