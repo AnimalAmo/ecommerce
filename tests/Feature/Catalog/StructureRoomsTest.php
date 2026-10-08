@@ -229,6 +229,29 @@ class StructureRoomsTest extends TestCase
         $this->assertSame($double->id, $structure->defaultRoomFor($checkIn, $checkIn->addDays(5), 2, 1)?->id);
     }
 
+    public function test_room_picker_flags_full_rooms_for_online_partner_only(): void
+    {
+        $checkIn = CarbonImmutable::today()->addDays(7);
+
+        $online = $this->structure();
+        $full = $this->room($online, 1);
+        $this->room($online, 2);
+        $this->book($full, $checkIn, $checkIn->addDays(5));
+
+        $this->page()
+            ->assertSee(__('catalog.rooms.full'))
+            ->assertDontSeeHtml('wire:click="selectRoom('.$full->id.')"');
+
+        $onsite = $this->structure(User::factory()->offlinePartner()->create(), slug: 'hotel-in-struttura');
+        $taken = $this->room($onsite, 1);
+        $other = $this->room($onsite, 2);
+        $this->book($taken, $checkIn, $checkIn->addDays(5));
+
+        $this->page('hotel-in-struttura')
+            ->assertDontSee(__('catalog.rooms.full'))
+            ->assertSeeHtml('wire:click="selectRoom('.$other->id.')"');
+    }
+
     public function test_calendar_disables_full_nights_for_online_partner_only(): void
     {
         $night = CarbonImmutable::today()->addDays(20);

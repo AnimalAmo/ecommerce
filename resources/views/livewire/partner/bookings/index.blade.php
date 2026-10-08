@@ -46,7 +46,7 @@
                                                     {{ $row[$key] }}
                                                     {{-- Stanza scelta (snapshot riga ordine) sotto il nome della struttura --}}
                                                     @if ($key === 'title' && $row['room'] !== null)
-                                                        <span class="mt-1 block text-[13px] text-[#555555]">{{ $row['room'] }}</span>
+                                                        <span class="mt-1 flex items-center gap-2 text-[13px] text-[#555555]"><flux:icon.bed class="h-[11px] w-[11px] shrink-0" />{{ $row['room'] }}</span>
                                                     @endif
                                                 </flux:table.cell>
                                             @endforeach

@@ -75,6 +75,20 @@ class RoomCheckoutTest extends TestCase
         $this->assertSame($room->id, (int) $item->options['room_id']);
     }
 
+    public function test_room_name_snapshot_is_italian_even_when_booking_from_english(): void
+    {
+        $this->actingAs($this->buyer());
+        $room = $this->roomOf($this->seller());
+        $room->update(['name' => null, 'type' => 'doppia']);
+        $this->addRoomLine($room);
+
+        app()->setLocale('en');
+        $item = $this->placeOrder()->items()->sole();
+
+        $this->assertSame(trans('partner.hotel_rooms.type_double', [], 'it'), $item->options['room_name']);
+        $this->assertNotSame(trans('partner.hotel_rooms.type_double', [], 'en'), $item->options['room_name']);
+    }
+
     // ── Stanza piena: il secondo checkout perde ──────────────────────────────
 
     public function test_second_checkout_on_full_room_fails_and_refunds(): void

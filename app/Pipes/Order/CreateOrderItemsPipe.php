@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 /**
  * Crea le righe ordine come snapshot autonomo dal catalogo (title/photo/tipo/
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * profilo ordini di bucketizzare programma/passati senza toccare il prodotto.
  * Stanza: room_id per l'occupazione e room_name nelle options come snapshot,
  * leggibile anche quando il partner cancella la stanza (room_id → null).
+ * Il nome si scrive nella lingua di default (quella del pannello partner e
+ * delle sue mail), non in quella di chi compra.
  */
 class CreateOrderItemsPipe
 {
@@ -37,7 +40,7 @@ class CreateOrderItemsPipe
                 'location' => $item->location,
                 'price_cents' => $item->priceCents,
                 'is_gift' => $item->isGift,
-                'options' => $room !== null ? [...$item->options, 'room_name' => $room->displayName()] : $item->options,
+                'options' => $room !== null ? [...$item->options, 'room_name' => $room->displayName(LaravelLocalization::getDefaultLocale())] : $item->options,
                 'room_id' => $room?->id,
                 'booked_from' => $bookedFrom,
                 'booked_until' => $bookedUntil,

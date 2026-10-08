@@ -97,5 +97,6 @@ return [
         'select' => 'Seleziona',
         'selected' => 'Selezionata',
         'booking_room' => 'Camera: :name',
+        'full' => 'Non disponibile in queste date',
     ],
 ];

@@ -97,5 +97,6 @@ return [
         'select' => 'Select',
         'selected' => 'Selected',
         'booking_room' => 'Room: :name',
+        'full' => 'Not available on these dates',
     ],
 ];

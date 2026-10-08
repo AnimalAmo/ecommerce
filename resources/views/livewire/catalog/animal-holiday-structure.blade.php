@@ -281,7 +281,7 @@
                             {{-- Prezzo notte della stanza scelta (della struttura se non ha stanze) --}}
                             <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($nightCents)]) }}</p>
                             @if ($room !== null)
-                                <p data-booking-room class="mt-1 text-[15px] font-semibold text-[#555555]">{{ __('catalog.rooms.booking_room', ['name' => $room->displayName()]) }}</p>
+                                <p data-booking-room class="mt-1 flex items-center gap-2 text-[15px] font-semibold text-[#555555]"><flux:icon.bed class="h-[13px] w-[13px] shrink-0" />{{ __('catalog.rooms.booking_room', ['name' => $room->displayName()]) }}</p>
                             @endif
 
                             <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">

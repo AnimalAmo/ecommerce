@@ -40,7 +40,7 @@
         @endif
         @if (($item['room'] ?? null) !== null)
             <div class="flex items-center gap-[10px]">
-                <flux:icon.home class="!h-[11px] !w-[11px] shrink-0" />
+                <flux:icon.bed class="!h-[11px] !w-[11px] shrink-0" />
                 <span class="truncate">{{ $item['room'] }}</span>
             </div>
         @endif

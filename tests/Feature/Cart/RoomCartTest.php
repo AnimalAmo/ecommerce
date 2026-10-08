@@ -3,6 +3,7 @@
 namespace Tests\Feature\Cart;
 
 use App\Exceptions\CartValidationException;
+use App\Livewire\Commerce\Cart;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\Structure\Room;
@@ -12,6 +13,7 @@ use App\Services\Availability\AvailabilityService;
 use App\Services\Cart\CartManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /** Stanza nel carrello: scelta obbligatoria se la struttura ha stanze, prezzo e capienza per stanza, occupazione solo per partner Online. */
@@ -177,5 +179,30 @@ class RoomCartTest extends TestCase
         $this->fillRoom($room, ['check_in' => $day->toDateString(), 'check_out' => $day->addDays(2)->toDateString()]);
 
         $this->assertSame([], app(AvailabilityService::class)->unavailableDates($structure, $room, $day->year, $day->month));
+    }
+
+    public function test_cart_edit_popup_uses_the_line_room(): void
+    {
+        $structure = $this->structureOf($this->actingAsPayablePartner());
+        $room = Room::factory()->for($structure)->create(['max_guests' => 2, 'max_animals' => 1]);
+        $options = $this->bookingOptions(['room_id' => $room->id]);
+        $this->add($structure, $options);
+        // Un'altra prenotazione riempie la stanza tre notti dopo il check-out della riga.
+        $full = CarbonImmutable::parse($options['check_out'])->addDays(3);
+        $this->fillRoom($room, ['check_in' => $full->toDateString(), 'check_out' => $full->addDay()->toDateString()]);
+
+        $key = app(CartManager::class)->items()->sole()->key;
+        $component = Livewire::test(Cart::class)
+            ->call('openEdit', $key)
+            ->call('incrementGuest', 'adulti')
+            ->call('incrementAnimal', 'cane')
+            ->assertSet('editGuests.adulti', 2)
+            ->assertSet('editAnimals.cane', 1);
+
+        // Calendario sul mese della notte piena (openEdit lo apre su quello del check-in).
+        $component->set('calendarMonth', $full->month)->set('calendarYear', $full->year);
+        $cells = collect($component->call('toggleField', 'date')->viewData('calendar'))->flatten(1);
+
+        $this->assertTrue($cells->firstWhere('date', $full->toDateString())['disabled']);
     }
 }

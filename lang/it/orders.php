@@ -54,7 +54,7 @@ return [
         ],
     ],
     // Stanza scelta nella struttura (snapshot sulla riga ordine): prenotazioni partner e riepilogo ordine
-    'room' => 'Stanza: :name',
+    'room' => 'Camera: :name',
     // Profilo — i miei ordini: conteggio articoli della riga lista
     'items_count' => '{1} 1 articolo|[2,*] :count articoli',
     // Label OrderStatus

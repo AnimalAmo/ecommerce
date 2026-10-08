@@ -61,6 +61,22 @@ class PartnerServiceDetailTest extends TestCase
             ->assertSee('2 '.__('partner.services.rooms_count'));
     }
 
+    public function test_service_detail_shows_room_type_only_when_it_differs_from_the_name(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, ['rooms' => [
+            ['key' => 'k1', 'type' => 'suite', 'name' => ['it' => 'Camera Glicine'], 'price' => '135', 'units' => 3],
+            ['key' => 'k2', 'type' => 'doppia', 'name' => ['it' => ''], 'price' => '90', 'units' => 2],
+        ]]);
+        $suite = ServiceOptionLabels::label('room_type', 'suite');
+        $double = ServiceOptionLabels::label('room_type', 'doppia');
+
+        $this->get(route('partner.services.show', $draft))
+            ->assertOk()
+            ->assertSee('Camera Glicine ('.$suite.')')
+            ->assertDontSee($double.' ('.$double.')');
+    }
+
     // ── Difetto F7: il dettaglio non mostra nessuno dei campi nuovi ───────────
     //
     // `rows()` compone dieci righe letterali e non contiene le colonne nate dalle

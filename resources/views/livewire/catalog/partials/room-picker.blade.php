@@ -5,7 +5,8 @@
      della camera, prezzo/notte e «Seleziona». La card scelta ha il bordo cyan.
 
      Parametri: $rooms (Room con amenities, solo con almeno due stanze),
-     $room (stanza scelta), $structure (copertina di ripiego). --}}
+     $room (stanza scelta), $structure (copertina di ripiego), $fullRoomIds
+     (stanze piene nelle date scelte, solo partner Online: «Seleziona» spento). --}}
 <section class="mt-10">
     <h2 class="text-[25px] font-bold leading-[30px] text-black max-lg:text-lg">{{ __('catalog.rooms.title') }}</h2>
 
@@ -13,6 +14,7 @@
         @foreach ($rooms as $option)
             @php
                 $isSelected = $room?->id === $option->id;
+                $isFull = in_array($option->id, $fullRoomIds, true);
                 $photos = $option->photoUrls();
                 $amenities = [...$option->amenityRows('hotel'), ...$option->amenityRows('animal')];
                 $typeLabel = $option->typeLabel();
@@ -65,8 +67,13 @@
 
                     <div class="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
                         <p class="text-xl font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($option->price_cents)]) }}</p>
+                        @if ($isFull)
+                            <p class="text-[13px] font-semibold text-brand-magenta">{{ __('catalog.rooms.full') }}</p>
+                        @endif
                         @if ($isSelected)
                             <flux:button disabled icon="check" class="!h-[39px] !rounded-full !border-0 !bg-brand-cyan !px-6 !text-sm !font-bold !text-white !opacity-100 !shadow-none">{{ __('catalog.rooms.selected') }}</flux:button>
+                        @elseif ($isFull)
+                            <flux:button disabled class="!h-[39px] !rounded-full !border-0 !bg-gray-200 !px-6 !text-sm !font-bold !text-gray-400 !shadow-none">{{ __('catalog.rooms.select') }}</flux:button>
                         @else
                             <flux:button wire:click="selectRoom({{ $option->id }})" class="!h-[39px] !rounded-full !border-0 !bg-brand-yellow !px-6 !text-sm !font-bold !text-[#0D171A] !shadow-none">{{ __('catalog.rooms.select') }}</flux:button>
                         @endif

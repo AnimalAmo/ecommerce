@@ -10,11 +10,13 @@ use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
 use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
+use App\Services\Availability\RoomOccupancy;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
@@ -186,6 +188,7 @@ class AnimalHolidayStructure extends Component
             'nights' => $nights,
             'room' => $rooms->count() > 1 ? $room : null,
             'rooms' => $rooms->count() > 1 ? $rooms : collect(),
+            'fullRoomIds' => $rooms->count() > 1 ? $this->fullRoomIds($structure, $rooms) : [],
             'nightCents' => $nightCents,
             'nightsCents' => $nightCents * $nights,
             'animalSupplementCents' => $structure->animal_supplement_cents * array_sum($this->editAnimals) * $nights,
@@ -285,6 +288,33 @@ class AnimalHolidayStructure extends Component
         }
 
         return $options;
+    }
+
+    /**
+     * Stanze piene nelle date scelte (picker: «Seleziona» disabilitato). Solo
+     * partner Online, come l'occupazione al checkout; nessuna con intervallo
+     * lasciato a metà.
+     *
+     * @param  Collection<int, Room>  $rooms
+     * @return list<int>
+     */
+    private function fullRoomIds(Structure $structure, Collection $rooms): array
+    {
+        if (app(PartnerPaymentModeService::class)->forPurchasable($structure) !== OrderPaymentMode::Online) {
+            return [];
+        }
+
+        $checkIn = CarbonImmutable::instance(self::parseDate($this->editCheckIn ?? ''));
+        $checkOut = CarbonImmutable::instance(self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? ''));
+
+        if ($checkOut->lte($checkIn)) {
+            return [];
+        }
+
+        $occupancy = app(RoomOccupancy::class);
+
+        return $rooms->reject(fn (Room $room): bool => $occupancy->isAvailable($room, $checkIn, $checkOut))
+            ->pluck('id')->values()->all();
     }
 
     /** Notti del preventivo live (minimo 1, stesso clamp del pricing server). */

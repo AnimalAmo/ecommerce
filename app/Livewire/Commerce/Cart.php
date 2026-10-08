@@ -9,6 +9,7 @@ use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\PresentsCartRoom;
 use App\Livewire\Concerns\TogglesFavorites;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
 use App\Services\Cart\CartNotice;
@@ -368,6 +369,26 @@ class Cart extends Component
         $item = $this->findItem($this->editingKey);
 
         return $item !== null ? Structure::find($item->purchasableId) : null;
+    }
+
+    /**
+     * Stanza del calendario e degli stepper del pop-up: quella della riga in
+     * modifica (options.room_id), solo se è ancora della sua struttura.
+     */
+    protected function calendarRoom(): ?Room
+    {
+        if ($this->editingKey === null || $this->editingFamily !== 'structure') {
+            return null;
+        }
+
+        $item = $this->findItem($this->editingKey);
+        $id = $item?->options['room_id'] ?? null;
+
+        if (! is_numeric($id)) {
+            return null;
+        }
+
+        return Room::query()->whereKey((int) $id)->where('structure_id', $item->purchasableId)->first();
     }
 
     /** Facciata carrello (singleton: storage sessione da guest, db da autenticato). */

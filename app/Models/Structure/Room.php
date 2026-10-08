@@ -115,13 +115,16 @@ class Room extends Model
         return $animals;
     }
 
-    /** Nome della stanza, o l'etichetta della tipologia se il partner non l'ha scritto. */
-    public function displayName(): string
+    /**
+     * Nome della stanza, o l'etichetta della tipologia se il partner non l'ha
+     * scritto; $locale null = lingua corrente.
+     */
+    public function displayName(?string $locale = null): string
     {
-        $name = trim((string) $this->name);
+        $name = trim((string) ($locale === null ? $this->name : $this->getTranslation('name', $locale)));
 
         return $name !== ''
             ? $name
-            : (string) ServiceOptionLabels::label('room_type', $this->type);
+            : (string) ServiceOptionLabels::label('room_type', $this->type, $locale);
     }
 }
