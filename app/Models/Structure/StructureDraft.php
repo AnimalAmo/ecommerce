@@ -267,7 +267,6 @@ class StructureDraft extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** Bozze chiuse dal partner e ferme in attesa che possa pubblicare (P4). */
     /**
      * Le righe di `rooms` nel formato unico che il publisher e il wizard leggono.
      *
@@ -337,6 +336,7 @@ class StructureDraft extends Model
         };
     }
 
+    /** Bozze chiuse dal partner e ferme in attesa che possa pubblicare (P4). */
     public function scopeAwaitingPublication(Builder $query): Builder
     {
         return $query->whereNotNull('publish_requested_at');

@@ -9,6 +9,7 @@ use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
+use App\Services\Admin\Catalog\StructureMerger;
 use App\Services\Availability\RoomOccupancy;
 use App\Services\Partner\Publishing\DraftPublisher;
 use App\Services\Partner\Publishing\FamilyPublisher;
@@ -246,6 +247,29 @@ class MergeStructuresTest extends TestCase
         $this->artisan('catalog:merge-structures', ['target' => $monia->id, 'sources' => [$dona->id]])->assertSuccessful();
         $before = $this->snapshot();
         $this->artisan('catalog:merge-structures', ['target' => $stella->id, 'sources' => [$dona->id]])->assertFailed();
+        $this->assertEquals($before, $this->snapshot());
+    }
+
+    public function test_refuses_a_source_with_several_rooms_or_that_absorbed_others(): void
+    {
+        [$monia, $dona, $stella] = $this->casale();
+        $merger = app(StructureMerger::class);
+
+        // Sorgente con più righe stanza: accorparla le schiaccerebbe in una.
+        Room::factory()->for($dona)->create();
+        $this->assertGreaterThan(1, $dona->rooms()->count());
+        $errors = $merger->errors($monia, collect([$dona]));
+        $this->assertNotEmpty(array_filter($errors, fn (string $error) => str_contains($error, "#{$dona->id}")));
+
+        // Sorgente in cui sono già state accorpate altre strutture.
+        $absorbed = $this->published('Il Casale Sotto le Stelle - Luna', '70', []);
+        Structure::withHidden()->whereKey($absorbed->id)->update(['merged_into_structure_id' => $stella->id]);
+        $this->assertSame(1, $stella->rooms()->count());
+        $errors = $merger->errors($monia, collect([$stella->fresh()]));
+        $this->assertNotEmpty(array_filter($errors, fn (string $error) => str_contains($error, "#{$stella->id}")));
+
+        $before = $this->snapshot();
+        $this->artisan('catalog:merge-structures', ['target' => $monia->id, 'sources' => [$stella->id]])->assertFailed();
         $this->assertEquals($before, $this->snapshot());
     }
 

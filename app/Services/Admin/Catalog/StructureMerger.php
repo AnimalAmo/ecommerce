@@ -88,6 +88,20 @@ class StructureMerger
             }
         }
 
+        // Una sorgente diventa una sola stanza: se ne ha già più d'una, o vi
+        // sono state accorpate altre strutture, le sue stanze si perderebbero.
+        foreach ($sources as $source) {
+            $label = "#{$source->id} «{$source->getTranslation('name', 'it')}»";
+
+            if ($source->rooms()->count() > 1) {
+                $errors[] = "La struttura sorgente {$label} ha più stanze: accorparla le ridurrebbe a una.";
+            }
+
+            if (Structure::withHidden()->where('merged_into_structure_id', $source->id)->exists()) {
+                $errors[] = "Nella struttura sorgente {$label} sono già state accorpate altre strutture: va usata come target.";
+            }
+        }
+
         return $errors;
     }
 

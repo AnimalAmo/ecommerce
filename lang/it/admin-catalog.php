@@ -106,6 +106,7 @@ return [
         'region_none' => 'Nessuna',
         'cancellation' => 'Cancellazione gratuita (giorni prima)',
         'draft_price_note' => 'Il prezzo a notte nasce dalle camere inserite dal partner: se il partner ripubblica la scheda, torna al prezzo della sua camera più economica. Nome e descrizione invece restano quelli che salvi qui.',
+        'rooms_price_note' => 'Questa struttura ha delle camere: il prezzo a notte è quello della camera più economica e si cambia dalle camere, non da qui. Nome e descrizione invece si salvano qui.',
         'on_site' => 'Sul sito',
         'stats' => [
             'bookings' => 'Prenotazioni totali',
