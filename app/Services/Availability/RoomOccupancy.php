@@ -24,18 +24,33 @@ class RoomOccupancy
     {
         $items = $this->overlappingItems($room, $checkIn, $checkOut, $exceptOrderId);
 
-        $max = 0;
-
-        for ($night = $checkIn->startOfDay(); $night->lt($checkOut->startOfDay()); $night = $night->addDay()) {
-            $max = max($max, $this->occupiedOn($items, $night));
-        }
-
-        return $max;
+        return $this->peak($items, $checkIn, $checkOut);
     }
 
     public function isAvailable(Room $room, CarbonImmutable $checkIn, CarbonImmutable $checkOut): bool
     {
         return $this->bookedUnits($room, $checkIn, $checkOut) < $room->units;
+    }
+
+    /**
+     * Ricontrollo del checkout: si chiama nella transaction dell'ordine, DOPO
+     * il lock della stanza. Le righe si leggono con un lock condiviso perché
+     * in REPEATABLE READ (MySQL) una SELECT semplice userebbe lo snapshot preso
+     * prima di attendere il lock e non vedrebbe l'ordine appena committato dal
+     * checkout concorrente. $pending sono i soggiorni sulla stessa stanza già
+     * riservati da righe precedenti dello stesso ordine, che a db non ci sono
+     * ancora.
+     *
+     * @param  list<array{0: CarbonImmutable, 1: CarbonImmutable}>  $pending
+     */
+    public function isAvailableAtCheckout(Room $room, CarbonImmutable $checkIn, CarbonImmutable $checkOut, array $pending = []): bool
+    {
+        $items = $this->overlappingItems($room, $checkIn, $checkOut, lock: true)->concat(array_map(
+            fn (array $stay): OrderItem => (new OrderItem)->forceFill(['booked_from' => $stay[0], 'booked_until' => $stay[1]]),
+            $pending,
+        ));
+
+        return $this->peak($items, $checkIn, $checkOut) < $room->units;
     }
 
     /**
@@ -63,15 +78,31 @@ class RoomOccupancy
     }
 
     /** Righe d'ordine valide che si sovrappongono a [checkIn, checkOut). */
-    private function overlappingItems(Room $room, CarbonImmutable $checkIn, CarbonImmutable $checkOut, ?int $exceptOrderId = null): Collection
+    private function overlappingItems(Room $room, CarbonImmutable $checkIn, CarbonImmutable $checkOut, ?int $exceptOrderId = null, bool $lock = false): Collection
     {
+        // Join e non whereHas: con il lock anche le righe orders vanno lette
+        // (e bloccate) all'ultima versione committata, non dallo snapshot.
         return OrderItem::query()
-            ->where('room_id', $room->id)
-            ->where('booked_from', '<', $checkOut)
-            ->where('booked_until', '>', $checkIn)
-            ->whereHas('order', fn ($order) => $order->whereIn('status', OrderStatus::bookingStatuses()))
-            ->when($exceptOrderId, fn ($query) => $query->where('order_id', '!=', $exceptOrderId))
-            ->get(['id', 'booked_from', 'booked_until']);
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.room_id', $room->id)
+            ->where('order_items.booked_from', '<', $checkOut)
+            ->where('order_items.booked_until', '>', $checkIn)
+            ->whereIn('orders.status', OrderStatus::bookingStatuses())
+            ->when($exceptOrderId, fn ($query) => $query->where('order_items.order_id', '!=', $exceptOrderId))
+            ->when($lock, fn ($query) => $query->sharedLock())
+            ->get(['order_items.id', 'order_items.booked_from', 'order_items.booked_until']);
+    }
+
+    /** Massimo di righe che occupano una stessa notte di [checkIn, checkOut). */
+    private function peak(Collection $items, CarbonImmutable $checkIn, CarbonImmutable $checkOut): int
+    {
+        $max = 0;
+
+        for ($night = $checkIn->startOfDay(); $night->lt($checkOut->startOfDay()); $night = $night->addDay()) {
+            $max = max($max, $this->occupiedOn($items, $night));
+        }
+
+        return $max;
     }
 
     /** Righe che occupano la notte indicata: booked_from <= notte < booked_until. */

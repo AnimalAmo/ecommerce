@@ -263,6 +263,7 @@ return [
         'detail_time' => 'Time:',
         'detail_language' => 'Language:',
         'detail_structure' => 'Structure:',
+        'detail_room' => 'Room:',
         'detail_validity' => 'Validity:',
         'detail_price' => 'Price:',
         'detail_people' => 'No. of people:',

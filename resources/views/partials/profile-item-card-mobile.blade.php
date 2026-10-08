@@ -38,6 +38,12 @@
                 <span class="truncate">{{ $item['dates'] }}</span>
             </div>
         @endif
+        @if (($item['room'] ?? null) !== null)
+            <div class="flex items-center gap-[10px]">
+                <flux:icon.home class="!h-[11px] !w-[11px] shrink-0" />
+                <span class="truncate">{{ $item['room'] }}</span>
+            </div>
+        @endif
         @if ($item['guests'] !== null)
             <div class="flex items-center gap-[10px]">
                 <flux:icon.user class="!h-[11px] !w-[11px] shrink-0" />

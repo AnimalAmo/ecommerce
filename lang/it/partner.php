@@ -277,6 +277,7 @@ return [
         'detail_time' => 'Orario:',
         'detail_language' => 'Lingua:',
         'detail_structure' => 'Struttura:',
+        'detail_room' => 'Stanza:',
         'detail_validity' => 'Validità:',
         'detail_price' => 'Prezzo:',
         'detail_people' => 'N. Persone:',

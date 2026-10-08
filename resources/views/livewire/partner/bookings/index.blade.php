@@ -42,7 +42,13 @@
                                     @forelse ($panel['rows'] as $row)
                                         <flux:table.row wire:key="booking-{{ $family }}-{{ $row['key'] }}">
                                             @foreach ($panel['columns'] as $key => $label)
-                                                <flux:table.cell :align="in_array($key, ['price', 'people'], true) ? 'center' : 'start'">{{ $row[$key] }}</flux:table.cell>
+                                                <flux:table.cell :align="in_array($key, ['price', 'people'], true) ? 'center' : 'start'">
+                                                    {{ $row[$key] }}
+                                                    {{-- Stanza scelta (snapshot riga ordine) sotto il nome della struttura --}}
+                                                    @if ($key === 'title' && $row['room'] !== null)
+                                                        <span class="mt-1 block text-[13px] text-[#555555]">{{ $row['room'] }}</span>
+                                                    @endif
+                                                </flux:table.cell>
                                             @endforeach
                                             <flux:table.cell>
                                                 <div class="flex items-center justify-end gap-3">

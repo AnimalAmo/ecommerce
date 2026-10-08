@@ -4,6 +4,7 @@ namespace App\Pipes\Order;
 
 use App\Data\Cart\CartItemData;
 use App\Data\Checkout\OrderPipelineData;
+use App\Models\Structure\Room;
 use App\Services\Pricing\BookingPricingService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * località/prezzo/options del CartItemData) più la finestra prenotata
  * booked_from/booked_until calcolata qui per famiglia — è ciò che permette al
  * profilo ordini di bucketizzare programma/passati senza toccare il prodotto.
+ * Stanza: room_id per l'occupazione e room_name nelle options come snapshot,
+ * leggibile anche quando il partner cancella la stanza (room_id → null).
  */
 class CreateOrderItemsPipe
 {
@@ -22,6 +25,7 @@ class CreateOrderItemsPipe
     {
         foreach ($data->input->items as $item) {
             [$bookedFrom, $bookedUntil] = $this->bookedWindow($item);
+            $room = $this->room($item);
 
             $data->orderItems->push($data->order->items()->create([
                 'purchasable_type' => $item->type,
@@ -33,13 +37,26 @@ class CreateOrderItemsPipe
                 'location' => $item->location,
                 'price_cents' => $item->priceCents,
                 'is_gift' => $item->isGift,
-                'options' => $item->options,
+                'options' => $room !== null ? [...$item->options, 'room_name' => $room->displayName()] : $item->options,
+                'room_id' => $room?->id,
                 'booked_from' => $bookedFrom,
                 'booked_until' => $bookedUntil,
             ]));
         }
 
         return $next($data);
+    }
+
+    /** Stanza della riga: esiste ed è della struttura, l'ha già verificato (e lockato) ReserveAvailabilityPipe. */
+    private function room(CartItemData $item): ?Room
+    {
+        $roomId = $item->options['room_id'] ?? null;
+
+        if ($item->type !== 'structure' || ! is_numeric($roomId)) {
+            return null;
+        }
+
+        return Room::query()->whereKey((int) $roomId)->where('structure_id', $item->purchasableId)->first();
     }
 
     /**
