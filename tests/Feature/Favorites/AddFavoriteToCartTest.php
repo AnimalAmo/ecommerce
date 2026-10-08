@@ -6,6 +6,7 @@ use App\Enums\ProductType;
 use App\Livewire\Commerce\Favorites;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\CartManager;
@@ -66,6 +67,21 @@ class AddFavoriteToCartTest extends TestCase
         $this->assertSame(0, $item->options['guests']['ragazzi']);
         $this->assertSame(0, $item->options['guests']['bambini']);
         $this->assertSame(['cane' => 1], $item->options['animals']);
+    }
+
+    public function test_favorite_structure_with_rooms_added_to_cart_with_default_room(): void
+    {
+        $user = User::factory()->create();
+        $hotel = Structure::where('type', ProductType::Structure)->orderBy('id')->firstOrFail();
+        $room = Room::factory()->create(['structure_id' => $hotel->id, 'position' => 0]);
+        $favorite = $user->favorites()->create(['favoritable_type' => 'structure', 'favoritable_id' => $hotel->id]);
+
+        Livewire::actingAs($user)->test(Favorites::class)
+            ->call('toggleCart', $favorite->id)
+            ->assertSet('inCart', [$favorite->id]);
+
+        $item = app(CartManager::class)->items()->first();
+        $this->assertSame($room->id, (int) $item->options['room_id']);
     }
 
     public function test_toggle_cart_adds_a_service_structure_with_day_and_time_slot(): void

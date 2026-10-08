@@ -66,6 +66,33 @@ class PartnerServiceDetail extends Component
         };
     }
 
+    /**
+     * Stanze per la scheda: nome (o etichetta della tipologia), tipologia, prezzo
+     * e unità, anche per le righe legacy (normalizedRooms le porta al formato nuovo).
+     *
+     * @return list<array{name:string,type:string,price:string,units:int}>
+     */
+    private function roomList(): array
+    {
+        $locale = app()->getLocale();
+
+        return array_map(function (array $room) use ($locale): array {
+            $typeLabel = (string) ServiceOptionLabels::label('room_type', $room['type']);
+            $name = trim((string) ($room['name'][$locale] ?? ''));
+
+            if ($name === '') {
+                $name = trim((string) (collect($room['name'])->first(fn ($text) => filled($text)) ?? ''));
+            }
+
+            return [
+                'name' => $name !== '' ? $name : $typeLabel,
+                'type' => $typeLabel,
+                'price' => $room['price'],
+                'units' => $room['units'],
+            ];
+        }, $this->draft->normalizedRooms());
+    }
+
     /** Percorso Struttura, step 1-11. */
     private function structureRows(): array
     {
@@ -78,7 +105,7 @@ class PartnerServiceDetail extends Component
             $this->descriptionRow(),
             [
                 'label' => __('partner.services.section_rooms'),
-                'rooms' => $draft->rooms ?: [],
+                'rooms' => $this->roomList(),
                 'checkin' => [$draft->checkin_from, $draft->checkin_to],
                 'checkout' => [$draft->checkout_from, $draft->checkout_to],
                 'text' => filled($draft->rooms) ? null : __('partner.services.not_provided'),

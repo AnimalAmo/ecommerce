@@ -55,7 +55,7 @@
                                 @elseif (filled($row['rooms'] ?? null))
                                     <ul class="space-y-1 text-[15px] text-[#627277]">
                                         @foreach ($row['rooms'] as $room)
-                                            <li>{{ $room['type'] ?? '' }} — {{ $room['count'] ?? 0 }} {{ __('partner.services.rooms_count') }} · €{{ $room['price'] ?? '' }} {{ __('partner.services.rooms_price') }}</li>
+                                            <li>{{ $room['name'] }} ({{ $room['type'] }}) — {{ $room['units'] }} {{ __('partner.services.rooms_count') }} · €{{ $room['price'] }} {{ __('partner.services.rooms_price') }}</li>
                                         @endforeach
                                     </ul>
                                     <p class="mt-2 text-sm text-[#959595]">{{ __('partner.services.checkin') }}: {{ $row['checkin'][0] ?: '—' }}–{{ $row['checkin'][1] ?: '—' }} · {{ __('partner.services.checkout') }}: {{ $row['checkout'][0] ?: '—' }}–{{ $row['checkout'][1] ?: '—' }}</p>
