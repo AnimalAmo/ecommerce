@@ -9,8 +9,10 @@ use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
+use App\Services\Availability\RoomOccupancy;
 use App\Services\Partner\Publishing\DraftPublisher;
 use App\Services\Partner\Publishing\FamilyPublisher;
+use Carbon\CarbonImmutable;
 use Database\Seeders\AmenitySeeder;
 use Database\Seeders\ProvinceSeeder;
 use Database\Seeders\RegionSeeder;
@@ -245,5 +247,59 @@ class MergeStructuresTest extends TestCase
         $before = $this->snapshot();
         $this->artisan('catalog:merge-structures', ['target' => $stella->id, 'sources' => [$dona->id]])->assertFailed();
         $this->assertEquals($before, $this->snapshot());
+    }
+
+    /** Il target com'è in produzione: mai ripubblicato dopo le stanze, nessuna riga `rooms`. */
+    private function asLegacy(Structure $structure, ?array $rows = null): void
+    {
+        Room::query()->where('structure_id', $structure->id)->delete();
+        $draft = $structure->draft;
+        $draft->forceFill(['rooms' => $rows ?? array_map(fn (array $row) => array_diff_key($row, ['key' => true]), $draft->rooms)])->saveQuietly();
+    }
+
+    public function test_target_own_bookings_are_linked_to_its_room(): void
+    {
+        [$monia, $dona] = $this->casale();
+        $this->asLegacy($monia);
+        $from = CarbonImmutable::today()->addDays(20);
+        $item = OrderItem::factory()->create([
+            'order_id' => Order::factory()->paid()->create()->id,
+            'purchasable_type' => 'structure',
+            'purchasable_id' => $monia->id,
+            'room_id' => null,
+            'booked_from' => $from,
+            'booked_until' => $from->addDays(3),
+        ]);
+
+        $this->artisan('catalog:merge-structures', ['target' => $monia->id, 'sources' => [$dona->id], '--dry-run' => true])
+            ->expectsTable(
+                ['Sorgente', 'Stanza', 'Tipo', 'Prezzo/notte', 'Unità', 'Ospiti', 'Animali', 'Foto', 'Recensioni', 'Righe ordine'],
+                [
+                    ['#'.$monia->id.' (target)', 'it: Monia', '', '', '', '', '', '', '', 1],
+                    ['#'.$dona->id, 'it: Dona / en: Dona', 'doppia', '80.00', 2, 3, 1, 2, 0, 0],
+                ],
+            )
+            ->assertSuccessful();
+        $this->assertNull($item->fresh()->room_id);
+
+        $this->artisan('catalog:merge-structures', ['target' => $monia->id, 'sources' => [$dona->id]])->assertSuccessful();
+
+        $room = $monia->fresh()->rooms->first(fn (Room $room) => $room->getTranslation('name', 'it') === 'Monia');
+        $this->assertSame($room->id, $item->fresh()->room_id);
+        // Una camera sola (units 1) già venduta in quelle notti: piena.
+        $this->assertFalse(app(RoomOccupancy::class)->isAvailable($room, $from, $from->addDays(3)));
+    }
+
+    public function test_target_bookings_stay_unlinked_and_warned_when_target_has_several_rows(): void
+    {
+        [$monia, $dona] = $this->casale();
+        $this->asLegacy($monia, [['type' => 'doppia', 'price' => '90'], ['type' => 'suite', 'price' => '150']]);
+        $item = $this->bookOn($monia);
+
+        $this->artisan('catalog:merge-structures', ['target' => $monia->id, 'sources' => [$dona->id]])
+            ->expectsOutputToContain('restano senza stanza')
+            ->assertSuccessful();
+
+        $this->assertNull($item->fresh()->room_id);
     }
 }

@@ -93,10 +93,8 @@ class StructureMerger
 
     /**
      * Anteprima senza scritture (per --dry-run): le righe stanza che si
-     * aggiungerebbero, con quanto verrebbe spostato su ciascuna.
-     *
-     * `target_room` è il nome che riceverebbe la stanza già esistente del
-     * target, se è una sola e senza nome (vedi targetRows()); null altrimenti.
+     * aggiungerebbero, con quanto verrebbe spostato su ciascuna. Per la
+     * stanza del target vedi targetRoomName() e targetBookings().
      *
      * @param  Collection<int, Structure>  $sources
      * @return list<array{source_id: int, row: array<string, mixed>, reviews: int, order_items: int}>
@@ -134,6 +132,30 @@ class StructureMerger
     }
 
     /**
+     * Le prenotazioni del target stesso. Una struttura mai ripubblicata dopo
+     * l'arrivo delle stanze non ha righe `rooms`, e i suoi ordini hanno
+     * room_id null: dopo l'accorpamento la sua riga diventa una stanza (es.
+     * «Monia») che l'occupazione vedrebbe vuota, e si potrebbe vendere due
+     * volte. Se la bozza ha una riga sola, gli ordini sono suoi e si
+     * collegano; con più righe non si sa a quale stanza attribuirli e restano
+     * null (`ambiguous`: il comando lo segnala).
+     *
+     * @return array{order_items: int, ambiguous: int}
+     */
+    public function targetBookings(Structure $target): array
+    {
+        $unlinked = $this->orderItems($target)->whereNull('room_id')->count();
+
+        if ($unlinked === 0 || Room::query()->where('structure_id', $target->id)->exists()) {
+            return ['order_items' => 0, 'ambiguous' => 0];
+        }
+
+        $single = count($target->draft->replicate()->normalizedRooms()) === 1;
+
+        return ['order_items' => $single ? $unlinked : 0, 'ambiguous' => $single ? 0 : $unlinked];
+    }
+
+    /**
      * @param  Collection<int, Structure>  $sources
      *
      * @throws InvalidArgumentException richiesta non valida (vedi errors()), niente scritto
@@ -149,7 +171,9 @@ class StructureMerger
 
             // Stessa regola del dry-run, letta prima che le key vengano scritte.
             $targetRoomName = $this->targetRoomName($target);
+            $linkTargetBookings = $this->targetBookings($target)['order_items'] > 0;
             $rows = $draft->normalizedRooms();
+            $targetKey = $rows[0]['key'] ?? null;
 
             if ($targetRoomName !== null) {
                 $rows[0]['name'] = $targetRoomName;
@@ -190,6 +214,14 @@ class StructureMerger
             foreach ($sources as $source) {
                 // Solo room_id: `purchasable` resta la sorgente, lo storico non cambia.
                 $this->orderItems($source)->update(['room_id' => $roomIds[$keys[$source->id]]]);
+            }
+
+            // Gli ordini del target sulla stanza nata dalla sua riga (vedi targetBookings()).
+            // Il publisher non lo fa: qui le stanze passano da 0 a più di una.
+            if ($linkTargetBookings) {
+                $this->orderItems($target)->whereNull('room_id')->update([
+                    'room_id' => Room::query()->where('structure_id', $target->id)->where('draft_key', $targetKey)->value('id'),
+                ]);
             }
 
             foreach ([$target, ...$sources->all()] as $structure) {

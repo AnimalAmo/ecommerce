@@ -3,6 +3,7 @@
 namespace App\Services\Partner\Publishing;
 
 use App\Enums\ProductType;
+use App\Models\OrderItem\OrderItem;
 use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
@@ -76,6 +77,7 @@ class StructurePublisher extends FamilyPublisher
             ->flatten()
             ->filter(fn ($path) => is_string($path) && $path !== '')
             ->unique();
+        $hadRooms = Room::query()->where('structure_id', $structure->id)->exists();
 
         foreach ($rows as $position => $row) {
             $room = Room::updateOrCreate(
@@ -106,6 +108,18 @@ class StructurePublisher extends FamilyPublisher
                 $room->amenities()->detach();
                 $room->delete();
             });
+
+        // Prima pubblicazione con le stanze di una struttura che ha già
+        // venduto: i suoi ordini hanno room_id null e l'occupazione non li
+        // vedrebbe. Con una stanza sola sono suoi; con più stanze non si sa
+        // a quale attribuirli e restano null (l'accorpamento lo gestisce da sé).
+        if (! $hadRooms && count($rows) === 1) {
+            OrderItem::query()
+                ->where('purchasable_type', $structure->getMorphClass())
+                ->where('purchasable_id', $structure->id)
+                ->whereNull('room_id')
+                ->update(['room_id' => Room::query()->where('structure_id', $structure->id)->where('draft_key', $rows[0]['key'])->value('id')]);
+        }
 
         $kept = [...($draft->photos ?? []), ...array_merge(...array_column($rows, 'photos') ?: [[]])];
 

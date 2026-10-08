@@ -231,4 +231,50 @@ class StructurePublisherRoomsTest extends TestCase
         $this->assertContains($target->id, $listed);
         $this->assertNotContains($merged->id, $listed);
     }
+
+    /**
+     * Struttura pubblicata prima delle stanze: nessuna riga `rooms` e un
+     * ordine con room_id null.
+     *
+     * @return array{0: StructureDraft, 1: OrderItem}
+     */
+    private function legacyWithBooking(array $rows): array
+    {
+        $draft = $this->hotelDraft($rows);
+        $structure = app(DraftPublisher::class)->publish($draft);
+        Room::query()->where('structure_id', $structure->id)->delete();
+
+        $item = OrderItem::factory()->create(['purchasable_type' => 'structure', 'purchasable_id' => $structure->id, 'room_id' => null]);
+
+        return [$draft->refresh(), $item];
+    }
+
+    public function test_first_publish_with_one_room_links_existing_bookings(): void
+    {
+        [$draft, $item] = $this->legacyWithBooking([$this->roomRow(self::KEY_A)]);
+
+        $structure = app(DraftPublisher::class)->publish($draft);
+
+        $this->assertSame($structure->rooms()->sole()->id, $item->fresh()->room_id);
+    }
+
+    public function test_first_publish_with_two_rooms_leaves_bookings_unlinked(): void
+    {
+        [$draft, $item] = $this->legacyWithBooking([$this->roomRow(self::KEY_A), $this->roomRow(self::KEY_B)]);
+
+        app(DraftPublisher::class)->publish($draft);
+
+        $this->assertNull($item->fresh()->room_id);
+    }
+
+    public function test_structure_that_already_had_rooms_is_never_backfilled(): void
+    {
+        $draft = $this->hotelDraft([$this->roomRow(self::KEY_A)]);
+        $structure = app(DraftPublisher::class)->publish($draft);
+        $item = OrderItem::factory()->create(['purchasable_type' => 'structure', 'purchasable_id' => $structure->id, 'room_id' => null]);
+
+        app(DraftPublisher::class)->publish($draft->refresh());
+
+        $this->assertNull($item->fresh()->room_id);
+    }
 }

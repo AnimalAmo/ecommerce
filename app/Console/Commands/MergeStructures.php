@@ -83,9 +83,17 @@ class MergeStructures extends Command
             $this->line("La stanza già presente nel target, senza nome, si chiamerà «{$rename['it']}».");
         }
 
+        $bookings = $merger->targetBookings($target);
+
+        if ($bookings['ambiguous'] > 0) {
+            $this->warn("Attenzione: {$bookings['ambiguous']} righe ordine del target restano senza stanza (la bozza ha più righe e nessuna stanza pubblicata): l'occupazione non le conterà.");
+        }
+
+        $targetRow = ['#'.$target->id.' (target)', $rename ? 'it: '.$rename['it'] : '(stanze attuali)', '', '', '', '', '', '', '', $bookings['order_items']];
+
         $this->table(
             ['Sorgente', 'Stanza', 'Tipo', 'Prezzo/notte', 'Unità', 'Ospiti', 'Animali', 'Foto', 'Recensioni', 'Righe ordine'],
-            collect($merger->plan($target, $sources))->map(fn (array $plan): array => [
+            [$targetRow, ...collect($merger->plan($target, $sources))->map(fn (array $plan): array => [
                 '#'.$plan['source_id'],
                 collect($plan['row']['name'])->map(fn (string $name, string $locale): string => "{$locale}: {$name}")->implode(' / '),
                 $plan['row']['type'],
@@ -96,7 +104,7 @@ class MergeStructures extends Command
                 count($plan['row']['photos']),
                 $plan['reviews'],
                 $plan['order_items'],
-            ])->all(),
+            ])->all()],
         );
 
         $this->line('Le sorgenti verranno sospese e le loro URL reindirizzate (301) al target.');
