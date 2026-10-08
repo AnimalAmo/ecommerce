@@ -744,6 +744,48 @@ class StructureCreateTest extends TestCase
         $this->assertSame($rooms->pluck('draft_key')->all(), array_column($draft->rooms, 'key'));
     }
 
+    /**
+     * Nel pannello le righe sono stato del client: il salvataggio le rivalida
+     * tutte. Prezzo a 0 (spec §2: > 0) e chiavi doppie non passano.
+     */
+    public function test_every_room_row_is_validated_on_save(): void
+    {
+        $partner = $this->payablePartner();
+        $rows = $this->roomRows();
+
+        $this->filled($partner)
+            ->set('rooms.rooms.0.price', '0')
+            ->call('save')
+            ->assertHasErrors(['rooms.rooms.0.price' => 'gt']);
+
+        $rows[1]['key'] = $rows[0]['key'];
+
+        $this->filled($partner)
+            ->set('rooms.rooms', $rows)
+            ->call('save')
+            ->assertHasErrors(['rooms.rooms.1.key' => 'distinct']);
+
+        $this->assertSame(0, StructureDraft::query()->count());
+    }
+
+    /** La chiave di una camera nuova la genera il server, non il roomForm del client. */
+    public function test_a_new_room_key_is_generated_by_the_server(): void
+    {
+        $partner = $this->payablePartner();
+        $existing = $this->roomRows()[0]['key'];
+
+        $component = $this->filled($partner)
+            ->call('openRoom', null)
+            ->set('roomForm.key', $existing)
+            ->set('roomForm.type', 'suite')
+            ->set('roomForm.price', '150')
+            ->call('saveRoom')
+            ->assertHasNoErrors();
+
+        $keys = array_column($component->get('rooms.rooms'), 'key');
+        $this->assertCount(3, array_unique($keys));
+    }
+
     /** Un salvataggio respinto dal service non lascia su disco le foto delle camere. */
     public function test_a_rejected_save_cleans_up_the_room_photos_too(): void
     {

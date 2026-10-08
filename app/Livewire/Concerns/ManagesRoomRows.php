@@ -5,6 +5,7 @@ namespace App\Livewire\Concerns;
 use App\Livewire\Forms\HotelRoomsForm;
 use App\Services\Partner\Publishing\FamilyPublisher;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 /**
  * Elenco di card stanza + modale di modifica, condiviso dallo step 5 del
@@ -44,6 +45,7 @@ trait ManagesRoomRows
     public function openRoom(?int $index = null): void
     {
         $form = $this->roomsForm();
+        $rows = $this->baseRoomRows();
 
         if ($index === null) {
             if ($form->wholeProperty) {
@@ -51,8 +53,8 @@ trait ManagesRoomRows
             }
 
             $this->roomForm = $form->blankRow();
-        } elseif (isset($form->rooms[$index])) {
-            $this->roomForm = $form->cleanRow($form->rooms[$index]);
+        } elseif (isset($rows[$index])) {
+            $this->roomForm = $form->cleanRow($rows[$index]);
             // Alloggio intero ancora da compilare: posti letto vuoti, non 0.
             $this->roomForm['max_guests'] = $this->roomForm['max_guests'] ?: '';
         } else {
@@ -97,8 +99,9 @@ trait ManagesRoomRows
     public function saveRoom(): void
     {
         $form = $this->roomsForm();
+        $rows = $this->baseRoomRows();
 
-        if ($this->editing !== null && ! isset($form->rooms[$this->editing])) {
+        if ($this->editing !== null && ! isset($rows[$this->editing])) {
             $this->closeRoom();
 
             return;
@@ -119,10 +122,13 @@ trait ManagesRoomRows
             ? ['roomForm.max_guests.required' => __('partner.hotel_rooms.beds_error')]
             : []);
 
-        $previous = $this->editing === null ? null : $form->rooms[$this->editing];
+        $previous = $this->editing === null ? null : $rows[$this->editing];
         $row = $form->cleanRow($this->roomForm);
-        // La chiave è quella della riga, non quella che arriva dal client.
-        $row['key'] = $previous === null ? $row['key'] : $form->cleanRow($previous)['key'];
+        // La chiave la decide il server: nuova per una stanza nuova, quella
+        // della riga per una modifica. Una chiave dal client potrebbe
+        // duplicarne un'altra (due stanze fuse) o cambiarla (id nuovo a
+        // catalogo, occupazione azzerata).
+        $row['key'] = $previous === null ? (string) Str::uuid() : $form->cleanRow($previous)['key'];
         // Solo foto che la stanza possiede davvero: un path scritto a mano nel
         // payload non entra (e quindi non si cancellerà mai da qui).
         $row['photos'] = array_values(array_intersect($row['photos'], $this->ownedRoomPhotos($row['key'])));
@@ -136,7 +142,6 @@ trait ManagesRoomRows
         $accepted = $this->acceptRoomUploads($row['key'], $this->roomPhotos);
         $row['photos'] = [...$row['photos'], ...$accepted];
 
-        $rows = array_values($form->rooms);
         if ($this->editing === null) {
             $rows[] = $row;
         } else {
@@ -151,13 +156,13 @@ trait ManagesRoomRows
     public function removeRoom(int $index): void
     {
         $form = $this->roomsForm();
+        $rows = $this->baseRoomRows();
 
-        if ($form->wholeProperty || ! isset($form->rooms[$index])) {
+        if ($form->wholeProperty || ! isset($rows[$index])) {
             return;
         }
 
-        $removed = $form->rooms[$index];
-        $rows = $form->rooms;
+        $removed = $rows[$index];
         unset($rows[$index]);
 
         $this->forgetRoomUploads((string) ($removed['key'] ?? ''));
@@ -168,7 +173,7 @@ trait ManagesRoomRows
     /** Sposta una stanza di una posizione (-1 su, +1 giù): l'ordine è quello della scheda. */
     public function moveRoom(int $index, int $direction): void
     {
-        $rows = array_values($this->roomsForm()->rooms);
+        $rows = $this->baseRoomRows();
         $target = $index + ($direction < 0 ? -1 : 1);
 
         if (! isset($rows[$index], $rows[$target])) {
@@ -212,6 +217,17 @@ trait ManagesRoomRows
 
     /** Form delle stanze del componente (`$form` nel wizard, `$rooms` nel pannello). */
     abstract protected function roomsForm(): HotelRoomsForm;
+
+    /**
+     * Righe da cui partono le azioni della modale. Nel wizard sono quelle
+     * della bozza, non `form.rooms`: il form è stato pubblico e il client lo
+     * riscrive, e una riga manomessa (prezzo negativo, tipologia inventata)
+     * finirebbe nella bozza con un moveRoom() senza passare da nessuna regola.
+     * Così l'unica riga che entra è quella validata dalla modale.
+     *
+     * @return list<array<string, mixed>>
+     */
+    abstract protected function baseRoomRows(): array;
 
     /**
      * Path sul disco che le stanze possono legittimamente contenere (fonte di

@@ -398,6 +398,16 @@ class StructureCreate extends Component
         return $this->rooms;
     }
 
+    /**
+     * Nel pannello non c'è una bozza: le righe sono quelle del form, e il
+     * salvataggio le rivalida tutte (rules(), chiavi distinte comprese)
+     * prima di pubblicare.
+     */
+    protected function baseRoomRows(): array
+    {
+        return array_values($this->rooms->rooms);
+    }
+
     /** Nel pannello nessuna foto camera è su disco prima del salvataggio. */
     protected function ownedRoomPhotos(?string $key): array
     {

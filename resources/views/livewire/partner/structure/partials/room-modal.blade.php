@@ -59,7 +59,7 @@
             <div class="grid grid-cols-2 gap-4 {{ $whole ? 'md:grid-cols-3' : 'md:grid-cols-4' }}">
                 <flux:field>
                     <flux:label>{{ __($whole ? 'partner.hotel_rooms.whole_price' : 'partner.hotel_rooms.price') }} (€) *</flux:label>
-                    <flux:input type="number" min="0" step="0.01" wire:model="roomForm.price" />
+                    <flux:input type="number" min="0.01" step="0.01" wire:model="roomForm.price" />
                     <flux:error name="roomForm.price" />
                 </flux:field>
                 <flux:field>

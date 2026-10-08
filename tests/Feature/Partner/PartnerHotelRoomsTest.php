@@ -167,6 +167,67 @@ class PartnerHotelRoomsTest extends TestCase
             ->assertSet('roomModal', true);
     }
 
+    /** Spec §2: una stanza a 0 € non esiste. */
+    public function test_room_price_must_be_positive(): void
+    {
+        $this->hotelDraft();
+
+        $this->fillRoom(Livewire::test(HotelRooms::class), null, ['price' => '0'])
+            ->call('saveRoom')
+            ->assertHasErrors(['roomForm.price' => 'gt'])
+            ->assertCount('form.rooms', 0);
+    }
+
+    /**
+     * Le azioni della modale partono dalle righe della bozza, non da
+     * `form.rooms`: righe manomesse dal client non arrivano mai nella bozza,
+     * né con un moveRoom() né con «Avanti».
+     */
+    public function test_tampered_rows_never_reach_the_draft(): void
+    {
+        $draft = $this->hotelDraft(['rooms' => [$this->row('a'), $this->row('b')]]);
+
+        $component = Livewire::test(HotelRooms::class)
+            ->set('form.rooms.1.price', '-5')
+            ->set('form.rooms.1.type', 'xyz')
+            ->set('form.rooms.1.max_guests', 900)
+            ->set('form.rooms.1.amenities', ['elicottero'])
+            ->set('form.rooms.1.key', 'a')
+            ->call('moveRoom', 0, 1);
+
+        $rooms = $draft->fresh()->rooms;
+        $this->assertSame(['b', 'a'], array_column($rooms, 'key'));
+        $this->assertSame(['80', '80'], array_column($rooms, 'price'));
+        $this->assertSame(['doppia', 'doppia'], array_column($rooms, 'type'));
+        $this->assertSame([2, 2], array_column($rooms, 'max_guests'));
+        $this->assertSame([[], []], array_column($rooms, 'amenities'));
+
+        $this->setTimes($component)
+            ->set('form.rooms.0.price', '-5')
+            ->set('form.rooms.0.key', 'a')
+            ->call('next')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['b', 'a'], array_column($draft->fresh()->rooms, 'key'));
+        $this->assertSame(['80', '80'], array_column($draft->fresh()->rooms, 'price'));
+    }
+
+    /** La chiave di una stanza nuova la decide il server: una copiata dal client fonderebbe due stanze. */
+    public function test_new_room_key_is_generated_by_the_server(): void
+    {
+        $draft = $this->hotelDraft(['rooms' => [$this->row('a')]]);
+
+        $this->fillRoom(Livewire::test(HotelRooms::class))
+            ->set('roomForm.key', 'a')
+            ->call('saveRoom')
+            ->assertHasNoErrors();
+
+        $keys = array_column($draft->fresh()->rooms, 'key');
+        $this->assertCount(2, $keys);
+        $this->assertSame('a', $keys[0]);
+        $this->assertNotSame('a', $keys[1]);
+    }
+
     public function test_room_amenities_are_whitelisted(): void
     {
         $this->hotelDraft();

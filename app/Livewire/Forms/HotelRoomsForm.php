@@ -49,6 +49,9 @@ class HotelRoomsForm extends Form
         foreach ($this->roomRules() as $field => $rule) {
             $rules['rooms.*.'.$field] = $rule;
         }
+        // La chiave aggancia la stanza pubblicata (draft_key): due righe con la
+        // stessa chiave fonderebbero due stanze in una.
+        $rules['rooms.*.key'] = ['required', 'string', 'distinct'];
 
         return $rules + [
             'checkinFrom' => ['required', 'string'],
@@ -74,7 +77,8 @@ class HotelRoomsForm extends Form
             'description.en' => ['nullable', 'string', 'max:1000'],
             // decimal:0,2 + max: il publisher converte in cents (unsignedInteger),
             // '1.500' ambiguo e importi a 9+ cifre overflowerebbero la colonna.
-            'price' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:1000000'],
+            // gt:0 (spec §2): una stanza a 0 € sarebbe prenotabile gratis.
+            'price' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:1000000'],
             // L'alloggio intero conta i posti letto, che prima arrivavano a 50.
             'max_guests' => ['required', 'integer', 'min:1', $this->wholeProperty ? 'max:50' : 'max:20'],
             'max_animals' => ['required', 'integer', 'min:0', 'max:10'],

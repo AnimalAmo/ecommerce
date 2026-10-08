@@ -27,16 +27,12 @@ class HotelRooms extends Component
 
     public function next(): void
     {
+        // Le stanze sono quelle della bozza (scritte dalla modale), non il
+        // payload: il client può riscrivere `form.rooms`, chiavi e foto comprese.
+        $this->form->rooms = $this->baseRoomRows();
         $this->form->validate();
 
-        $attributes = $this->form->toDraft();
-        // Le foto di ogni riga solo fra quelle che la bozza possiede già.
-        $owned = $this->ownedRoomPhotos(null);
-        foreach ($attributes['rooms'] as $i => $row) {
-            $attributes['rooms'][$i]['photos'] = array_values(array_intersect($row['photos'], $owned));
-        }
-
-        $this->saveStep($attributes, 5);
+        $this->saveStep($this->form->toDraft(), 5);
         $this->redirectRoute('partner.structure.hotel.cancellation');
     }
 
@@ -51,6 +47,21 @@ class HotelRooms extends Component
     protected function roomsForm(): HotelRoomsForm
     {
         return $this->form;
+    }
+
+    /**
+     * Le stanze della bozza. L'alloggio intero senza ancora una riga parte
+     * dalla card vuota del form (la chiave nuova la riscrive saveRoom).
+     */
+    protected function baseRoomRows(): array
+    {
+        $rows = $this->draft()->normalizedRooms();
+
+        if ($rows === [] && $this->form->wholeProperty) {
+            return [$this->form->blankRow()];
+        }
+
+        return $rows;
     }
 
     /** Le foto delle stanze così come sono nella bozza: la fonte di verità, non il payload. */
@@ -72,7 +83,16 @@ class HotelRooms extends Component
 
     /**
      * Le stanze vanno subito nella bozza, senza toccare `current_step`: le foto
-     * caricate non si perdono se il partner esce senza «Avanti».
+     * caricate non si perdono se il partner esce senza «Avanti», e la bozza è
+     * la fonte da cui si decide quali foto una stanza possiede.
+     *
+     * Conseguenza accettata: su una bozza in attesa di Stripe, una
+     * pubblicazione automatica (AwaitingDraftPublisher, al collegamento di
+     * Stripe o al cambio di modalità di pagamento) prende le stanze così come
+     * sono in quel momento, anche prima di «Avanti». Ogni riga scritta qui è
+     * però una riga validata dalla modale (roomRules), mai il payload; mancano
+     * solo i controlli d'insieme (almeno una stanza, orari), che una bozza in
+     * modifica aveva già superato.
      */
     protected function persistRooms(array $rows): void
     {
