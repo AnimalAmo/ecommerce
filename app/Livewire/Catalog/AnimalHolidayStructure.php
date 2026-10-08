@@ -4,6 +4,7 @@ namespace App\Livewire\Catalog;
 
 use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
+use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
@@ -117,6 +118,20 @@ class AnimalHolidayStructure extends Component
         $this->reviewsShown = min($this->reviewsShown + self::REVIEWS_STEP, $this->structure()->reviews->count());
     }
 
+    /**
+     * Totale del preventivo live. Una struttura con stanze non ha prezzo finché
+     * non ne viene scelta una (la selezione arriva con la pagina stanze): fino
+     * ad allora il totale è 0 invece di un errore in render.
+     */
+    private function previewTotal(Structure $structure): int
+    {
+        try {
+            return app(BookingPricingService::class)->quote($structure, $this->bookingOptions());
+        } catch (CartValidationException) {
+            return 0;
+        }
+    }
+
     public function render()
     {
         $structure = $this->structure();
@@ -136,7 +151,7 @@ class AnimalHolidayStructure extends Component
             'nights' => $nights,
             'nightsCents' => $structure->price_cents * $nights,
             'animalSupplementCents' => $structure->animal_supplement_cents * array_sum($this->editAnimals) * $nights,
-            'totalCents' => app(BookingPricingService::class)->quote($structure, $this->bookingOptions()),
+            'totalCents' => $this->previewTotal($structure),
             'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
             'calendarLabel' => $this->calendarLabel(),
             'guestsAtMax' => $this->guestsAtMax(),

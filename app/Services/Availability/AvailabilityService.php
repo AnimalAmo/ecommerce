@@ -2,9 +2,12 @@
 
 namespace App\Services\Availability;
 
+use App\Enums\OrderPaymentMode;
 use App\Exceptions\CartValidationException;
 use App\Models\Event\Event;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
+use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use Carbon\CarbonImmutable;
 
@@ -50,11 +53,75 @@ class AvailabilityService
             ->all();
     }
 
-    /** Structure: check-in futuro, intervallo valido, nessuna chiusura in [check_in, check_out). */
+    /**
+     * Giorni non prenotabili del mese: chiusure, più le notti piene della
+     * stanza — queste ultime solo se il partner incassa online (con pagamento
+     * in struttura l'occupazione è informativa, non blocca).
+     *
+     * @return list<string>
+     */
+    public function unavailableDates(Structure $structure, ?Room $room, int $year, int $month): array
+    {
+        $dates = $this->closedDates($structure, $year, $month);
+
+        if ($room !== null && $this->isOnline($structure)) {
+            $dates = array_merge($dates, app(RoomOccupancy::class)->fullDates($room, $year, $month));
+        }
+
+        $dates = array_values(array_unique($dates));
+        sort($dates);
+
+        return $dates;
+    }
+
+    /**
+     * Stanza scelta nelle options: null se la struttura non ha stanze (comportamento
+     * storico); altrimenti room_id è obbligatorio e deve appartenere alla struttura.
+     * Unica implementazione, riusata dal pricing.
+     *
+     * @throws CartValidationException
+     */
+    public function roomFor(Structure $structure, array $options): ?Room
+    {
+        // Struttura non salvata (calcoli puri senza db): nessuna stanza.
+        if (! $structure->exists || ! $structure->rooms()->exists()) {
+            return null;
+        }
+
+        $roomId = $options['room_id'] ?? null;
+
+        // room_id può arrivare come stringa numerica da Livewire.
+        if (! is_numeric($roomId)) {
+            throw CartValidationException::notPurchasable();
+        }
+
+        $room = $structure->rooms()->whereKey((int) $roomId)->first();
+
+        if ($room === null) {
+            throw CartValidationException::notPurchasable();
+        }
+
+        return $room;
+    }
+
+    private function isOnline(Structure $structure): bool
+    {
+        // Risolto al momento: il service è scoped (memoizza per richiesta).
+        return app(PartnerPaymentModeService::class)->forPurchasable($structure) === OrderPaymentMode::Online;
+    }
+
+    /** Structure: check-in futuro, intervallo valido, capienza stanza, nessuna chiusura, stanza libera (partner Online). */
     private function ensureStructureAvailable(Structure $structure, array $options): void
     {
+        $room = $this->roomFor($structure, $options);
         $checkIn = CarbonImmutable::parse($options['check_in']);
         $checkOut = CarbonImmutable::parse($options['check_out']);
+
+        if ($room !== null
+            && (BookingPricingService::persons($options) > $room->max_guests
+                || BookingPricingService::animalCount($options) > $room->max_animals)) {
+            throw CartValidationException::invalidParticipants();
+        }
 
         if ($checkIn->lt(CarbonImmutable::today())) {
             throw CartValidationException::pastDate();
@@ -70,6 +137,10 @@ class AvailabilityService
             ->exists();
 
         if ($closed) {
+            throw CartValidationException::unavailableDates();
+        }
+
+        if ($room !== null && $this->isOnline($structure) && ! app(RoomOccupancy::class)->isAvailable($room, $checkIn, $checkOut)) {
             throw CartValidationException::unavailableDates();
         }
     }
