@@ -15,7 +15,7 @@
 | {{ __('orders.mail.confirmation.table_item') }} | {{ __('orders.mail.partner_booking.table_people') }} | {{ __('orders.mail.confirmation.table_price') }} |
 |:--|:-:|--:|
 @foreach ($lines as $item)
-| **{{ $item->title }}**@if ($item->purchasable_type !== 'smartbox_package' && $item->booked_from !== null && $item->booked_until !== null)<br>{{ Format::dateRange($item->booked_from, $item->booked_until) }}@endif | {{ BookingPricingService::persons($item->options ?? []) }} | {{ Format::money($item->price_cents) }} |
+| **{{ $item->title }}**@if ($item->purchasable_type !== 'smartbox_package' && $item->booked_from !== null && $item->booked_until !== null)<br>{{ Format::dateRange($item->booked_from, $item->booked_until) }}@endif@if (filled($item->options['room_name'] ?? null))<br>{{ __('orders.room', ['name' => $item->options['room_name']]) }}@endif | {{ BookingPricingService::persons($item->options ?? []) }} | {{ Format::money($item->price_cents) }} |
 @endforeach
 | **{{ __('orders.mail.confirmation.total') }}** | | **{{ Format::money($linesTotal) }}** |
 </x-mail::table>

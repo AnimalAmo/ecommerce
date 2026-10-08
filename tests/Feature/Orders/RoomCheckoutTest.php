@@ -6,6 +6,8 @@ use App\Exceptions\CartValidationException;
 use App\Livewire\Commerce\Checkout;
 use App\Livewire\Partner\Bookings\PartnerBookingDetail;
 use App\Livewire\Profile\ProfileOrderSummary;
+use App\Mail\OrderConfirmationMail;
+use App\Mail\PartnerNewBookingMail;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\Structure\Room;
@@ -303,6 +305,19 @@ class RoomCheckoutTest extends TestCase
         Livewire::actingAs($buyer)
             ->test(ProfileOrderSummary::class, ['order' => $item->order->order_number])
             ->assertSee(__('orders.room', ['name' => 'Camera Vista Mare']));
+    }
+
+    public function test_order_mails_show_room_name(): void
+    {
+        $this->actingAs($this->buyer());
+        $seller = $this->seller();
+        $this->addRoomLine($this->roomOf($seller));
+
+        $order = $this->placeOrder();
+        $line = __('orders.room', ['name' => 'Camera Vista Mare']);
+
+        $this->assertStringContainsString($line, (new OrderConfirmationMail($order->fresh()))->render());
+        $this->assertStringContainsString($line, (new PartnerNewBookingMail($order->fresh(), $seller))->render());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

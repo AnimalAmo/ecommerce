@@ -41,9 +41,12 @@ return new class extends Migration
             $table->dropConstrainedForeignId('merged_into_structure_id');
         });
 
+        // Prima la FK, poi l'indice: su MySQL la FK si appoggia all'indice
+        // composito (prima colonna room_id) e non lo lascia cadere (errore 1553).
         Schema::table('order_items', function (Blueprint $table) {
+            $table->dropForeign(['room_id']);
             $table->dropIndex(['room_id', 'booked_from', 'booked_until']);
-            $table->dropConstrainedForeignId('room_id');
+            $table->dropColumn('room_id');
         });
     }
 };

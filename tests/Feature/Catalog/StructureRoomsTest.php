@@ -197,6 +197,38 @@ class StructureRoomsTest extends TestCase
         $this->assertNull(Structure::factory()->create()->defaultRoomFor($checkIn, $checkIn->addDay()));
     }
 
+    public function test_default_room_prefers_a_room_that_fits_the_party(): void
+    {
+        $structure = $this->structure();
+        $single = $this->room($structure, 1, ['max_guests' => 1]);
+        $fullDouble = $this->room($structure, 2, ['max_guests' => 2]);
+        $double = $this->room($structure, 3, ['max_guests' => 2]);
+        $checkIn = CarbonImmutable::today()->addDays(7);
+        $this->book($fullDouble, $checkIn, $checkIn->addDays(5));
+
+        // Entra e libera vince; poi entra ma piena; poi la prima comunque.
+        $this->assertSame($double->id, $structure->defaultRoomFor($checkIn, $checkIn->addDays(5), 2, 1)?->id);
+        $double->update(['max_guests' => 1]);
+        $this->assertSame($fullDouble->id, $structure->refresh()->defaultRoomFor($checkIn, $checkIn->addDays(5), 2, 1)?->id);
+        $this->assertSame($single->id, $structure->defaultRoomFor($checkIn, $checkIn->addDays(5), 5, 1)?->id);
+        // Senza gruppo resta il comportamento di prima: la prima libera.
+        $this->assertSame($single->id, $structure->defaultRoomFor($checkIn, $checkIn->addDays(5))?->id);
+
+        // La scheda usa il gruppo di default (2 adulti, 1 animale).
+        $this->page()->assertSet('roomId', $fullDouble->id)->assertSet('editGuests.adulti', 2);
+    }
+
+    public function test_default_room_for_onsite_partner_checks_capacity_only(): void
+    {
+        $structure = $this->structure(User::factory()->offlinePartner()->create());
+        $this->room($structure, 1, ['max_guests' => 1]);
+        $double = $this->room($structure, 2, ['max_guests' => 2]);
+        $checkIn = CarbonImmutable::today()->addDays(7);
+        $this->book($double, $checkIn, $checkIn->addDays(5));
+
+        $this->assertSame($double->id, $structure->defaultRoomFor($checkIn, $checkIn->addDays(5), 2, 1)?->id);
+    }
+
     public function test_calendar_disables_full_nights_for_online_partner_only(): void
     {
         $night = CarbonImmutable::today()->addDays(20);

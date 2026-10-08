@@ -72,6 +72,49 @@ class Room extends Model
         return array_map(fn (string $path): string => Storage::disk('public')->url($path), $paths);
     }
 
+    /** Il gruppo (ospiti e animali) entra nella capienza della stanza. */
+    public function fits(int $guests, int $animals): bool
+    {
+        return $guests <= $this->max_guests && $animals <= $this->max_animals;
+    }
+
+    /**
+     * Ospiti entro max_guests: si tolgono prima bambini e ragazzi, gli adulti
+     * restano almeno 1.
+     *
+     * @param  array<string, int>  $guests
+     * @return array<string, int>
+     */
+    public function clampGuests(array $guests): array
+    {
+        foreach (['bambini', 'ragazzi', 'adulti'] as $key) {
+            $min = $key === 'adulti' ? 1 : 0;
+
+            while (array_sum($guests) > $this->max_guests && ($guests[$key] ?? 0) > $min) {
+                $guests[$key]--;
+            }
+        }
+
+        return $guests;
+    }
+
+    /**
+     * Animali entro max_animals, togliendo dall'ultima specie.
+     *
+     * @param  array<string, int>  $animals
+     * @return array<string, int>
+     */
+    public function clampAnimals(array $animals): array
+    {
+        foreach (array_reverse(array_keys($animals)) as $species) {
+            while (array_sum($animals) > $this->max_animals && $animals[$species] > 0) {
+                $animals[$species]--;
+            }
+        }
+
+        return $animals;
+    }
+
     /** Nome della stanza, o l'etichetta della tipologia se il partner non l'ha scritto. */
     public function displayName(): string
     {

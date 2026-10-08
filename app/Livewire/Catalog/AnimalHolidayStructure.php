@@ -98,7 +98,7 @@ class AnimalHolidayStructure extends Component
         $this->editGuests = ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0];
         $this->editAnimals = [self::defaultSpecies() => 1];
 
-        // Stanza: quella dell'URL se è di questa struttura, altrimenti la prima libera nelle date di default.
+        // Stanza: quella dell'URL se è di questa struttura, altrimenti la proposta per date e gruppo di default.
         $this->roomId = $this->selectedRoom($model)?->id;
         $this->clampToRoom();
     }
@@ -216,7 +216,7 @@ class AnimalHolidayStructure extends Component
 
     /**
      * Stanza scelta: roomId se appartiene alla struttura, altrimenti la stanza
-     * proposta per le date correnti (Structure::defaultRoomFor); null se la
+     * proposta per le date e il gruppo correnti (Structure::defaultRoomFor); null se la
      * struttura non ha stanze.
      */
     private function selectedRoom(?Structure $structure = null): ?Room
@@ -233,6 +233,8 @@ class AnimalHolidayStructure extends Component
             ?? $structure->defaultRoomFor(
                 CarbonImmutable::instance(self::parseDate($this->editCheckIn ?? '')),
                 CarbonImmutable::instance(self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? '')),
+                array_sum($this->editGuests),
+                array_sum($this->editAnimals),
             );
 
         return $this->resolvedRooms[$key] = $room;
@@ -251,19 +253,8 @@ class AnimalHolidayStructure extends Component
             return;
         }
 
-        foreach (['bambini', 'ragazzi', 'adulti'] as $key) {
-            $min = $key === 'adulti' ? 1 : 0;
-
-            while (array_sum($this->editGuests) > $room->max_guests && ($this->editGuests[$key] ?? 0) > $min) {
-                $this->editGuests[$key]--;
-            }
-        }
-
-        foreach (array_reverse(array_keys($this->editAnimals)) as $species) {
-            while (array_sum($this->editAnimals) > $room->max_animals && $this->editAnimals[$species] > 0) {
-                $this->editAnimals[$species]--;
-            }
-        }
+        $this->editGuests = $room->clampGuests($this->editGuests);
+        $this->editAnimals = $room->clampAnimals($this->editAnimals);
     }
 
     /** Struttura della pagina (rirrisolta dallo slug a ogni richiesta, come il render). */

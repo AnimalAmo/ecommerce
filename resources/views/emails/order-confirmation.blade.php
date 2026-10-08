@@ -10,7 +10,7 @@
 | {{ __('orders.mail.confirmation.table_item') }} | {{ __('orders.mail.confirmation.table_price') }} |
 |:--|--:|
 @foreach ($order->items as $item)
-| **{{ $item->title }}**{{ $item->is_gift ? ' '.__('orders.mail.confirmation.gift_flag') : '' }}@if ($item->purchasable_type !== 'smartbox_package' && $item->booked_from !== null && $item->booked_until !== null)<br>{{ Format::dateRange($item->booked_from, $item->booked_until) }}@endif | {{ Format::money($item->price_cents) }} |
+| **{{ $item->title }}**{{ $item->is_gift ? ' '.__('orders.mail.confirmation.gift_flag') : '' }}@if ($item->purchasable_type !== 'smartbox_package' && $item->booked_from !== null && $item->booked_until !== null)<br>{{ Format::dateRange($item->booked_from, $item->booked_until) }}@endif@if (filled($item->options['room_name'] ?? null))<br>{{ __('orders.room', ['name' => $item->options['room_name']]) }}@endif | {{ Format::money($item->price_cents) }} |
 @endforeach
 | **{{ __('orders.mail.confirmation.total') }}** | **{{ Format::money($order->total_cents) }}** |
 </x-mail::table>

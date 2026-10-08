@@ -428,7 +428,8 @@ class FavoriteService
 
     /**
      * Struttura con stanze: il carrello ne vuole una (room_id), quindi si sceglie
-     * la prima libera alle date di default. Senza stanze le opzioni restano com'erano.
+     * la prima che contiene il gruppo di default ed è libera alle date di
+     * default (Structure::defaultRoomFor). Senza stanze le opzioni restano com'erano.
      *
      * @param  array<string, mixed>  $options
      * @return array<string, mixed>
@@ -442,10 +443,15 @@ class FavoriteService
         $room = $product->defaultRoomFor(
             CarbonImmutable::parse($options['check_in']),
             CarbonImmutable::parse($options['check_out']),
+            array_sum($options['guests']),
+            array_sum($options['animals']),
         );
 
         if ($room !== null) {
             $options['room_id'] = $room->id;
+            // Nessuna stanza contiene il gruppo di default: lo si riporta nella capienza.
+            $options['guests'] = $room->clampGuests($options['guests']);
+            $options['animals'] = $room->clampAnimals($options['animals']);
         }
 
         return $options;
