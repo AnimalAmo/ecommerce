@@ -4,17 +4,19 @@ namespace App\Livewire\Catalog;
 
 use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
-use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
+use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class AnimalHolidayStructure extends Component
@@ -38,6 +40,14 @@ class AnimalHolidayStructure extends Component
     /** Campo espanso del widget prenotazione: null | 'date' | 'ospiti' | 'animali' (uno alla volta, come il pop-up del carrello). */
     public ?string $expandedField = null;
 
+    /**
+     * Stanza scelta (?camera=id): null per le strutture senza stanze. Arriva
+     * dal client: ogni lettura passa da selectedRoom(), che rifiuta le stanze
+     * di altre strutture e ripiega sulla stanza proposta.
+     */
+    #[Url(as: 'camera')]
+    public ?int $roomId = null;
+
     /** Recensioni mostrate: parte da 3 (XD), cresce a step di 3 con "Carica altre recensioni". */
     public int $reviewsShown = 3;
 
@@ -46,6 +56,14 @@ class AnimalHolidayStructure extends Component
 
     /** Step di paginazione incrementale delle recensioni. */
     private const REVIEWS_STEP = 3;
+
+    /**
+     * Stanze risolte in questa richiesta, per roomId (calendario, stepper e
+     * render la chiedono più volte; null = struttura senza stanze).
+     *
+     * @var array<string, Room|null>
+     */
+    private array $resolvedRooms = [];
 
     public function mount(string $region, string $structure): void
     {
@@ -74,6 +92,27 @@ class AnimalHolidayStructure extends Component
         $this->editCheckOut = $today->modify('+12 days')->format('d/m/Y');
         $this->editGuests = ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0];
         $this->editAnimals = [self::defaultSpecies() => 1];
+
+        // Stanza: quella dell'URL se è di questa struttura, altrimenti la prima libera nelle date di default.
+        $this->roomId = $this->selectedRoom($model)?->id;
+        $this->clampToRoom();
+    }
+
+    /**
+     * «Seleziona» di una card stanza: le stanze di altre strutture si ignorano.
+     * Ospiti e animali rientrano nella capienza della nuova stanza.
+     */
+    public function selectRoom(int $id): void
+    {
+        $room = $this->structure()->rooms()->whereKey($id)->first();
+
+        if ($room === null) {
+            return;
+        }
+
+        $this->roomId = $room->id;
+        $this->resolvedRooms[(string) $room->id] = $room;
+        $this->clampToRoom();
     }
 
     /** Apre/chiude un campo del widget; aprire il calendario lo ripunta al mese del check-in. */
@@ -118,24 +157,15 @@ class AnimalHolidayStructure extends Component
         $this->reviewsShown = min($this->reviewsShown + self::REVIEWS_STEP, $this->structure()->reviews->count());
     }
 
-    /**
-     * Totale del preventivo live. Una struttura con stanze non ha prezzo finché
-     * non ne viene scelta una (la selezione arriva con la pagina stanze): fino
-     * ad allora il totale è 0 invece di un errore in render.
-     */
-    private function previewTotal(Structure $structure): int
-    {
-        try {
-            return app(BookingPricingService::class)->quote($structure, $this->bookingOptions());
-        } catch (CartValidationException) {
-            return 0;
-        }
-    }
-
     public function render()
     {
         $structure = $this->structure();
         $nights = $this->nights();
+        $room = $this->selectedRoom($structure);
+        // Prezzo notte: della stanza scelta, della struttura se non ha stanze.
+        $nightCents = $room?->price_cents ?? $structure->price_cents;
+        // Sezione «Scegli la camera» solo con almeno due stanze: con una sola la stanza è implicita.
+        $rooms = $structure->rooms()->with('amenities')->get();
 
         return view('livewire.catalog.animal-holiday-structure', [
             'structure' => $structure,
@@ -149,9 +179,12 @@ class AnimalHolidayStructure extends Component
             'reviewsCount' => $structure->reviews->count(),
             // Preventivo live: notti reali, supplemento animali (riga solo se > 0) e totale quotato server-side.
             'nights' => $nights,
-            'nightsCents' => $structure->price_cents * $nights,
+            'room' => $rooms->count() > 1 ? $room : null,
+            'rooms' => $rooms->count() > 1 ? $rooms : collect(),
+            'nightCents' => $nightCents,
+            'nightsCents' => $nightCents * $nights,
             'animalSupplementCents' => $structure->animal_supplement_cents * array_sum($this->editAnimals) * $nights,
-            'totalCents' => $this->previewTotal($structure),
+            'totalCents' => app(BookingPricingService::class)->quote($structure, $this->bookingOptions()),
             'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
             'calendarLabel' => $this->calendarLabel(),
             'guestsAtMax' => $this->guestsAtMax(),
@@ -170,6 +203,64 @@ class AnimalHolidayStructure extends Component
         return self::findBySlug($this->structureSlug);
     }
 
+    /** Stanza del calendario e degli stepper: quella scelta. */
+    protected function calendarRoom(): ?Room
+    {
+        return $this->selectedRoom();
+    }
+
+    /**
+     * Stanza scelta: roomId se appartiene alla struttura, altrimenti la stanza
+     * proposta per le date correnti (Structure::defaultRoomFor); null se la
+     * struttura non ha stanze.
+     */
+    private function selectedRoom(?Structure $structure = null): ?Room
+    {
+        $key = (string) $this->roomId;
+
+        if (array_key_exists($key, $this->resolvedRooms)) {
+            return $this->resolvedRooms[$key];
+        }
+
+        $structure ??= $this->structure();
+
+        $room = ($this->roomId !== null ? $structure->rooms()->whereKey($this->roomId)->first() : null)
+            ?? $structure->defaultRoomFor(
+                CarbonImmutable::instance(self::parseDate($this->editCheckIn ?? '')),
+                CarbonImmutable::instance(self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? '')),
+            );
+
+        return $this->resolvedRooms[$key] = $room;
+    }
+
+    /**
+     * Riporta ospiti e animali entro la capienza della stanza scelta: si tolgono
+     * prima bambini e ragazzi, gli adulti restano almeno 1; gli animali si
+     * tolgono dall'ultima specie.
+     */
+    private function clampToRoom(): void
+    {
+        $room = $this->selectedRoom();
+
+        if ($room === null) {
+            return;
+        }
+
+        foreach (['bambini', 'ragazzi', 'adulti'] as $key) {
+            $min = $key === 'adulti' ? 1 : 0;
+
+            while (array_sum($this->editGuests) > $room->max_guests && ($this->editGuests[$key] ?? 0) > $min) {
+                $this->editGuests[$key]--;
+            }
+        }
+
+        foreach (array_reverse(array_keys($this->editAnimals)) as $species) {
+            while (array_sum($this->editAnimals) > $room->max_animals && $this->editAnimals[$species] > 0) {
+                $this->editAnimals[$species]--;
+            }
+        }
+    }
+
     /** Struttura della pagina (rirrisolta dallo slug a ogni richiesta, come il render). */
     private function structure(): Structure
     {
@@ -180,16 +271,24 @@ class AnimalHolidayStructure extends Component
         return $structure;
     }
 
-    /** Options del widget nel vocabolario canonico del carrello (decisione ratificata #4). */
+    /** Options del widget nel vocabolario canonico del carrello (decisione ratificata #4), più la stanza se la struttura ne ha. */
     private function bookingOptions(): array
     {
-        return [
+        $options = [
             'check_in' => self::parseDate($this->editCheckIn ?? '')->format('Y-m-d'),
             // Intervallo lasciato a metà: check-out = check-in (la validazione server segnala il range non valido).
             'check_out' => self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? '')->format('Y-m-d'),
             'guests' => $this->editGuests,
             'animals' => $this->editAnimals,
         ];
+
+        $room = $this->selectedRoom();
+
+        if ($room !== null) {
+            $options['room_id'] = $room->id;
+        }
+
+        return $options;
     }
 
     /** Notti del preventivo live (minimo 1, stesso clamp del pricing server). */

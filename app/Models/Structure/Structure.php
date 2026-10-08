@@ -2,6 +2,7 @@
 
 namespace App\Models\Structure;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
@@ -10,6 +11,9 @@ use App\Models\Concerns\HasFaqs;
 use App\Models\Concerns\HasMapEmbed;
 use App\Models\Concerns\HasReviews;
 use App\Models\Structure\Concerns\StructureHasRelationships;
+use App\Services\Availability\RoomOccupancy;
+use App\Services\Partner\PartnerPaymentModeService;
+use Carbon\CarbonImmutable;
 use Database\Factories\Structure\StructureFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -77,5 +81,30 @@ class Structure extends Model
     public function mapFallbackUrl(): ?string
     {
         return $this->mapImageUrl();
+    }
+
+    /**
+     * Stanza proposta per le date (dettaglio struttura, «aggiungi al carrello»
+     * dai preferiti): la prima per posizione libera nelle date; se sono tutte
+     * piene, la prima comunque. L'occupazione conta solo se il partner incassa
+     * online: con pagamento in struttura è informativa e non blocca. Null se
+     * la struttura non ha stanze.
+     */
+    public function defaultRoomFor(CarbonImmutable $checkIn, CarbonImmutable $checkOut): ?Room
+    {
+        $rooms = $this->rooms()->get();
+
+        if ($rooms->isEmpty()) {
+            return null;
+        }
+
+        if (app(PartnerPaymentModeService::class)->forPurchasable($this) !== OrderPaymentMode::Online) {
+            return $rooms->first();
+        }
+
+        $occupancy = app(RoomOccupancy::class);
+
+        return $rooms->first(fn (Room $room): bool => $occupancy->isAvailable($room, $checkIn, $checkOut))
+            ?? $rooms->first();
     }
 }

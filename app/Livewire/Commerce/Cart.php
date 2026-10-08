@@ -7,6 +7,7 @@ use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Livewire\Concerns\HasBookingCalendar;
+use App\Livewire\Concerns\PresentsCartRoom;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Structure\Structure;
 use App\Services\Cart\CartManager;
@@ -25,6 +26,7 @@ use Livewire\Component;
 class Cart extends Component
 {
     use HasBookingCalendar;
+    use PresentsCartRoom;
 
     // I cuori delle card «più amate» dello stato vuoto sono quelli del catalogo (difetto C6).
     use TogglesFavorites;
@@ -412,6 +414,8 @@ class Cart extends Component
             'type' => $item->productType,
             'title' => $item->title,
             'location' => $item->location,
+            // «Stanza: …» per le strutture a camere (null senza stanza o se cancellata).
+            'room' => $this->cartRoomLabel($item),
             'photoUrl' => $item->photoUrl,
             'dates' => $item->dates,
             'serviceSlot' => $item->serviceSlot,

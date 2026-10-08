@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Services\Availability\AvailabilityService;
 use DateTimeImmutable;
@@ -10,8 +11,10 @@ use DateTimeImmutable;
  * Macchina condivisa del picker prenotazione (estratta dal pop-up "Modifica
  * prenotazione" del carrello, riusata dai widget delle pagine detail):
  * calendario mensile con selezione range o giorno singolo e giorni
- * passati/chiusi disabilitati (AvailabilityService::closedDates), più gli
- * stepper ospiti e animali con i clamp ratificati (10 ospiti / 5 animali).
+ * passati/non prenotabili disabilitati (AvailabilityService::unavailableDates:
+ * chiusure, più le notti piene della stanza di calendarRoom()), più gli
+ * stepper ospiti e animali con i clamp ratificati (10 ospiti / 5 animali,
+ * o la capienza della stanza di calendarRoom()).
  * Le viste stanno in resources/views/partials/booking/.
  */
 trait HasBookingCalendar
@@ -142,13 +145,13 @@ trait HasBookingCalendar
     /** true se il totale ospiti ha raggiunto il clamp (bottoni "+" disabilitati in vista). */
     public function guestsAtMax(): bool
     {
-        return array_sum($this->editGuests) >= self::MAX_GUESTS;
+        return array_sum($this->editGuests) >= ($this->calendarRoom()?->max_guests ?? self::MAX_GUESTS);
     }
 
     /** true se il totale animali ha raggiunto il clamp. */
     public function animalsAtMax(): bool
     {
-        return array_sum($this->editAnimals) >= self::MAX_ANIMALS;
+        return array_sum($this->editAnimals) >= ($this->calendarRoom()?->max_animals ?? self::MAX_ANIMALS);
     }
 
     /** Ore selezionabili nei picker orario dei servizi (08:00–20:00, passo 1h). */
@@ -176,6 +179,17 @@ trait HasBookingCalendar
      * che usano il trait la sovrascrivono quando prenotano una structure/service.
      */
     protected function calendarStructure(): ?Structure
+    {
+        return null;
+    }
+
+    /**
+     * Stanza prenotata dal picker (null = nessuna): le sue notti piene si
+     * disabilitano nel calendario (solo partner Online, vedi
+     * AvailabilityService::unavailableDates) e la sua capienza fa da clamp agli
+     * stepper al posto di MAX_GUESTS / MAX_ANIMALS.
+     */
+    protected function calendarRoom(): ?Room
     {
         return null;
     }
@@ -231,7 +245,7 @@ trait HasBookingCalendar
         return DateTimeImmutable::createFromFormat('!d/m/Y', $date) ?: new DateTimeImmutable('today');
     }
 
-    /** true se il giorno è chiuso per la struttura del calendario. */
+    /** true se il giorno non è prenotabile (chiuso o stanza piena) nel calendario. */
     private function isClosedDay(DateTimeImmutable $day): bool
     {
         $structure = $this->calendarStructure();
@@ -241,13 +255,13 @@ trait HasBookingCalendar
         }
 
         $closed = app(AvailabilityService::class)
-            ->closedDates($structure, (int) $day->format('Y'), (int) $day->format('n'));
+            ->unavailableDates($structure, $this->calendarRoom(), (int) $day->format('Y'), (int) $day->format('n'));
 
         return in_array($day->format('Y-m-d'), $closed, true);
     }
 
     /**
-     * Giorni chiusi ('Y-m-d') su tutti i mesi coperti dalla griglia (le code
+     * Giorni non prenotabili ('Y-m-d') su tutti i mesi coperti dalla griglia (le code
      * dei mesi adiacenti incluse), per marcare le celle disabilitate.
      *
      * @return list<string>
@@ -261,12 +275,13 @@ trait HasBookingCalendar
         }
 
         $availability = app(AvailabilityService::class);
+        $room = $this->calendarRoom();
         $closed = [];
 
         for ($month = $from->modify('first day of this month'); $month <= $to; $month = $month->modify('first day of next month')) {
             $closed = [
                 ...$closed,
-                ...$availability->closedDates($structure, (int) $month->format('Y'), (int) $month->format('n')),
+                ...$availability->unavailableDates($structure, $room, (int) $month->format('Y'), (int) $month->format('n')),
             ];
         }
 

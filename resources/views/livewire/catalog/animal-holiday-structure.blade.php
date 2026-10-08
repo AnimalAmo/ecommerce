@@ -119,6 +119,11 @@
                         </section>
                     @endif
 
+                    {{-- 3b. Scegli la camera: solo con almeno due stanze (con una la stanza è implicita) --}}
+                    @if ($rooms->isNotEmpty())
+                        @include('livewire.catalog.partials.room-picker')
+                    @endif
+
                     {{-- 4. Servizi Hotel / Servizi Animali (mobile: due liste impilate senza cornice).
                            Solo le voci offerte: un box senza voci sparisce invece di lasciare
                            una cornice alta 250px col solo titolo. --}}
@@ -273,7 +278,11 @@
                         @include('partials.catalog.partner-contacts-card')
                     @else
                         <div class="rounded-[4px] border border-[#DEDEDE] bg-white p-[22px] max-lg:hidden">
-                            <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($structure->price_cents)]) }}</p>
+                            {{-- Prezzo notte della stanza scelta (della struttura se non ha stanze) --}}
+                            <p class="text-[28px] font-light text-[#2B2B2B]">{{ __('format.per_night', ['price' => \App\Support\Format::money($nightCents)]) }}</p>
+                            @if ($room !== null)
+                                <p data-booking-room class="mt-1 text-[15px] font-semibold text-[#555555]">{{ __('catalog.rooms.booking_room', ['name' => $room->displayName()]) }}</p>
+                            @endif
 
                             <div class="mt-[18px] rounded-[4px] border border-[#DEDEDE]">
                                 {{-- Check-in / Check-out: apre il calendario range condiviso (accordion nello stile del pop-up carrello) --}}
@@ -337,7 +346,7 @@
 
                             <div class="mt-6 space-y-3">
                                 <div class="flex items-center justify-between text-[17px] text-[#2B2B2B]">
-                                    <span>{{ __('format.for_nights', ['price' => \App\Support\Format::money($structure->price_cents), 'count' => $nights]) }}</span>
+                                    <span>{{ __('format.for_nights', ['price' => \App\Support\Format::money($nightCents), 'count' => $nights]) }}</span>
                                     <span>{{ \App\Support\Format::money($nightsCents) }}</span>
                                 </div>
                                 {{-- Supplemento animali per notte: riga mostrata solo se il seed lo valorizza --}}
@@ -368,11 +377,25 @@
     {{-- Galleria «Vedere tutte le foto»: fuori dall'hero, vedi il partial --}}
     @include('partials.catalog.photo-gallery', ['photos' => $galleryPhotos, 'title' => $structure->name])
 
+    {{-- Gallerie delle card stanza: anche loro a livello di pagina, un modale per stanza --}}
+    @foreach ($rooms as $option)
+        @php $roomPhotos = $option->photoUrls(); @endphp
+        @include('partials.catalog.photo-gallery', [
+            'photos' => count($roomPhotos) > 1 ? $roomPhotos : [],
+            'title' => $option->displayName(),
+            'modalName' => 'room-gallery-'.$option->id,
+        ])
+    @endforeach
+
     {{-- Barra fissa mobile (XD app "Dettaglio struttura"): sulla scheda la tabbar lascia il posto alla CTA carrello.
          Senza pagamento online non c'è niente da mettere nel carrello: la barra sparisce
          e resta la card contatti, che su mobile scorre in pagina. --}}
     @unless ($paysOnSite)
         <div class="fixed inset-x-0 bottom-0 z-40 flex h-20 flex-col items-center justify-center gap-1 border-t border-gray-150 bg-white px-4 lg:hidden">
+            {{-- Con più stanze la barra dice quale si sta prenotando e a che prezzo --}}
+            @if ($room !== null)
+                <p class="max-w-full truncate text-[13px] font-semibold text-[#555555]">{{ $room->displayName() }} · {{ __('format.per_night', ['price' => \App\Support\Format::money($nightCents)]) }}</p>
+            @endif
             <flux:button wire:click="addToCart" class="!h-[39px] !w-[189px] !rounded-full !border-0 !bg-brand-cyan !text-sm !font-bold !text-white !shadow-none hover:!bg-[#4FB9DB]">{{ __('holiday.add_to_cart') }}</flux:button>
         </div>
         {{-- Spaziatore: evita che la barra CTA copra il fondo pagina --}}
@@ -421,6 +444,9 @@
                         <img src="{{ $structure->heroImageUrl() }}" alt="{{ $structure->name }}" class="h-[106px] w-[118px] shrink-0 rounded-[3px] object-cover">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-black">{{ $structure->name }}</p>
+                            @if ($room !== null)
+                                <p class="mt-1 truncate text-[13px] font-semibold text-[#555555]">{{ $room->displayName() }}</p>
+                            @endif
                             <ul class="mt-4 space-y-1.5 text-[13px] font-semibold text-[#555555]">
                                 <li class="flex items-center gap-[5px]">
                                     <flux:icon.calendar class="h-[15px] w-[15px] shrink-0" />
