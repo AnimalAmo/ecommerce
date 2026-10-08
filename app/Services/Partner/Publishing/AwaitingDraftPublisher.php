@@ -35,6 +35,7 @@ class AwaitingDraftPublisher
     {
         $draftIds = StructureDraft::query()
             ->where('user_id', $partnerId)
+            ->whereNull('merged_into_draft_id')
             ->awaitingPublication()
             ->orderBy('id')
             ->pluck('id');
@@ -79,7 +80,7 @@ class AwaitingDraftPublisher
             return DB::transaction(function () use ($draftId): bool {
                 $draft = StructureDraft::query()->whereKey($draftId)->lockForUpdate()->first();
 
-                if ($draft === null || ! $draft->isAwaitingPublication()) {
+                if ($draft === null || $draft->merged_into_draft_id !== null || ! $draft->isAwaitingPublication()) {
                     return false;
                 }
 

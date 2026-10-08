@@ -207,7 +207,18 @@ abstract class FamilyPublisher
      */
     protected function translations(StructureDraft $draft, string $field): array
     {
-        $values = array_filter($draft->getTranslations($field), fn ($value) => filled($value));
+        return $this->translationsFrom($draft->getTranslations($field));
+    }
+
+    /**
+     * Stessa regola di translations() per un array già per lingua (le stanze
+     * della bozza non sono colonne translatable).
+     *
+     * @param  array<string, mixed>  $translations
+     */
+    protected function translationsFrom(array $translations): array
+    {
+        $values = array_filter($translations, fn ($value) => filled($value));
 
         // Tutto vuoto: '' in italiano per le colonne NOT NULL, e le altre lingue
         // a null anche qui, o un testo inglese tolto (un «Altro» deselezionato)
@@ -284,7 +295,9 @@ abstract class FamilyPublisher
             return;
         }
 
-        $kept = $draft->photos ?? [];
+        // Le foto delle stanze sono sul disco come quelle della galleria: una
+        // foto passata da lì alla stanza non è "sostituita".
+        $kept = [...($draft->photos ?? []), ...collect($draft->rooms ?? [])->pluck('photos')->flatten()->filter()->all()];
 
         $replaced = collect(array_keys(self::CATALOG_IMAGE_COLUMNS))
             ->flatMap(fn (string $model) => $model::withHidden()

@@ -3,6 +3,7 @@
 namespace App\Services\Partner\Publishing;
 
 use App\Enums\ProductType;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 
@@ -51,7 +52,50 @@ class StructurePublisher extends FamilyPublisher
             ...($draft->animal_services ?? []),
         ]);
 
+        $this->syncRooms($structure, $draft);
+
         return $structure;
+    }
+
+    /**
+     * Una stanza per riga della bozza, agganciata a `draft_key`: ripubblicare
+     * aggiorna la stanza esistente e ne conserva l'id, da cui dipende
+     * l'occupazione registrata sugli ordini. Le righe tolte dalla bozza
+     * spariscono; gli ordini storici tengono `room_name` (room_id va a null).
+     */
+    private function syncRooms(Structure $structure, StructureDraft $draft): void
+    {
+        $rows = $draft->normalizedRooms();
+
+        foreach ($rows as $position => $row) {
+            $room = Room::updateOrCreate(
+                ['structure_id' => $structure->id, 'draft_key' => $row['key']],
+                [
+                    'type' => $row['type'],
+                    'name' => $this->translationsFrom($row['name']),
+                    'description' => $this->translationsFrom($row['description']),
+                    'price_cents' => $this->cents($row['price']),
+                    'max_guests' => $row['max_guests'],
+                    'max_animals' => $row['max_animals'],
+                    'units' => $row['units'],
+                    'photos' => $row['photos'] ?: null,
+                    'position' => $position,
+                ],
+            );
+
+            $this->syncAmenities($room, $row['amenities']);
+        }
+
+        // whereNotNull: le stanze senza draft_key (create a mano) non si toccano.
+        Room::query()
+            ->where('structure_id', $structure->id)
+            ->whereNotNull('draft_key')
+            ->whereNotIn('draft_key', array_column($rows, 'key'))
+            ->get()
+            ->each(function (Room $room): void {
+                $room->amenities()->detach();
+                $room->delete();
+            });
     }
 
     /** rooms[].price (stringhe numeric per notte) → min in cents; 0 senza stanze. */

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Spatie\Translatable\HasTranslations;
 
@@ -267,6 +268,75 @@ class StructureDraft extends Model
     }
 
     /** Bozze chiuse dal partner e ferme in attesa che possa pubblicare (P4). */
+    /**
+     * Le righe di `rooms` nel formato unico che il publisher e il wizard leggono.
+     *
+     * `rooms` resta la fonte di verità. Le righe legacy ({type,count,price}, o
+     * {type:'intera_struttura',count:1,beds,price}) non hanno chiave: qui ne
+     * ricevono una e la bozza la salva, così la stanza pubblicata (draft_key)
+     * non cambia id a ogni lettura. Il resto della riga legacy non si tocca.
+     *
+     * @return list<array{key:string,type:string,name:array,description:array,price:string,max_guests:int,max_animals:int,units:int,photos:list<string>,amenities:list<string>}>
+     */
+    public function normalizedRooms(): array
+    {
+        $raw = array_values($this->rooms ?? []);
+        $changed = false;
+        $normalized = [];
+
+        foreach ($raw as $index => $row) {
+            if (blank($row['key'] ?? null)) {
+                $raw[$index]['key'] = $row['key'] = (string) Str::uuid();
+                $changed = true;
+            }
+
+            $type = (string) ($row['type'] ?? '');
+
+            $normalized[] = [
+                'key' => (string) $row['key'],
+                'type' => $type,
+                'name' => self::localized($row['name'] ?? null),
+                'description' => self::localized($row['description'] ?? null),
+                'price' => (string) ($row['price'] ?? ''),
+                'max_guests' => (int) ($row['max_guests'] ?? self::legacyMaxGuests($type, $row)),
+                'max_animals' => (int) ($row['max_animals'] ?? 2),
+                'units' => max(1, (int) ($row['units'] ?? $row['count'] ?? 1)),
+                'photos' => array_values($row['photos'] ?? []),
+                'amenities' => array_values($row['amenities'] ?? []),
+            ];
+        }
+
+        if ($changed && $this->exists) {
+            $this->rooms = $raw;
+            $this->saveQuietly();
+        }
+
+        return $normalized;
+    }
+
+    /** Ospiti massimi di una riga legacy, che non li chiedeva: li dice la tipologia. */
+    private static function legacyMaxGuests(string $type, array $row): int
+    {
+        return match ($type) {
+            'singola' => 1,
+            'doppia' => 2,
+            'tripla' => 3,
+            'suite' => 4,
+            'intera_struttura' => max(1, (int) ($row['beds'] ?? 1)),
+            default => 2,
+        };
+    }
+
+    /** Testo per lingua; una stringa nuda (mai scritta dal wizard) vale per l'italiano. */
+    private static function localized(mixed $value): array
+    {
+        return match (true) {
+            is_array($value) => $value,
+            filled($value) => ['it' => (string) $value],
+            default => [],
+        };
+    }
+
     public function scopeAwaitingPublication(Builder $query): Builder
     {
         return $query->whereNotNull('publish_requested_at');
@@ -287,7 +357,10 @@ class StructureDraft extends Model
      */
     public function scopeListableFor(Builder $query, int $userId): Builder
     {
+        // Le bozze assorbite da un'altra (comando di unione delle strutture)
+        // non sono più un servizio a sé: le mostra solo quella che le ha assorbite.
         return $query->where('user_id', $userId)
+            ->whereNull('merged_into_draft_id')
             ->where(fn (Builder $query): Builder => $query
                 ->where('status', self::STATUS_COMPLETED)
                 ->orWhereNotNull('publish_requested_at')
