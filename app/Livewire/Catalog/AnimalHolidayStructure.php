@@ -15,6 +15,7 @@ use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -72,6 +73,10 @@ class AnimalHolidayStructure extends Component
         abort_unless($regionModel !== null, 404);
 
         $model = self::findBySlug($structure);
+
+        if ($model === null) {
+            self::redirectIfMerged($structure);
+        }
 
         abort_unless($model !== null, 404);
 
@@ -311,5 +316,33 @@ class AnimalHolidayStructure extends Component
     private static function findBySlug(string $slug): ?Structure
     {
         return Structure::where('slug', $slug)->orderBy('position')->first();
+    }
+
+    /**
+     * Struttura accorpata in un'altra (`catalog:merge-structures`): la vecchia
+     * URL, magari indicizzata o condivisa, risponde 301 verso la scheda che
+     * ora la contiene come stanza. Una catena di accorpamenti si segue per
+     * pochi passi, mai in cerchio; se il target non è visibile resta il 404.
+     */
+    private static function redirectIfMerged(string $slug): void
+    {
+        $merged = Structure::withHidden()->where('slug', $slug)->whereNotNull('merged_into_structure_id')->first();
+        $seen = [];
+
+        while ($merged !== null && $merged->merged_into_structure_id !== null && count($seen) < 3) {
+            $seen[] = $merged->id;
+            $merged = in_array((int) $merged->merged_into_structure_id, $seen, true)
+                ? null
+                : Structure::withHidden()->with('region')->find($merged->merged_into_structure_id);
+        }
+
+        if ($merged === null || $merged->merged_into_structure_id !== null || ! $merged->isVisibleInCatalog() || $merged->region === null) {
+            return;
+        }
+
+        throw new HttpResponseException(redirect()->route('holiday.structure', [
+            'region' => $merged->region->slug,
+            'structure' => $merged->slug,
+        ], 301));
     }
 }
