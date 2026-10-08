@@ -6,6 +6,7 @@ use App\Enums\ProductType;
 use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Famiglia struttura (hotel|bb|agriturismo) → tabella structures.
@@ -67,6 +68,15 @@ class StructurePublisher extends FamilyPublisher
     {
         $rows = $draft->normalizedRooms();
 
+        // Foto che le stanze pubblicate mostrano ora: quelle che la nuova
+        // versione non usa più si potano dopo il commit, come la galleria.
+        $before = Room::query()
+            ->where('structure_id', $structure->id)
+            ->pluck('photos')
+            ->flatten()
+            ->filter(fn ($path) => is_string($path) && $path !== '')
+            ->unique();
+
         foreach ($rows as $position => $row) {
             $room = Room::updateOrCreate(
                 ['structure_id' => $structure->id, 'draft_key' => $row['key']],
@@ -96,6 +106,12 @@ class StructurePublisher extends FamilyPublisher
                 $room->amenities()->detach();
                 $room->delete();
             });
+
+        $kept = [...($draft->photos ?? []), ...array_merge(...array_column($rows, 'photos') ?: [[]])];
+
+        foreach ($before->reject(fn (string $path) => in_array($path, $kept, true)) as $path) {
+            DB::afterCommit(fn () => self::deletePhotoIfUnreferenced($path));
+        }
     }
 
     /** rooms[].price (stringhe numeric per notte) → min in cents; 0 senza stanze. */

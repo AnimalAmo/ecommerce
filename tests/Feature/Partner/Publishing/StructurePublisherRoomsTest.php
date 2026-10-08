@@ -8,6 +8,7 @@ use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
 use App\Services\Partner\Publishing\DraftPublisher;
+use App\Services\Partner\Publishing\FamilyPublisher;
 use Database\Seeders\AmenitySeeder;
 use Database\Seeders\ProvinceSeeder;
 use Database\Seeders\RegionSeeder;
@@ -192,6 +193,29 @@ class StructurePublisherRoomsTest extends TestCase
 
         Storage::disk('public')->assertExists('structure-photos/room.jpg');
         $this->assertSame(['structure-photos/room.jpg'], Room::where('draft_key', self::KEY_A)->first()->photos);
+    }
+
+    /** Una foto tolta dalla stanza resta finché la stanza pubblicata la mostra, poi si pota. */
+    public function test_room_photo_removed_from_draft_is_pruned_after_republish(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('structure-photos/old.jpg', 'o');
+        Storage::disk('public')->put('structure-photos/kept.jpg', 'k');
+
+        $draft = $this->hotelDraft([
+            $this->roomRow(self::KEY_A, ['photos' => ['structure-photos/old.jpg', 'structure-photos/kept.jpg']]),
+        ]);
+        app(DraftPublisher::class)->publish($draft);
+
+        $draft->refresh()->update(['rooms' => [$this->roomRow(self::KEY_A, ['photos' => ['structure-photos/kept.jpg']])]]);
+
+        // La stanza pubblicata la punta ancora: la X non la cancella.
+        $this->assertFalse(FamilyPublisher::deletePhotoIfUnreferenced('structure-photos/old.jpg'));
+
+        DB::transaction(fn () => app(DraftPublisher::class)->publish($draft->refresh()));
+
+        Storage::disk('public')->assertMissing('structure-photos/old.jpg');
+        Storage::disk('public')->assertExists('structure-photos/kept.jpg');
     }
 
     public function test_merged_draft_is_not_listed_nor_published(): void

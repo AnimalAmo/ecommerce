@@ -113,55 +113,15 @@
             {{-- Step 5: camere (o alloggio intero per la casa vacanza) --}}
             <x-admin.card :heading="__($whole ? $t.'section_whole' : $t.'section_rooms')">
                 <div class="flex flex-col gap-5 p-5">
-                    @if ($whole)
-                        <p class="m-0 text-[13px] leading-normal text-gray-600">{{ __($t.'whole_help') }}</p>
-                        <div class="grid items-start gap-4 md:grid-cols-2">
-                            <flux:input type="number" min="1" max="50" wire:model="rooms.rooms.0.beds" :label="__($t.'beds')" />
-                            <flux:input type="number" min="0" step="0.01" wire:model="rooms.rooms.0.price" :label="__($t.'room_price')" />
-                        </div>
-                    @else
-                        <p class="m-0 text-[13px] leading-normal text-gray-600">{{ __($t.'rooms_help') }}</p>
+                    <p class="m-0 text-[13px] leading-normal text-gray-600">{{ __($whole ? $t.'whole_help' : $t.'rooms_help') }}</p>
 
-                        @foreach ($rooms->rooms as $i => $room)
-                            <div class="grid items-start gap-4 md:grid-cols-[1fr_auto_1fr_auto]" wire:key="room-{{ $i }}">
-                                <flux:select wire:model="rooms.rooms.{{ $i }}.type" :label="__($t.'room_type')" :placeholder="__($t.'room_type')">
-                                    @foreach ($options['room'] as $slug => $label)
-                                        <flux:select.option value="{{ $slug }}">{{ $label }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-
-                                <flux:field>
-                                    <flux:label>{{ __($t.'room_count') }}</flux:label>
-                                    <div class="flex h-10 items-center gap-2 rounded-[6px] border border-gray-300 px-1.5">
-                                        <x-admin.button tone="ghost" icon="minus" square wire:click="decrementRoom({{ $i }})" class="!h-8 !w-8 !px-0" />
-                                        <span class="min-w-6 text-center text-[14.5px] font-semibold text-admin-rail">{{ $room['count'] }}</span>
-                                        <x-admin.button tone="ghost" icon="plus" square wire:click="incrementRoom({{ $i }})" class="!h-8 !w-8 !px-0" />
-                                    </div>
-                                    <flux:error name="rooms.rooms.{{ $i }}.count" />
-                                </flux:field>
-
-                                <flux:input type="number" min="0" step="0.01" wire:model="rooms.rooms.{{ $i }}.price" :label="__($t.'room_price')" />
-
-                                <flux:field>
-                                    <flux:label class="opacity-0">{{ __($t.'remove_room') }}</flux:label>
-                                    <x-admin.button
-                                        tone="danger"
-                                        icon="trash"
-                                        square
-                                        wire:click="removeRoom({{ $i }})"
-                                        :disabled="count($rooms->rooms) <= 1"
-                                        :aria-label="__($t.'remove_room')"
-                                        class="!h-10 !w-10 !px-0"
-                                    />
-                                </flux:field>
-                            </div>
-                        @endforeach
-
-                        <flux:error name="rooms.rooms" />
-                        <flux:error name="rooms.rooms.*.type" />
-
-                        <x-admin.button tone="ghost" icon="plus" wire:click="addRoom" class="self-start">{{ __($t.'add_room') }}</x-admin.button>
-                    @endif
+                    {{-- Stesse card e stessa modale del wizard (ManagesRoomRows). --}}
+                    @include('livewire.partner.structure.partials.room-cards', [
+                        'roomRows' => $rooms->rooms,
+                        'whole' => $whole,
+                        'rowsErrorKey' => 'rooms.rooms',
+                        'pendingUploads' => $roomUploads,
+                    ])
 
                     <div class="grid items-start gap-4 md:grid-cols-4">
                         <flux:select wire:model="rooms.checkinFrom" :label="__($t.'checkin').' · '.__($t.'time_from')" placeholder="--:--">
@@ -372,4 +332,6 @@
 
         @include('livewire.admin.catalog.partials.partner-aside')
     </div>
+
+    @include('livewire.partner.structure.partials.room-modal', ['whole' => $whole, 'pendingUploads' => $roomUploads])
 </div>

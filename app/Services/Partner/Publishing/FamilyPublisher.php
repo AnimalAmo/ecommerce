@@ -7,6 +7,7 @@ use App\Models\Event\Event;
 use App\Models\OrderItem\OrderItem;
 use App\Models\Region\Province;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
 use App\Support\Translations;
@@ -140,12 +141,16 @@ abstract class FamilyPublisher
         return Storage::disk('public')->delete($path);
     }
 
-    /** Il path è ancora puntato da una bozza, da una riga a catalogo o da una riga d'ordine? */
+    /** Il path è ancora puntato da una bozza (galleria o stanze), da una riga a catalogo, da una stanza o da una riga d'ordine? */
     private static function isPhotoReferenced(string $path): bool
     {
         // whereJsonContains e non un LIKE: il cast array di Laravel serializza
         // `/` come `\/`, quindi il path grezzo non compare nel testo della colonna.
         if (StructureDraft::query()->whereJsonContains('photos', $path)->exists()) {
+            return true;
+        }
+
+        if (self::isRoomPhoto($path)) {
             return true;
         }
 
@@ -168,6 +173,31 @@ abstract class FamilyPublisher
         // photo_url è un URL completo (Storage::url del path), quindi si
         // confronta la coda. Un falso positivo tiene il file: è il verso sicuro.
         return OrderItem::query()->where('photo_url', 'like', '%'.$path)->exists();
+    }
+
+    /**
+     * Il path è una foto di stanza, in una bozza (`rooms[].photos`) o in una
+     * stanza pubblicata (`rooms.photos`)?
+     *
+     * `rooms[].photos` sta un livello sotto: whereJsonContains confronta solo
+     * gli scalari della colonna su SQLite, quindi si prefiltra con un LIKE sul
+     * nome del file (senza `/`, che il cast array scrive `\/`) e si conferma
+     * in PHP. Un falso positivo del LIKE non passa la conferma.
+     */
+    private static function isRoomPhoto(string $path): bool
+    {
+        $needle = '%'.basename($path).'%';
+
+        $inDraft = StructureDraft::query()
+            ->where('rooms', 'like', $needle)
+            ->get(['id', 'rooms'])
+            ->contains(fn (StructureDraft $draft): bool => collect($draft->rooms ?? [])
+                ->contains(fn ($row): bool => is_array($row) && in_array($path, (array) ($row['photos'] ?? []), true)));
+
+        return $inDraft || Room::query()
+            ->where('photos', 'like', $needle)
+            ->get(['id', 'photos'])
+            ->contains(fn (Room $room): bool => in_array($path, $room->photos ?? [], true));
     }
 
     /**

@@ -55,7 +55,7 @@ class AdminServiceCreator
     ) {}
 
     /**
-     * @param  array<string, mixed>  $draftAttributes  campi della bozza già validati (senza user_id, categoria, stato e foto)
+     * @param  array<string, mixed>  $draftAttributes  campi della bozza già validati (senza user_id, categoria, stato e foto della scheda; `rooms[].photos` già su disco)
      * @param  list<string>  $photoPaths  foto già memorizzate sul disco public, la prima è la copertina
      * @param  StructureDraft|null  $draft  esce valorizzato con la bozza creata: serve al chiamante per trovare la riga a catalogo (structure_draft_id) e costruire il redirect
      *
@@ -70,9 +70,11 @@ class AdminServiceCreator
         ?StructureDraft &$draft = null,
     ): DraftCompletion {
         $draft = null;
+        // Le foto delle camere sono su disco come quelle della scheda: stessa pulizia.
+        $written = [...$photoPaths, ...self::roomPhotoPaths($draftAttributes)];
 
         if (! $this->isEligible($partner)) {
-            Storage::disk('public')->delete($photoPaths);
+            Storage::disk('public')->delete($written);
 
             throw PartnerServiceException::notEligible($partner);
         }
@@ -100,7 +102,7 @@ class AdminServiceCreator
                 return $outcome;
             });
         } catch (Throwable $e) {
-            Storage::disk('public')->delete($photoPaths);
+            Storage::disk('public')->delete($written);
             $draft = null;
 
             throw $e;
@@ -185,6 +187,22 @@ class AdminServiceCreator
             'approval_requested_at' => null,
             'approval_note' => null,
         ])->save();
+    }
+
+    /**
+     * Foto delle camere (`rooms[].photos`) già scritte su disco dal chiamante.
+     *
+     * @param  array<string, mixed>  $draftAttributes
+     * @return list<string>
+     */
+    private static function roomPhotoPaths(array $draftAttributes): array
+    {
+        return collect($draftAttributes['rooms'] ?? [])
+            ->pluck('photos')
+            ->flatten()
+            ->filter(fn ($path) => is_string($path) && $path !== '')
+            ->values()
+            ->all();
     }
 
     /** Senza profilo non si sa nemmeno come il partner verrebbe pagato: è il controllo di DraftPublisher, anticipato. */
