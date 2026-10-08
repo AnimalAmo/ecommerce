@@ -41,6 +41,9 @@ Ruoli: **target** = la struttura che resta (Monia), **sources** = quelle che div
 
 ### 2.1 Trovare gli id
 
+Lo snippet è per una shell Linux (bash, sul server): l'escape `\$s` serve a bash dentro le virgolette
+doppie; da PowerShell o cmd va riscritto.
+
 ```bash
 php artisan tinker --execute="App\Models\Structure\Structure::withHidden()->where('name->it','like','%Casale Sotto le Stelle%')->get(['id','user_id','type','structure_draft_id','slug','price_from_cents'])->each(fn(\$s)=>dump(\$s->toArray()));"
 ```
@@ -60,7 +63,9 @@ Nella tabella controlla:
 - **recensioni** e **righe ordine** che si spostano o si rilegano: la colonna «Righe ordine» della riga
   del target indica quante prenotazioni del target verranno collegate alla sua stanza;
 - le righe **warning**: in particolare «righe ordine del target restano senza stanza» (vedi §3);
-- che il partner sia a incasso online con Stripe operativo (altrimenti l'occupazione non viene applicata).
+- la tabella **non** mostra lo stato Stripe: che il partner sia a incasso online con Stripe operativo
+  (altrimenti l'occupazione non viene applicata) si controlla nel **pannello admin, scheda del partner**
+  (modalità di pagamento e collegamento Stripe).
 
 Il dry run non scrive niente. Se qualcosa non torna, fermarsi qui.
 
@@ -75,8 +80,8 @@ Non c'è conferma interattiva: l'anteprima è la rete di sicurezza.
 ### 2.4 Dopo l'esecuzione
 
 1. Dal **pannello admin** rinomina il target in «Il Casale Sotto le Stelle» e correggi la descrizione se
-   parla solo di Monia. Attenzione: «Modifica» da admin sovrascrive `price_cents`/`price_from_cents` con
-   un prezzo unico; il nuovo slug (`nome-idbozza`) si applica alla successiva ripubblicazione, e dopo
+   parla solo di Monia. Il prezzo a notte di una struttura con stanze è bloccato nel form (resta quello
+   della stanza più economica): si cambia dalle stanze. Il nuovo slug (`nome-idbozza`) si applica alla successiva ripubblicazione, e dopo
    di essa il vecchio URL del target dà 404 (comportamento preesistente, nessuna storia degli slug).
 2. Verifica:
    - la scheda del target mostra **3 stanze** e il selettore stanza funziona (`?camera=`);
@@ -96,6 +101,8 @@ Non c'è conferma interattiva: l'anteprima è la rete di sicurezza.
 - **Il 301 perde la query string** e non preseleziona la stanza corrispondente (la mappatura
   sorgente→stanza non è memorizzata).
 - **Le chiusure restano per struttura**, non per stanza.
+- **Il comando rifiuta come sorgente** una struttura con più stanze o in cui sono già state accorpate
+  altre strutture: le sue stanze si perderebbero. Va usata come target.
 - **Una struttura sorgente accorpata si può riattivare dall'admin: non farlo.** Duplicherebbe l'offerta
   e romperebbe il 301.
 - **Ripubblicare il target manda online anche le modifiche in bozza non ancora pubblicate.** Prima di
