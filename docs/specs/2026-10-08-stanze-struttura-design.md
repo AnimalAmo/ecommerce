@@ -170,14 +170,26 @@ Il controllo gira in tre punti:
   senza lock, per dare subito l'errore;
 - **calendario** del dettaglio: giorni pieni disabilitati;
 - **checkout** (`ReserveAvailabilityPipe`): `Room::lockForUpdate()` sulla riga
-  stanza, poi ricontrollo nella transaction. Righe ordinate per tipo + id stanza,
-  come già fatto per gli eventi (niente deadlock). Stanza piena ⇒
+  stanza, poi ricontrollo nella transaction (`RoomOccupancy::isAvailableAtCheckout`,
+  solo partner Online) che conta anche le righe precedenti dello stesso ordine
+  sulla stessa stanza. Righe ordinate per tipo + id struttura + id stanza, come
+  già fatto per gli eventi. Stanza piena ⇒
   `CartValidationException::unavailableDates()` ⇒ storno dell'incasso, come per
   il sold-out evento.
 
-La serializzazione regge perché l'ordine nasce Pending e passa a Paid nella
-stessa transaction (capture-first): il secondo checkout attende il lock e vede
-l'ordine del primo già committato.
+La serializzazione regge così: l'ordine nasce Pending e passa a Paid nella
+stessa transaction (capture-first), e il lock sulla stanza mette in fila i
+checkout sulla stessa stanza. Il secondo, ottenuto il lock, rilegge le righe
+ordine con una **lettura con lock** (`sharedLock`, join su `orders`): in
+REPEATABLE READ (MySQL) una SELECT semplice userebbe lo snapshot preso prima
+di attendere il lock e non vedrebbe l'ordine del primo, mentre la lettura con
+lock vede l'ultima versione committata. Quella lettura prende però gap lock
+sull'indice di `order_items`: due checkout su stanze diverse ma vicine
+nell'indice possono andare in deadlock sui rispettivi insert. Per questo
+`PlaceOrderAction` esegue la transaction con `TRANSACTION_ATTEMPTS` (3)
+tentativi: deadlock e lock wait timeout ritentano l'intero ordine (nulla è
+committato, l'idempotenza si rivaluta, OrderPaid arriva a listener afterCommit)
+e solo se falliscono tutti si arriva allo storno.
 
 ## 5. Accorpamento dei servizi esistenti
 
