@@ -3,6 +3,7 @@
 namespace App\Models\Structure\Concerns;
 
 use App\Models\Region\Region;
+use App\Models\Structure\Room;
 use App\Models\Structure\StructureClosure;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
@@ -20,6 +21,12 @@ trait StructureHasRelationships
     public function closures(): HasMany
     {
         return $this->hasMany(StructureClosure::class);
+    }
+
+    /** Stanze della struttura, in ordine di inserimento nel wizard. */
+    public function rooms(): HasMany
+    {
+        return $this->hasMany(Room::class)->orderBy('position');
     }
 
     /** Partner proprietario (null per le righe seedate della piattaforma). */

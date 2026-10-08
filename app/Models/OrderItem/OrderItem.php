@@ -29,6 +29,7 @@ class OrderItem extends Model
         'price_cents',
         'is_gift',
         'options',
+        'room_id',
         'booked_from',
         'booked_until',
     ];
