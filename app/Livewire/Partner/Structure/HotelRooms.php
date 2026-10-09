@@ -40,7 +40,7 @@ class HotelRooms extends Component
     {
         return view('livewire.partner.structure.hotel-rooms', [
             'roomTypes' => ServiceOptionLabels::options('room_type'),
-            'roomAmenities' => ServiceOptionLabels::options('services'),
+            'roomAmenities' => ServiceOptionLabels::roomAmenityOptions(),
         ])->title(__('partner.hotel_rooms.title'));
     }
 

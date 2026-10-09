@@ -87,7 +87,7 @@ class HotelRoomsForm extends Form
             'photos' => ['array', 'max:'.self::MAX_PHOTOS],
             'photos.*' => ['string'],
             'amenities' => ['array'],
-            'amenities.*' => ['string', Rule::in(ServiceOptionLabels::slugs('services'))],
+            'amenities.*' => ['string', Rule::in(ServiceOptionLabels::roomAmenitySlugs())],
         ];
     }
 

@@ -2,7 +2,8 @@
     Modale di una stanza (ManagesRoomRows), condivisa fra lo step 5 del wizard
     e la creazione struttura del pannello. Lavora sulla copia `roomForm`; le
     righe cambiano solo con «Salva stanza» (saveRoom). Variabili:
-    $whole (alloggio intero), $roomTypes e $roomAmenities (slug => label),
+    $whole (alloggio intero), $roomTypes (slug => label), $roomAmenities
+    (ServiceOptionLabels::roomAmenityOptions(): services e animal_services, slug => label),
     $pendingUploads (pannello: foto in upload per chiave stanza).
 --}}
 @php
@@ -127,10 +128,18 @@
                 @endif
             </flux:field>
 
-            {{-- Servizi della camera: stesso catalogo dei servizi della struttura (step 7). --}}
+            {{-- Servizi della camera: stessi cataloghi degli step 7 (hotel) e 8 (animali).
+                 Un solo gruppo, un solo array `amenities`: la scheda pubblica li separa
+                 nei box «Servizi hotel» e «Servizi animali» della stanza scelta. --}}
             <flux:checkbox.group wire:model="roomForm.amenities" :label="__('partner.hotel_rooms.amenities')">
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    @foreach ($roomAmenities as $slug => $label)
+                    @foreach ($roomAmenities['services'] as $slug => $label)
+                        <flux:checkbox value="{{ $slug }}" :label="$label" />
+                    @endforeach
+                </div>
+                <p class="mt-4 text-sm font-medium text-zinc-800">{{ __('partner.hotel_rooms.animal_amenities') }}</p>
+                <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    @foreach ($roomAmenities['animal_services'] as $slug => $label)
                         <flux:checkbox value="{{ $slug }}" :label="$label" />
                     @endforeach
                 </div>

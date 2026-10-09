@@ -173,14 +173,19 @@ class AnimalHolidayStructure extends Component
         $nightCents = $room?->price_cents ?? $structure->price_cents;
         // Sezione «Scegli la camera» solo con almeno due stanze: con una sola la stanza è implicita.
         $rooms = $structure->rooms()->with('amenities')->get();
+        // Box «Servizi hotel» e «Servizi animali»: quelli della stanza scelta
+        // (con almeno due stanze), gruppo per gruppo; un gruppo che la stanza
+        // non dichiara resta quello della struttura, invece di un box vuoto.
+        $roomWithAmenities = $rooms->count() > 1 && $room !== null ? $rooms->firstWhere('id', $room->id) : null;
+        $services = fn (string $group): array => ($roomWithAmenities?->amenityRows($group) ?: null) ?? $structure->amenityRows($group);
 
         return view('livewire.catalog.animal-holiday-structure', [
             'structure' => $structure,
             // «Vedere tutte le foto»: vuoto con una foto sola, e allora niente pulsante né modale.
             'galleryPhotos' => $structure->galleryPhotos(),
             'isFav' => $this->isFavorite('structure', $structure->id),
-            'hotelServices' => $structure->amenityRows('hotel'),
-            'animalServices' => $structure->amenityRows('animal'),
+            'hotelServices' => $services('hotel'),
+            'animalServices' => $services('animal'),
             'faqs' => $structure->faqs,
             'reviews' => $structure->reviews->take($this->reviewsShown),
             'reviewsCount' => $structure->reviews->count(),

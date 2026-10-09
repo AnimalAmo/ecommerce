@@ -64,6 +64,8 @@ class MergeStructuresTest extends TestCase
             'province' => 'BS',
             'city' => 'Brescia',
             'services' => ['wifi', 'piscina'],
+            // Servizi animali della scheda: con l'accorpamento devono finire nella stanza.
+            'animal_services' => ['pet_sitting'],
             'rooms' => [['type' => 'doppia', 'price' => $price, 'count' => 1, ...$row]],
             'photos' => $photos,
         ]);
@@ -137,7 +139,7 @@ class MergeStructuresTest extends TestCase
         $this->assertSame(1, $doneRoom->max_animals);
         $this->assertSame(['structure-photos/dona-1.jpg', 'structure-photos/dona-2.jpg'], $doneRoom->photos);
         $this->assertSame('Descrizione Il Casale Sotto le Stelle - Dona', $doneRoom->getTranslation('description', 'it'));
-        $this->assertSame(['Piscina', 'Wifi'], $doneRoom->amenities()->wherePivot('included', true)->pluck('name')->sort()->values()->all());
+        $this->assertSame(['Pet sitting', 'Piscina', 'Wifi'], $doneRoom->amenities()->wherePivot('included', true)->pluck('name')->sort()->values()->all());
 
         // La bozza è la fonte di verità: una ripubblicazione non toglie le stanze, né cambia i loro id.
         $draft = $monia->draft->fresh();

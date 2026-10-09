@@ -146,7 +146,7 @@ class StructureCreate extends Component
             'provinces' => Province::query()->orderBy('name')->get(),
             'times' => $this->times(),
             'roomTypes' => ServiceOptionLabels::options('room_type'),
-            'roomAmenities' => ServiceOptionLabels::options('services'),
+            'roomAmenities' => ServiceOptionLabels::roomAmenityOptions(),
             // slug => etichetta: la vista NON ricompone la label a mano, così
             // una quinta finestra di cancellazione compare in tutte e tre le
             // famiglie insieme alla whitelist.

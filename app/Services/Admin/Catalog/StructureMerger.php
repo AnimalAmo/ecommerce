@@ -255,8 +255,10 @@ class StructureMerger
     {
         $rows = $source->draft->replicate()->normalizedRooms();
 
+        // Servizi hotel e animali della scheda: ogni stanza tiene i suoi, la
+        // pagina pubblica li mostra nei box quando la stanza è scelta.
         $amenities = [
-            ...array_intersect($source->draft->services ?? [], ServiceOptionLabels::slugs('services')),
+            ...array_intersect([...$source->draft->services ?? [], ...$source->draft->animal_services ?? []], ServiceOptionLabels::roomAmenitySlugs()),
             ...array_merge(...array_column($rows, 'amenities') ?: [[]]),
         ];
 

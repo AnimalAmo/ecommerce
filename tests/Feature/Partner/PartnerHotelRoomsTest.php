@@ -228,6 +228,29 @@ class PartnerHotelRoomsTest extends TestCase
         $this->assertNotSame('a', $keys[1]);
     }
 
+    public function test_a_room_saves_animal_services_too(): void
+    {
+        $draft = $this->hotelDraft();
+
+        $this->fillRoom(Livewire::test(HotelRooms::class))
+            ->assertSee(__('partner.hotel_rooms.animal_amenities'))
+            ->set('roomForm.amenities', ['wifi', 'pet_sitting'])
+            ->call('saveRoom')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['wifi', 'pet_sitting'], $draft->fresh()->rooms[0]['amenities']);
+    }
+
+    public function test_none_is_not_a_room_animal_service(): void
+    {
+        $this->hotelDraft();
+
+        $this->fillRoom(Livewire::test(HotelRooms::class))
+            ->set('roomForm.amenities', ['nessuno'])
+            ->call('saveRoom')
+            ->assertHasErrors('roomForm.amenities.0');
+    }
+
     public function test_room_amenities_are_whitelisted(): void
     {
         $this->hotelDraft();
