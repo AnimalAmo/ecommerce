@@ -237,6 +237,12 @@
                                                     <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
                                                     <span class="truncate">{{ $item['location'] }}</span>
                                                 </div>
+                                                @if ($item['room'] !== null)
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:icon.bed class="h-[11px] w-[11px] shrink-0" />
+                                                        <span class="truncate">{{ $item['room'] }}</span>
+                                                    </div>
+                                                @endif
                                                 @if ($item['dates'] !== null)
                                                     <div class="flex items-center gap-2">
                                                         <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />
@@ -328,6 +334,12 @@
                                             <flux:icon.pin class="h-[10px] w-[10px] shrink-0" />
                                             <span class="truncate">{{ $item['location'] }}</span>
                                         </div>
+                                        @if ($item['room'] !== null)
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon.bed class="h-[11px] w-[11px] shrink-0" />
+                                                <span class="truncate">{{ $item['room'] }}</span>
+                                            </div>
+                                        @endif
                                         @if ($item['dates'] !== null)
                                             <div class="flex items-center gap-2">
                                                 <flux:icon.calendar class="h-[11px] w-[11px] shrink-0" />

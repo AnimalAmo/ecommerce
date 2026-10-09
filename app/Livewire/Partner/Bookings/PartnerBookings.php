@@ -137,6 +137,7 @@ class PartnerBookings extends Component
             'last_name' => $order->last_name,
             'email' => $order->email,
             'title' => $item->title,
+            'room' => isset($item->options['room_name']) ? __('orders.room', ['name' => $item->options['room_name']]) : null,
             'date' => $this->dateLabel($item, $family),
             'time' => $family === 'eventi' ? $item->booked_from?->format('H:i') : null,
             'price' => Format::money($item->price_cents),
@@ -174,7 +175,7 @@ class PartnerBookings extends Component
         $term = mb_strtolower(trim($this->search));
 
         if ($term !== '' && ! str_contains(mb_strtolower(implode(' ', [
-            $row['id'], $row['first_name'], $row['last_name'], $row['email'], $row['title'],
+            $row['id'], $row['first_name'], $row['last_name'], $row['email'], $row['title'], $row['room'],
         ])), $term)) {
             return false;
         }

@@ -7,16 +7,20 @@ use App\Livewire\Admin\Catalog\Approvals;
 use App\Livewire\Admin\Catalog\CatalogIndex;
 use App\Livewire\Admin\Catalog\CatalogShow;
 use App\Mail\CatalogModerationMail;
+use App\Models\Amenity\Amenity;
 use App\Models\Event\Event;
 use App\Models\Favorite\Favorite;
 use App\Models\Order\Order;
 use App\Models\OrderItem\OrderItem;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Admin\Catalog\CatalogAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -229,6 +233,25 @@ class CatalogAdminTest extends TestCase
         $this->assertNotNull(OrderItem::find($pastItem->id), "l'ordine resta");
     }
 
+    public function test_delete_removes_room_amenities_and_unreferenced_room_photos(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('structure-photos/room-only.jpg', 'jpg');
+        Storage::disk('public')->put('structure-photos/shared.jpg', 'jpg');
+        $structure = Structure::factory()->create();
+        $room = Room::factory()->for($structure)->create(['photos' => ['structure-photos/room-only.jpg', 'structure-photos/shared.jpg']]);
+        $room->amenities()->attach(Amenity::factory()->create()->id, ['included' => true, 'position' => 0]);
+        // Un'altra struttura usa ancora la seconda foto: resta su disco.
+        Structure::factory()->create(['gallery' => ['structure-photos/shared.jpg']]);
+
+        app(CatalogAdmin::class)->delete($structure);
+
+        $this->assertSame(0, DB::table('amenityables')->where('amenityable_type', 'room')->count());
+        $this->assertDatabaseMissing('rooms', ['id' => $room->id]);
+        Storage::disk('public')->assertMissing('structure-photos/room-only.jpg');
+        Storage::disk('public')->assertExists('structure-photos/shared.jpg');
+    }
+
     public function test_the_detail_saves_texts_and_prices(): void
     {
         $structure = Structure::factory()->create(['name' => ['it' => 'Vecchio nome'], 'price_cents' => 10000]);
@@ -249,6 +272,24 @@ class CatalogAdminTest extends TestCase
         $this->assertSame('New name', $fresh->getTranslation('name', 'en'));
         $this->assertSame(12050, $fresh->price_cents);
         $this->assertSame(1500, $fresh->animal_supplement_cents);
+    }
+
+    public function test_the_detail_keeps_the_room_price_of_a_structure_with_rooms(): void
+    {
+        $structure = Structure::factory()->create(['name' => ['it' => 'Il Casale'], 'price_cents' => 8000, 'price_from_cents' => 8000]);
+        Room::factory()->for($structure)->create(['price_cents' => 8000]);
+
+        Livewire::test(CatalogShow::class, ['type' => 'structure', 'id' => $structure->id])
+            ->assertSee(__('admin-catalog.show.rooms_price_note'))
+            ->set('name.it', 'Il Casale Sotto le Stelle')
+            ->set('price', '10')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $fresh = Structure::withHidden()->find($structure->id);
+        $this->assertSame('Il Casale Sotto le Stelle', $fresh->getTranslation('name', 'it'));
+        $this->assertSame(8000, $fresh->price_cents);
+        $this->assertSame(8000, $fresh->price_from_cents);
     }
 
     public function test_the_detail_rejects_a_missing_italian_name(): void

@@ -86,4 +86,17 @@ return [
         'previous' => 'Previous photo',
         'next' => 'Next photo',
     ],
+
+    // «Choose your room» section of the structure page (only with two or
+    // more rooms) and the chosen room in the booking card.
+    'rooms' => [
+        'title' => 'Choose your room',
+        'max_guests' => 'Max guests: :count',
+        'max_animals' => 'Max animals: :count',
+        'amenities' => 'Room amenities',
+        'select' => 'Select',
+        'selected' => 'Selected',
+        'booking_room' => 'Room: :name',
+        'full' => 'Not available on these dates',
+    ],
 ];

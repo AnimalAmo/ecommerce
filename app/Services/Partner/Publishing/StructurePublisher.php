@@ -3,8 +3,11 @@
 namespace App\Services\Partner\Publishing;
 
 use App\Enums\ProductType;
+use App\Models\OrderItem\OrderItem;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\Structure\StructureDraft;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Famiglia struttura (hotel|bb|agriturismo) → tabella structures.
@@ -51,7 +54,78 @@ class StructurePublisher extends FamilyPublisher
             ...($draft->animal_services ?? []),
         ]);
 
+        $this->syncRooms($structure, $draft);
+
         return $structure;
+    }
+
+    /**
+     * Una stanza per riga della bozza, agganciata a `draft_key`: ripubblicare
+     * aggiorna la stanza esistente e ne conserva l'id, da cui dipende
+     * l'occupazione registrata sugli ordini. Le righe tolte dalla bozza
+     * spariscono; gli ordini storici tengono `room_name` (room_id va a null).
+     */
+    private function syncRooms(Structure $structure, StructureDraft $draft): void
+    {
+        $rows = $draft->normalizedRooms();
+
+        // Foto che le stanze pubblicate mostrano ora: quelle che la nuova
+        // versione non usa più si potano dopo il commit, come la galleria.
+        $before = Room::query()
+            ->where('structure_id', $structure->id)
+            ->pluck('photos')
+            ->flatten()
+            ->filter(fn ($path) => is_string($path) && $path !== '')
+            ->unique();
+        $hadRooms = Room::query()->where('structure_id', $structure->id)->exists();
+
+        foreach ($rows as $position => $row) {
+            $room = Room::updateOrCreate(
+                ['structure_id' => $structure->id, 'draft_key' => $row['key']],
+                [
+                    'type' => $row['type'],
+                    'name' => $this->translationsFrom($row['name']),
+                    'description' => $this->translationsFrom($row['description']),
+                    'price_cents' => $this->cents($row['price']),
+                    'max_guests' => $row['max_guests'],
+                    'max_animals' => $row['max_animals'],
+                    'units' => $row['units'],
+                    'photos' => $row['photos'] ?: null,
+                    'position' => $position,
+                ],
+            );
+
+            $this->syncAmenities($room, $row['amenities']);
+        }
+
+        // whereNotNull: le stanze senza draft_key (create a mano) non si toccano.
+        Room::query()
+            ->where('structure_id', $structure->id)
+            ->whereNotNull('draft_key')
+            ->whereNotIn('draft_key', array_column($rows, 'key'))
+            ->get()
+            ->each(function (Room $room): void {
+                $room->amenities()->detach();
+                $room->delete();
+            });
+
+        // Prima pubblicazione con le stanze di una struttura che ha già
+        // venduto: i suoi ordini hanno room_id null e l'occupazione non li
+        // vedrebbe. Con una stanza sola sono suoi; con più stanze non si sa
+        // a quale attribuirli e restano null (l'accorpamento lo gestisce da sé).
+        if (! $hadRooms && count($rows) === 1) {
+            OrderItem::query()
+                ->where('purchasable_type', $structure->getMorphClass())
+                ->where('purchasable_id', $structure->id)
+                ->whereNull('room_id')
+                ->update(['room_id' => Room::query()->where('structure_id', $structure->id)->where('draft_key', $rows[0]['key'])->value('id')]);
+        }
+
+        $kept = [...($draft->photos ?? []), ...array_merge(...array_column($rows, 'photos') ?: [[]])];
+
+        foreach ($before->reject(fn (string $path) => in_array($path, $kept, true)) as $path) {
+            DB::afterCommit(fn () => self::deletePhotoIfUnreferenced($path));
+        }
     }
 
     /** rooms[].price (stringhe numeric per notte) → min in cents; 0 senza stanze. */

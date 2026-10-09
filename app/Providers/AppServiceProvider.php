@@ -7,6 +7,7 @@ use App\Http\Middleware\UseItalianLocale;
 use App\Models\Article\Article;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Admin\AdminCounters;
@@ -51,6 +52,8 @@ class AppServiceProvider extends ServiceProvider
         // e per model_has_roles di spatie/laravel-permission ('user').
         Relation::enforceMorphMap([
             'structure' => Structure::class,
+            // Amenity delle stanze (amenityables).
+            'room' => Room::class,
             'event' => Event::class,
             'smartbox_package' => SmartboxPackage::class,
             'user' => User::class,

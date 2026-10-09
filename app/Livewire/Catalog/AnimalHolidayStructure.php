@@ -8,12 +8,18 @@ use App\Livewire\Concerns\AddsCatalogProductToCart;
 use App\Livewire\Concerns\HasBookingCalendar;
 use App\Livewire\Concerns\TogglesFavorites;
 use App\Models\Region\Region;
+use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
+use App\Services\Availability\RoomOccupancy;
 use App\Services\Partner\PartnerContacts;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Services\Pricing\BookingPricingService;
+use Carbon\CarbonImmutable;
 use DateTimeImmutable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class AnimalHolidayStructure extends Component
@@ -37,6 +43,14 @@ class AnimalHolidayStructure extends Component
     /** Campo espanso del widget prenotazione: null | 'date' | 'ospiti' | 'animali' (uno alla volta, come il pop-up del carrello). */
     public ?string $expandedField = null;
 
+    /**
+     * Stanza scelta (?camera=id): null per le strutture senza stanze. Arriva
+     * dal client: ogni lettura passa da selectedRoom(), che rifiuta le stanze
+     * di altre strutture e ripiega sulla stanza proposta.
+     */
+    #[Url(as: 'camera')]
+    public ?int $roomId = null;
+
     /** Recensioni mostrate: parte da 3 (XD), cresce a step di 3 con "Carica altre recensioni". */
     public int $reviewsShown = 3;
 
@@ -46,6 +60,14 @@ class AnimalHolidayStructure extends Component
     /** Step di paginazione incrementale delle recensioni. */
     private const REVIEWS_STEP = 3;
 
+    /**
+     * Stanze risolte in questa richiesta, per roomId (calendario, stepper e
+     * render la chiedono più volte; null = struttura senza stanze).
+     *
+     * @var array<string, Room|null>
+     */
+    private array $resolvedRooms = [];
+
     public function mount(string $region, string $structure): void
     {
         $regionModel = Region::where('slug', $region)->first();
@@ -53,6 +75,10 @@ class AnimalHolidayStructure extends Component
         abort_unless($regionModel !== null, 404);
 
         $model = self::findBySlug($structure);
+
+        if ($model === null) {
+            self::redirectIfMerged($structure);
+        }
 
         abort_unless($model !== null, 404);
 
@@ -73,6 +99,27 @@ class AnimalHolidayStructure extends Component
         $this->editCheckOut = $today->modify('+12 days')->format('d/m/Y');
         $this->editGuests = ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0];
         $this->editAnimals = [self::defaultSpecies() => 1];
+
+        // Stanza: quella dell'URL se è di questa struttura, altrimenti la proposta per date e gruppo di default.
+        $this->roomId = $this->selectedRoom($model)?->id;
+        $this->clampToRoom();
+    }
+
+    /**
+     * «Seleziona» di una card stanza: le stanze di altre strutture si ignorano.
+     * Ospiti e animali rientrano nella capienza della nuova stanza.
+     */
+    public function selectRoom(int $id): void
+    {
+        $room = $this->structure()->rooms()->whereKey($id)->first();
+
+        if ($room === null) {
+            return;
+        }
+
+        $this->roomId = $room->id;
+        $this->resolvedRooms[(string) $room->id] = $room;
+        $this->clampToRoom();
     }
 
     /** Apre/chiude un campo del widget; aprire il calendario lo ripunta al mese del check-in. */
@@ -121,6 +168,11 @@ class AnimalHolidayStructure extends Component
     {
         $structure = $this->structure();
         $nights = $this->nights();
+        $room = $this->selectedRoom($structure);
+        // Prezzo notte: della stanza scelta, della struttura se non ha stanze.
+        $nightCents = $room?->price_cents ?? $structure->price_cents;
+        // Sezione «Scegli la camera» solo con almeno due stanze: con una sola la stanza è implicita.
+        $rooms = $structure->rooms()->with('amenities')->get();
 
         return view('livewire.catalog.animal-holiday-structure', [
             'structure' => $structure,
@@ -134,7 +186,11 @@ class AnimalHolidayStructure extends Component
             'reviewsCount' => $structure->reviews->count(),
             // Preventivo live: notti reali, supplemento animali (riga solo se > 0) e totale quotato server-side.
             'nights' => $nights,
-            'nightsCents' => $structure->price_cents * $nights,
+            'room' => $rooms->count() > 1 ? $room : null,
+            'rooms' => $rooms->count() > 1 ? $rooms : collect(),
+            'fullRoomIds' => $rooms->count() > 1 ? $this->fullRoomIds($structure, $rooms) : [],
+            'nightCents' => $nightCents,
+            'nightsCents' => $nightCents * $nights,
             'animalSupplementCents' => $structure->animal_supplement_cents * array_sum($this->editAnimals) * $nights,
             'totalCents' => app(BookingPricingService::class)->quote($structure, $this->bookingOptions()),
             'calendar' => $this->expandedField === 'date' ? $this->buildCalendar() : [],
@@ -155,6 +211,55 @@ class AnimalHolidayStructure extends Component
         return self::findBySlug($this->structureSlug);
     }
 
+    /** Stanza del calendario e degli stepper: quella scelta. */
+    protected function calendarRoom(): ?Room
+    {
+        return $this->selectedRoom();
+    }
+
+    /**
+     * Stanza scelta: roomId se appartiene alla struttura, altrimenti la stanza
+     * proposta per le date e il gruppo correnti (Structure::defaultRoomFor); null se la
+     * struttura non ha stanze.
+     */
+    private function selectedRoom(?Structure $structure = null): ?Room
+    {
+        $key = (string) $this->roomId;
+
+        if (array_key_exists($key, $this->resolvedRooms)) {
+            return $this->resolvedRooms[$key];
+        }
+
+        $structure ??= $this->structure();
+
+        $room = ($this->roomId !== null ? $structure->rooms()->whereKey($this->roomId)->first() : null)
+            ?? $structure->defaultRoomFor(
+                CarbonImmutable::instance(self::parseDate($this->editCheckIn ?? '')),
+                CarbonImmutable::instance(self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? '')),
+                array_sum($this->editGuests),
+                array_sum($this->editAnimals),
+            );
+
+        return $this->resolvedRooms[$key] = $room;
+    }
+
+    /**
+     * Riporta ospiti e animali entro la capienza della stanza scelta: si tolgono
+     * prima bambini e ragazzi, gli adulti restano almeno 1; gli animali si
+     * tolgono dall'ultima specie.
+     */
+    private function clampToRoom(): void
+    {
+        $room = $this->selectedRoom();
+
+        if ($room === null) {
+            return;
+        }
+
+        $this->editGuests = $room->clampGuests($this->editGuests);
+        $this->editAnimals = $room->clampAnimals($this->editAnimals);
+    }
+
     /** Struttura della pagina (rirrisolta dallo slug a ogni richiesta, come il render). */
     private function structure(): Structure
     {
@@ -165,16 +270,51 @@ class AnimalHolidayStructure extends Component
         return $structure;
     }
 
-    /** Options del widget nel vocabolario canonico del carrello (decisione ratificata #4). */
+    /** Options del widget nel vocabolario canonico del carrello (decisione ratificata #4), più la stanza se la struttura ne ha. */
     private function bookingOptions(): array
     {
-        return [
+        $options = [
             'check_in' => self::parseDate($this->editCheckIn ?? '')->format('Y-m-d'),
             // Intervallo lasciato a metà: check-out = check-in (la validazione server segnala il range non valido).
             'check_out' => self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? '')->format('Y-m-d'),
             'guests' => $this->editGuests,
             'animals' => $this->editAnimals,
         ];
+
+        $room = $this->selectedRoom();
+
+        if ($room !== null) {
+            $options['room_id'] = $room->id;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Stanze piene nelle date scelte (picker: «Seleziona» disabilitato). Solo
+     * partner Online, come l'occupazione al checkout; nessuna con intervallo
+     * lasciato a metà.
+     *
+     * @param  Collection<int, Room>  $rooms
+     * @return list<int>
+     */
+    private function fullRoomIds(Structure $structure, Collection $rooms): array
+    {
+        if (app(PartnerPaymentModeService::class)->forPurchasable($structure) !== OrderPaymentMode::Online) {
+            return [];
+        }
+
+        $checkIn = CarbonImmutable::instance(self::parseDate($this->editCheckIn ?? ''));
+        $checkOut = CarbonImmutable::instance(self::parseDate($this->editCheckOut ?? $this->editCheckIn ?? ''));
+
+        if ($checkOut->lte($checkIn)) {
+            return [];
+        }
+
+        $occupancy = app(RoomOccupancy::class);
+
+        return $rooms->reject(fn (Room $room): bool => $occupancy->isAvailable($room, $checkIn, $checkOut))
+            ->pluck('id')->values()->all();
     }
 
     /** Notti del preventivo live (minimo 1, stesso clamp del pricing server). */
@@ -197,5 +337,33 @@ class AnimalHolidayStructure extends Component
     private static function findBySlug(string $slug): ?Structure
     {
         return Structure::where('slug', $slug)->orderBy('position')->first();
+    }
+
+    /**
+     * Struttura accorpata in un'altra (`catalog:merge-structures`): la vecchia
+     * URL, magari indicizzata o condivisa, risponde 301 verso la scheda che
+     * ora la contiene come stanza. Una catena di accorpamenti si segue per
+     * pochi passi, mai in cerchio; se il target non è visibile resta il 404.
+     */
+    private static function redirectIfMerged(string $slug): void
+    {
+        $merged = Structure::withHidden()->where('slug', $slug)->whereNotNull('merged_into_structure_id')->first();
+        $seen = [];
+
+        while ($merged !== null && $merged->merged_into_structure_id !== null && count($seen) < 3) {
+            $seen[] = $merged->id;
+            $merged = in_array((int) $merged->merged_into_structure_id, $seen, true)
+                ? null
+                : Structure::withHidden()->with('region')->find($merged->merged_into_structure_id);
+        }
+
+        if ($merged === null || $merged->merged_into_structure_id !== null || ! $merged->isVisibleInCatalog() || $merged->region === null) {
+            return;
+        }
+
+        throw new HttpResponseException(redirect()->route('holiday.structure', [
+            'region' => $merged->region->slug,
+            'structure' => $merged->slug,
+        ], 301));
     }
 }

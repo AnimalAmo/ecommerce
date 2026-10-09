@@ -12,6 +12,7 @@ use App\Enums\ProductType;
 use App\Exceptions\CartValidationException;
 use App\Exceptions\OrderAlreadyPlacedException;
 use App\Exceptions\PaymentConfigurationException;
+use App\Livewire\Concerns\PresentsCartRoom;
 use App\Models\Partner\PartnerProfile;
 use App\Services\Availability\AvailabilityService;
 use App\Services\Cart\CartManager;
@@ -36,6 +37,8 @@ use Throwable;
 
 class Checkout extends Component
 {
+    use PresentsCartRoom;
+
     /** Flag ?regalo=1 (come nel carrello): checkout con le SOLE righe regalo (flussi separati, mai vista mista). */
     #[Url(as: 'regalo', except: false)]
     public bool $gift = false;
@@ -1129,6 +1132,8 @@ class Checkout extends Component
             'type' => $item->productType,
             'title' => $item->title,
             'location' => $item->location,
+            // «Stanza: …» per le strutture a camere (null senza stanza o se cancellata).
+            'room' => $this->cartRoomLabel($item),
             'photoUrl' => $item->photoUrl,
             'dates' => $item->dates,
             'serviceSlot' => $item->serviceSlot,

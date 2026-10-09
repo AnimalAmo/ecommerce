@@ -7,10 +7,11 @@
 
      Parametri: $photos (URL, HasCatalogImages::galleryPhotos(): vuoto con una foto
      sola, la soglia sta lì per pulsante e modale insieme), $title (nome della
-     scheda, per titolo e testi alternativi). --}}
+     scheda, per titolo e testi alternativi), $modalName (facoltativo: nome del
+     modale, 'photo-gallery' di default; le card stanza ne hanno uno a testa). --}}
 @if ($photos !== [])
     {{-- backdrop:!bg-black/30: lo stesso velo dei pop-up delle schede e del modale di login. --}}
-    <flux:modal name="photo-gallery" class="w-full max-w-5xl backdrop:!bg-black/30">
+    <flux:modal :name="$modalName ?? 'photo-gallery'" class="w-full max-w-5xl backdrop:!bg-black/30">
         <flux:heading size="lg" class="pe-10 !font-bold !text-black">{{ $title }}</flux:heading>
 
         <flux:carousel snap="mandatory" indicators aria-label="{{ __('catalog.gallery.label', ['title' => $title]) }}" class="mt-5">

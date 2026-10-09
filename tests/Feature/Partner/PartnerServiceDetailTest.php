@@ -5,6 +5,7 @@ namespace Tests\Feature\Partner;
 use App\Livewire\Partner\MyServices\PartnerServiceDetail;
 use App\Models\Structure\StructureDraft;
 use App\Models\User;
+use App\Services\Partner\ServiceOptionLabels;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -41,6 +42,39 @@ class PartnerServiceDetailTest extends TestCase
             ->assertSee(__('partner.services.section_rooms'))
             ->assertSee(__('partner.services.section_payment'))
             ->assertSee('Hotel pet-friendly.');
+    }
+
+    public function test_service_detail_lists_named_rooms(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, ['rooms' => [
+            ['key' => 'k1', 'type' => 'suite', 'name' => ['it' => 'Camera Glicine'], 'price' => '135', 'max_guests' => 2, 'max_animals' => 1, 'units' => 3],
+            ['key' => 'k2', 'type' => 'doppia', 'name' => ['it' => ''], 'price' => '90', 'units' => 2],
+        ]]);
+
+        $this->get(route('partner.services.show', $draft))
+            ->assertOk()
+            ->assertSee('Camera Glicine')
+            ->assertSee('135')
+            ->assertSee('3 '.__('partner.services.rooms_count'))
+            ->assertSee(ServiceOptionLabels::label('room_type', 'doppia'))
+            ->assertSee('2 '.__('partner.services.rooms_count'));
+    }
+
+    public function test_service_detail_shows_room_type_only_when_it_differs_from_the_name(): void
+    {
+        $partner = $this->actingAsActivePartner();
+        $draft = $this->service($partner->id, ['rooms' => [
+            ['key' => 'k1', 'type' => 'suite', 'name' => ['it' => 'Camera Glicine'], 'price' => '135', 'units' => 3],
+            ['key' => 'k2', 'type' => 'doppia', 'name' => ['it' => ''], 'price' => '90', 'units' => 2],
+        ]]);
+        $suite = ServiceOptionLabels::label('room_type', 'suite');
+        $double = ServiceOptionLabels::label('room_type', 'doppia');
+
+        $this->get(route('partner.services.show', $draft))
+            ->assertOk()
+            ->assertSee('Camera Glicine ('.$suite.')')
+            ->assertDontSee($double.' ('.$double.')');
     }
 
     // ── Difetto F7: il dettaglio non mostra nessuno dei campi nuovi ───────────

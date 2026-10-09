@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Cart\CartManager;
 use App\Services\Partner\PartnerPaymentModeService;
 use App\Support\Format;
+use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -412,17 +413,48 @@ class FavoriteService
                 'participants' => $product->quickAddPersons(),
             ],
             // Hotel (riga Structure): soggiorno oggi+7 → oggi+12, 2 adulti, 1 animale.
-            ProductType::Structure => [
+            ProductType::Structure => $this->withDefaultRoom($product, [
                 'check_in' => $today->modify('+7 days')->format('Y-m-d'),
                 'check_out' => $today->modify('+12 days')->format('Y-m-d'),
                 'guests' => ['adulti' => 2, 'ragazzi' => 0, 'bambini' => 0],
                 'animals' => [$species => 1],
-            ],
+            ]),
             // Smartbox (stay/wellness/adventure): solo animali, niente regalo.
             default => [
                 'animals' => [$species => 1],
             ],
         };
+    }
+
+    /**
+     * Struttura con stanze: il carrello ne vuole una (room_id), quindi si sceglie
+     * la prima che contiene il gruppo di default ed è libera alle date di
+     * default (Structure::defaultRoomFor). Senza stanze le opzioni restano com'erano.
+     *
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function withDefaultRoom(Model $product, array $options): array
+    {
+        if (! $product instanceof Structure) {
+            return $options;
+        }
+
+        $room = $product->defaultRoomFor(
+            CarbonImmutable::parse($options['check_in']),
+            CarbonImmutable::parse($options['check_out']),
+            array_sum($options['guests']),
+            array_sum($options['animals']),
+        );
+
+        if ($room !== null) {
+            $options['room_id'] = $room->id;
+            // Nessuna stanza contiene il gruppo di default: lo si riporta nella capienza.
+            $options['guests'] = $room->clampGuests($options['guests']);
+            $options['animals'] = $room->clampAnimals($options['animals']);
+        }
+
+        return $options;
     }
 
     /** Specie preselezionata dello stepper animali: primo pet dell'utente, altrimenti 'cane'. */

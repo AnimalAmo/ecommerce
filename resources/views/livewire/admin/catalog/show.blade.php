@@ -67,6 +67,7 @@
                 <div class="grid items-start gap-3.5 sm:grid-cols-3">
                     <flux:input
                         wire:model="price"
+                        :disabled="$hasRooms"
                         :label="__($isStructure ? 'admin-catalog.show.price_night' : ($isEvent ? 'admin-catalog.show.price_person' : 'admin-catalog.show.price'))"
                         :placeholder="$isEvent ? __('admin-catalog.show.price_free_placeholder') : ''"
                         inputmode="decimal"
@@ -85,7 +86,9 @@
                     <flux:input wire:model="cancellationDays" type="number" min="0" max="365" :label="__('admin-catalog.show.cancellation')" />
                 </div>
 
-                @if ($isStructure && $item->structure_draft_id)
+                @if ($hasRooms)
+                    <p class="m-0 text-[12.5px] leading-normal text-gray-400">{{ __('admin-catalog.show.rooms_price_note') }}</p>
+                @elseif ($isStructure && $item->structure_draft_id)
                     <p class="m-0 text-[12.5px] leading-normal text-gray-400">{{ __('admin-catalog.show.draft_price_note') }}</p>
                 @endif
             </form>

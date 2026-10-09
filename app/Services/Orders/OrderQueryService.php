@@ -142,6 +142,7 @@ class OrderQueryService
             'photo' => $item->photo_url,
             'location' => $item->location,
             'dates' => $this->datesLabel($item, $options),
+            'room' => isset($options['room_name']) ? __('orders.room', ['name' => $options['room_name']]) : null,
             'guests' => $this->guestsLabel($options),
             'animals' => isset($options['animals']) ? Format::animals($options['animals']) : null,
             'price' => Format::money($item->price_cents),

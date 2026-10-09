@@ -62,6 +62,33 @@ class StructureCreateTest extends TestCase
     }
 
     /**
+     * Le due camere della fixture di StructurePublisherTest, nel formato riga
+     * di StructureDraft::normalizedRooms().
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function roomRows(): array
+    {
+        $row = fn (string $key, string $type, string $name, string $price, int $units): array => [
+            'key' => $key,
+            'type' => $type,
+            'name' => ['it' => $name, 'en' => ''],
+            'description' => ['it' => '', 'en' => ''],
+            'price' => $price,
+            'max_guests' => 2,
+            'max_animals' => 1,
+            'units' => $units,
+            'photos' => [],
+            'amenities' => [],
+        ];
+
+        return [
+            $row('aaaaaaaa-0000-4000-8000-000000000001', 'doppia', 'Camera Lago', '80', 3),
+            $row('aaaaaaaa-0000-4000-8000-000000000002', 'singola', 'Camera Bosco', '55.50', 2),
+        ];
+    }
+
+    /**
      * Compila l'intera pagina con la fixture di StructurePublisherTest, così il
      * confronto con il publisher del wizard (Task 5) parte dagli stessi dati.
      *
@@ -82,10 +109,7 @@ class StructureCreateTest extends TestCase
             ->set('location.province', 'BS')
             ->set('location.zip', '25100')
             ->set('location.license', 'SCIA 2026/14')
-            ->set('rooms.rooms', [
-                ['type' => 'doppia', 'count' => 3, 'price' => '80'],
-                ['type' => 'singola', 'count' => 2, 'price' => '55.50'],
-            ])
+            ->set('rooms.rooms', $this->roomRows())
             ->set('rooms.checkinFrom', '14:00')
             ->set('rooms.checkinTo', '20:00')
             ->set('rooms.checkoutFrom', '08:00')
@@ -256,10 +280,7 @@ class StructureCreateTest extends TestCase
             'province' => 'BS',
             'zip' => '25100',
             'license' => 'SCIA 2026/14',
-            'rooms' => [
-                ['type' => 'doppia', 'count' => 3, 'price' => '80'],
-                ['type' => 'singola', 'count' => 2, 'price' => '55.50'],
-            ],
+            'rooms' => $this->roomRows(),
             'checkin_from' => '14:00',
             'checkin_to' => '20:00',
             'checkout_from' => '08:00',
@@ -503,8 +524,11 @@ class StructureCreateTest extends TestCase
             // Le righe dell'hotel sono state azzerate dal cambio tipologia.
             ->assertSet('rooms.wholeProperty', true)
             ->assertCount('rooms.rooms', 1)
-            ->set('rooms.rooms.0.beds', 6)
-            ->set('rooms.rooms.0.price', '140')
+            ->call('openRoom', 0)
+            ->set('roomForm.max_guests', 6)
+            ->set('roomForm.price', '140')
+            ->call('saveRoom')
+            ->assertHasNoErrors()
             ->call('save')
             ->assertHasNoErrors();
 
@@ -513,7 +537,8 @@ class StructureCreateTest extends TestCase
         $this->assertSame('casa_vacanza', $draft->type);
         // La tipologia fittizia arriva dal gruppo room_type_whole del Task 1.
         $this->assertSame('intera_struttura', $draft->rooms[0]['type']);
-        $this->assertSame(1, $draft->rooms[0]['count']);
+        $this->assertSame(1, $draft->rooms[0]['units']);
+        $this->assertSame(6, $draft->rooms[0]['max_guests']);
         $this->assertSame(14000, Structure::withHidden()->sole()->price_cents);
     }
 
@@ -645,22 +670,140 @@ class StructureCreateTest extends TestCase
     }
 
     /**
-     * "Rimuovi riga" è l'unica cosa che il pannello ha e il wizard no
-     * (contratto §Regole dei campi): senza un test, cancellarla non farebbe
-     * diventare rosso niente. Deve restare sempre una riga, perché `rooms`
-     * ha `min:1` e senza righe la scheda non è pubblicabile.
+     * Le camere si tolgono e si riordinano come nel wizard. Togliere l'ultima
+     * è permesso, ma la scheda non si salva: `rooms` ha `min:1`.
      */
-    public function test_a_room_row_can_be_removed_but_never_the_last_one(): void
+    public function test_a_room_can_be_removed_and_reordered_but_one_is_required(): void
     {
         $partner = $this->payablePartner();
 
         $this->filled($partner)
             ->assertCount('rooms.rooms', 2)
-            ->call('removeRoom', 0)
-            ->assertCount('rooms.rooms', 1)
+            ->call('moveRoom', 1, -1)
             ->assertSet('rooms.rooms.0.type', 'singola')
             ->call('removeRoom', 0)
-            ->assertCount('rooms.rooms', 1);
+            ->assertCount('rooms.rooms', 1)
+            ->assertSet('rooms.rooms.0.type', 'doppia')
+            ->call('removeRoom', 0)
+            ->assertCount('rooms.rooms', 0)
+            ->call('save')
+            ->assertHasErrors('rooms.rooms');
+
+        $this->assertSame(0, StructureDraft::query()->count());
+    }
+
+    /**
+     * Le camere si compilano nella stessa modale del wizard. Le foto della
+     * camera restano upload temporanei fino al salvataggio (spec §5.3: niente
+     * su disco prima che tutto abbia validato), poi vanno sulla stanza
+     * pubblicata.
+     */
+    public function test_admin_creates_structure_with_named_rooms(): void
+    {
+        $partner = $this->payablePartner();
+
+        $component = $this->filled($partner)->set('rooms.rooms', []);
+
+        foreach ([['Camera Glicine', 'doppia', '90', 2], ['Suite Lavanda', 'suite', '150', 1]] as [$name, $type, $price, $units]) {
+            $component->call('openRoom', null)
+                ->set('roomForm.type', $type)
+                ->set('roomForm.name.it', $name)
+                ->set('roomForm.price', $price)
+                ->set('roomForm.max_guests', 3)
+                ->set('roomForm.max_animals', 2)
+                ->set('roomForm.units', $units)
+                ->set('roomForm.amenities', ['wifi']);
+
+            if ($type === 'suite') {
+                $component->set('roomPhotos', [UploadedFile::fake()->image('suite.jpg')]);
+            }
+
+            $component->call('saveRoom')->assertHasNoErrors();
+        }
+
+        // Prima del salvataggio sul disco non c'è ancora nessun file.
+        $this->assertSame([], Storage::disk('public')->files('structure-photos'));
+
+        $component->call('save')->assertHasNoErrors();
+
+        $structure = Structure::withHidden()->sole();
+        $rooms = $structure->rooms;
+
+        $this->assertCount(2, $rooms);
+        $this->assertSame(['Camera Glicine', 'Suite Lavanda'], $rooms->map->displayName()->all());
+        $this->assertSame([9000, 15000], $rooms->pluck('price_cents')->all());
+        $this->assertSame([2, 1], $rooms->pluck('units')->all());
+        $this->assertSame(9000, $structure->price_cents);
+
+        $this->assertSame([], $rooms[0]->photos ?? []);
+        $this->assertCount(1, $rooms[1]->photos);
+        Storage::disk('public')->assertExists($rooms[1]->photos[0]);
+        $this->assertStringStartsWith('structure-photos/', $rooms[1]->photos[0]);
+
+        $draft = StructureDraft::query()->sole();
+        $this->assertSame($rooms->pluck('draft_key')->all(), array_column($draft->rooms, 'key'));
+    }
+
+    /**
+     * Nel pannello le righe sono stato del client: il salvataggio le rivalida
+     * tutte. Prezzo a 0 (spec §2: > 0) e chiavi doppie non passano.
+     */
+    public function test_every_room_row_is_validated_on_save(): void
+    {
+        $partner = $this->payablePartner();
+        $rows = $this->roomRows();
+
+        $this->filled($partner)
+            ->set('rooms.rooms.0.price', '0')
+            ->call('save')
+            ->assertHasErrors(['rooms.rooms.0.price' => 'gt']);
+
+        $rows[1]['key'] = $rows[0]['key'];
+
+        $this->filled($partner)
+            ->set('rooms.rooms', $rows)
+            ->call('save')
+            ->assertHasErrors(['rooms.rooms.1.key' => 'distinct']);
+
+        $this->assertSame(0, StructureDraft::query()->count());
+    }
+
+    /** La chiave di una camera nuova la genera il server, non il roomForm del client. */
+    public function test_a_new_room_key_is_generated_by_the_server(): void
+    {
+        $partner = $this->payablePartner();
+        $existing = $this->roomRows()[0]['key'];
+
+        $component = $this->filled($partner)
+            ->call('openRoom', null)
+            ->set('roomForm.key', $existing)
+            ->set('roomForm.type', 'suite')
+            ->set('roomForm.price', '150')
+            ->call('saveRoom')
+            ->assertHasNoErrors();
+
+        $keys = array_column($component->get('rooms.rooms'), 'key');
+        $this->assertCount(3, array_unique($keys));
+    }
+
+    /** Un salvataggio respinto dal service non lascia su disco le foto delle camere. */
+    public function test_a_rejected_save_cleans_up_the_room_photos_too(): void
+    {
+        $partner = $this->payablePartner();
+
+        $component = $this->filled($partner)
+            ->call('openRoom', 0)
+            ->set('roomPhotos', [UploadedFile::fake()->image('camera.jpg')])
+            ->call('saveRoom')
+            ->assertHasNoErrors();
+
+        // Il partner perde l'idoneità fra la compilazione e il salvataggio.
+        $partner->update(['is_active' => false]);
+
+        $component->call('save');
+
+        $this->assertSame(0, StructureDraft::query()->count());
+        $this->assertSame([], Storage::disk('public')->files('structure-photos'));
     }
 
     /**

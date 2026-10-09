@@ -106,6 +106,8 @@ class CatalogShow extends Component
             'row' => $presenter->row($item),
             'item' => $item,
             'isStructure' => $item instanceof Structure,
+            // Prezzo bloccato: con le camere lo decide la più economica.
+            'hasRooms' => $item instanceof Structure && $item->rooms()->exists(),
             'isEvent' => $item->getMorphClass() === 'event',
             'hasRegion' => $item instanceof Structure || $item instanceof Event,
             'publicUrl' => $item->isVisibleInCatalog() ? $presenter->publicUrl($item) : null,

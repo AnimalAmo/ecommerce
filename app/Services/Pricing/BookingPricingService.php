@@ -7,6 +7,7 @@ use App\Exceptions\CartValidationException;
 use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
+use App\Services\Availability\AvailabilityService;
 use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
@@ -55,7 +56,10 @@ class BookingPricingService
     {
         $nights = self::nights($options);
 
-        return $structure->price_cents * $nights
+        // Con stanze il prezzo notte è della stanza scelta (stessa regola dell'availability).
+        $room = app(AvailabilityService::class)->roomFor($structure, $options);
+
+        return ($room?->price_cents ?? $structure->price_cents) * $nights
             + $structure->animal_supplement_cents * self::animals($options) * $nights;
     }
 
@@ -81,6 +85,12 @@ class BookingPricingService
 
     /** Numero animali: somma dei count di options['animals'] ({specie: count}). */
     private static function animals(array $options): int
+    {
+        return self::animalCount($options);
+    }
+
+    /** Come animals(), pubblico per il controllo di capienza della stanza. */
+    public static function animalCount(array $options): int
     {
         return (int) array_sum($options['animals'] ?? []);
     }

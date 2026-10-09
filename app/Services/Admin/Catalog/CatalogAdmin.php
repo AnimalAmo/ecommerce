@@ -8,6 +8,7 @@ use App\Models\Event\Event;
 use App\Models\SmartboxPackage\SmartboxPackage;
 use App\Models\Structure\Structure;
 use App\Services\Cart\DatabaseCartStorage;
+use App\Services\Partner\Publishing\FamilyPublisher;
 use App\Support\Translations;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
@@ -284,10 +285,37 @@ class CatalogAdmin
             DB::table('reviews')->where('reviewable_type', $family)->where('reviewable_id', $id)->delete();
 
             $item->amenities()->detach();
+            $roomPhotos = $item instanceof Structure ? $this->deleteRooms($item) : [];
             $draft = $item->draft;
             $item->delete();
             $draft?->delete();
+
+            // Dopo il commit, come la potatura del publisher: nel dubbio il file resta.
+            DB::afterCommit(function () use ($roomPhotos): void {
+                foreach ($roomPhotos as $path) {
+                    FamilyPublisher::deletePhotoIfUnreferenced($path);
+                }
+            });
         });
+    }
+
+    /**
+     * Stanze della struttura: la cascade del DB non passa da Eloquent, quindi
+     * i loro servizi (amenityables di tipo room) si staccano qui.
+     *
+     * @return list<string> le foto delle stanze, da potare se nessuno le usa più
+     */
+    private function deleteRooms(Structure $structure): array
+    {
+        $photos = [];
+
+        foreach ($structure->rooms()->get() as $room) {
+            $photos = [...$photos, ...($room->photos ?? [])];
+            $room->amenities()->detach();
+            $room->delete();
+        }
+
+        return array_values(array_unique(array_filter($photos, filled(...))));
     }
 
     /**
@@ -297,7 +325,9 @@ class CatalogAdmin
      *
      * Il prezzo di una struttura invece nasce dalle camere del wizard (la più
      * economica): la bozza non ha un campo in cui scriverlo, e una
-     * ripubblicazione lo ricalcola. La scheda lo dice accanto al campo.
+     * ripubblicazione lo ricalcola. La scheda lo dice accanto al campo. Se la
+     * struttura ha righe stanza il prezzo non si tocca proprio: il campo è
+     * bloccato e quello mandato si ignora.
      *
      * @param  array{name: array<string, string>, description: array<string, string>, price_cents: ?int, supplement_cents?: ?int, region_id?: ?int, cancellation_policy_days?: ?int}  $data
      */
@@ -313,8 +343,12 @@ class CatalogAdmin
             $item->cancellation_policy_days = $data['cancellation_policy_days'] ?? $item->cancellation_policy_days;
 
             if ($item instanceof Structure) {
-                $item->price_cents = $data['price_cents'] ?? 0;
-                $item->price_from_cents = $data['price_cents'] ?? 0;
+                // Con le camere il prezzo è quello della più economica (lo
+                // scrive il publisher): il form non lo tocca.
+                if (! $item->rooms()->exists()) {
+                    $item->price_cents = $data['price_cents'] ?? 0;
+                    $item->price_from_cents = $data['price_cents'] ?? 0;
+                }
                 $item->animal_supplement_cents = $data['supplement_cents'] ?? 0;
                 $item->region_id = $data['region_id'] ?? null;
             } elseif ($item instanceof Event) {

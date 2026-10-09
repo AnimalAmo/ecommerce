@@ -247,8 +247,8 @@ class ServiceOptionLabels
         ],
     ];
 
-    /** Label localizzata di una singola chiave (fallback: la chiave stessa). */
-    public static function label(string $group, ?string $key): ?string
+    /** Label localizzata di una singola chiave (fallback: la chiave stessa); $locale null = lingua corrente. */
+    public static function label(string $group, ?string $key, ?string $locale = null): ?string
     {
         if ($key === null || $key === '') {
             return null;
@@ -256,7 +256,7 @@ class ServiceOptionLabels
 
         $langKey = self::MAPS[$group][$key] ?? null;
 
-        return $langKey ? __($langKey) : $key;
+        return $langKey ? __($langKey, [], $locale) : $key;
     }
 
     /** Label localizzate di una lista di chiavi, nell'ordine dato. */

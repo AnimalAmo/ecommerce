@@ -129,8 +129,10 @@ Mappature comuni:
 ## Fuori scope MVP (v2, dal report audit)
 
 - Moderazione superadmin (spec) al posto dell'auto-publish
-- Inventario stanze reale (tabella rooms + allocazione) — oggi solo structure_closures,
-  overbooking possibile; UI partner per gestire chiusure
+- ~~Inventario stanze reale~~ — FATTO (feature/structure-rooms): tabella `rooms` dentro la struttura,
+  occupazione per stanza applicata ai partner Online (OnSite non è bloccato); le chiusure restano
+  per struttura (`structure_closures`). Accorpamento delle strutture «una per camera»:
+  `docs/runbook-stanze-struttura-2026-10-08.md`. Resta fuori: UI partner per gestire chiusure
 - Input wizard mancanti: capienza eventi, supplemento animali, audience smartbox
 - general_info multilingua; sub-type struttura (B&B/agriturismo oggi appiattiti su Structure)
 - smartbox ↔ strutture reali (pivot + consenso hotel `smartbox_consent` oggi mai letto)

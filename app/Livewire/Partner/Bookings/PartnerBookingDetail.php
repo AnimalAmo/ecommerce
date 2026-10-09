@@ -108,6 +108,8 @@ class PartnerBookingDetail extends Component
         return [
             // Per eventi/attività il mockup mostra il luogo sotto "Struttura:".
             'detail_structure' => $this->family() === 'strutture' ? $item->title : $item->location,
+            // Snapshot: resta anche se il partner ha poi cancellato la stanza.
+            'detail_room' => $item->options['room_name'] ?? null,
             'detail_price' => Format::money($item->price_cents),
             'detail_people' => BookingPricingService::persons($item->options ?? []),
             'detail_duration' => $this->duration(),

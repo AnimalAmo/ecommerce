@@ -55,6 +55,8 @@ return [
     ],
     // Profile — my orders: item count of the list row
     'items_count' => '{1} 1 item|[2,*] :count items',
+    // Room chosen in the structure (snapshot on the order line): partner bookings and order summary
+    'room' => 'Room: :name',
     // OrderStatus labels
     'status' => [
         'cancelled' => 'Cancelled',

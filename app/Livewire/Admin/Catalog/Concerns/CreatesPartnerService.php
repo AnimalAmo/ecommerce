@@ -211,6 +211,8 @@ trait CreatesPartnerService
             return;
         }
 
+        $attributes = $this->storeExtraPhotos($attributes);
+
         $draft = null;
 
         try {
@@ -299,6 +301,19 @@ trait CreatesPartnerService
      * percorso che il client ha messo in `saved`, quindi qui non fa niente.
      */
     public function removeSaved(int $index): void {}
+
+    /**
+     * Foto della famiglia oltre a quelle della scheda (le camere della
+     * struttura), da scrivere su disco solo adesso: dopo la validazione e dopo
+     * le foto della scheda, prima del service, che le ripulisce se rifiuta.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    protected function storeExtraPhotos(array $attributes): array
+    {
+        return $attributes;
+    }
 
     /** Porta i tab testi sulla lingua che ha l'errore (stesso metodo di ArticleEdit). */
     protected function focusLocaleOf(array $keys): void

@@ -33,9 +33,21 @@ use RuntimeException;
  * resta a db e il chiamante storna l'incasso col transaction id del capture.
  * In struttura non si muove denaro: stessa pipeline senza payout né
  * pagamento, idempotente sul token del checkout.
+ *
+ * Deadlock e lock wait timeout ritentano l'intera transaction (fino a
+ * TRANSACTION_ATTEMPTS volte) prima di arrivare allo storno: la lettura con
+ * lock dell'occupazione stanze prende gap lock, e due checkout su stanze
+ * vicine nell'indice possono incrociarsi sugli insert in order_items. Il
+ * retry è sicuro perché il callback non ha effetti fuori dal db: il capture
+ * avviene prima, carrier e pipe nascono a ogni tentativo, OrderPaid arriva a
+ * listener afterCommit (scartati dal rollback), OnSiteOrderConfirmed parte
+ * dopo il commit. Laravel ritenta solo la transaction più esterna: dentro una
+ * transaction del chiamante il deadlock risale come DeadlockException.
  */
 class PlaceOrderAction
 {
+    public const TRANSACTION_ATTEMPTS = 3;
+
     /**
      * @throws OrderAlreadyPlacedException capture o token hanno GIÀ un ordine: esito idempotente, NIENTE refund
      * @throws CartValidationException riga non più disponibile (rollback totale)
@@ -98,7 +110,7 @@ class PlaceOrderAction
                         ClearCartPipe::class,
                     ])
                     ->thenReturn();
-            });
+            }, self::TRANSACTION_ATTEMPTS);
         } catch (UniqueConstraintViolationException $exception) {
             // Backstop della race fra transaction concorrenti sullo stesso
             // capture: il vincolo unico (provider, gateway_session_id) fa
@@ -157,7 +169,7 @@ class PlaceOrderAction
                         ClearCartPipe::class,
                     ])
                     ->thenReturn();
-            });
+            }, self::TRANSACTION_ATTEMPTS);
         } catch (UniqueConstraintViolationException|CartValidationException $exception) {
             // Due conferme concorrenti con lo stesso token hanno superato
             // entrambe la ricerca: l'unique su checkout_token fa perdere la

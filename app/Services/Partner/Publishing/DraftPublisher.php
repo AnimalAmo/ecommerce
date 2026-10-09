@@ -146,6 +146,11 @@ class DraftPublisher
      */
     private function isPublishable(StructureDraft $draft): bool
     {
+        // Assorbita da un'altra bozza: la scheda è quella, non se ne crea una seconda.
+        if ($draft->merged_into_draft_id !== null) {
+            return false;
+        }
+
         if (blank($draft->getTranslation('name', 'it'))) {
             return false;
         }

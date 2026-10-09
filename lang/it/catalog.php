@@ -86,4 +86,17 @@ return [
         'previous' => 'Foto precedente',
         'next' => 'Foto successiva',
     ],
+
+    // Sezione «Scegli la camera» della scheda struttura (solo con almeno due
+    // stanze) e stanza scelta nella booking card.
+    'rooms' => [
+        'title' => 'Scegli la camera',
+        'max_guests' => 'Ospiti max: :count',
+        'max_animals' => 'Animali max: :count',
+        'amenities' => 'Servizi della camera',
+        'select' => 'Seleziona',
+        'selected' => 'Selezionata',
+        'booking_room' => 'Camera: :name',
+        'full' => 'Non disponibile in queste date',
+    ],
 ];

@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Catalog;
 
 use App\Livewire\Admin\Catalog\Concerns\CreatesPartnerService;
+use App\Livewire\Concerns\ManagesRoomRows;
 use App\Livewire\Concerns\ProvidesTimeSlots;
 use App\Livewire\Forms\HotelLocationForm;
 use App\Livewire\Forms\HotelPaymentForm;
@@ -13,6 +14,7 @@ use App\Services\Partner\ServiceOptionLabels;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * Pannello — nuova scheda della famiglia struttura, creata dal superadmin per
@@ -32,7 +34,7 @@ use Livewire\Component;
  */
 class StructureCreate extends Component
 {
-    use CreatesPartnerService, ProvidesTimeSlots;
+    use CreatesPartnerService, ManagesRoomRows, ProvidesTimeSlots;
 
     /** Famiglia dell'indirizzo: structure | service. Decide la categoria iniziale. */
     #[Locked]
@@ -73,6 +75,16 @@ class StructureCreate extends Component
 
     public HotelRoomsForm $rooms;
 
+    /**
+     * Foto delle camere ancora in upload, per chiave stanza: si scrivono su
+     * disco solo al salvataggio della scheda (storeRoomPhotos()). `#[Locked]`:
+     * le riempie solo saveRoom(), il client non ci mette file di altri.
+     *
+     * @var array<string, list<TemporaryUploadedFile>>
+     */
+    #[Locked]
+    public array $roomUploads = [];
+
     public HotelServicesForm $services;
 
     public HotelPaymentForm $payment;
@@ -85,7 +97,7 @@ class StructureCreate extends Component
 
     /**
      * Casa vacanza: lo step camere diventa "alloggio intero" (una riga sola,
-     * `count` bloccato a 1, posti letto al posto della tipologia).
+     * `units` bloccato a 1, posti letto al posto degli ospiti).
      * HotelRoomsForm ricava `wholeProperty` solo in setFromDraft(), che qui non
      * gira mai: lo allinea il componente. Le righe si azzerano perché le regole
      * `size:1` e `in:1` rifiuterebbero quelle già scritte mentre la vista non le
@@ -101,8 +113,10 @@ class StructureCreate extends Component
         }
 
         $this->rooms->wholeProperty = $whole;
-        $this->rooms->rooms = [$this->rooms->blankRow()];
-        $this->resetErrorBag('rooms.rooms.*');
+        $this->rooms->rooms = $whole ? [$this->rooms->blankRow()] : [];
+        $this->roomUploads = [];
+        $this->closeRoom();
+        $this->resetErrorBag(['rooms.rooms', 'rooms.rooms.*']);
     }
 
     /** Senza consenso le adesioni non hanno senso: si svuotano invece di restare appese. */
@@ -113,43 +127,15 @@ class StructureCreate extends Component
         }
     }
 
-    public function addRoom(): void
+    /** Toglie una foto ancora in upload da una camera già salvata nell'elenco. */
+    public function removePendingRoomUpload(string $key, int $index): void
     {
-        if ($this->rooms->wholeProperty) {
+        if (! isset($this->roomUploads[$key][$index])) {
             return;
         }
 
-        $this->rooms->rooms[] = $this->rooms->blankRow();
-    }
-
-    public function incrementRoom(int $index): void
-    {
-        if (! $this->rooms->wholeProperty && isset($this->rooms->rooms[$index])) {
-            $this->rooms->rooms[$index]['count']++;
-        }
-    }
-
-    public function decrementRoom(int $index): void
-    {
-        if (! $this->rooms->wholeProperty && isset($this->rooms->rooms[$index]) && $this->rooms->rooms[$index]['count'] > 0) {
-            $this->rooms->rooms[$index]['count']--;
-        }
-    }
-
-    /**
-     * Rimuove una riga camera. Il wizard non ce l'ha: chi sbaglia riga deve
-     * riscriverla. Resta sempre almeno una riga, perché `rooms` non può essere
-     * vuoto (regola `min:1`) e senza righe la scheda non è pubblicabile.
-     */
-    public function removeRoom(int $index): void
-    {
-        if ($this->rooms->wholeProperty || count($this->rooms->rooms) <= 1 || ! isset($this->rooms->rooms[$index])) {
-            return;
-        }
-
-        unset($this->rooms->rooms[$index]);
-        $this->rooms->rooms = array_values($this->rooms->rooms);
-        $this->resetErrorBag('rooms.rooms.*');
+        unset($this->roomUploads[$key][$index]);
+        $this->roomUploads[$key] = array_values($this->roomUploads[$key]);
     }
 
     public function render()
@@ -159,6 +145,8 @@ class StructureCreate extends Component
             'sub' => __('admin-catalog.create.structure.sub_'.$this->category),
             'provinces' => Province::query()->orderBy('name')->get(),
             'times' => $this->times(),
+            'roomTypes' => ServiceOptionLabels::options('room_type'),
+            'roomAmenities' => ServiceOptionLabels::options('services'),
             // slug => etichetta: la vista NON ricompone la label a mano, così
             // una quinta finestra di cancellazione compare in tutte e tre le
             // famiglie insieme alla whitelist.
@@ -403,6 +391,68 @@ class StructureCreate extends Component
     private function paymentFilled(): bool
     {
         return filled($this->payment->accountHolder) || filled($this->payment->iban) || filled($this->payment->bic);
+    }
+
+    protected function roomsForm(): HotelRoomsForm
+    {
+        return $this->rooms;
+    }
+
+    /**
+     * Nel pannello non c'è una bozza: le righe sono quelle del form, e il
+     * salvataggio le rivalida tutte (rules(), chiavi distinte comprese)
+     * prima di pubblicare.
+     */
+    protected function baseRoomRows(): array
+    {
+        return array_values($this->rooms->rooms);
+    }
+
+    /** Nel pannello nessuna foto camera è su disco prima del salvataggio. */
+    protected function ownedRoomPhotos(?string $key): array
+    {
+        return [];
+    }
+
+    /** Le foto restano upload temporanei, appesi alla chiave della camera. */
+    protected function acceptRoomUploads(string $key, array $files): array
+    {
+        if ($files !== []) {
+            $this->roomUploads[$key] = [...($this->roomUploads[$key] ?? []), ...array_values($files)];
+        }
+
+        return [];
+    }
+
+    /** Le righe vivono solo nel form: la bozza nasce al salvataggio. */
+    protected function persistRooms(array $rows): void {}
+
+    protected function pendingRoomUploadCount(string $key): int
+    {
+        return count($this->roomUploads[$key] ?? []);
+    }
+
+    protected function forgetRoomUploads(string $key): void
+    {
+        unset($this->roomUploads[$key]);
+    }
+
+    /**
+     * Dopo la validazione e le foto della scheda: le foto delle camere vanno
+     * su disco e sulle righe. Prima di qui le righe non ne hanno (un path
+     * arrivato dal payload si scarta); se il service rifiuta la scheda le
+     * cancella lui, insieme alle altre, e gli upload restano per riprovare.
+     */
+    protected function storeExtraPhotos(array $attributes): array
+    {
+        foreach ($attributes['rooms'] ?? [] as $i => $row) {
+            $attributes['rooms'][$i]['photos'] = array_values(array_map(
+                fn ($file): string => $file->store($this->photoDirectory(), 'public'),
+                $this->roomUploads[$row['key']] ?? [],
+            ));
+        }
+
+        return $attributes;
     }
 
     /**

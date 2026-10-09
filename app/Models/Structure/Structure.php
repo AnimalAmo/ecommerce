@@ -2,6 +2,7 @@
 
 namespace App\Models\Structure;
 
+use App\Enums\OrderPaymentMode;
 use App\Enums\ProductType;
 use App\Models\Concerns\HasAmenities;
 use App\Models\Concerns\HasCatalogImages;
@@ -10,6 +11,9 @@ use App\Models\Concerns\HasFaqs;
 use App\Models\Concerns\HasMapEmbed;
 use App\Models\Concerns\HasReviews;
 use App\Models\Structure\Concerns\StructureHasRelationships;
+use App\Services\Availability\RoomOccupancy;
+use App\Services\Partner\PartnerPaymentModeService;
+use Carbon\CarbonImmutable;
 use Database\Factories\Structure\StructureFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -77,5 +81,35 @@ class Structure extends Model
     public function mapFallbackUrl(): ?string
     {
         return $this->mapImageUrl();
+    }
+
+    /**
+     * Stanza proposta per date e gruppo (dettaglio struttura, «aggiungi al
+     * carrello» dai preferiti), per posizione: la prima che contiene il gruppo
+     * ed è libera nelle date; se sono tutte piene, la prima che lo contiene;
+     * se nessuna lo contiene, la prima comunque (chi chiama riporta il gruppo
+     * nella capienza). L'occupazione conta solo se il partner incassa online:
+     * con pagamento in struttura è informativa e non blocca. Senza gruppo
+     * (0/0) ogni stanza lo contiene. Null se la struttura non ha stanze.
+     */
+    public function defaultRoomFor(CarbonImmutable $checkIn, CarbonImmutable $checkOut, int $guests = 0, int $animals = 0): ?Room
+    {
+        $rooms = $this->rooms()->get();
+
+        if ($rooms->isEmpty()) {
+            return null;
+        }
+
+        $fitting = $rooms->filter(fn (Room $room): bool => $room->fits($guests, $animals));
+
+        if (app(PartnerPaymentModeService::class)->forPurchasable($this) !== OrderPaymentMode::Online) {
+            return $fitting->first() ?? $rooms->first();
+        }
+
+        $occupancy = app(RoomOccupancy::class);
+
+        return $fitting->first(fn (Room $room): bool => $occupancy->isAvailable($room, $checkIn, $checkOut))
+            ?? $fitting->first()
+            ?? $rooms->first();
     }
 }
