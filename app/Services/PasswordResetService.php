@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
@@ -30,6 +31,12 @@ class PasswordResetService
      * (config/auth.php → passwords.partner_welcome, 7 giorni).
      */
     public const WELCOME_BROKER = 'partner_welcome';
+
+    /**
+     * Broker del link mandato dall'amministratore dalla scheda di un iscritto
+     * (config/auth.php → passwords.admin_reset, 7 giorni).
+     */
+    public const ADMIN_BROKER = 'admin_reset';
 
     /**
      * Accoda l'invio del link di reimpostazione.
@@ -94,6 +101,25 @@ class PasswordResetService
     }
 
     /**
+     * Come acceptsWelcome(), per il link dell'amministratore: vale per
+     * qualsiasi iscritto tranne un superadmin (il suo reset resta quello del
+     * pannello, 60 minuti e regola più forte), e col token solo se l'ha creato
+     * questo broker — stessa difesa dall'oracolo di enumerazione.
+     *
+     * @param  string|null  $token  token del link; null = solo email e ruoli (guardia lato server di reset())
+     */
+    public function acceptsAdminLink(string $email, ?string $token = null): bool
+    {
+        $user = User::query()->whereRaw('lower(email) = ?', [Str::lower(trim($email))])->first();
+
+        if ($user === null || $user->hasRole('superadmin')) {
+            return false;
+        }
+
+        return $token === null || Password::broker(self::ADMIN_BROKER)->tokenExists($user, $token);
+    }
+
+    /**
      * Consuma il token e imposta la nuova password.
      *
      * Il broker va scelto da chi chiama: la scadenza la verifica il broker con
@@ -106,12 +132,16 @@ class PasswordResetService
      * link di "password dimenticata" ne allunga la finestra a 7 giorni. Il
      * token resta segreto, monouso e recapitato solo al titolare dell'email.
      *
-     * @param  string|null  $broker  null = broker di default (`users`); self::WELCOME_BROKER per il benvenuto
+     * @param  string|null  $broker  null = broker di default (`users`); self::WELCOME_BROKER per il benvenuto, self::ADMIN_BROKER per il link dell'amministratore
      * @return string una costante di Password (PASSWORD_RESET, INVALID_TOKEN, INVALID_USER)
      */
     public function reset(string $email, string $token, string $password, ?string $broker = null): string
     {
         if ($broker === self::WELCOME_BROKER && ! $this->acceptsWelcome($email)) {
+            $broker = null;
+        }
+
+        if ($broker === self::ADMIN_BROKER && ! $this->acceptsAdminLink($email)) {
             $broker = null;
         }
 
@@ -122,7 +152,7 @@ class PasswordResetService
                 'password_confirmation' => $password,
                 'token' => $token,
             ],
-            function (User $user) use ($password): void {
+            function (User $user) use ($password, $broker): void {
                 // Il cast 'hashed' del model fa l'hash; remember_token ruotato
                 // invalida i cookie "ricordami" rimasti su altri dispositivi
                 // (le sessioni attive non sono raggiungibili da qui: chi
@@ -131,6 +161,13 @@ class PasswordResetService
                     'password' => $password,
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                // Il link dell'amministratore chiude anche le sessioni aperte
+                // (driver database): se l'ha mandato lui, l'accesso di prima
+                // non deve sopravvivere alla password nuova.
+                if ($broker === self::ADMIN_BROKER) {
+                    DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+                }
 
                 event(new PasswordReset($user));
             },

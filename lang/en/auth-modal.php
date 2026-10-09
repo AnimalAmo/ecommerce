@@ -66,6 +66,21 @@ return [
 
     // Same page, from the welcome link of a partner created in the admin panel (?welcome=1).
     // Not 'welcome': that key is already the heading of the sign-in modal.
+    // Link sent by the administrator from the member's page (?admin=1): 7 days.
+    'admin_reset' => [
+        'title' => 'Set a new password',
+        'sub' => 'The AnimalAmo administrator sent you this link: choose the new password for the :email account.',
+    ],
+
+    'admin_reset_mail' => [
+        'subject' => 'Set a new password for AnimalAmo',
+        'heading' => 'Hi :name,',
+        'intro' => 'the AnimalAmo administrator sent you a link to set a new password for your account.',
+        'cta' => 'Set the new password',
+        'expiry' => 'The link is valid for :days days.',
+        'ignore' => 'If you were not expecting it you can ignore this email: your current password stays valid.',
+    ],
+
     'partner_welcome' => [
         'title' => 'Welcome to AnimalAmo',
         'sub' => 'Choose the password for the :email account: you will use it to sign in to the partner area.',

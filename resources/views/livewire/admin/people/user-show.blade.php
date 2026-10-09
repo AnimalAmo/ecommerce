@@ -49,6 +49,10 @@
     <x-admin.page-header :heading="$user->name" :sub="$user->email">
         <x-slot:actions>
             @if ($anonymizedAt === null)
+                {{-- Nessuna password nella mail: l'iscritto la sceglie dal link (7 giorni). --}}
+                @if ($user->is_active)
+                    <x-admin.button tone="outline" icon="key" wire:click="sendPasswordLink">{{ __('admin-people.users.password_link.button') }}</x-admin.button>
+                @endif
                 <x-admin.button tone="outline" :icon="$user->is_active ? 'no-symbol' : 'check'" wire:click="toggleActive">
                     {{ __('admin-people.users.'.($user->is_active ? 'deactivate' : 'reactivate')) }}
                 </x-admin.button>

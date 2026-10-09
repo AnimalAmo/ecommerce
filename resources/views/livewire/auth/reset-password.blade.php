@@ -53,8 +53,9 @@
                     {{-- Form --}}
                     <div class="text-center">
                         {{-- Con ?welcome=1 è il primo accesso di un partner creato dal pannello: non "reimposta", ma "scegli". --}}
-                        <flux:heading level="1" class="!text-4xl !font-bold !text-ink max-lg:!text-lg max-lg:!text-brand-cyan">{{ $welcome ? __('auth-modal.partner_welcome.title') : __('auth-modal.reset.title') }}</flux:heading>
-                        <p class="mt-4 text-[15px] leading-[21px] text-[#555555]">{{ $welcome ? __('auth-modal.partner_welcome.sub', ['email' => $email]) : __('auth-modal.reset.intro', ['email' => $email]) }}</p>
+                        {{-- Con ?admin=1 il link l'ha mandato l'amministratore: lo si dice, così non sembra una richiesta mai fatta. --}}
+                        <flux:heading level="1" class="!text-4xl !font-bold !text-ink max-lg:!text-lg max-lg:!text-brand-cyan">{{ $welcome ? __('auth-modal.partner_welcome.title') : ($adminLink ? __('auth-modal.admin_reset.title') : __('auth-modal.reset.title')) }}</flux:heading>
+                        <p class="mt-4 text-[15px] leading-[21px] text-[#555555]">{{ $welcome ? __('auth-modal.partner_welcome.sub', ['email' => $email]) : ($adminLink ? __('auth-modal.admin_reset.sub', ['email' => $email]) : __('auth-modal.reset.intro', ['email' => $email])) }}</p>
                     </div>
 
                     <form wire:submit="save" class="mx-auto mt-10 w-full max-w-[472px] max-lg:mt-8">

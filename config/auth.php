@@ -115,6 +115,20 @@ return [
             'expire' => 10080,
             'throttle' => 60,
         ],
+
+        /*
+        | Link "imposta una nuova password" mandato dall'amministratore dalla
+        | scheda di un iscritto (cliente o partner): sette giorni come il
+        | benvenuto, per lo stesso motivo. Stessa tabella: il link nuovo
+        | sostituisce il precedente. Mai per un superadmin:
+        | PasswordResetService::acceptsAdminLink().
+        */
+        'admin_reset' => [
+            'provider' => 'users',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 10080,
+            'throttle' => 60,
+        ],
     ],
 
     /*

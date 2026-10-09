@@ -66,6 +66,21 @@ return [
 
     // Stessa pagina, dal link di benvenuto di un partner creato dal pannello (?welcome=1).
     // Non 'welcome': quella chiave è già il titolo della modale di accesso.
+    // Link mandato dall'amministratore dalla scheda dell'iscritto (?admin=1): 7 giorni.
+    'admin_reset' => [
+        'title' => 'Imposta una nuova password',
+        'sub' => 'L’amministratore di AnimalAmo ti ha inviato questo link: scegli la nuova password per l’account :email.',
+    ],
+
+    'admin_reset_mail' => [
+        'subject' => 'Imposta una nuova password per AnimalAmo',
+        'heading' => 'Ciao :name,',
+        'intro' => 'l’amministratore di AnimalAmo ti ha inviato un link per impostare una nuova password per il tuo account.',
+        'cta' => 'Imposta la nuova password',
+        'expiry' => 'Il link è valido per :days giorni.',
+        'ignore' => 'Se non te lo aspettavi puoi ignorare questa email: la tua password attuale resta valida.',
+    ],
+
     'partner_welcome' => [
         'title' => 'Benvenuto su AnimalAmo',
         'sub' => 'Scegli la password per l’account :email: la userai per entrare nell’area partner.',
