@@ -93,7 +93,6 @@ return [
         'title' => 'Choose your room',
         'max_guests' => 'Max guests: :count',
         'max_animals' => 'Max animals: :count',
-        'amenities' => 'Room amenities',
         'select' => 'Select',
         'selected' => 'Selected',
         'booking_room' => 'Room: :name',

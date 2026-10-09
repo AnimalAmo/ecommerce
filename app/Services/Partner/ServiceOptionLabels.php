@@ -306,6 +306,28 @@ class ServiceOptionLabels
     }
 
     /**
+     * Servizi che una stanza può avere: quelli della struttura e quelli per gli
+     * animali, senza «nessuno» (per una stanza è la lista vuota). La scheda
+     * pubblica mostra i box «Servizi hotel» e «Servizi animali» della stanza
+     * scelta; li usano la modale stanza (wizard e pannello) e l'accorpamento.
+     *
+     * @return array{services: array<string, string>, animal_services: array<string, string>}
+     */
+    public static function roomAmenityOptions(): array
+    {
+        return [
+            'services' => self::options('services'),
+            'animal_services' => array_diff_key(self::options('animal_services'), ['nessuno' => true]),
+        ];
+    }
+
+    /** @return list<string> */
+    public static function roomAmenitySlugs(): array
+    {
+        return array_map(strval(...), array_merge(...array_map(array_keys(...), array_values(self::roomAmenityOptions()))));
+    }
+
+    /**
      * I nomi dei gruppi esistenti, nell'ordine di dichiarazione. Lo usa il
      * test che impedisce i doppioni dentro MAPS: PHP non protesta se una
      * chiave è definita due volte, tiene l'ultima e basta.

@@ -93,7 +93,6 @@ return [
         'title' => 'Scegli la camera',
         'max_guests' => 'Ospiti max: :count',
         'max_animals' => 'Animali max: :count',
-        'amenities' => 'Servizi della camera',
         'select' => 'Seleziona',
         'selected' => 'Selezionata',
         'booking_room' => 'Camera: :name',

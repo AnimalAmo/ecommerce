@@ -10,7 +10,9 @@ use App\Models\Structure\Room;
 use App\Models\Structure\Structure;
 use App\Models\User;
 use App\Services\Cart\SessionCartStorage;
+use App\Services\Partner\Publishing\FamilyPublisher;
 use Carbon\CarbonImmutable;
+use Database\Seeders\AmenitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
@@ -283,6 +285,53 @@ class StructureRoomsTest extends TestCase
                 $this->assertFalse($this->isDisabled($component->viewData('calendar'), $night));
             }
         }
+    }
+
+    public function test_service_boxes_follow_the_selected_room(): void
+    {
+        $this->seed(AmenitySeeder::class);
+        $structure = $this->structure();
+        $structure->amenities()->sync(FamilyPublisher::amenityPivot(['tv', 'omaggio']));
+        $lago = $this->room($structure, 1, ['name' => ['it' => 'Camera Lago']]);
+        $lago->amenities()->sync(FamilyPublisher::amenityPivot(['wifi', 'pet_sitting']));
+        $bosco = $this->room($structure, 2, ['name' => ['it' => 'Camera Bosco']]);
+        $bosco->amenities()->sync(FamilyPublisher::amenityPivot(['piscina', 'veterinario']));
+
+        $this->page()
+            ->assertViewHas('hotelServices', fn (array $rows): bool => array_column($rows, 'label') === ['Wifi'])
+            ->assertViewHas('animalServices', fn (array $rows): bool => array_column($rows, 'label') === ['Pet sitting'])
+            ->call('selectRoom', $bosco->id)
+            ->assertViewHas('hotelServices', fn (array $rows): bool => array_column($rows, 'label') === ['Piscina'])
+            ->assertViewHas('animalServices', fn (array $rows): bool => array_column($rows, 'label') === ['Servizio veterinario']);
+    }
+
+    public function test_a_service_box_falls_back_to_the_structure_when_the_room_has_none(): void
+    {
+        $this->seed(AmenitySeeder::class);
+        $structure = $this->structure();
+        $structure->amenities()->sync(FamilyPublisher::amenityPivot(['tv', 'omaggio']));
+        $lago = $this->room($structure, 1);
+        // Solo servizi hotel: il box animali resta quello della struttura.
+        $lago->amenities()->sync(FamilyPublisher::amenityPivot(['wifi']));
+        $this->room($structure, 2);
+
+        $this->page()
+            ->assertViewHas('hotelServices', fn (array $rows): bool => array_column($rows, 'label') === ['Wifi'])
+            ->assertViewHas('animalServices', fn (array $rows): bool => array_column($rows, 'label') === ['Omaggio di benvenuto']);
+    }
+
+    public function test_the_room_card_shows_the_price_but_no_service_list(): void
+    {
+        $this->seed(AmenitySeeder::class);
+        $structure = $this->structure();
+        $lago = $this->room($structure, 1, ['price_cents' => 12500]);
+        $lago->amenities()->sync(FamilyPublisher::amenityPivot(['wifi']));
+        $this->room($structure, 2);
+
+        $this->page()
+            ->assertSeeHtml('data-room-price="'.$lago->id.'"')
+            // L'elenco «Servizi della camera» non sta più nella card: ci sono i box della pagina.
+            ->assertDontSee('Servizi della camera');
     }
 
     public function test_structure_without_rooms_page_unchanged(): void
