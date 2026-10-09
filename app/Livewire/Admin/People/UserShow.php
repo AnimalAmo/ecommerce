@@ -3,10 +3,12 @@
 namespace App\Livewire\Admin\People;
 
 use App\Enums\OrderPaymentMode;
+use App\Exceptions\AdminPasswordLinkException;
 use App\Exceptions\PartnerAccountException;
 use App\Exceptions\PaymentModeException;
 use App\Models\Partner\PartnerProfile;
 use App\Models\User;
+use App\Services\Admin\People\AdminPasswordLinkService;
 use App\Services\Admin\People\AnonymizeUser;
 use App\Services\Admin\People\PartnerAccountService;
 use App\Services\Admin\People\UserAccountStatus;
@@ -161,6 +163,20 @@ class UserShow extends Component
         }
 
         Flux::toast(text: __('admin-people.users.welcome_sent', ['email' => $this->user->email], 'it'), variant: 'success');
+    }
+
+    /** Stato e limite d'invio li verifica il service: qui solo l'esito a schermo. */
+    public function sendPasswordLink(AdminPasswordLinkService $links): void
+    {
+        try {
+            $links->send($this->user);
+        } catch (AdminPasswordLinkException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+
+            return;
+        }
+
+        Flux::toast(text: __('admin-people.users.password_link.sent', ['email' => $this->user->email], 'it'), variant: 'success');
     }
 
     /** @return array<string, string> */

@@ -161,6 +161,15 @@ return [
             'website' => 'Sito',
             'address' => 'Indirizzo',
         ],
+        // Link "imposta una nuova password" per qualsiasi iscritto: nessuna password nella mail.
+        'password_link' => [
+            'button' => 'Invia link per nuova password',
+            'sent' => 'Link per impostare una nuova password inviato a :email.',
+            'errors' => [
+                'inactive' => 'L’account non è attivo: riattivalo prima di mandare il link.',
+                'throttled' => 'Link appena inviato: riprova tra un minuto.',
+            ],
+        ],
         'resend_welcome' => 'Invia di nuovo il link',
         'welcome_sent' => 'Link per scegliere la password inviato a :email.',
         'pets' => 'Animali',

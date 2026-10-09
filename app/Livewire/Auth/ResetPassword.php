@@ -40,19 +40,37 @@ class ResetPassword extends Component
     public bool $welcome = false;
 
     /**
+     * Link mandato dall'amministratore dalla scheda dell'iscritto
+     * ("?admin=1"): broker a 7 giorni, chiusura delle sessioni aperte e, per
+     * un partner, la login partner alla fine. Stessa guardia del benvenuto
+     * (acceptsAdminLink), stesso Locked.
+     */
+    #[Locked]
+    public bool $adminLink = false;
+
+    /** Il link admin di un partner porta alla sua login, non a quella dei clienti. */
+    #[Locked]
+    public bool $partnerLogin = false;
+
+    /**
      * $email non è un parametro di rotta: arriva dalla query string del link
      * ("?email="), che è come Laravel firma il destinatario del token. Resta
      * argomento esplicito perché il componente sia montabile anche senza
      * richiesta HTTP (test).
      */
-    public function mount(string $token, ?string $email = null, ?bool $welcome = null): void
+    public function mount(string $token, ?string $email = null, ?bool $welcome = null, ?bool $admin = null): void
     {
         $this->token = $token;
         $this->email = $email ?? (string) request()->query('email', '');
+        $resets = app(PasswordResetService::class);
         // Il token entra nel controllo: la copia di benvenuto la vede solo chi
         // ha in mano il link della mail (acceptsWelcome).
         $this->welcome = ($welcome ?? request()->boolean('welcome'))
-            && app(PasswordResetService::class)->acceptsWelcome($this->email, $this->token);
+            && $resets->acceptsWelcome($this->email, $this->token);
+        $this->adminLink = ! $this->welcome
+            && ($admin ?? request()->boolean('admin'))
+            && $resets->acceptsAdminLink($this->email, $this->token);
+        $this->partnerLogin = $this->welcome || ($this->adminLink && $resets->acceptsWelcome($this->email));
 
         // Link troncato o incollato a metà: inutile mostrare il form, la
         // reimpostazione fallirebbe comunque dopo aver scritto la password.
@@ -82,7 +100,11 @@ class ResetPassword extends Component
             $this->email,
             $this->token,
             $this->password,
-            $this->welcome ? PasswordResetService::WELCOME_BROKER : null,
+            match (true) {
+                $this->welcome => PasswordResetService::WELCOME_BROKER,
+                $this->adminLink => PasswordResetService::ADMIN_BROKER,
+                default => null,
+            },
         );
 
         if ($status !== Password::PASSWORD_RESET) {
@@ -105,8 +127,8 @@ class ResetPassword extends Component
      */
     public function goToLogin(): void
     {
-        // Un partner appena creato va alla sua login, non a quella dei clienti.
-        if ($this->welcome) {
+        // Un partner (appena creato, o col link dell'amministratore) va alla sua login, non a quella dei clienti.
+        if ($this->partnerLogin) {
             Flux::modal('partner-login')->show();
 
             return;
@@ -124,6 +146,10 @@ class ResetPassword extends Component
 
     public function render()
     {
-        return view('livewire.auth.reset-password')->title(__($this->welcome ? 'auth-modal.partner_welcome.title' : 'auth-modal.reset.title_page'));
+        return view('livewire.auth.reset-password')->title(__(match (true) {
+            $this->welcome => 'auth-modal.partner_welcome.title',
+            $this->adminLink => 'auth-modal.admin_reset.title',
+            default => 'auth-modal.reset.title_page',
+        }));
     }
 }
